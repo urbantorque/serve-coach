@@ -243,7 +243,10 @@ async function cocoTennis() {
   if (fs.existsSync(path.join(DEST, 'serve.json'))) {
     const have = JSON.parse(fs.readFileSync(path.join(DEST, 'serve.json'), 'utf8'))
     const missing = have.images.filter((im) => !fs.existsSync(path.join(DEST, 'serve', im.file_name)))
-    if (!missing.length) {
+    // Built before the racket boxes were kept (L5.11): rebuilt once, so the
+    // racket detector has labels to be scored against.
+    const rackets = have.images.every((im) => Array.isArray(im.rackets))
+    if (!missing.length && rackets) {
       console.log(`  coco-tennis: ${have.images.length} serve-shaped frames (already here)`)
       return
     }
@@ -329,7 +332,15 @@ async function cocoTennis() {
 
     for (const [id, ann] of best) {
       const im = meta.get(id)
-      images.push({ id, file_name: im.file_name, width: im.width, height: im.height, split })
+      // The racket boxes beside this player, kept for scoring the racket
+      // detector (`bench.html?set=coco-tennis&racket=1`, L5.11).
+      const near = rackets.get(id).filter(([x, y, w, h]) => {
+        const b = ann.bbox
+        const cx = x + w / 2
+        const cy = y + h / 2
+        return cx > b[0] - 0.3 * b[3] && cx < b[0] + b[2] + 0.3 * b[3] && cy > b[1] - 0.5 * b[3] && cy < b[1] + b[3]
+      })
+      images.push({ id, file_name: im.file_name, width: im.width, height: im.height, split, rackets: near })
       annotations.push(ann)
       attribution.push(`${im.file_name}\t${licences.get(im.license).name}\t${im.flickr}`)
     }

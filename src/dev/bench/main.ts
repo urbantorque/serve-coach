@@ -32,6 +32,8 @@
  */
 import { FilesetResolver, ObjectDetector, PoseLandmarker } from '@mediapipe/tasks-vision'
 import * as ort from 'onnxruntime-web'
+import { racketFromBox } from '../../lib/analysis/racket'
+import { RACKET_CATEGORY } from '../../lib/vision/objectEngine'
 import {
   COCO_JOINTS,
   MEDIAPIPE_TO_COCO,
@@ -60,7 +62,8 @@ const log = (s: string) => {
 }
 
 interface CocoFile {
-  images: { id: number; file_name: string; width: number; height: number }[]
+  /** `rackets`: COCO's tennis-racket boxes beside the player, coco-tennis only (L5.11). */
+  images: { id: number; file_name: string; width: number; height: number; rackets?: number[][] }[]
   annotations: { image_id: number; keypoints: number[]; bbox: number[] }[]
 }
 
@@ -393,4 +396,109 @@ async function mainVideo() {
   log('done')
 }
 
-;(params.get('video') ? mainVideo() : main()).catch((e) => log(`FAILED: ${(e as Error).stack ?? e}`))
+/* ----------------------------------------------------- the racket box (L5.11) */
+
+/**
+ * `?set=coco-tennis&racket=1`: the app's racket detector against COCO's own
+ * racket boxes, before the racket head is trusted as a witness for the drop.
+ *
+ * The detector is run as `objectEngine.ts` runs it (EfficientDet-Lite0, a 0.2
+ * floor, the highest-scoring racket), and the head is placed the way the app
+ * places it (`racketFromBox`, from the racket wrist out through the box) from
+ * the detected box and from the labelled one alike. So what is scored is the
+ * point the witness would read, not a box overlap nobody uses:
+ *
+ *   found       a racket box the wrist accepts (`racketFromBox` refuses one
+ *               a whole box away, as the app does)
+ *   IoU ≥ 0.5   the box itself, for comparison with published detector figures
+ *   head error  detected head against labelled head, % of the player's height
+ *   agrees      both heads on the same side of the racket shoulder, which is
+ *               the question the witness would answer
+ */
+async function mainRacket() {
+  const coco: CocoFile = await (await fetch(`${DATA}/serve.json`)).json()
+  const byImage = new Map(coco.annotations.map((a) => [a.image_id, a]))
+  const items = coco.images.filter((im) => byImage.has(im.id) && im.rackets?.length).slice(0, LIMIT)
+  if (!items.length) {
+    log('no racket labels in this set: run `npm run setup:bench` to rebuild coco-tennis with them')
+    return
+  }
+  log(`${items.length} frames with a labelled racket from ${SET}`)
+  const fileset = await FilesetResolver.forVisionTasks('/wasm')
+  const det = await ObjectDetector.createFromOptions(fileset, {
+    baseOptions: { modelAssetPath: '/models/efficientdet_lite0.tflite', delegate: 'CPU' },
+    runningMode: 'IMAGE',
+    scoreThreshold: 0.2,
+    maxResults: 10,
+  })
+  const iou = (a: number[], b: number[]) => {
+    const x0 = Math.max(a[0], b[0])
+    const y0 = Math.max(a[1], b[1])
+    const x1 = Math.min(a[0] + a[2], b[0] + b[2])
+    const y1 = Math.min(a[1] + a[3], b[1] + b[3])
+    const inter = Math.max(0, x1 - x0) * Math.max(0, y1 - y0)
+    return inter / (a[2] * a[3] + b[2] * b[3] - inter)
+  }
+  const rows: { file: string; found: boolean; iou: number; headError?: number; agrees?: boolean }[] = []
+  for (const im of items) {
+    const ann = byImage.get(im.id)!
+    const truth = truthFrom(im.file_name, ann.keypoints, ann.bbox)
+    const height = truth.bbox[3]
+    // The racket hand: the labelled wrist nearest a labelled racket.
+    const centre = (b: number[]) => ({ x: b[0] + b[2] / 2, y: b[1] + b[3] / 2 })
+    const hands = ([9, 10] as const).flatMap((j) => (truth.joints[j] ? [{ j, p: truth.joints[j]! }] : []))
+    if (!hands.length) continue
+    const pick = hands
+      .map((h) => ({ ...h, d: Math.min(...im.rackets!.map((b) => Math.hypot(centre(b).x - h.p.x, centre(b).y - h.p.y))) }))
+      .sort((a, b) => a.d - b.d)[0]
+    const label = im.rackets!.reduce((a, b) =>
+      Math.hypot(centre(a).x - pick.p.x, centre(a).y - pick.p.y) <= Math.hypot(centre(b).x - pick.p.x, centre(b).y - pick.p.y) ? a : b,
+    )
+    const shoulder = truth.joints[pick.j === 9 ? 5 : 6]
+    const img = await loadImage(`${DATA}/serve/${im.file_name}`)
+    const found = det
+      .detect(img)
+      .detections.filter((d) => d.categories[0]?.categoryName === RACKET_CATEGORY && d.boundingBox)
+      .sort((a, b) => (b.categories[0]?.score ?? 0) - (a.categories[0]?.score ?? 0))[0]
+    const box = found?.boundingBox
+    const asBox = (b: number[], score = 1) => ({ x: b[0], y: b[1], width: b[2], height: b[3], score })
+    const want = racketFromBox(asBox(label), pick.p)
+    const got = box ? racketFromBox(asBox([box.originX, box.originY, box.width, box.height], found!.categories[0]!.score), pick.p) : undefined
+    rows.push({
+      file: im.file_name,
+      found: Boolean(got),
+      iou: box ? iou([box.originX, box.originY, box.width, box.height], label) : 0,
+      ...(got && want
+        ? {
+            headError: Math.hypot(got.head.x - want.head.x, got.head.y - want.head.y) / height,
+            ...(shoulder ? { agrees: got.head.y > shoulder.y === want.head.y > shoulder.y } : {}),
+          }
+        : {}),
+    })
+  }
+  const n = rows.length
+  const found = rows.filter((r) => r.found)
+  const errors = found.map((r) => r.headError!).filter(Number.isFinite).sort((a, b) => a - b)
+  const judged = found.filter((r) => r.agrees !== undefined)
+  const summary = {
+    frames: n,
+    found: found.length,
+    iou50: rows.filter((r) => r.iou >= 0.5).length,
+    medianHeadError: errors.length ? errors[errors.length >> 1] * 100 : NaN,
+    p90HeadError: errors.length ? errors[Math.floor(errors.length * 0.9)] * 100 : NaN,
+    agrees: judged.filter((r) => r.agrees).length,
+    judged: judged.length,
+  }
+  ;(window as unknown as { __bench: unknown }).__bench = { set: SET, racket: true, summary, rows }
+  document.getElementById('table')!.innerHTML =
+    `<h2>Racket box · ${SET}</h2><table><tr><th>frames</th><th>found</th><th>IoU ≥ 0.5</th>` +
+    `<th>head error, median / p90 (% ht)</th><th>head vs shoulder agrees</th></tr>` +
+    `<tr><td>${n}</td><td>${summary.found}</td><td>${summary.iou50}</td>` +
+    `<td>${summary.medianHeadError.toFixed(1)} / ${summary.p90HeadError.toFixed(1)}</td>` +
+    `<td>${summary.agrees} of ${summary.judged}</td></tr></table>`
+  log('done')
+}
+
+;(params.get('racket') ? mainRacket() : params.get('video') ? mainVideo() : main()).catch((e) =>
+  log(`FAILED: ${(e as Error).stack ?? e}`),
+)

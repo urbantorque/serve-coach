@@ -2682,6 +2682,23 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         holds up, use the racket head under the shoulder as a witness for the
         drop.
       - *Proof:* the `/bench.html` table.
+      - *Delta (Oct 17):* ready, not run, so still open.
+        - The COCO subset never kept its racket boxes; they were only used to
+          choose the frames. `scripts/fetch-bench.mjs` now keeps the boxes
+          beside the player, and rebuilds a subset built without them.
+        - That rebuild re-downloads COCO's annotation archive
+          (`annotations_trainval2017.zip`, about 241 MB, from COCO's S3
+          bucket), which waits on the owner's say-so.
+        - `bench.html?set=coco-tennis&racket=1` scores the app's detector as
+          the app runs it (EfficientDet-Lite0, a 0.2 floor, the best racket):
+          - how often it finds a box the wrist accepts;
+          - IoU ≥ 0.5 against the label;
+          - the racket head's error as `racketFromBox` places it, as a share
+            of the player's height;
+          - whether detected and labelled heads agree on the witness question,
+            head below the racket shoulder or not.
+        - On today's data it says the labels are missing and how to get them.
+        - The witness stays unused until that table says it holds up.
 - [ ] **L5.12 The 60 fps hint** · S.
       - **What:** until D1.2 is wired, the too-few-frames refusal recommends
         slow motion only.
