@@ -49,11 +49,15 @@ const testDirs = (function find(dir) {
  * intermittent, attributed to whichever test file happened to be mid-write, and
  * completely absent on a re-run.
  *
- * Defaults to the old location, so nothing that does not set it changes.
+ * By default a directory of its own per run (L6.12), removed when the run
+ * ends, so two runs cannot share one: the override used to be the only way
+ * out of that, and the collision it prevents is the kind nobody thinks to set
+ * a variable against.
  */
-const cache = process.env.SERVE_COACH_TEST_CACHE
-  ? path.resolve(process.env.SERVE_COACH_TEST_CACHE)
-  : path.join(root, 'node_modules', '.cache')
+const ownCache = !process.env.SERVE_COACH_TEST_CACHE
+const cache = ownCache
+  ? path.join(root, 'node_modules', '.cache', `serve-coach-run-${process.pid}-${Date.now()}`)
+  : path.resolve(process.env.SERVE_COACH_TEST_CACHE)
 
 fs.mkdirSync(cache, { recursive: true })
 
@@ -134,4 +138,5 @@ for (const file of files) {
   if ((res.status ?? 1) !== 0) failed++
 }
 
+if (ownCache) fs.rmSync(cache, { recursive: true, force: true })
 process.exit(failed === 0 ? 0 : 1)

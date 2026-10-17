@@ -3053,7 +3053,19 @@ Everything here is built from `primitives.tsx` and the existing tokens.
       - **What:** `run`, `compareServes` and `openClip` move out of `App.tsx`
         with their refs, so the idle and sweep decisions can be tested.
       - *Proof:* hook tests, and `App.tsx` under 1,200 lines.
-- [ ] **L6.12 Ledgers that agree** · S.
+- [x] **L6.12 Ledgers that agree** · S.
+      - *Delta (Oct 17):* done.
+        - `LOOP.md` points at `roadmap/market-ready` and `ROADMAP.md`, says
+          the `loop/top-ten` loop it describes has ended, and keeps its
+          governing constraints.
+        - `NEXT.md` and `PROGRESS.md` open with a historical banner.
+          PROGRESS's "Resuming this loop" check count is still kept, because
+          `handover.test.ts` holds it to the suite.
+        - `run-tests.mjs` bundles into a directory of its own per run,
+          `node_modules/.cache/serve-coach-run-<pid>-<time>`, and removes it
+          at the end. `SERVE_COACH_TEST_CACHE` still overrides it.
+        - Proof: the full suite ran through the new runner, 1,794 checks
+          passed, and it left no run directory behind.
       - **What:** `LOOP.md` points at this branch and at `ROADMAP.md`.
         `NEXT.md` and `PROGRESS.md` are marked historical. The test cache is
         set per run by default.

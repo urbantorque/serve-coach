@@ -1,5 +1,10 @@
 # PROGRESS
 
+> **Historical.** The log of the 75-round loop, which has ended. Current work is
+> on `roadmap/market-ready`, tracked in `ROADMAP.md`. Only the check count in
+> "Resuming this loop" is still kept current, because `handover.test.ts` holds
+> it to the suite.
+
 The running log of the 75-round loop. One entry per round: what was picked, what
 was built, and what the critic said before it committed.
 

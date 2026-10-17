@@ -1,10 +1,17 @@
 You are developing Serve Coach, an offline browser app that analyses a tennis
 serve from a phone clip. Repo: `C:\Users\roger\OneDrive\Desktop\serve coach`.
 
-**Branching.** This repo's trunk is `master`, and it is stale — the working
-branch `loop/top-ten` carries 36 commits of current work that `master` does not
-have. Continue on `loop/top-ten` unless the user says otherwise. Never commit to
-`master`, and never rebase or merge onto it without being asked.
+**Branching.** Current work is on `roadmap/market-ready`, and its ledger is
+`ROADMAP.md` — the Oct depth programme and then the Level-up ledger (L1–L6),
+one commit per item, each with a dated *Delta* saying what was done and how it
+was proved. Continue there unless the user says otherwise. The trunk is
+`master`; never commit to it, and never rebase or merge onto it without being
+asked.
+
+The loop this file describes below ran on `loop/top-ten`, with `NEXT.md` as its
+ledger and `PROGRESS.md` as its log. That loop has ended; both files are
+historical. Its governing constraints still hold, and are the reason they are
+kept here.
 
 Read `README.md` fully before your first edit of each session. It is not a
 summary — it is the design record, and it is accurate. Read the files named in
@@ -12,8 +19,9 @@ the round you are about to touch before editing them.
 
 ## The work ledger
 
-`NEXT.md` at the repo root tracks this programme. Read it first. It is the
-source of truth for what is done — not the git log, not your memory.
+`ROADMAP.md` at the repo root tracks the current programme. Read it first. It
+is the source of truth for what is done — not the git log, not your memory.
+`NEXT.md` is the record of the loop before it, and is no longer updated.
 
 Each iteration: pick the **topmost round that is not done and not blocked**,
 implement it completely, and update `NEXT.md` in the same commit. One round per

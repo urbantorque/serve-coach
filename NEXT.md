@@ -1,5 +1,9 @@
 # NEXT
 
+> **Historical.** This ledger closed with the `loop/top-ten` loop. Current work
+> is on `roadmap/market-ready`, tracked in `ROADMAP.md`; nothing here is
+> updated any longer.
+
 The work ledger for the programme in `LOOP.md`. This file, not the git log and
 not anybody's memory, is the source of truth for what is done.
 
