@@ -7,6 +7,7 @@ import {
   CLIP_SHARE_OF_QUOTA,
   MAX_KEPT_CLIPS,
   clipFor,
+  clipStoreAvailable,
   forgetAllClips,
   forgetClipsExcept,
   keepClip,
@@ -118,6 +119,58 @@ await check('a clip goes with its last report, and every clip goes first under p
   for (const id of ['serve-a', 'serve-b', 'serve-c']) await keepClip(id, clip(MB), { optedIn: true, estimate: { usage: 0, quota: 1e12 } }, root)
   assert((await forgetClipsExcept(['serve-a', 'serve-c'], root)) === 1 && !files.has('serve-b'), 'an orphaned clip was kept')
   assert((await forgetAllClips(root)) === 2 && files.size === 0, 'clips survived the first rung')
+})
+
+/**
+ * Safari's private file system (L6.7): a directory, and file handles that
+ * cannot be written from the page. Creating a handle creates the empty file,
+ * as the real one does.
+ */
+function readOnlyRoot() {
+  const files = new Map<string, number>()
+  const dir = {
+    kind: 'directory',
+    async getFileHandle(name: string, opts?: { create?: boolean }) {
+      if (!files.has(name)) {
+        if (!opts?.create) throw new DOMException('missing', 'NotFoundError')
+        files.set(name, 0)
+      }
+      return {
+        kind: 'file',
+        name,
+        async getFile() {
+          return { size: files.get(name)!, lastModified: 1, name } as unknown as File
+        },
+      }
+    },
+    async removeEntry(name: string) {
+      files.delete(name)
+    },
+    async *values() {
+      for (const name of [...files.keys()]) yield await dir.getFileHandle(name)
+    },
+  }
+  return { root: (async () => dir as unknown as FileSystemDirectoryHandle) as ClipRoot, files }
+}
+
+await check('a handle that cannot be written keeps nothing, and leaves no empty clip behind', async () => {
+  const { root, files } = readOnlyRoot()
+  const kept = await keepClip('serve-a', clip(MB), { optedIn: true, estimate: { usage: 0, quota: 1e10 } }, root)
+  assert(kept === false, 'a clip was reported kept on a handle with no way to write it')
+  assert(files.size === 0, 'an empty file was left where a reopened report would try to play it')
+  assert((await keptClips(root)).length === 0, 'the empty file was listed as a kept clip')
+})
+
+check('the setting is offered only where a clip can be written', () => {
+  const fs = { getDirectory: () => undefined }
+  class Writable {
+    createWritable() {}
+  }
+  class ReadOnly {}
+  assert(clipStoreAvailable({ navigator: { storage: fs }, FileSystemFileHandle: Writable }), 'a browser that can keep clips was refused')
+  assert(!clipStoreAvailable({ navigator: { storage: fs }, FileSystemFileHandle: ReadOnly }), 'Safari, with no createWritable, was offered it')
+  assert(!clipStoreAvailable({ navigator: {}, FileSystemFileHandle: Writable }), 'a browser with no private file system was offered it')
+  assert(!clipStoreAvailable({}), 'nothing at all was offered it')
 })
 
 report()

@@ -312,6 +312,8 @@ export default function App() {
   // it drives is advice before a tap, not a guard (L6.1).
   // An analysis the last load did not finish, said once on the home screen (L6.4).
   const [interrupted, setInterrupted] = useState(INTERRUPTED_AT_LOAD)
+  // The report whose clip could not be kept, when the player keeps them (L6.7).
+  const [keepFailedFor, setKeepFailedFor] = useState<string>()
   const [metered] = useState(() => meteredConnection(navigator as Navigator & { connection?: { saveData?: boolean; type?: string } }))
   const [prefs, setPrefs] = useState<Prefs>(readPrefs)
 
@@ -849,7 +851,12 @@ export default function App() {
         // The clip itself, on this phone, when the player keeps them (D6.4).
         // Not for a refused clip, which never enters the record either.
         if (prefs.keepClips && analysis.triage?.status !== 'rejected') {
-          void keepClip(clipIdOf(analysis.id), file, { optedIn: true })
+          // A keep that fails is said on the report (L6.7), rather than found
+          // later as a reopened report with nothing to play.
+          const id = analysis.id
+          void keepClip(clipIdOf(id), file, { optedIn: true }).then((ok) => {
+            if (!ok) setKeepFailedFor(id)
+          })
         }
         recheckOffline()
 
@@ -1673,6 +1680,8 @@ export default function App() {
               onTagOutcome={(o) => void applyServeTag(shownReport.id, { outcome: o })}
               tossMap={tossMapFor(shownReport, sessions, serveTags)}
               kept={keptMedia?.id === shownReport.id ? { url: keptMedia.url, bestUrl: keptMedia.bestUrl } : undefined}
+              keepsClips={Boolean(prefs.keepClips)}
+              keepFailed={keepFailedFor === shownReport.id}
               fixtureExport={FIXTURE_EXPORT}
               onBack={goHome}
               onAnalyzeAnother={goHome}
@@ -1969,8 +1978,13 @@ export default function App() {
             ))}
           </ul>
         )}
+        {/* Follows the setting (L6.7). Passive on purpose, as `jsxCopy.test.ts`
+            ruled when it was plain text: the promise is that nobody does the
+            keeping — no server, no account. */}
         <p className="sheet-note">
-          Reports are kept on this device only. The video itself is never saved.
+          {prefs.keepClips
+            ? 'Reports, and the videos you chose to keep, stay on this device only.'
+            : 'Reports are kept on this device only. The video itself is never saved.'}
         </p>
         <button className="btn btn--ghost btn--full history-backup" onClick={() => setSheet('settings')}>
           <Icon name="upload" size={17} />

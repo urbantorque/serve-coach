@@ -2931,7 +2931,34 @@ Everything here is built from `primitives.tsx` and the existing tokens.
       - **What:** the cache name comes through a Vite define, the readiness
         check looks in that cache only, and older engine caches are deleted.
       - *Proof:* a fake CacheStorage test.
-- [ ] **L6.7 Keep videos only where it works** · S.
+- [x] **L6.7 Keep videos only where it works** · S.
+      - *Delta (Oct 17):* done.
+        - `clipStoreAvailable` needs a private file system and
+          `createWritable` on file handles. Safari has the first without the
+          second, so the setting was offered and every keep failed in silence.
+        - `keepClip` removes the file it created when the handle cannot be
+          written, or the write fails. It used to leave a 0-byte "kept clip"
+          for a reopened report to play.
+        - A failed keep is said on the live report: "I could not keep this
+          video on the phone, so it will not play here later."
+        - The "never saved" lines follow the setting:
+          - the report's fine print says "the video is kept on this phone
+            only", "this video was not kept", or the old promise;
+          - the replay note says "This clip was not kept on your phone";
+          - the history sheet says "Reports, and the videos you chose to keep,
+            stay on this device only".
+          - The JSX copy ruling for the old sheet line went stale when it moved
+            into an expression. It was removed, as that test asks, with its
+            reason kept beside the line.
+        - Proof:
+          - Two checks in `clipStore.test.ts`: a Safari-like handle keeps
+            nothing and leaves no empty file, and availability is offered only
+            with `createWritable`.
+          - Four render checks in `keptCopy.test.ts`: a reopened report with a
+            kept clip, with the setting on and no clip, with it off, and a
+            failed keep on the live report.
+        - Seen at 375×812 on a reopened seeded report with keeping on, with no
+          console errors. The entry bundle is 128.6 kB.
       - **What:** check for `createWritable` before offering the setting, tell
         the player when a keep fails, and make the "never saved" copy follow
         the setting.

@@ -125,11 +125,6 @@ const RULINGS: Ruling[] = [
     why: 'A button on the same dev-only corpus screen.',
   },
   {
-    text: 'Reports are kept on this device only',
-    verdict: 'exempt',
-    why: 'The passive is the claim. An active rewrite needs a subject, and the whole promise is that there is no "we" doing the keeping — no server, no account, nobody.',
-  },
-  {
     text: 'Nothing here is sent anywhere',
     verdict: 'exempt',
     why: 'Same sentence, same reason, on the `?check` panel.',

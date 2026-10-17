@@ -107,6 +107,10 @@ interface Props {
    * serve's when it was kept too — object URLs, on a reopened report only.
    */
   kept?: { url: string; bestUrl?: string }
+  /** Whether the player keeps videos, so the "never saved" lines follow it (L6.7). */
+  keepsClips?: boolean
+  /** The keep for this clip failed, said on the live report (L6.7). */
+  keepFailed?: boolean
   onBack: () => void
   onAnalyzeAnother: () => void
   onFlipHandedness?: () => void
@@ -241,6 +245,8 @@ export default function Report({
   onGlance,
   tossMap,
   kept,
+  keepsClips,
+  keepFailed,
   onBack,
   onAnalyzeAnother,
   onFlipHandedness,
@@ -1072,8 +1078,10 @@ export default function Report({
               Two sentences, and the first one is the good news: the clip is
               gone because it was never kept, which is the promise on the tin. */}
           <p className="player-note">
-            Your clip never left your phone, so there is nothing to replay. This is the
-            tracked body, moving at the speed you filmed.
+            {keepsClips
+              ? 'This clip was not kept on your phone, so there is nothing to replay.'
+              : 'Your clip never left your phone, so there is nothing to replay.'}{' '}
+            This is the tracked body, moving at the speed you filmed.
           </p>
           {/* Only when there is a second body on screen. Silence otherwise —
               `pairTracks` refuses most pairs and none of its reasons is the
@@ -1516,8 +1524,14 @@ export default function Report({
           {example
             ? 'Built from a simulated serve. Nothing on this page was measured from a video.'
             : isLive(analysis)
-              ? `Measured on this device from ${analysis.frames.length} tracked frames. Nothing was uploaded.`
-              : 'Measured on this device. Nothing was uploaded, and the video itself was never saved.'}
+              ? `Measured on this device from ${analysis.frames.length} tracked frames. Nothing was uploaded.` +
+                (keepFailed ? ' I could not keep this video on the phone, so it will not play here later.' : '')
+              : // Follows the setting (L6.7): "never saved" was printed under a kept video.
+                kept
+                ? 'Measured on this device. Nothing was uploaded, and the video is kept on this phone only.'
+                : keepsClips
+                  ? 'Measured on this device. Nothing was uploaded, and this video was not kept.'
+                  : 'Measured on this device. Nothing was uploaded, and the video itself was never saved.'}
         </p>
       </footer>
     </div>

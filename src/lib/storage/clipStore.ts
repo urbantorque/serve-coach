@@ -77,9 +77,23 @@ const deviceRoot: ClipRoot = async () => {
   }
 }
 
-/** Whether this browser can keep a clip at all. */
-export const clipStoreAvailable = (): boolean =>
-  typeof navigator !== 'undefined' && typeof navigator.storage?.getDirectory === 'function'
+/**
+ * Whether this browser can keep a clip at all: a private file system, and a
+ * way to write a file into it from the page (L6.7). Safari has the first
+ * without the second — `createWritable` exists there only in a worker — so
+ * the setting was offered, turned on, and every keep failed in silence.
+ */
+export const clipStoreAvailable = (
+  env: { navigator?: { storage?: { getDirectory?: unknown } }; FileSystemFileHandle?: unknown } = globalThis as never,
+): boolean => {
+  const handle = env.FileSystemFileHandle as (((...a: never[]) => unknown) & { prototype?: object }) | undefined
+  return (
+    typeof env.navigator?.storage?.getDirectory === 'function' &&
+    typeof handle === 'function' &&
+    typeof handle.prototype === 'object' &&
+    'createWritable' in handle.prototype
+  )
+}
 
 /** Every kept clip, oldest first. */
 export async function keptClips(root: ClipRoot = deviceRoot): Promise<KeptClip[]> {
@@ -120,9 +134,21 @@ export async function keepClip(
     if (!plan.fits) return false
     for (const id of plan.evict) await dir.removeEntry(id).catch(() => undefined)
     const handle = await dir.getFileHandle(clipId, { create: true })
-    const writable = await handle.createWritable()
-    await writable.write(file)
-    await writable.close()
+    // A handle that cannot be written leaves the empty file it was just
+    // created as (L6.7): that would be a 0-byte "kept clip" a reopened report
+    // tries to play. Removed, and the keep reported as failed.
+    if (typeof handle.createWritable !== 'function') {
+      await dir.removeEntry(clipId).catch(() => undefined)
+      return false
+    }
+    try {
+      const writable = await handle.createWritable()
+      await writable.write(file)
+      await writable.close()
+    } catch {
+      await dir.removeEntry(clipId).catch(() => undefined)
+      return false
+    }
     return true
   } catch {
     return false
