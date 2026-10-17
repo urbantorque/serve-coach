@@ -14,6 +14,42 @@
   position: relative;
 }
 
+/* More about this clip (L4.1): one fold for everything after the serve itself.
+   The summary is a block title with a chevron that turns; the body keeps the
+   screen's own gap between sections, which a details element does not inherit. */
+.report-more {
+  border-top: 1px solid var(--hairline-soft);
+}
+
+.report-more-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+  list-style: none;
+  cursor: pointer;
+  color: var(--fg-faint);
+}
+
+.report-more-head::-webkit-details-marker {
+  display: none;
+}
+
+.report-more-head svg {
+  transition: transform var(--fast) var(--ease);
+}
+
+.report-more[open] .report-more-head svg {
+  transform: rotate(90deg);
+}
+
+.report-more-body {
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+  padding-top: 10px;
+}
+
 .topbar {
   display: flex;
   align-items: center;

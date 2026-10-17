@@ -1851,7 +1851,23 @@ does, and nothing marks a fault as fixed.
 ### Wave L4 — See what good looks like
 Everything here is built from `primitives.tsx` and the existing tokens.
 
-- [ ] **L4.1 A shorter report** · M.
+- [x] **L4.1 A shorter report** · M.
+      - *Delta (Oct 17):* done.
+        - The report now reads: the hero, the serve picker, the one fix with
+          its plan, the season focus, the video, and the six moments. Then
+          one `<details>` titled "More about this clip".
+        - The fold holds, in this order: the "Score all serves" button and
+          the basket, the toss map, the notes, how the clip was read, tagging,
+          every area, and the firing order.
+        - It starts closed. It opens by itself when a basket arrives while
+          the report is on screen, because the player has just asked for it.
+          A reopened basket report starts closed like any other.
+        - Proof:
+          - a render test checks the DOM order, hero through areas;
+          - the same test checks that everything after the six moments sits
+            inside the fold, and that the fold starts closed;
+          - the basket demo was previewed at 375×812, closed and open, with
+            the chevron turning and no console errors.
       - **What:** hero → focus → plan → video and six moments → one folded
         "More about this clip". The folded part holds the basket, toss map, how
         the clip was read, tagging, areas and firing order.

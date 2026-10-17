@@ -323,6 +323,44 @@ check('a steady fault in a basket is called off target, not praised (L1.8)', () 
   assert(out.includes('steady, but outside the target'), 'a steady fault was shown without saying it is off target')
 })
 
+check('the report reads hero, fix, plan, the serve, then one fold for the rest (L4.1)', () => {
+  const out = html(
+    createElement(Report, {
+      analysis: { ...sampleAnalysis(DEMO_DIALS.example), consistency: buildConsistency(sampleBasket(), 5) },
+      onBack: noop,
+      onAnalyzeAnother: noop,
+      onTagServe: noop,
+      onTagOutcome: noop,
+    }),
+  )
+  const at = (marker: string) => {
+    const i = out.indexOf(marker)
+    assert(i >= 0, `"${marker}" is not on the report`)
+    return i
+  }
+  const order = [
+    ['the score', 'class="hero"'],
+    ['the fix', 'class="focus"'],
+    ['the plan', 'focus-next'],
+    ['the six moments', 'Six moments in your serve'],
+    ['the fold', 'More about this clip'],
+    ['the basket', 'best serve against your worst'],
+    ['how it was read', 'How I read this clip'],
+    ['tagging', 'Tag this serve'],
+    ['the areas', 'Every area we scored'],
+  ] as const
+  for (let i = 1; i < order.length; i++) {
+    assert(
+      at(order[i - 1][1]) < at(order[i][1]),
+      `${order[i - 1][0]} comes after ${order[i][0]}`,
+    )
+  }
+  // Everything after the six moments sits inside the one fold.
+  const fold = out.slice(at('<details class="report-more"'), out.indexOf('</details>', at('<details class="report-more"')))
+  for (const [what, marker] of order.slice(5)) assert(fold.includes(marker), `${what} is outside the fold`)
+  assert(!/<details class="report-more"[^>]*open/.test(out), 'the fold starts open')
+})
+
 check('the glance renders', () => {
   const out = html(
     createElement(Glance, { analysis: sampleAnalysis(), onOpenReport: noop, onBack: noop }),

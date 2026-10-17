@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import ConsistencyPanel from '../components/ConsistencyPanel'
 import TossMap from '../components/TossMap'
 import FiringTimeline from '../components/FiringTimeline'
@@ -288,6 +288,14 @@ export default function Report({
    */
   const [hidSpreads, setHidSpreads] = useState(false)
   const consistency = hidSpreads ? undefined : analysis.consistency
+  // "More about this clip" (L4.1): closed, until a basket the player asked for
+  // arrives — a sweep finished while this report was on screen.
+  const [moreOpen, setMoreOpen] = useState(false)
+  const hadBasket = useRef(Boolean(consistency))
+  useEffect(() => {
+    if (consistency && !hadBasket.current) setMoreOpen(true)
+    hadBasket.current = Boolean(consistency)
+  }, [consistency])
   /**
    * Whether the player has asked to see numbers off a clip that was refused.
    *
@@ -923,206 +931,6 @@ export default function Report({
         />
       )}
 
-      {/*
-       * Comparing the serves in the clip, and the caveats on how it was read.
-       *
-       * Both sat above the focus card until now, which meant the one
-       * instruction the report exists to deliver arrived two phone screens
-       * down, under a serve picker, a scored panel of per-position spread
-       * charts and a stack of quality notes. Consistency is worth showing and
-       * it is not the answer to "what do I fix" — it is rung four of five.
-       *
-       * The button and the panel it opens stay together, so tapping Compare
-       * still makes the thing appear directly underneath it. Only the picker
-       * chips stay up by the score, because they change which serve every
-       * number above is describing.
-       */}
-      {analysis.serves && analysis.serves.count > 1 && onCheckConsistency && !consistency && (
-        <section className="serves-compare">
-          <button className="btn btn--ghost btn--full serves-cta" onClick={onCheckConsistency}>
-            <Icon name="target" size={16} />
-            {/* The sweep is capped, so a longer basket cannot promise all of
-                them. Said on the button rather than discovered afterwards as a
-                count that does not match the clip. */}
-            {analysis.serves.count > MAX_CONSISTENCY_SERVES
-              ? `Score your last ${MAX_CONSISTENCY_SERVES} serves`
-              : `Score all ${analysis.serves.count} serves in this clip`}
-          </button>
-        </section>
-      )}
-
-      {consistency && (
-        <ConsistencyPanel
-          consistency={consistency}
-          onDismiss={() => setHidSpreads(true)}
-          pair={servePair}
-          createdAt={analysis.createdAt}
-          bestGap={bestGap}
-          gapDelta={basketGapDelta}
-          clipServes={analysis.serves?.count}
-        />
-      )}
-
-      {/* Where every toss in this basket peaked, against the front foot
-          (D6.3). One axis, the one this camera reads, and said so. */}
-      {tossMap && (
-        <section className="block">
-          <h2 className="block-title">
-            {tossMap.axis === 'ahead' ? 'Your tosses, front to back' : 'Your tosses, side to side'}
-          </h2>
-          <TossMap map={tossMap} />
-        </section>
-      )}
-
-      {!example && analysis.quality.warnings.length > 0 && (
-        <section className="notes">
-          {analysis.quality.warnings.map((w) => (
-            <p key={w} className="note">
-              {w}
-            </p>
-          ))}
-        </section>
-      )}
-
-      {/*
-       * How the clip was read: which hand, what angle, how clearly it came
-       * through, and which kind of serve the targets came from.
-       *
-       * Under the fix rather than above it. Every one of these is an assumption
-       * the player can correct — a kick serve marked against flat bands is
-       * penalised for contacting the ball over the head, which is the whole
-       * point of a kick — so it has to be visible and changeable. But none of
-       * them is the thing to do next, and stacked between the score and the fix
-       * they pushed the one instruction on the page off the first screen.
-       */}
-      <section className="reading" aria-label="How this clip was read">
-        <h2 className="t-overline reading-title">How I read this clip</h2>
-        <div className="reading-chips">
-          {/* A fact rather than a dead button once the frames are gone.
-              Reopening a serve from history is the main way saved work is read,
-              and it arrives with no handlers at all — so this whole row used to
-              be controls that looked tappable, did nothing, and offered no
-              reason. Worst on exactly the clip that needs it: when the hand is
-              uncertain the report prints "check the badge below and switch it
-              if wrong" directly above a badge that had been disabled. The
-              disabled button already rendered identically to a plain chip, so
-              nothing on screen changes; what goes is a control the keyboard and
-              the screen reader had to walk past. */}
-          {onFlipHandedness ? (
-            <button
-              className="chip chip--button"
-              onClick={onFlipHandedness}
-              title="Tap if I read the wrong hand"
-            >
-              {analysis.handedness === 'right' ? 'Right-handed' : 'Left-handed'}
-              <Icon name="chevron" size={13} />
-            </button>
-          ) : (
-            <span className="chip">
-              {analysis.handedness === 'right' ? 'Right-handed' : 'Left-handed'}
-            </span>
-          )}
-          <span className="chip">
-            {analysis.quality.view === 'side'
-              ? 'Side view'
-              : analysis.quality.view === 'front-back'
-                ? 'Front / back view'
-                : 'Angled view'}
-          </span>
-          <span className={`chip${analysis.quality.confidence < SOFT_READ ? ' chip--warn' : ''}`}>
-            {readQuality(analysis.quality.confidence)}
-          </span>
-          {/* Which of two correct stances, not a verdict on either (D3.2).
-              Absent when the camera stood where the feet could not be read. */}
-          {analysis.diagnosis?.stance && (
-            <span className="chip">
-              {analysis.diagnosis.stance.kind === 'pinpoint' ? 'Pinpoint stance' : 'Platform stance'}
-            </span>
-          )}
-        </div>
-
-        {/* What this angle could not see, and where to stand to see it (D3.9).
-            Read off the findings this clip has rather than the angle's name, so
-            a corner that caught one axis of the toss hears only of the other. */}
-        {unseenLines(analysis.diagnosis).map((line) => (
-          <p key={line} className="reading-unseen">
-            {line}
-          </p>
-        ))}
-
-        <div className="judged">
-          <span className="t-overline judged-lead">Judged as</span>
-          {/* Same rule as the hand above: three dead chips on a reopened report
-              become the one name that is still true. The row is kept rather
-              than dropped because `judged-note` underneath explains what that
-              serve type means for the targets, and without the label it
-              explains nothing. */}
-          <div className="judged-options">
-            {onPickServeType ? (
-              (Object.keys(SERVE_TYPES) as ServeType[]).map((t) => (
-                <button
-                  key={t}
-                  className={`serve-chip${analysis.serveType === t ? ' is-on' : ''}`}
-                  aria-pressed={analysis.serveType === t}
-                  disabled={analysis.serveType === t}
-                  onClick={() => onPickServeType(t)}
-                >
-                  {SERVE_TYPES[t].label}
-                </button>
-              ))
-            ) : (
-              <span className="chip">{SERVE_TYPES[analysis.serveType].label}</span>
-            )}
-          </div>
-          <p className="judged-note">{SERVE_TYPES[analysis.serveType].blurb}</p>
-        </div>
-      </section>
-
-      {/* What the player says about this serve, on every report and not only
-          after a recorded one (D5.1): which serve it was and where it went. The
-          app never sees the court, so these are taps and nothing else, stored
-          exactly as given. Built from the "Judged as" row above, so it adds
-          no styles. */}
-      {(onTagServe || onTagOutcome) && (
-        <section className="reading" aria-label="What you said about this serve">
-          <h2 className="t-overline reading-title">Tag this serve</h2>
-          {onTagServe && (
-            <div className="judged">
-              <span className="t-overline judged-lead">Which serve</span>
-              <div className="judged-options">
-                {([1, 2] as const).map((n) => (
-                  <button
-                    key={n}
-                    className={`serve-chip${serveNumber === n ? ' is-on' : ''}`}
-                    aria-pressed={serveNumber === n}
-                    onClick={() => onTagServe(serveNumber === n ? undefined : n)}
-                  >
-                    {SERVE_NUMBER_LABEL[n]}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          {onTagOutcome && (
-            <div className="judged">
-              <span className="t-overline judged-lead">Where it landed</span>
-              <div className="judged-options">
-                {SERVE_OUTCOMES.map((o) => (
-                  <button
-                    key={o}
-                    className={`serve-chip${outcome === o ? ' is-on' : ''}`}
-                    aria-pressed={outcome === o}
-                    onClick={() => onTagOutcome(outcome === o ? undefined : o)}
-                  >
-                    {OUTCOME_LABEL[o]}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </section>
-      )}
-
       {live && (
         <section className="block" ref={playerRef}>
           <h2 className="block-title">Your serve, frame by frame</h2>
@@ -1237,6 +1045,260 @@ export default function Report({
       </section>
 
       {/*
+       * More about this clip (L4.1), folded. The report reads hero, the one
+       * thing to fix, the plan, then the serve itself — the video and its six
+       * moments — and stops. Everything else a player may want is here, one
+       * tap down: the basket, where the tosses went, how the clip was read,
+       * tagging it, every area and the order the body fired in. It opens by
+       * itself when the player asks for the basket to be scored, because they
+       * then want to see it.
+       */}
+      <details
+        className="report-more"
+        open={moreOpen}
+        onToggle={(e) => setMoreOpen((e.currentTarget as HTMLDetailsElement).open)}
+      >
+        <summary className="report-more-head">
+          <span className="block-title">More about this clip</span>
+          <Icon name="chevron" size={16} />
+        </summary>
+        <div className="report-more-body">
+        {/*
+         * Comparing the serves in the clip, and the caveats on how it was read.
+         *
+         * Both sat above the focus card until now, which meant the one
+         * instruction the report exists to deliver arrived two phone screens
+         * down, under a serve picker, a scored panel of per-position spread
+         * charts and a stack of quality notes. Consistency is worth showing and
+         * it is not the answer to "what do I fix" — it is rung four of five.
+         *
+         * The button and the panel it opens stay together, so tapping Compare
+         * still makes the thing appear directly underneath it. Only the picker
+         * chips stay up by the score, because they change which serve every
+         * number above is describing.
+         */}
+        {analysis.serves && analysis.serves.count > 1 && onCheckConsistency && !consistency && (
+          <section className="serves-compare">
+            <button className="btn btn--ghost btn--full serves-cta" onClick={onCheckConsistency}>
+              <Icon name="target" size={16} />
+              {/* The sweep is capped, so a longer basket cannot promise all of
+                  them. Said on the button rather than discovered afterwards as a
+                  count that does not match the clip. */}
+              {analysis.serves.count > MAX_CONSISTENCY_SERVES
+                ? `Score your last ${MAX_CONSISTENCY_SERVES} serves`
+                : `Score all ${analysis.serves.count} serves in this clip`}
+            </button>
+          </section>
+        )}
+
+        {consistency && (
+          <ConsistencyPanel
+            consistency={consistency}
+            onDismiss={() => setHidSpreads(true)}
+            pair={servePair}
+            createdAt={analysis.createdAt}
+            bestGap={bestGap}
+            gapDelta={basketGapDelta}
+            clipServes={analysis.serves?.count}
+          />
+        )}
+
+        {/* Where every toss in this basket peaked, against the front foot
+            (D6.3). One axis, the one this camera reads, and said so. */}
+        {tossMap && (
+          <section className="block">
+            <h2 className="block-title">
+              {tossMap.axis === 'ahead' ? 'Your tosses, front to back' : 'Your tosses, side to side'}
+            </h2>
+            <TossMap map={tossMap} />
+          </section>
+        )}
+
+        {!example && analysis.quality.warnings.length > 0 && (
+          <section className="notes">
+            {analysis.quality.warnings.map((w) => (
+              <p key={w} className="note">
+                {w}
+              </p>
+            ))}
+          </section>
+        )}
+
+        {/*
+         * How the clip was read: which hand, what angle, how clearly it came
+         * through, and which kind of serve the targets came from.
+         *
+         * Under the fix rather than above it. Every one of these is an assumption
+         * the player can correct — a kick serve marked against flat bands is
+         * penalised for contacting the ball over the head, which is the whole
+         * point of a kick — so it has to be visible and changeable. But none of
+         * them is the thing to do next, and stacked between the score and the fix
+         * they pushed the one instruction on the page off the first screen.
+         */}
+        <section className="reading" aria-label="How this clip was read">
+          <h2 className="t-overline reading-title">How I read this clip</h2>
+          <div className="reading-chips">
+            {/* A fact rather than a dead button once the frames are gone.
+                Reopening a serve from history is the main way saved work is read,
+                and it arrives with no handlers at all — so this whole row used to
+                be controls that looked tappable, did nothing, and offered no
+                reason. Worst on exactly the clip that needs it: when the hand is
+                uncertain the report prints "check the badge below and switch it
+                if wrong" directly above a badge that had been disabled. The
+                disabled button already rendered identically to a plain chip, so
+                nothing on screen changes; what goes is a control the keyboard and
+                the screen reader had to walk past. */}
+            {onFlipHandedness ? (
+              <button
+                className="chip chip--button"
+                onClick={onFlipHandedness}
+                title="Tap if I read the wrong hand"
+              >
+                {analysis.handedness === 'right' ? 'Right-handed' : 'Left-handed'}
+                <Icon name="chevron" size={13} />
+              </button>
+            ) : (
+              <span className="chip">
+                {analysis.handedness === 'right' ? 'Right-handed' : 'Left-handed'}
+              </span>
+            )}
+            <span className="chip">
+              {analysis.quality.view === 'side'
+                ? 'Side view'
+                : analysis.quality.view === 'front-back'
+                  ? 'Front / back view'
+                  : 'Angled view'}
+            </span>
+            <span className={`chip${analysis.quality.confidence < SOFT_READ ? ' chip--warn' : ''}`}>
+              {readQuality(analysis.quality.confidence)}
+            </span>
+            {/* Which of two correct stances, not a verdict on either (D3.2).
+                Absent when the camera stood where the feet could not be read. */}
+            {analysis.diagnosis?.stance && (
+              <span className="chip">
+                {analysis.diagnosis.stance.kind === 'pinpoint' ? 'Pinpoint stance' : 'Platform stance'}
+              </span>
+            )}
+          </div>
+
+          {/* What this angle could not see, and where to stand to see it (D3.9).
+              Read off the findings this clip has rather than the angle's name, so
+              a corner that caught one axis of the toss hears only of the other. */}
+          {unseenLines(analysis.diagnosis).map((line) => (
+            <p key={line} className="reading-unseen">
+              {line}
+            </p>
+          ))}
+
+          <div className="judged">
+            <span className="t-overline judged-lead">Judged as</span>
+            {/* Same rule as the hand above: three dead chips on a reopened report
+                become the one name that is still true. The row is kept rather
+                than dropped because `judged-note` underneath explains what that
+                serve type means for the targets, and without the label it
+                explains nothing. */}
+            <div className="judged-options">
+              {onPickServeType ? (
+                (Object.keys(SERVE_TYPES) as ServeType[]).map((t) => (
+                  <button
+                    key={t}
+                    className={`serve-chip${analysis.serveType === t ? ' is-on' : ''}`}
+                    aria-pressed={analysis.serveType === t}
+                    disabled={analysis.serveType === t}
+                    onClick={() => onPickServeType(t)}
+                  >
+                    {SERVE_TYPES[t].label}
+                  </button>
+                ))
+              ) : (
+                <span className="chip">{SERVE_TYPES[analysis.serveType].label}</span>
+              )}
+            </div>
+            <p className="judged-note">{SERVE_TYPES[analysis.serveType].blurb}</p>
+          </div>
+        </section>
+
+        {/* What the player says about this serve, on every report and not only
+            after a recorded one (D5.1): which serve it was and where it went. The
+            app never sees the court, so these are taps and nothing else, stored
+            exactly as given. Built from the "Judged as" row above, so it adds
+            no styles. */}
+        {(onTagServe || onTagOutcome) && (
+          <section className="reading" aria-label="What you said about this serve">
+            <h2 className="t-overline reading-title">Tag this serve</h2>
+            {onTagServe && (
+              <div className="judged">
+                <span className="t-overline judged-lead">Which serve</span>
+                <div className="judged-options">
+                  {([1, 2] as const).map((n) => (
+                    <button
+                      key={n}
+                      className={`serve-chip${serveNumber === n ? ' is-on' : ''}`}
+                      aria-pressed={serveNumber === n}
+                      onClick={() => onTagServe(serveNumber === n ? undefined : n)}
+                    >
+                      {SERVE_NUMBER_LABEL[n]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {onTagOutcome && (
+              <div className="judged">
+                <span className="t-overline judged-lead">Where it landed</span>
+                <div className="judged-options">
+                  {SERVE_OUTCOMES.map((o) => (
+                    <button
+                      key={o}
+                      className={`serve-chip${outcome === o ? ' is-on' : ''}`}
+                      aria-pressed={outcome === o}
+                      onClick={() => onTagOutcome(outcome === o ? undefined : o)}
+                    >
+                      {OUTCOME_LABEL[o]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        <section className="block">
+          <h2 className="block-title">Every area we scored</h2>
+          <div className="fcards">
+            {/* Nothing opens by itself. `defaultOpen={i === 0}` opened whatever
+                sat first in the array, and that order is hard-coded in
+                `measure()` — toss, loading, swing, contact, rhythm — so it was
+                always the toss, and the toss card is the largest of the five. A
+                player whose problem is the racket drop read a ranked plan saying
+                so and then found a different area expanded underneath it,
+                offering up to five more instructions about something else. The
+                plan above decides what to do first; this list is for looking
+                things up. */}
+            {analysis.fundamentals.map((f) => (
+              <FundamentalCard
+                key={f.id}
+                fundamental={f}
+                change={deltas[f.id]}
+                breakdown={breakdowns.get(f.id)}
+                onSeek={live ? goToPhase : undefined}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* The order the body fired in (D3.8), at 60 fps and above. */}
+        {analysis.diagnosis?.firingOrder && (
+          <section className="block">
+            <h2 className="block-title">The order you fired in</h2>
+            <FiringTimeline chain={analysis.diagnosis.chain} order={analysis.diagnosis.firingOrder} />
+          </section>
+        )}
+
+        </div>
+      </details>
+
+      {/*
         Turn this analysis into a ground-truth test fixture.
 
         REACHABLE ON A PHONE NOW, which is the whole of R59. It used to be behind
@@ -1311,38 +1373,6 @@ export default function Report({
             </>
           )}
         </>
-      )}
-
-      <section className="block">
-        <h2 className="block-title">Every area we scored</h2>
-        <div className="fcards">
-          {/* Nothing opens by itself. `defaultOpen={i === 0}` opened whatever
-              sat first in the array, and that order is hard-coded in
-              `measure()` — toss, loading, swing, contact, rhythm — so it was
-              always the toss, and the toss card is the largest of the five. A
-              player whose problem is the racket drop read a ranked plan saying
-              so and then found a different area expanded underneath it,
-              offering up to five more instructions about something else. The
-              plan above decides what to do first; this list is for looking
-              things up. */}
-          {analysis.fundamentals.map((f) => (
-            <FundamentalCard
-              key={f.id}
-              fundamental={f}
-              change={deltas[f.id]}
-              breakdown={breakdowns.get(f.id)}
-              onSeek={live ? goToPhase : undefined}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* The order the body fired in (D3.8), at 60 fps and above. */}
-      {analysis.diagnosis?.firingOrder && (
-        <section className="block">
-          <h2 className="block-title">The order you fired in</h2>
-          <FiringTimeline chain={analysis.diagnosis.chain} order={analysis.diagnosis.firingOrder} />
-        </section>
       )}
 
       <footer className="report-foot">
