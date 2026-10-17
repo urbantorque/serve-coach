@@ -300,8 +300,8 @@ export default function Home({
       {/* Where the history lives (L6.5): moving from Safari to the Home Screen,
           restoring into an empty install, or a backup overdue. One at a time. */}
       {nudge && (
-        <div className="note home-nudge" role="status">
-          <span>{NUDGE_COPY[nudge]}</span>
+        <div className="note home-nudge">
+          <span role="status">{NUDGE_COPY[nudge]}</span>
           <span className="home-nudge-actions">
             {nudge === 'restore' ? (
               <button className="chip chip--button" onClick={onShowSettings}>

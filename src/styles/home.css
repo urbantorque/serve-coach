@@ -483,3 +483,8 @@ button.badge[disabled] {
   flex-wrap: wrap;
   gap: 8px;
 }
+
+/* The download's megabyte count ticks every second (L6.1): even-width digits, so the badge does not jitter. */
+.home-foot .badge {
+  font-variant-numeric: tabular-nums;
+}
