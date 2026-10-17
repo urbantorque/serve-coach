@@ -471,3 +471,15 @@ button.badge[disabled] {
   background: var(--ink-1);
   border: 1px solid var(--hairline-soft);
 }
+
+/* The history's one line (L6.5): the caution card, with its actions under it. */
+.home-nudge {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.home-nudge-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

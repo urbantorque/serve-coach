@@ -292,6 +292,8 @@ export async function downloadBackup(): Promise<number> {
   a.click()
   // Revoking immediately can cancel the download in some browsers.
   setTimeout(() => URL.revokeObjectURL(url), 1000)
+  // From here or from Settings, an export is an export (L6.5).
+  writePrefs({ lastExportedAt: backup.exportedAt })
   return backup.sessions.length
 }
 

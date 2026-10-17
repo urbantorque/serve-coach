@@ -64,6 +64,10 @@ export interface Prefs {
   activeSet?: ActiveSet
   /** Finished sets, oldest first, the newest `SETS_KEPT`: the records live here. */
   sets?: SetResult[]
+  /** When the history was last exported to a file (L6.5). */
+  lastExportedAt?: number
+  /** When "Not now" was tapped on the move from Safari (L6.5). */
+  moveQuietedAt?: number
 }
 
 const KEY = 'serve-coach-prefs'

@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { DeltaChip, Sparkline } from '../components/Trend'
 import { Icon, ScoreRing, Sheet } from '../components/primitives'
 import { engineMegabytes } from '../lib/engineManifest'
+import { NUDGE_COPY, type StorageNudge } from '../lib/storage/nudge'
 import { previewSupported } from '../lib/framing/access'
 import { findPracticeFocus } from '../lib/practice'
 import { weekPlan } from '../lib/weekPlan'
@@ -96,6 +97,10 @@ interface Props {
   metered?: 'saveData' | 'cellular'
   /** The last analysis the page did not live to finish, said once (L6.4). */
   interrupted?: string
+  /** Where the history lives, when there is something to say about it (L6.5). */
+  nudge?: StorageNudge
+  onExportBackup?: () => void
+  onQuietMove?: () => void
   /** Long clips read as practice sessions (L2.4), newest first. */
   practiceSessions?: PracticeSession[]
   onOpenPracticeSession?: (session: PracticeSession) => void
@@ -130,6 +135,9 @@ export default function Home({
   offlineReady,
   metered,
   interrupted,
+  nudge,
+  onExportBackup,
+  onQuietMove,
   sessionsLoaded,
   onPick,
   onRecorded,
@@ -287,6 +295,30 @@ export default function Home({
         <p className="note home-interrupted" role="status">
           {interrupted}
         </p>
+      )}
+
+      {/* Where the history lives (L6.5): moving from Safari to the Home Screen,
+          restoring into an empty install, or a backup overdue. One at a time. */}
+      {nudge && (
+        <div className="note home-nudge" role="status">
+          <span>{NUDGE_COPY[nudge]}</span>
+          <span className="home-nudge-actions">
+            {nudge === 'restore' ? (
+              <button className="chip chip--button" onClick={onShowSettings}>
+                Restore a backup
+              </button>
+            ) : (
+              <button className="chip chip--button" onClick={onExportBackup}>
+                Export now
+              </button>
+            )}
+            {nudge === 'move' && (
+              <button className="chip chip--button" onClick={onQuietMove}>
+                Not now
+              </button>
+            )}
+          </span>
+        </div>
       )}
 
       {/* Once there is history the pitch has done its job (L4.10): the hero

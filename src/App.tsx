@@ -59,7 +59,8 @@ import {
   tagsById,
   type Session,
 } from './lib/storage/db'
-import { requestPersistence } from './lib/storage/backup'
+import { downloadBackup, isIOS, isInstalled, requestPersistence } from './lib/storage/backup'
+import { storageNudge } from './lib/storage/nudge'
 import { readPrefs, writePrefs, type Prefs, type ServeType } from './lib/storage/prefs'
 import { clipIdOf, fileKeyOf, sessionKeyFor } from './lib/storage/sessionKey'
 import { getPracticeSession, savePracticeSession } from './lib/storage/db'
@@ -1518,6 +1519,21 @@ export default function App() {
               offlineReady={offlineReady}
               metered={metered}
               interrupted={interrupted ? interruptedLine() : undefined}
+              nudge={storageNudge({
+                ios: isIOS(),
+                installed: isInstalled(),
+                loaded: sessionsLoaded,
+                filed: sessions.map((s) => s.createdAt),
+                lastExportedAt: prefs.lastExportedAt,
+                quietedAt: prefs.moveQuietedAt,
+                now: Date.now(),
+              })}
+              onExportBackup={() =>
+                void downloadBackup()
+                  .then(() => setPrefs(readPrefs()))
+                  .catch(() => {})
+              }
+              onQuietMove={() => setPrefs(writePrefs({ moveQuietedAt: Date.now() }))}
               sessionsLoaded={sessionsLoaded}
               onPick={(f) => void openClip(f)}
               onRecorded={(f) => void openClip(f, true)}

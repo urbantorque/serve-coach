@@ -2871,7 +2871,31 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         - seeks wait for the page to be visible again instead of timing out.
       - *Proof:* render tests, and extract tests with a fake
         `document.hidden`.
-- [ ] **L6.5 iOS storage safety** · S–M.
+- [x] **L6.5 iOS storage safety** · S–M.
+      - *Delta (Oct 17):* done.
+        - `storage/nudge.ts` decides the one thing to say, from answers
+          rather than probes, so tests can be any phone:
+          - **move**: iOS Safari, not installed, at least one serve.
+            "Safari clears this after a week away. Export your serves, add Serve
+            Coach to your Home Screen, then restore them there." It offers
+            Export now and Not now; Not now quiets it for three days.
+          - **restore**: installed with no history. "Moving over from Safari?
+            Restore the backup you exported there." The button opens Settings,
+            where the restore lives.
+          - **remind**: 20 serves filed since the last export.
+        - `downloadBackup` stores `lastExportedAt` itself, so an export from
+          Settings counts as well as one from the home screen.
+        - Proof: four checks in `storageNudge.test.ts`, with iOS and installed
+          stubbed as answers.
+          - The move fires after the first save, stays quiet with no history or
+            before it loads, and returns after the quiet.
+          - The restore appears on either platform.
+          - The reminder fires at 20, and only serves filed since the export
+            count.
+          - The Home render of each, with its buttons.
+        - Seen at 375×812 with 21 seeded serves: the reminder sits at the top
+          with Export now, and the console is clean. The entry bundle is
+          128.3 kB.
       - **What:**
         - after the first save on iOS Safari: "Export, add to Home Screen,
           then restore";
