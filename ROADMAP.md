@@ -3344,3 +3344,426 @@ main thread.
 - **Anything that sends data off the device:** opt-in data donation for
   level norms, coach links, leaderboards.
 - **The COCO download** for L5.11.
+
+## Notch programme (2026-10-18) — on court, at pace, and easier to read
+
+A review on 2026-10-18 graded the app area by area. The reasoning is in
+`NOTCH-REVIEW.md`.
+
+| Area | Now | Target |
+|---|---|---|
+| Core principles | 9 | 9 |
+| UX and flow | 6.5 | 8 |
+| Coaching depth | 7 | 8 |
+| Information architecture | 6 | 7.5 |
+| Look and feel | 7.5 | 8.5 |
+| Retention | 6 | 7.5 |
+| Serve speed | 1 | 6 |
+| Product overall | 6.5 | 7.5–8 |
+
+The programme sits beside the Lift programme above, which is planned and not
+yet started. The combined order of play is at the end.
+
+The same rules hold:
+- every item is proven by machine: the rig, the Bath bench, the open-data
+  benches, unit and render tests, or the browser preview at 375×812;
+- nothing re-skins;
+- nothing leaves the device;
+- every new line passes the copy lint;
+- the entry bundle stays under 130 kB. It is at 126.8 kB, so every new screen
+  or sheet loads lazily.
+
+### Wave N0 — Fix what a player trips on
+- [ ] **N0.1 One message per line on the glance** · S.
+      - **Why:** "▲ 9 vs your last serve" sits over "No change from your last
+        serve." The second line is about the fault (`verdict.ts:651`), but it
+        reads as the score.
+      - **What:** the fault line names its subject, e.g. "Your tossing arm
+        looks the same as last serve." Where the score's change is inside the
+        noise floor, the glance chip says so the way the report does.
+      - *Proof:*
+        - a render test of the glance with a score rise and a `same` fault
+          finds no sentence that denies the change;
+        - the copy lint passes.
+- [ ] **N0.2 One drill per fault, everywhere it shows** · S.
+      - **Why:** a reopened report can show *Toss and point* (the focus),
+        *Back-leg serves* (item 2, the legs) and *Push throws* (the practice
+        card, the knee bend). That is two drills for the legs and three things
+        to do.
+      - **What:**
+        - the practice card and the week plan take a fault's drill from
+          `progressionFor(flaw)` at its current rung, as the focus card does;
+        - when the practice card's fault is already on the report's list, it
+          shows the progress line only, not a second drill.
+      - *Proof:* a render test over every `?demo` report and the history demo
+        finds no fault with two drill names, and no two drills for one body
+        area.
+- [ ] **N0.3 A sentence that reads** · S.
+      - **Why:** "has not moved after twice of its drill" (`practice.ts:443-449`).
+      - **What:** "…after two rounds of its drill". A voice-lint rule flags
+        `times()` output used as a noun.
+      - *Proof:* a unit test of every `practiceCue` branch at 1, 2 and 5 drills;
+        the new lint rule fails on the old string.
+- [ ] **N0.4 Retry goes straight to capture** · S.
+      - **Why:** "Analyse another", the refusal's "Film it again" and the error
+        screen's "Try another video" all land on Home. The refusal's fix is the
+        framing check.
+      - **What:**
+        - "Analyse another" opens the picker, or the viewfinder after an in-app
+          recording;
+        - "Film it again" and the error screen open the framing check, through
+          the same `framingNonce` path;
+        - the error screen gains "Check your framing" beside "How to film it".
+      - *Proof:* the `screenFlow.ts` MOVES table is updated and
+        `screenFlow.test` passes; render tests of each handler.
+- [ ] **N0.5 Empty states lead somewhere** · S.
+      - **What:** the empty history sheet offers "Analyse a serve" and the
+        example report. Every empty Progress section says what fills it.
+      - *Proof:* a render test of each empty state finds an action or a "how to
+        fill this" line.
+- [ ] **N0.6 Model serve captions its own moment** · S.
+      - **Why:** mid-play the model showed the contact caption with *Racket
+        drop* lit.
+      - **What:** the caption and the lit chip come from one phase index.
+      - *Proof:* a unit test steps `RigPlayer` frame by frame and checks the
+        caption against the chip on every frame. If the mismatch is not real,
+        the test stays as a guard and the item closes.
+- [ ] **N0.7 `serveSpeed.ts` green and committed, still unwired** · S.
+      - **What:**
+        - the ruler check is gated on `scaleError` (the 79.8% outlier already
+          flags itself at 69%);
+        - find why 240 fps with decoys reads fewer clips than 120 fps;
+        - the header and the code agree on `MIN_SAMPLES`;
+        - the test's promised pixel check is added, or the promise removed;
+        - every `SpeedMiss` that is declared can be reached.
+      - *Proof:* `serveSpeed.test.ts` passes inside the full suite; a test
+        reaches each miss reason.
+
+### Wave N1 — The on-court loop
+- [ ] **N1.1 Hands-free recording** · M.
+      - **Why:** a phone propped on the fence costs two walks per serve.
+      - **What:**
+        - "Record the serve here" starts a 5 s countdown, shown large and spoken
+          through `speech.ts`;
+        - a pure `shouldStop(samples)` reads the pose loop the viewfinder
+          already runs. It stops about 1.5 s after the landing, or after N
+          serves in basket mode, or at the 90 s cap;
+        - a tap still stops it at any time.
+      - *Proof:*
+        - `shouldStop` unit tests on rig traces: one serve, a basket of six, a
+          player who walks off, a ball bounce before the serve;
+        - a render test of the countdown states;
+        - a `?demo=live` screenshot.
+- [ ] **N1.2 A framing verdict you can hear** · S.
+      - **Why:** the verdict cannot be read from the baseline.
+      - **What:**
+        - verdict changes are spoken, at most one every 3 s;
+        - "Recording" and "Stopped" are spoken;
+        - a toggle sits in the viewfinder and is remembered in prefs.
+      - *Proof:* a unit test of which verdict changes speak, and of the
+        debounce; a render test of the toggle.
+- [ ] **N1.3 A drill check from recorded serves** · M.
+      - **Why:** the route the app recommends on court can never say "Move up a
+        step". `checkDrill` runs only for picked baskets
+        (`useAnalysisRun.ts:478-486`).
+      - **What:**
+        - a pure `tripDrillCheck(reports, flaw, rung)` pools the same trip's
+          single-serve reports once `CHECK_SERVES` (6) can be judged;
+        - the glance shows "4 of 6 clean so far" and offers the move once the
+          pass bar is met.
+      - *Proof:* unit tests (a passing trip, a failing trip, too few judged, a
+        mixed trip from two days); a Glance render test.
+- [ ] **N1.4 "Check this drill" on the week plan** · M. Needs N1.3.
+      - **What:** each week-plan item gets "Check this drill". It opens the
+        viewfinder with that drill as the target, and the glance counts
+        towards the 6.
+      - *Proof:* a render test; a `screenFlow` MOVES entry and its test.
+- [ ] **N1.5 Practice sessions move the ladder** · M.
+      - **Why:** a whole practice's evidence never reaches the ladder,
+        graduation or the week plan (`weekPlan.ts:72`).
+      - **What:**
+        - a session's per-serve fault lines run through `checkDrill` for the
+          fault being drilled;
+        - the dashboard offers "Move up a step";
+        - `weekPlan` and graduation accept session evidence, weighed as one trip.
+      - *Proof:*
+        - a unit test that a session with 6 clean judged serves passes;
+        - a weekPlan test that a session counts as one trip, not as twelve;
+        - the history-consumer list in `screenFlow.test` is updated.
+- [ ] **N1.6 Today's plan** · M.
+      - **Why:** there is no plain "what to do on court today".
+      - **What:**
+        - a pure `courtPlan(week, minutes)` splits a 30, 45 or 60 minute hit
+          into warm-up, drill reps by rung, a filmed check of 6, and free
+          serves;
+        - it shows on Home above the week plan, and in a line at the top of the
+          glance.
+      - *Proof:* unit tests (each length, one fault, three faults, a graduated
+        fault); a Home render test; a preview screenshot.
+- [ ] **N1.7 The court card** · M. Lazy.
+      - **What:**
+        - a full-screen, large-type card for the current drill: its feel cue,
+          its reps and its pass bar;
+        - it can be read aloud;
+        - a tap anywhere counts a rep;
+        - the screen stays awake while it is open (`useWakeLock`).
+      - *Proof:* a render test; a 375×812 screenshot with the body text at
+        24 px or more; the entry bundle is unchanged.
+- [ ] **N1.8 The glance from any report** · S.
+      - **What:** reopened reports pass `onGlance` too (`App.tsx:808-812`).
+      - *Proof:* a render test; a MOVES entry.
+- [ ] **N1.9 Tagging out of the fold** · S.
+      - **Why:** in-rate, first and second serves, sets and the toss map all
+        depend on tags, and they are inside "More about this clip".
+      - **What:** a compact row on live reports, under the drill: which serve,
+        and where it landed. The fold keeps the full version.
+      - *Proof:* a render-order test; the copy lint.
+- [ ] **N1.10 Record a whole practice** · L. Optional.
+      - **Why:** the 90 s cap means an in-app recording can never become a
+        session.
+      - **What:**
+        - where `clipStoreAvailable()` is true, a "Record a practice" mode
+          streams `MediaRecorder` chunks into the clip store instead of memory;
+        - it has a 20-minute cap and a storage check before it starts;
+        - it opens a session when it stops.
+      - Where the store cannot write, the mode is not offered, and the guide
+        says to use the camera app.
+      - *Proof:*
+        - unit tests of chunk assembly and of a recording cut off part way;
+        - a preview run with a fake camera stream for 3 minutes ends in a
+          session plan;
+        - the egress test is unchanged.
+
+### Wave N2 — Serve speed, honestly
+Engine first, screens after the owner's OK. Showing a speed reverses the rule
+in `outbound.ts:20` and `ANALYSIS-REVIEW.md:393`. Until a radar-checked serve
+exists, a speed is:
+- a range;
+- in km/h, or mph by locale;
+- only from slow-motion clips;
+- `UNCALIBRATED`;
+- never graded and never part of the score.
+
+- [ ] **N2.1 A pass for the struck ball** · L.
+      - **What:**
+        - after the main read, a second pass from contact −40 ms to +200 ms
+          reads every native frame, at the timestamps `seekTo` really reaches;
+        - it reads a net-side window sized from the body, at near-native
+          resolution (at least 720 lines across the window);
+        - the slow-motion stretch comes from `container.ts` or `slowMotion.ts`,
+          so each frame has a real time;
+        - it runs on the worker from M1.2 where it exists.
+      - *Proof:*
+        - the rig, rendered at the window's real pixels per frame height,
+          feeds `measureServeSpeed`;
+        - coverage is at least 30% at 120 fps landscape side-on with decoys;
+        - the range holds the true speed on at least 95% of tries;
+        - the time the pass adds is measured at 4× throttle (M1.4) and is under
+          4 s at 240 fps.
+- [ ] **N2.2 A ball centre that survives blur** · M.
+      - **What:**
+        - `findStreaks` returns a streak's centre and its exposure length, and
+          they feed `StruckFrame` candidates beside the round-blob finder;
+        - a streak's centre is placed at the frame's mid-exposure time.
+      - *Proof:* unit tests on synthetic smears at 60, 120 and 240 fps, and at
+        three shutter lengths. The centre is within 1.5 px, and serve speed
+        coverage does not drop against round blobs alone.
+- [ ] **N2.3 Impact from the sound** · M.
+      - **What:**
+        - when `audio/onsets.ts` finds a strike within the search window, its
+          time, shifted by the learned offset (`fuse.ts`), replaces the ±40/+80
+          ms impact search in `trackStruckBall`;
+        - without a strike, the search stands.
+      - *Proof:* the rig, with onset jitter of 2.5 and 10 ms, shows coverage
+        gains at 60 and 120 fps, and range coverage stays at 95% or more.
+- [ ] **N2.4 Pixels from end to end** · M.
+      - **What:** a test renders a toss and a struck ball (as a blob and as a
+        streak) into bitmaps. It runs them through `findCandidates` and
+        `findStreaks`, then `tossPath` and `measureServeSpeed`.
+      - *Proof:* the test itself. The read lands within its range for 60,
+        120 and 240 fps, and a 30 fps render gives `frame_rate`.
+- [ ] **N2.5 Every miss says how to get a speed** · S.
+      - **What:**
+        - each `SpeedMiss` becomes a player sentence. For example:
+          - `frame_rate`: "Film in slow motion to get a speed";
+          - `view`: "Turn the phone sideways";
+          - `not_found`: "I lost the ball after the hit";
+        - the filming guide gains one line on slow motion for speed.
+      - *Proof:* a unit test that every miss has a sentence; the copy lint;
+        a test that no sentence contains a number.
+- [ ] **N2.6 Speed on the open-data clips** · S.
+      - **What:** `/clipbench.html` gains a speed column: reading, range or
+        miss for each clip.
+      - Coverage is reported, not graded. None of the Commons clips is side-on,
+        and none has a radar figure.
+      - *Proof:* the bench runs and the table goes into `ANALYSIS-REVIEW.md`.
+- [ ] **N2.7 The speed on the report and the glance** · M. Owner's OK first.
+      - **What:**
+        - when a speed is read, one row sits under the hero: "About 150 km/h ·
+          likely 138–162", drawn as a band on a short scale, with `Term` on
+          "likely";
+        - the glance shows the same in one line;
+        - a miss shows only inside the fold, as its N2.5 sentence;
+        - km/h or mph follows the locale, with an override in Settings.
+      - *Proof:*
+        - render tests with a reading, a miss and none;
+        - a test that the speed never enters any score or band;
+        - a 375×812 screenshot;
+        - the copy lint.
+- [ ] **N2.8 Speed over time** · M. Needs N2.7.
+      - **What:**
+        - Progress shows a speed trend only where two trips' ranges do not
+          overlap. That is the same gate idea as `secondServeSlower`;
+        - first-serve against second-serve speed;
+        - a fastest-serve record in `bests.ts`, held as a range;
+        - the session dashboard shows the best and the median.
+      - *Proof:* unit tests (overlapping ranges say nothing; separated ranges
+        say "faster"; a single trip says nothing); history-consumer list
+        updated.
+- [ ] **N2.9 Heights in metres from gravity** · M.
+      - **Why:** this needs no slow motion and no assumed body size.
+      - **What:**
+        - where `tossPath`'s `scaleError` is under 8%, the toss height above
+          the hand and the contact height are given in metres, as readings, not
+          grades;
+        - otherwise the 1.78 m body scale stands, and the card says which ruler
+          it used.
+      - *Proof:*
+        - `bench:mocap` checks contact height against the Bath marker heights,
+          and the error is stated;
+        - a rig test across zoom and tilt dials.
+- [ ] **N2.10 Speed from the sound of the bounce** · S spike.
+      - **What:** the time from strike to bounce, with court geometry, gives an
+        average speed. This item measures only how wide its error is on the
+        rig, with unknown bounce depth and sound delay.
+      - It ships only if the error is under 10%, and then only as a cross-check
+        on N2.7, never as a reading on its own.
+      - *Proof:* a rig table in `ANALYSIS-REVIEW.md`.
+
+### Wave N3 — Show what is already computed
+- [ ] **N3.1 What your misses have in common** · S.
+      - **What:** `missesInCommon` (`progress.ts:1617`) gets a line under first
+        and second serves on Progress, behind its existing gates.
+      - *Proof:* a render test with seeded tags that pass the gates, and one
+        where noise renders nothing.
+- [ ] **N3.2 Sets you can look back on** · S.
+      - **What:** `bestSet` (`sets.ts:95`) goes into the Progress records, and
+        the glance's "Start a set" chip shows your best and today's target.
+      - *Proof:* render tests.
+- [ ] **N3.3 Before and after, in the app** · M.
+      - **What:** when a drill check passes or a fault graduates, the report
+        shows the old focus moment beside today's, through `MomentPair` and
+        `graduationCard`.
+      - *Proof:* a render test on seeded history; a `?demo=history`
+        screenshot.
+- [ ] **N3.4 The glossary everywhere** · S.
+      - **What:** `Term` on fault titles and drill names in the glance, the
+        week plan and the session dashboard.
+      - *Proof:* a test that every glossary id in player copy renders as a
+        `Term` wherever it appears.
+- [ ] **N3.5 History by trip** · S.
+      - **What:** rows are grouped by trip with the trip's median, and session
+        rows sit in the same list.
+      - *Proof:* a render test.
+- [ ] **N3.6 Sessions you can find** · S.
+      - **What:** a Home strap and a guide line: "Film a whole practice with
+        your camera app, then pick it."
+      - *Proof:* a render test; the copy lint.
+- [ ] **N3.7 The download offered at first run** · S.
+      - **What:** when the engines are not stored, the guide sheet gets one
+        line with the size, a Wi-Fi note and the button. This complements M1.3.
+      - *Proof:* a render test, in both the stored and the unstored state.
+- [ ] **N3.8 A target on the toss map** · S.
+      - **What:** draw the front-foot band the toss ladder aims for.
+      - *Proof:* a geometry unit test; a preview screenshot.
+
+### Wave N4 — Look and feel, inside the skin
+- [ ] **N4.1 The player drawn as well as the model** · M.
+      - **What:** the tapered, filled limbs from L4.4 are used for the tracked
+        body in `PoseStill`, `PosePlayer` and `MomentPair`.
+        - Joints the tracker was unsure of are drawn faded, not invented.
+        - The six-moment stills crop to the body, so the figure fills its tile.
+      - *Proof:*
+        - a unit test that a low-confidence joint is drawn faded;
+        - a crop test that the body fills at least 70% of the tile height;
+        - before and after screenshots at 375×812;
+        - the report chunk grows by under 2 kB.
+- [ ] **N4.2 A lighter report** · S.
+      - **What:**
+        - a drill-check result, when there is one, leads the focus card;
+        - "Then, in this order" folds to titles;
+        - the practice card hides when it repeats the focus (with N0.2).
+      - *Proof:* a render test caps the focus card at 8 visible children.
+- [ ] **N4.3 Progress as pictures** · M. Lazy.
+      - **What:** the tiles become doors to four groups: Path, Records, Serves
+        and Charts. Each group leads with a chart:
+        - the score over trips, with noise bands;
+        - a strip showing when each fault appeared and cleared;
+        - in-rate by serve.
+
+        The prose sections move into `details`.
+      - *Proof:*
+        - a render test shows 7 or fewer sections open;
+        - the chart geometry is unit tested, like `trendGeometry.ts`;
+        - screenshots;
+        - every chart has a text alternative.
+- [ ] **N4.4 Signposts you can read** · S.
+      - **What:** overlines that carry meaning move to the muted token at
+        12 px: "Work on this next", "Then, in this order", "Your form". This is a
+        contrast fix, not a re-tone.
+      - *Proof:* `contrast.test` asserts 4.5:1 for every overline class; the
+        floor test gains a 12 px rule for those classes.
+- [ ] **N4.5 One placement rule** · S.
+      - **What:** the guide, the viewfinder cue, the report hints and the
+        refusal hints all take their wording from `PLACEMENT`.
+      - *Proof:* a copy test that the placement phrases match across all four.
+- [ ] **N4.6 Motion with a purpose** · S.
+      - **What:**
+        - the score ring fills once, on a live report only;
+        - the glance hands over to the report with a shared-element move of the
+          ring;
+        - both are off under `prefers-reduced-motion`.
+      - *Proof:* a render test that reduced motion gives the final state on
+        the first frame; a preview check.
+
+### Wave N5 — Truth a machine can lift
+- [ ] **N5.1 A toss finder for portrait and oblique** · M.
+      - **Why:** the toss column is tied to a side-on body, and portrait clips
+        lose the ball.
+      - **What:** the search column widens with the camera angle the engine
+        already estimates, and in portrait it follows the tossing hand's path.
+      - *Proof:*
+        - rig sweeps over view angle and orientation show toss-found rates
+          before and after;
+        - Bath virtual-phone placements show no new false tosses;
+        - the noisy-bench false-naming gate stays at 2% or below.
+- [ ] **N5.2 Ball coverage on every bench** · S.
+      - **What:** `/clipbench.html` and `bench:mocap` report the share of serves
+        with a toss found, a struck ball found, and a speed. This becomes the
+        standing coverage table in `ANALYSIS-REVIEW.md`.
+      - *Proof:* the table itself, re-run in the same commit as any change to
+        ball finding.
+
+### Combined order of play (Lift and Notch)
+1. **N0.1–N0.6** together: small, and the player meets them on day one.
+   **N0.7** alongside.
+2. **Lift M1.1 and M1.4.** These are the real timings every later budget is
+   measured against, including N2.1's.
+3. **N1.1, N1.2, N1.3, then N1.4 and N1.8.** The on-court loop.
+4. **N3.1–N3.8.** Quick wins, mostly render tests.
+5. **Lift M1.2,** the worker, **then N2.1–N2.6**: the speed engine, measured
+   but not shown.
+6. **The owner decides on showing a speed.** On a yes, **N2.7 and N2.8**.
+   **N2.9** goes either way.
+7. **N1.5, N1.6, N1.7,** then **N4.1–N4.6.**
+8. **Lift M1.3, M2.1, M3.1, M3.2, N5.1, N5.2.**
+9. **N1.10 and N2.10** if there is room.
+10. **Lift M4 and M5** last. M4.1 is the gate a first public build passes
+    through.
+
+### The owner's call, added by this programme
+- **Showing a serve speed at all.** It reverses a written rule.
+- **A radar-checked serve.** One filmed serve with a radar reading would move
+  the speed from `UNCALIBRATED` to checked. A machine cannot do this.
+- The Lift programme's list stands: real players, a remote, hosting, egress,
+  and the COCO download.
