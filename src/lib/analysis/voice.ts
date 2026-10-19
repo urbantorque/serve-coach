@@ -75,6 +75,14 @@ const MISUSED_DROP =
   /(?<!racket )(?<!racket head )\b(drops|dropped|dropping)\b|\b(ball|toss|arm|hands?|head|legs?|elbow|shoulders?|contact|it)\s+drop\b/i
 
 /**
+ * A count of times used as a noun (N0.3). "Once", "twice" and "five times" say
+ * how often; they cannot be counted out of something. "Has not moved after
+ * twice of its drill" shipped on the practice card because the count was
+ * dropped into a slot written for a noun.
+ */
+const COUNT_AS_NOUN = /\b(?:once|twice|thrice|\d+ times)\s+of\b|\bafter\s+(?:once|twice|thrice)\b/i
+
+/**
  * One narrator (L4.11): the coach says "I". "We" was the app's second voice,
  * in a handful of lines, and a player reading "we changed how we mark" on the
  * screen that says "How I read this clip" meets two speakers. The software
@@ -207,6 +215,9 @@ export function cueIssues(text: string): string[] {
 
   const drop = s.match(MISUSED_DROP)
   if (drop) issues.push(`"drop" is the racket drop: ${drop[0]}`)
+
+  const count = s.match(COUNT_AS_NOUN)
+  if (count) issues.push(`a count used as a noun: ${count[0]}`)
 
   const narrator = s.match(NARRATOR)
   if (narrator) issues.push(`two narrators: the coach says I, not "${narrator[0]}"`)

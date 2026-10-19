@@ -1,9 +1,10 @@
 import { FUNDAMENTALS, METRICS, SERVE_TYPES, metricCopy } from './analysis/coaching'
-import { drillForMetric, faultForMetric, lastSeverity, progressionFor, rungFor } from './analysis/progressions'
+import { areaOfFault, drillForMetric, faultForMetric, lastSeverity, progressionFor, rungFor } from './analysis/progressions'
 import { SOFT_MEASUREMENT } from './analysis/confidence'
 import { mean } from './analysis/geometry'
 import { rowChange } from './analysis/realChange'
 import { cue } from './analysis/voice'
+import type { FlawId } from './analysis/flaws'
 import type { Drill, FundamentalId } from './analysis/types'
 import {
   buildConsistencyTrend,
@@ -282,10 +283,23 @@ export function findPracticeFocus(
   // the flat ladder walks contact forward, which a kick met over the head does
   // not need.
   const typed = metricCopy(pick.id, type)?.drill
-  const forRow =
+  const ownRow =
     typed && typed !== METRICS[pick.id]?.drill
-      ? { drill: typed, flaw: undefined }
+      ? { drill: typed, flaw: undefined as FlawId | undefined }
       : drillForMetric(pick.id, typed ?? fundamental.drill, rungs, severity)
+  // One drill per body area (N0.2). A row with no fault of its own would hand
+  // out its area's general drill, while the newest report plans a fault in that
+  // same area with a ladder of its own. The card takes that fault's step, on
+  // the player's rung, so the page names one exercise for the area. A serve
+  // type's own drill still wins, as above.
+  const borrowed =
+    !ownRow.flaw && ownRow.drill === (typed ?? fundamental.drill)
+      ? plannedInArea(sameServe[sameServe.length - 1], pick.fundamentalId)
+      : undefined
+  const ladderSeverity = borrowed ? lastSeverity(sameServe, borrowed) : severity
+  const forRow = borrowed
+    ? drillForFault(borrowed, rungs, ladderSeverity)
+    : ownRow
   const rowLadder = forRow.flaw ? progressionFor(forRow.flaw) : undefined
 
   return {
@@ -300,7 +314,7 @@ export function findPracticeFocus(
     // fault's ladder on the player's rung, the same step the report's plan
     // shows, and the serve type's own drill where it has one.
     drill: forRow.drill,
-    rungsLeft: rowLadder && forRow.flaw ? rowLadder.steps.length - 1 - rungFor(forRow.flaw, rowLadder, rungs, severity) : undefined,
+    rungsLeft: rowLadder && forRow.flaw ? rowLadder.steps.length - 1 - rungFor(forRow.flaw, rowLadder, rungs, ladderSeverity) : undefined,
     scores: pick.scores,
     average: Math.round(pick.average),
     timesWeakest: pick.weakest,
@@ -319,6 +333,27 @@ export function findPracticeFocus(
       ? logs.filter((l) => l.metricId === pick.id && l.doneAt >= recent[0].createdAt).length
       : undefined,
   }
+}
+
+/**
+ * The fault a report plans in this area, if it plans one with a ladder (N0.2).
+ *
+ * The primary fault first, then the detected faults no other fault explains, in
+ * the order the diagnosis lists them. That is the report's plan without its
+ * cap, read off the stored serve so this module stays out of `verdict.ts`.
+ */
+function drillForFault(flaw: FlawId, rungs: Partial<Record<string, number>> | undefined, severity: ReturnType<typeof lastSeverity>): { drill: Drill; flaw: FlawId } {
+  const ladder = progressionFor(flaw)!
+  return { drill: ladder.steps[rungFor(flaw, ladder, rungs, severity)], flaw }
+}
+
+function plannedInArea(s: Session | undefined, area: FundamentalId): FlawId | undefined {
+  if (!s || s.triage?.status === 'rejected') return undefined
+  const named: (FlawId | undefined)[] = [
+    s.triage?.primary_flaw?.flaw,
+    ...(s.diagnosis?.flaws ?? []).filter((f) => f.detected && !f.caused_by).map((f) => f.flaw),
+  ]
+  return named.find((f): f is FlawId => !!f && areaOfFault(f) === area && !!progressionFor(f))
 }
 
 /**
@@ -392,6 +427,13 @@ export function repeatabilityNote(f: PracticeFocus): string {
 const times = (n: number): string =>
   n === 1 ? 'once' : n === 2 ? 'twice' : `${n} times`
 
+/**
+ * The same count as a noun, for "after two rounds of its drill" (N0.3). The
+ * adverb in that slot read "after twice of its drill"; `voice.ts` now flags it.
+ */
+const rounds = (n: number): string =>
+  n === 1 ? 'one round' : n === 2 ? 'two rounds' : n === 3 ? 'three rounds' : `${n} rounds`
+
 /** The line at the top of the practice card. */
 export function practiceHeadline(f: PracticeFocus): string {
   const across = `across your last ${f.sessionsConsidered} ${SERVE_WORD(f.serveType)} serves`
@@ -440,13 +482,13 @@ export function practiceHeadline(f: PracticeFocus): string {
    * whole ladder did not move.
    */
   if (f.drilled && f.drilled >= COACH_AFTER_DRILLS && !f.rungsLeft) {
-    return cue(`${it} has not moved after ${times(f.drilled)} of its drill. Take this one to a coach.`)
+    return cue(`${it} has not moved after ${rounds(f.drilled)} of its drill. Take this one to a coach.`)
   }
   if (f.drilled && f.drilled >= COACH_AFTER_DRILLS) {
-    return cue(`${it} has not moved after ${times(f.drilled)} of its drill. Work through the rest of its ladder before you take it to a coach.`)
+    return cue(`${it} has not moved after ${rounds(f.drilled)} of its drill. Work through the rest of its ladder before you take it to a coach.`)
   }
   if (f.drilled) {
-    return cue(`${it} has not moved after ${times(f.drilled)} of its drill. Do it at half pace, then film again.`)
+    return cue(`${it} has not moved after ${rounds(f.drilled)} of its drill. Do it at half pace, then film again.`)
   }
   if (f.drilled === 0 && f.timesWeakest >= 2) {
     return cue(`${it} was your weakest reading on ${f.timesWeakest} serves, and you have not logged its drill. Start there.`)

@@ -23,9 +23,9 @@ import {
   type SweepRun,
   type SweepServe,
 } from '../analyze'
-import { METRICS, metricCopy } from '../coaching'
+import { FUNDAMENTALS, METRICS, metricCopy } from '../coaching'
 import { sampleAnalysis } from '../../../dev/sampleAnalysis'
-import { progressionFor, rungFor, startingRung } from '../progressions'
+import { areaOfFault, progressionFor, rungFor, startingRung, stepOf } from '../progressions'
 import {
   IMPLAUSIBLE_HEIGHT_SPREAD,
   MIN_COMPARABLE_SERVES,
@@ -2561,6 +2561,49 @@ check('a kick history is handed the kick drill (L1.4)', () => {
   assert(f.drill !== METRICS.contactAhead.drill, 'the flat drill reached a kick history')
 })
 
+check('a body area gets one drill: a row with no fault takes the planned fault in its area (N0.2)', () => {
+  // The knee bend carries no fault's number, so on its own it hands out the
+  // Loading area's general drill. When the newest report plans the legs, the
+  // card hands out that ladder's step instead, so the page never names two
+  // exercises for one pair of legs.
+  const weakKnees = (plan?: 'no_leg_drive') =>
+    [0, 1, 2].map((i) => ({
+      ...sessionWith(i * DAY, [
+        ['kneeBend', 'Knee bend at trophy', 'loading', 40],
+        ['contactHeight', 'Contact height', 'contact', 88],
+      ]),
+      ...(plan && {
+        triage: { schema: 1, status: 'ok', primary_flaw: { flaw: 'toss_arm_drops' }, injury_risk: [], suppressed_count: 0 },
+        diagnosis: { flaws: [{ flaw: plan, detected: true, severity: 'medium' }] },
+      }),
+    })) as unknown as Parameters<typeof findPracticeFocus>[0]
+  const alone = findPracticeFocus(weakKnees())!
+  assert(alone.metricId === 'kneeBend', `focus was ${alone.metricId}`)
+  assert(alone.drill === FUNDAMENTALS.loading.drill, `with nothing planned it handed out ${alone.drill.name}`)
+  const ladder = progressionFor('no_leg_drive')!
+  const planned = findPracticeFocus(weakKnees('no_leg_drive'))!
+  assert(stepOf(ladder, planned.drill) >= 0, `the legs are planned, yet the card handed out ${planned.drill.name}`)
+  assert(planned.rungsLeft !== undefined, 'the borrowed drill lost its place on the ladder')
+  assert(areaOfFault('no_leg_drive') === 'loading', `the legs filed under ${areaOfFault('no_leg_drive')}`)
+  assert(areaOfFault('toss_arm_drops') === 'toss', `the tossing arm filed under ${areaOfFault('toss_arm_drops')}`)
+})
+
+check('every practice headline reads as a sentence at one, two and five drills (N0.3)', () => {
+  const base = findPracticeFocus(persistentWeakness([42, 45, 41, 44, 43]))!
+  for (const verdict of ['improving', 'stuck', 'slipping'] as const) {
+    for (const drilled of [0, 1, 2, 5]) {
+      for (const rungsLeft of [0, 2]) {
+        const line = practiceHeadline({ ...base, verdict, drilled, rungsLeft })
+        const issues = cueIssues(line)
+        assert(issues.length === 0, `"${line}": ${issues.join('; ')}`)
+        assert(!/\b(once|twice|\d+ times) of\b/.test(line), `"${line}" counts a drill as a noun`)
+      }
+    }
+  }
+  const old = cueIssues('Knee bend at trophy has not moved after twice of its drill.')
+  assert(old.some((i) => i.startsWith('a count used as a noun')), `the lint let the old line through: ${old.join('; ')}`)
+})
+
 check('counts how often it was the weakest link', () => {
   const f = findPracticeFocus(persistentWeakness([42, 45, 41, 44, 43]))
   assert(f!.timesWeakest === 5, `expected 5, got ${f!.timesWeakest}`)
@@ -2681,11 +2724,13 @@ check('the drill count is said the way somebody would say it', () => {
   const sessions = persistentWeakness([42, 45, 41, 44, 43])
   const said = (n: number) =>
     practiceHeadline(findPracticeFocus(sessions, undefined, undefined, drilledLogs('dropDepth', n))!)
-  assert(said(1).includes('once'), said(1))
-  assert(said(2).includes('twice'), said(2))
-  assert(said(5).includes('5 times'), said(5))
+  // A count after "after … of its drill" is a noun since N0.3: "after twice of
+  // its drill" was the adverb dropped into a noun's slot.
+  assert(said(1).includes('one round'), said(1))
+  assert(said(2).includes('two rounds'), said(2))
+  assert(said(5).includes('5 rounds'), said(5))
   for (const n of [1, 2, 3]) {
-    assert(!said(n).includes(`${n} times`) || n > 2, `said "${n} times": ${said(n)}`)
+    assert(!said(n).includes(`${n} times`) && !said(n).includes(`${n} rounds`) || n > 3, `said "${n}" as a digit: ${said(n)}`)
   }
 })
 

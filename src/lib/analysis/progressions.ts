@@ -42,13 +42,13 @@
  * in `tiers.ts` already decide when a reading is a fault and when it is the
  * tracker, and a second opinion here would drift from the first.
  */
-import { DRILLS } from './coaching'
+import { DRILLS, FUNDAMENTALS } from './coaching'
 import type { BodyAxis } from './axes'
 import type { Diagnosis } from './diagnose'
 import { FLAWS, MIN_EVIDENCE, type FlawId } from './flaws'
 import { CARD_SIGNAL, type Severity } from './tiers'
 import type { Triage } from './triage'
-import type { Drill } from './types'
+import type { Drill, FundamentalId } from './types'
 
 /**
  * How a step is passed (L4.2). By the app, when the step is a served ball it
@@ -554,6 +554,23 @@ export function faultForMetric(metricId: string): FlawId | undefined {
   const signal = CARD_SIGNAL[metricId]
   if (!signal) return undefined
   return FLAWS.find((s) => s.signal === signal || s.sideOn === signal)?.flaw
+}
+
+/**
+ * The scoring area a fault belongs to, read off the card row that carries the
+ * same number (N0.2). Undefined for a fault no card row shares a number with.
+ *
+ * Exists so a body area gets one drill. A practice row with no fault of its own
+ * (the knee bend) used to fall back to its area's general drill, Push throws,
+ * on the same page where the plan gave that area's fault (the legs) Back-leg
+ * serves: two exercises for one pair of legs, and three things to do.
+ */
+export function areaOfFault(flaw: FlawId): FundamentalId | undefined {
+  const spec = FLAWS.find((s) => s.flaw === flaw)
+  if (!spec) return undefined
+  const row = Object.keys(CARD_SIGNAL).find((m) => CARD_SIGNAL[m] === spec.signal || CARD_SIGNAL[m] === spec.sideOn)
+  if (!row) return undefined
+  return (Object.keys(FUNDAMENTALS) as FundamentalId[]).find((id) => FUNDAMENTALS[id].metrics.includes(row))
 }
 
 /**
