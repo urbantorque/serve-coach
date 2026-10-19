@@ -9,6 +9,7 @@ import { type Ghost, drawSkeleton, fitContain, ghostFor } from '../lib/pose/skel
 import { SkeletonSmoother } from '../lib/pose/smoothing'
 import { pairedLookup, type TrackPair } from '../lib/trackPair'
 import { Icon } from './primitives'
+import { usePillInView } from './usePillInView'
 
 /** Playback speeds, named rather than written as multipliers. */
 const SPEEDS = [
@@ -48,6 +49,8 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired }: Props) 
   const [playing, setPlaying] = useState(false)
   const [speed, setSpeed] = useState<(typeof SPEEDS)[number]['rate']>(0.5)
   const [activePhase, setActivePhase] = useState<PhaseId>('ready')
+  const pillsRef = useRef<HTMLDivElement>(null)
+  usePillInView(pillsRef, activePhase)
   const [skeletonOn, setSkeletonOn] = useState(true)
   const [cursor, setCursor] = useState(0)
 
@@ -798,7 +801,7 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired }: Props) 
         </button>
       </div>
 
-      <div className="phase-pills">
+      <div className="phase-pills" ref={pillsRef}>
         {phases.map((p) => (
           <button
             key={p.id}

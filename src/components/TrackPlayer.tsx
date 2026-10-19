@@ -5,6 +5,7 @@ import { phaseSamples, trackFrameAt, type Replay, type SwingTrack } from '../lib
 import { pairedLookup, type TrackPair } from '../lib/trackPair'
 import type { Frame, Phase, PhaseId } from '../lib/analysis/types'
 import { Icon } from './primitives'
+import { usePillInView } from './usePillInView'
 
 /** The same three speeds the live player offers, named the same way. */
 const SPEEDS = [
@@ -188,6 +189,8 @@ export default function TrackPlayer({ track, replay, phases, racket, paired }: P
     }
     return best
   }, [marked, marks, cursor])
+  const pillsRef = useRef<HTMLDivElement>(null)
+  usePillInView(pillsRef, activePhase)
 
   /* ------------------------------------------------------------- drawing --- */
 
@@ -573,7 +576,7 @@ export default function TrackPlayer({ track, replay, phases, racket, paired }: P
       </div>
 
       {marked.length > 0 && (
-        <div className="phase-pills">
+        <div className="phase-pills" ref={pillsRef}>
           {marked.map((p) => (
             <button
               key={p.id}

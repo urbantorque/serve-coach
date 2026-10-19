@@ -5,6 +5,7 @@ import type { PhaseId } from '../lib/analysis/types'
 import { drawSkeleton, type DrawRect } from '../lib/pose/skeleton'
 import { ballOn, highlightOf } from '../lib/demoDraw'
 import { Icon } from './primitives'
+import { usePillInView } from './usePillInView'
 
 /** The same three speeds the report's players offer, named the same way. */
 const SPEEDS = [
@@ -265,10 +266,12 @@ export default function RigPlayer({
     return () => document.removeEventListener('visibilitychange', onVisibility)
   }, [])
 
+  const pillsRef = useRef<HTMLDivElement>(null)
   const active = marks.reduce<(typeof marks)[number] | undefined>(
     (best, m) => (!best || Math.abs(m.tau - tau) < Math.abs(best.tau - tau) ? m : best),
     undefined,
   )
+  usePillInView(pillsRef, active?.id, Boolean(still))
 
   return (
     <div className="player" role="group" aria-label={groupLabel}>
@@ -312,7 +315,7 @@ export default function RigPlayer({
         )}
       </div>
 
-      <div className="phase-pills">
+      <div className="phase-pills" ref={pillsRef}>
         {marks.map((m) => (
           <button
             key={m.id}
