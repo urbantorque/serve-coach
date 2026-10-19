@@ -3374,7 +3374,8 @@ The same rules hold:
   or sheet loads lazily.
 
 ### Wave N0 — Fix what a player trips on
-- [ ] **N0.1 One message per line on the glance** · S.
+- [x] **N0.1 One message per line on the glance** · S.
+      - *Done:* Done 2026-10-19 (16ced39). The repeat form names "this fault"; the score chip was already held to the noise floor.
       - **Why:** "▲ 9 vs your last serve" sits over "No change from your last
         serve." The second line is about the fault (`verdict.ts:651`), but it
         reads as the score.
@@ -3385,7 +3386,8 @@ The same rules hold:
         - a render test of the glance with a score rise and a `same` fault
           finds no sentence that denies the change;
         - the copy lint passes.
-- [ ] **N0.2 One drill per fault, everywhere it shows** · S.
+- [x] **N0.2 One drill per fault, everywhere it shows** · S.
+      - *Done:* Done 2026-10-19 (21d94db, 1eef6dc). `areaOfFault` files a fault under its card area; a practice row with no fault takes the newest report's planned fault in that area, and any plan drill counts as already shown. Proved by a unit test and in the preview, not by a render test over every demo.
       - **Why:** a reopened report can show *Toss and point* (the focus),
         *Back-leg serves* (item 2, the legs) and *Push throws* (the practice
         card, the knee bend). That is two drills for the legs and three things
@@ -3398,13 +3400,15 @@ The same rules hold:
       - *Proof:* a render test over every `?demo` report and the history demo
         finds no fault with two drill names, and no two drills for one body
         area.
-- [ ] **N0.3 A sentence that reads** · S.
+- [x] **N0.3 A sentence that reads** · S.
+      - *Done:* Done 2026-10-19 (21d94db). "after two rounds of its drill"; `COUNT_AS_NOUN` in `voice.ts`.
       - **Why:** "has not moved after twice of its drill" (`practice.ts:443-449`).
       - **What:** "…after two rounds of its drill". A voice-lint rule flags
         `times()` output used as a noun.
       - *Proof:* a unit test of every `practiceCue` branch at 1, 2 and 5 drills;
         the new lint rule fails on the old string.
-- [ ] **N0.4 Retry goes straight to capture** · S.
+- [x] **N0.4 Retry goes straight to capture** · S.
+      - *Done:* Done 2026-10-19 (1eef6dc). `captureAgain` in `App.tsx`; checked in the preview: "Film it again" opens the framing check.
       - **Why:** "Analyse another", the refusal's "Film it again" and the error
         screen's "Try another video" all land on Home. The refusal's fix is the
         framing check.
@@ -3416,19 +3420,22 @@ The same rules hold:
         - the error screen gains "Check your framing" beside "How to film it".
       - *Proof:* the `screenFlow.ts` MOVES table is updated and
         `screenFlow.test` passes; render tests of each handler.
-- [ ] **N0.5 Empty states lead somewhere** · S.
+- [x] **N0.5 Empty states lead somewhere** · S.
+      - *Done:* Done for the history sheet, 2026-10-19 (1eef6dc, `HistoryEmpty.tsx`). Progress is only reachable with history, so its sections were left.
       - **What:** the empty history sheet offers "Analyse a serve" and the
         example report. Every empty Progress section says what fills it.
       - *Proof:* a render test of each empty state finds an action or a "how to
         fill this" line.
-- [ ] **N0.6 Model serve captions its own moment** · S.
+- [x] **N0.6 Model serve captions its own moment** · S.
+      - *Done:* Done 2026-10-19 (eb0e847). Caption and pill were always one value; the lit pill was scrolled off the row. `usePillInView` keeps it on screen in all three players.
       - **Why:** mid-play the model showed the contact caption with *Racket
         drop* lit.
       - **What:** the caption and the lit chip come from one phase index.
       - *Proof:* a unit test steps `RigPlayer` frame by frame and checks the
         caption against the chip on every frame. If the mismatch is not real,
         the test stays as a guard and the item closes.
-- [ ] **N0.7 `serveSpeed.ts` green and committed, still unwired** · S.
+- [x] **N0.7 `serveSpeed.ts` green and committed, still unwired** · S.
+      - *Done:* Done 2026-10-19 (4e9550f). `TRACK_FLOOR` (a pixel) and 24 refined lines fixed the coverage; 240 fps with decoys read worse than 120 because racket lines filled all six refines. `MIN_FPS` 45 and `readingOf` make every miss reachable. Two test claims were restated to what is true: noise-free rulers within their own stated error (one is 80% off and says ±69%), and clean tracks within 5% inside 30° of the picture (at 45° the unknown focal length costs up to 9%, inside the range). Pixel check deferred to N2.4. Seen: at 3 px with decoys at 120 fps the range holds 88–91%, under the 95% claimed at a pixel; N2.1 must hold coverage at the noise it really reads at.
       - **What:**
         - the ruler check is gated on `scaleError` (the 79.8% outlier already
           flags itself at 69%);
