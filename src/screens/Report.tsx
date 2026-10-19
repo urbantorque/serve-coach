@@ -113,6 +113,12 @@ interface Props {
   keepFailed?: boolean
   onBack: () => void
   onAnalyzeAnother: () => void
+  /**
+   * The refusal's "Film it again": straight to the framing check, which is
+   * the fix a refusal is asking for (N0.4). Falls back to `onAnalyzeAnother`
+   * where the caller has no viewfinder to open, as the example report does not.
+   */
+  onFilmAgain?: () => void
   onFlipHandedness?: () => void
   /** Re-run against a different serve in the same clip. */
   onPickServe?: (index: number) => void
@@ -249,6 +255,7 @@ export default function Report({
   keepFailed,
   onBack,
   onAnalyzeAnother,
+  onFilmAgain,
   onFlipHandedness,
   onPickServe,
   onCheckConsistency,
@@ -582,7 +589,7 @@ export default function Report({
           </p>
         </section>
         <footer className="report-foot">
-          <button className="btn btn--primary btn--full" onClick={onAnalyzeAnother}>
+          <button className="btn btn--primary btn--full" onClick={onFilmAgain ?? onAnalyzeAnother}>
             <Icon name="camera" size={18} />
             Film it again
           </button>
@@ -1017,7 +1024,12 @@ export default function Report({
           onUndoDrill={practice.drilled ? onUndoDrill : undefined}
           // The season and this serve agreeing on the fix (L1.6): the card
           // keeps its trend and its log and does not print the drill twice.
-          sameAsFocus={practice.drill.name === drill.name || practice.label === plan[0].title}
+          // Any drill already on the plan counts, not just the first (N0.2).
+          sameAsFocus={
+            practice.drill.name === drill.name ||
+            practice.label === plan[0].title ||
+            plan.some((p) => p.drill.name === practice.drill.name)
+          }
         />
       )}
 

@@ -13,6 +13,7 @@ import { loadAnalysis, loadAnalyzing, loadReport, loadSessionScreen, loadGlance 
 import { meteredConnection } from './lib/engineDownload'
 import { interruptedLine, takeInterrupted } from './lib/interrupted'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
+import HistoryEmpty from './components/HistoryEmpty'
 import { faultMoveOnTrip, rotationMoveOnTrip, scoreMoveAgainst, scoringVersionOf, streakLine, typeOf } from './lib/progress'
 import { bestPriorTo } from './lib/bestServe'
 import { tossMapFor } from './lib/tossMap'
@@ -515,6 +516,28 @@ export default function App() {
     refreshSessions()
   }
 
+  /**
+   * "Go again", straight to the capture it needs (N0.4).
+   *
+   * Every way out of a report or a refusal used to land on Home, one or two
+   * taps short of what the player had asked for. A refusal's fix is the
+   * framing check, so "Film it again" opens the viewfinder; a serve recorded in
+   * the app goes back to the viewfinder it came from; a picked clip goes back
+   * to the picker. Home is still underneath, so closing either lands there.
+   *
+   * The picker is the app's own input, clicked a tick after Home mounts, the
+   * way the first-run guide and the session's "pick again" already do it.
+   */
+  const captureAgain = (how: 'pick' | 'framing') => {
+    goHome()
+    if (how === 'framing') {
+      setFramingNonce((n) => n + 1)
+      return
+    }
+    setFirstRunIntent('pick')
+    setTimeout(() => firstRunPickRef.current?.click(), 0)
+  }
+
   /** Off the session screen: the reading stops with its place kept, and the video goes. */
   const leaveSession = () => {
     closeSessionVideo()
@@ -794,7 +817,8 @@ export default function App() {
               keepFailed={keepFailedFor === shownReport.id}
               fixtureExport={FIXTURE_EXPORT}
               onBack={goHome}
-              onAnalyzeAnother={goHome}
+              onAnalyzeAnother={() => captureAgain(shownReport.capture ? 'framing' : 'pick')}
+              onFilmAgain={() => captureAgain('framing')}
               bestGap={bestGapFor(typeOf(shownReport))}
               basketGapDelta={gapDeltaForView(shownReport.id, typeOf(shownReport))}
               bestScore={bestScoreFor(typeOf(shownReport))}
@@ -919,8 +943,11 @@ export default function App() {
                     <li key={h}>{h}</li>
                   ))}
                 </ul>
-                <button className="btn btn--primary btn--full" onClick={goHome}>
+                <button className="btn btn--primary btn--full" onClick={() => captureAgain('pick')}>
                   Try another video
+                </button>
+                <button className="btn btn--ghost btn--full" onClick={() => captureAgain('framing')}>
+                  Check your framing
                 </button>
                 <button className="btn btn--ghost btn--full" onClick={() => setSheet('guide')}>
                   How to film it
@@ -1048,7 +1075,17 @@ export default function App() {
           </p>
         )}
         {sessions.filter((s) => s.id !== pendingDelete).length === 0 ? (
-          <p className="sheet-empty">No serves analysed yet.</p>
+          <HistoryEmpty
+            onAnalyse={() => {
+              setSheet(null)
+              if (prefs.handedness) captureAgain('pick')
+              else onGuideThen('pick')
+            }}
+            onExample={() => {
+              setSheet(null)
+              void showExample()
+            }}
+          />
         ) : (
           <ul className="history">
             {sessions.filter((s) => s.id !== pendingDelete).map((s) => (

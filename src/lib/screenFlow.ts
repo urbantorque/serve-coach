@@ -99,14 +99,16 @@ export const MOVES: Record<Screen, Move[]> = {
     { to: 'analyzing', via: 'onFlipHandedness / onPickServe → run' },
     { to: 'analyzing', via: 'onCheckConsistency → compareServes' },
     { to: 'error', via: 'run (too large, or not a video)' },
-    { to: 'home', via: 'goHome / onAnalyzeAnother' },
+    // "Go again" lands on home with the picker or the viewfinder already
+    // open over it (N0.4), so the move is still to home.
+    { to: 'home', via: 'goHome / onAnalyzeAnother / onFilmAgain (captureAgain)' },
   ],
   glance: [
     { to: 'report', via: 'onOpenReport' },
     { to: 'home', via: 'onBack / onRecordAnother' },
   ],
-  saved: [{ to: 'home', via: 'goHome / onAnalyzeAnother' }],
-  error: [{ to: 'home', via: 'goHome' }],
+  saved: [{ to: 'home', via: 'goHome / onAnalyzeAnother (captureAgain)' }],
+  error: [{ to: 'home', via: 'captureAgain (pick, or the framing check)' }],
   // Was a sheet over home until it outgrew one; see `screens/Progress.tsx`.
   progress: [{ to: 'home', via: 'goHome' }],
   session: [
