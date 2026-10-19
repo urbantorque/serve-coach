@@ -644,12 +644,17 @@ const MOVE_COPY: Record<MoveVerdict, string> = {
  * not as progress. These say which way it went and name the comparison instead
  * of the fault. `cleared` cannot reach here by construction and is written out
  * anyway: a table with a hole in it is one refactor away from a crash.
+ *
+ * Each line names its subject, "this fault" (N0.1). The glance sets this line
+ * under the score's change, and "No change from your last serve" beneath "▲ 9
+ * vs your last serve" read as the screen contradicting itself: the player took
+ * it for the score, not the fault under the heading.
  */
 const MOVE_AGAIN_COPY: Record<MoveVerdict, string> = {
-  cleared: 'Gone since your last serve.',
-  closer: 'Closer than your last serve.',
-  same: 'No change from your last serve.',
-  wider: 'Further out than your last serve.',
+  cleared: 'This fault is gone since your last serve.',
+  closer: 'This fault is closer to fixed than on your last serve.',
+  same: 'This fault looks the same as on your last serve.',
+  wider: 'This fault is further off than on your last serve.',
 }
 
 /**

@@ -248,6 +248,20 @@ check('naming the fault again is dropped when the heading above already carries 
   assert(again.toLowerCase().includes('last serve'), 'the repeat form lost what it compares against')
 })
 
+/*
+ * N0.1. The glance sets the repeat form directly under the score's change, so a
+ * line with no subject is read as being about the score: "No change from your
+ * last serve" under "▲ 9 vs your last serve" told the player two opposite
+ * things. Every repeat form has to say it is about the fault.
+ */
+check('the repeat form says it is about the fault, so it is never read as the score', () => {
+  for (const verdict of ['cleared', 'closer', 'same', 'wider'] as const) {
+    const line = faultMoveLine({ flaw: FLAW, signal: SIGNAL, before: 1, after: 0, floor: FLOOR, verdict }, true)!
+    assert(/\bfault\b/i.test(line), `"${line}" does not say what it is about`)
+    assert(!/^no change\b/i.test(line), `"${line}" reads as a verdict on the score`)
+  }
+})
+
 check('the four verdicts read as four different pieces of news', () => {
   const lines = (['cleared', 'closer', 'same', 'wider'] as const).map(
     (verdict) =>
