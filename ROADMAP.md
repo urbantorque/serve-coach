@@ -3192,7 +3192,8 @@ main thread.
         - RTMPose's swing pass on the Bath clips is timed on one thread and
           on four, and both times are recorded;
         - the egress test is unchanged.
-- [ ] **M1.2 Pose inference off the main thread** (W5.4, re-scoped) · L.
+- [~] **M1.2 Pose inference off the main thread** (W5.4, re-scoped) · L.
+      - *Status:* 2026-10-22: the spike passed (3ddac28, `workerspike.html`). tasks-vision 0.10.18 loads in a module worker from this origin once a same-origin sync request stands in for `importScripts`; 30 of 30 bench frames read identically (largest landmark difference 0); 38 ms a frame in the worker against 37 on the main thread (CPU); the GPU delegate loads there through an OffscreenCanvas. The build itself — every caller of the landmarker (extract, preflight, the viewfinder, sessions) moving to an async worker API with the main-thread fallback — is not started.
       - **What:**
         - MediaPipe's landmarker and RTMPose run in one module worker, and
           frames reach it as transferred `ImageBitmap`s;
@@ -3576,7 +3577,8 @@ exists, a speed is:
         - the range holds the true speed on at least 95% of tries;
         - the time the pass adds is measured at 4× throttle (M1.4) and is under
           4 s at 240 fps.
-- [ ] **N2.2 A ball centre that survives blur** · M.
+- [x] **N2.2 A ball centre that survives blur** · M.
+      - *Done:* 2026-10-22 (3643208). `vision/struckBall.ts`: brightened pixels only, grown with hysteresis, each region an ellipse. Within 1.5 px of mid-exposure at 60/120/240 fps and 1, 0.5 and 0.06 of a frame's shutter; a long faint 1/60 s smear read 31 px off before the hysteresis. A new detector rather than `findStreaks`, which reads the unsigned difference and returns where the ball was as readily as where it is.
       - **What:**
         - `findStreaks` returns a streak's centre and its exposure length, and
           they feed `StruckFrame` candidates beside the round-blob finder;
@@ -3584,7 +3586,8 @@ exists, a speed is:
       - *Proof:* unit tests on synthetic smears at 60, 120 and 240 fps, and at
         three shutter lengths. The centre is within 1.5 px, and serve speed
         coverage does not drop against round blobs alone.
-- [ ] **N2.3 Impact from the sound** · M.
+- [~] **N2.3 Impact from the sound** · M.
+      - *Status:* 2026-10-22: measured, not adopted. With the strike heard to ±2.5 ms, readings went 7 → 7 at 60 fps and 28 → 28 at 120 (of about 50 each); at ±10 ms, 120 fps fell to 23. The impact search is not what limits coverage. Seen on the way: at 60 fps the plain range held the truth on 6 of 7, a small sample to watch when N2.1 reads 60 fps clips.
       - **What:**
         - when `audio/onsets.ts` finds a strike within the search window, its
           time, shifted by the learned offset (`fuse.ts`), replaces the ±40/+80
@@ -3592,13 +3595,15 @@ exists, a speed is:
         - without a strike, the search stands.
       - *Proof:* the rig, with onset jitter of 2.5 and 10 ms, shows coverage
         gains at 60 and 120 fps, and range coverage stays at 95% or more.
-- [ ] **N2.4 Pixels from end to end** · M.
+- [x] **N2.4 Pixels from end to end** · M.
+      - *Done:* 2026-10-22 (3643208). `serveSpeedPixels.test.ts`: a side-on phone renders the toss and the struck ball with drag; 5 of 6 serves at 120 and 240 fps read, every range held the truth, readings ran +1 to +5% high (worth a look in N2.1); 30 fps gives `frame_rate`. Takes about 20 s of the suite.
       - **What:** a test renders a toss and a struck ball (as a blob and as a
         streak) into bitmaps. It runs them through `findCandidates` and
         `findStreaks`, then `tossPath` and `measureServeSpeed`.
       - *Proof:* the test itself. The read lands within its range for 60,
         120 and 240 fps, and a 30 fps render gives `frame_rate`.
-- [ ] **N2.5 Every miss says how to get a speed** · S.
+- [x] **N2.5 Every miss says how to get a speed** · S.
+      - *Done:* 2026-10-22 (1cefbe7). `speedCopy.ts`, linted and number-free. The filming-guide line waits for N2.7: it would advertise a speed nobody can see yet.
       - **What:**
         - each `SpeedMiss` becomes a player sentence. For example:
           - `frame_rate`: "Film in slow motion to get a speed";
