@@ -3179,7 +3179,8 @@ main thread.
       - Choosing a remote stays with the owner.
 
 ### Wave M1 — The first analysis, sooner and smoother
-- [ ] **M1.1 Threads for the swing read** · S.
+- [~] **M1.1 Threads for the swing read** · S.
+      - *Status:* 2026-10-21 (be3b3c2): measured, not adopted. The headers plugin is ready behind `ISOLATE=1` (launch config `serve-coach-isolated`), with `isolation.test.ts`; every route and demo page reported `crossOriginIsolated` with nothing blocked. Four threads read RTMPose-s in 53–56 ms against 87–98 on one (`footprint.html?threads=1|4`, interleaved). But all three isolated whole analyses of `Saque_con_pelota.webm` abandoned the swing refine (`refined: 0`, 100–228 s) and the one without isolation did not (`refined: 27`, 67 s). The machine swung between 12% and 100% CPU from other apps, so this is a lead, not a finding. Settle it on a quiet machine before shipping `_headers`; ONNX Runtime's `session.intra_op.allow_spinning = 0` is the first thing to try.
       - **What:** COOP `same-origin` and COEP `require-corp` headers in the dev
         server, in `vite preview`, and in a shipped `public/_headers` for
         static hosts.
@@ -3221,7 +3222,8 @@ main thread.
         - the copy lint passes;
         - in the preview with the cache cleared, the time to the first report
           is measured before and after.
-- [ ] **M1.4 A phone-shaped timing, without a phone** · S.
+- [~] **M1.4 A phone-shaped timing, without a phone** · S.
+      - *Status:* 2026-10-21: blocked. The CDP throttle harness works (scratch `time.cjs`: fresh Chromium, `Emulation.setCPUThrottlingRate`, reads `cost` back from IndexedDB). But on this machine headless Chrome crashed after most reports, and other apps held the CPU at up to 100%, so no budget was checked against its numbers. It needs a quiet machine, or a headed browser.
       - **What:**
         - the preview runs at 4× and 6× CPU throttle through CDP;
         - a Bath clip, a basket and a session-length clip are timed;
@@ -3447,7 +3449,8 @@ The same rules hold:
         reaches each miss reason.
 
 ### Wave N1 — The on-court loop
-- [ ] **N1.1 Hands-free recording** · M.
+- [x] **N1.1 Hands-free recording** · M.
+      - *Done:* 2026-10-21 (6295c23). `framing/handsFree.ts`: `shouldStop` on hand samples (a hand above the head starts a serve; 1.5 s of hands down or nobody in shot ends it; 8 s gone ends a basket short), a 5 s spoken countdown, 1 or 6 serves. While recording, the pose is read every 350 ms at a 25% duty. Rig-trace tests; the camera path itself is unchecked in the preview, which blocks the camera.
       - **Why:** a phone propped on the fence costs two walks per serve.
       - **What:**
         - "Record the serve here" starts a 5 s countdown, shown large and spoken
@@ -3461,7 +3464,8 @@ The same rules hold:
           player who walks off, a ball bounce before the serve;
         - a render test of the countdown states;
         - a `?demo=live` screenshot.
-- [ ] **N1.2 A framing verdict you can hear** · S.
+- [x] **N1.2 A framing verdict you can hear** · S.
+      - *Done:* 2026-10-21 (6295c23). `speakVerdict`: a change, at most every 3 s; "Recording" and "Stopped" said; "Read it aloud" remembered in prefs.
       - **Why:** the verdict cannot be read from the baseline.
       - **What:**
         - verdict changes are spoken, at most one every 3 s;
@@ -3469,7 +3473,8 @@ The same rules hold:
         - a toggle sits in the viewfinder and is remembered in prefs.
       - *Proof:* a unit test of which verdict changes speak, and of the
         debounce; a render test of the toggle.
-- [ ] **N1.3 A drill check from recorded serves** · M.
+- [x] **N1.3 A drill check from recorded serves** · M.
+      - *Done:* 2026-10-21 (6295c23). `tripCheck.ts`: the trip's newest six judged serves since the ladder last moved (`Prefs.ladderMovedAt`), against the fault drilled when the trip began. On the glance, with "Move up a step". A trip is the app's own: serves under a day apart.
       - **Why:** the route the app recommends on court can never say "Move up a
         step". `checkDrill` runs only for picked baskets
         (`useAnalysisRun.ts:478-486`).
@@ -3480,7 +3485,8 @@ The same rules hold:
           pass bar is met.
       - *Proof:* unit tests (a passing trip, a failing trip, too few judged, a
         mixed trip from two days); a Glance render test.
-- [ ] **N1.4 "Check this drill" on the week plan** · M. Needs N1.3.
+- [x] **N1.4 "Check this drill" on the week plan** · M. Needs N1.3.
+      - *Done:* 2026-10-21 (6295c23). On each item where the app can record; the viewfinder says "Checking <drill>"; the trip check counts for that drill until it moves. Checked in the preview.
       - **What:** each week-plan item gets "Check this drill". It opens the
         viewfinder with that drill as the target, and the glance counts
         towards the 6.
@@ -3516,7 +3522,8 @@ The same rules hold:
         - the screen stays awake while it is open (`useWakeLock`).
       - *Proof:* a render test; a 375×812 screenshot with the body text at
         24 px or more; the entry bundle is unchanged.
-- [ ] **N1.8 The glance from any report** · S.
+- [x] **N1.8 The glance from any report** · S.
+      - *Done:* 2026-10-21 (6295c23). The glance takes a saved report (no frames needed); back goes to the saved report.
       - **What:** reopened reports pass `onGlance` too (`App.tsx:808-812`).
       - *Proof:* a render test; a MOVES entry.
 - [ ] **N1.9 Tagging out of the fold** · S.
