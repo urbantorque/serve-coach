@@ -100,6 +100,18 @@ export function bestSet(results: readonly SetResult[], serveNumber: 1 | 2): SetR
 
 const SERVES_WORD: Record<1 | 2, string> = { 1: 'first serves', 2: 'second serves' }
 
+/**
+ * The best set of each serve number, as a records line (N3.2). A finished set
+ * used to live for one line on the glance and then nowhere, though every one
+ * was kept in prefs and in the backup.
+ */
+export function bestSetLines(results: readonly SetResult[]): string[] {
+  return ([1, 2] as const).flatMap((n) => {
+    const best = bestSet(results, n)
+    return best ? [`Best set of ${SET_SIZE} ${SERVES_WORD[n]}: ${best.inServes} in.`] : []
+  })
+}
+
 /** The running line for a set under way. */
 export function setRunningLine(active: ActiveSet, counted: number, inServes: number): string {
   const aim = active.target !== undefined ? ` Aim: ${active.target} of ${SET_SIZE}.` : ''

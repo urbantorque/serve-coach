@@ -432,7 +432,7 @@ export default function App() {
   practiceRef.current = practice
 
   // Sets of ten — see `useSets` (L6.11).
-  const { startSet, glanceSet } = useSets({ prefs, setPrefs, sessions, serveTags })
+  const { startSet, glanceSet, bestSets } = useSets({ prefs, setPrefs, sessions, serveTags })
   // Read by the sweep, which is declared once and would otherwise judge a
   // basket against the history it was created with (L3.4).
   historyRef.current = { sessions, ladder: prefs.ladder }
@@ -785,6 +785,7 @@ export default function App() {
               onTagOutcome={(o) => void applyServeTag(view.analysis.id, { outcome: o })}
               set={glanceSet(view.analysis)}
               onStartSet={startSet}
+              bestSets={bestSets}
               onStopSet={() => setPrefs(writePrefs({ activeSet: undefined }))}
             />
           )}
@@ -925,6 +926,7 @@ export default function App() {
               cadence={prefs.cadence}
               practiceSessions={practiceSessions}
               tags={serveTags}
+              sets={prefs.sets}
               ladder={prefs.ladder}
               practice={practice}
               onLogDrill={logDrill}

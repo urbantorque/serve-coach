@@ -11,6 +11,7 @@ import type { PracticeFocus } from '../lib/practice'
 import {
   MIN_OUTCOMES_FOR_RATE,
   byServeNumber,
+  missesInCommon,
   secondServeSlower,
   faultTrends,
   inRateByType,
@@ -38,6 +39,7 @@ import type { TripRecord } from '../lib/storage/ledger'
 import type { Cadence } from '../lib/storage/prefs'
 import { partLabel, servePath, type PartState } from '../lib/servePath'
 import { bodyBestLine, bodyBests } from '../lib/bests'
+import { bestSetLines, type SetResult } from '../lib/sets'
 import { serveProfile } from '../lib/serveProfile'
 import { graduation } from '../lib/graduation'
 import { graduationCard } from '../lib/graduationCard'
@@ -69,6 +71,8 @@ interface Props {
   practiceSessions?: PracticeSession[]
   /** What the player said about each serve — see `ServeTag`. */
   tags?: ServeTag[]
+  /** Finished sets of ten (`Prefs.sets`), for the records (N3.2). */
+  sets?: SetResult[]
   /** Which rung of each fault's ladder the player is on — see `Prefs.ladder`. */
   ladder?: Partial<Record<string, number>>
   practice?: PracticeFocus
@@ -105,6 +109,7 @@ export default function Progress({
   cadence,
   practiceSessions,
   tags = [],
+  sets = [],
   ladder,
   practice,
   onLogDrill,
@@ -150,6 +155,9 @@ export default function Progress({
   // (D5.3), from the player's own taps. Serves per week, and one plain line
   // when a week jumps (D5.4).
   const numbers = useMemo(() => byServeNumber(sessions, tags, form?.serveType), [sessions, tags, form])
+  // What the misses share, behind its own statistical gates (N3.1).
+  const misses = useMemo(() => missesInCommon(sessions, tags, form?.serveType), [sessions, tags, form])
+  const setLines = useMemo(() => bestSetLines(sets), [sets])
   const inRates = useMemo(() => inRateByType(sessions, tags), [sessions, tags])
   // A second serve swung slower than the first, past the camera's noise (L5.8).
   const slowSecond = useMemo(() => secondServeSlower(sessions, tags), [sessions, tags])
@@ -347,7 +355,7 @@ export default function Progress({
               order, same conditions. Guarded on the whole cluster so a
               player short of every record never sees a heading over
               nothing. */}
-          {(streak || longestStreakText || sheetBestScore || bests.length > 0) && (
+          {(streak || longestStreakText || sheetBestScore || bests.length > 0 || setLines.length > 0) && (
             <section className="block" id="progress-records">
               <h2 className="block-title">Your records</h2>
               {bests.map((b) => (
@@ -358,6 +366,11 @@ export default function Progress({
               {streak && <p className="progress-foot">{streak}</p>}
               {longestStreakText && <p className="progress-foot">{longestStreakText}</p>}
               {sheetBestScore && <p className="progress-foot">{bestTripEverLine(sheetBestScore)}</p>}
+              {setLines.map((l) => (
+                <p key={l} className="progress-foot">
+                  {l}
+                </p>
+              ))}
             </section>
           )}
 
@@ -380,7 +393,7 @@ export default function Progress({
           {/* Kept apart because a second serve is meant to be safer, slower
               and spun: averaged with first serves, its score and its in-rate
               answer neither question. Only serves the player tagged. */}
-          {(numbers.length > 0 || inRates.length > 0 || slowSecond) && (
+          {(numbers.length > 0 || inRates.length > 0 || slowSecond || misses.length > 0) && (
             <section className="block">
               <h2 className="block-title">First and second serves</h2>
               {numbers.map((n) => (
@@ -401,6 +414,11 @@ export default function Progress({
                   <Cue text={slowSecond.line} />
                 </p>
               )}
+              {misses.map((m) => (
+                <p key={m.miss} className="progress-foot">
+                  <Cue text={m.line} />
+                </p>
+              ))}
             </section>
           )}
 

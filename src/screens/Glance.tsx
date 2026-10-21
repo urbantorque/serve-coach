@@ -104,6 +104,8 @@ interface Props {
   /** Start a set of ten of one serve number. Absent where taps cannot be stored. */
   onStartSet?: (serveNumber: 1 | 2) => void
   onStopSet?: () => void
+  /** Each serve number's best set of ten, said on its chip (N3.2). */
+  bestSets?: { 1?: number; 2?: number }
   /**
    * The drill being worked on, checked across this trip's recorded serves
    * (N1.3): "4 of 6 clean so far", and the move once the bar is met.
@@ -129,6 +131,7 @@ export default function Glance({
   set,
   onStartSet,
   onStopSet,
+  bestSets,
   tripCheck,
   onLadderStep,
   speak = false,
@@ -437,6 +440,7 @@ export default function Glance({
             {([1, 2] as const).map((n) => (
               <button key={n} className="chip chip--button" onClick={() => onStartSet(n)}>
                 {n === 1 ? 'First serves' : 'Second serves'}
+                {bestSets?.[n] !== undefined && <span className="chip-note">· best {bestSets[n]}</span>}
               </button>
             ))}
           </div>

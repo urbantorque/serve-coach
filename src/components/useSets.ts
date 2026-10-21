@@ -9,6 +9,7 @@ import type { ServeTag, Session } from '../lib/storage/db'
 import { writePrefs, type Prefs } from '../lib/storage/prefs'
 import {
   SETS_KEPT,
+  bestSet,
   finishedSet,
   inRateFor,
   setDoneLine,
@@ -48,5 +49,7 @@ export function useSets(deps: { prefs: Prefs; setPrefs: Dispatch<SetStateAction<
     const just = (prefs.sets ?? []).find((r) => r.endedAt === analysis.createdAt)
     return just ? { line: setDoneLine(just, prefs.sets ?? []), running: false } : undefined
   }
-  return { startSet, glanceSet }
+  // Each serve number's best set, for the glance's chips (N3.2).
+  const bestSets = { 1: bestSet(prefs.sets ?? [], 1)?.inServes, 2: bestSet(prefs.sets ?? [], 2)?.inServes }
+  return { startSet, glanceSet, bestSets }
 }

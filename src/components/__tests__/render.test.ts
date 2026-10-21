@@ -724,6 +724,44 @@ check('progress keeps first and second serves apart, and counts the weeks (D5.3,
   assert(!bare.includes('First and second serves'), 'a serve-number block with no taps behind it')
 })
 
+check('progress says what the misses share, and the best sets, and nothing from noise (N3.1, N3.2)', () => {
+  // The fixture `misses.test.ts` plants: the net serves struck lower.
+  let clock = 0
+  const tagged = (outcome: 'in' | 'net', reach: number, n: number, seed: number) =>
+    Array.from({ length: n }, (_, i) => {
+      const { frames: _f, ...rest } = sampleAnalysis({ noise: 0.004, seed: seed + i, contactReach: reach }) as Analysis
+      void _f
+      clock += 86_400_000
+      return { ...rest, id: `serve-miss${seed + i}`, createdAt: clock } as Session
+    }).map((s) => ({ s, tag: { id: s.id, outcome, taggedAt: s.createdAt } }))
+  const planted = [...tagged('in', 1.25, 6, 11), ...tagged('net', 1.05, 6, 17)]
+  const sets = [{ serveNumber: 1 as const, startedAt: 1, endedAt: 2, inServes: 7 }]
+  const out = html(
+    createElement(Progress, {
+      sessions: planted.map((p) => p.s),
+      tags: planted.map((p) => p.tag),
+      sets,
+      onLogDrill: noop,
+      onUndoDrill: noop,
+      seeded: false,
+      onBack: noop,
+    }),
+  )
+  assert(out.includes('Your serves into the net had contact lower.'), 'the planted pattern was not said')
+  assert(out.includes('Best set of 10 first serves: 7 in.'), 'the best set was not in the records')
+  const same = [...tagged('in', 1.15, 7, 40), ...tagged('net', 1.15, 7, 47)]
+  const noise = html(
+    createElement(Progress, { sessions: same.map((p) => p.s), tags: same.map((p) => p.tag), onLogDrill: noop, onUndoDrill: noop, seeded: false, onBack: noop }),
+  )
+  assert(!noise.includes('Your serves into the net had'), 'a pattern was read out of noise')
+})
+
+check('the glance says the best set on each set chip (N3.2)', () => {
+  const out = html(createElement(Glance, { analysis: sampleAnalysis(), onOpenReport: noop, onBack: noop, onTagOutcome: noop, onStartSet: noop, bestSets: { 1: 7 } }))
+  assert(out.includes('best 7'), 'the first-serve chip did not carry its best')
+  assert((out.match(/best \d/g) ?? []).length === 1, 'a best was shown for a serve number with no set')
+})
+
 /* ------------------------------------------- every stored shape, one at a time */
 
 /**
