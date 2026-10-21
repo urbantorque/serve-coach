@@ -43,7 +43,11 @@ async function run() {
   const url = which === 'm' ? '/bench-data/models/onnx/rtmpose-m.onnx' : '/models/rtmpose-s.onnx'
   const ort = await import('onnxruntime-web/wasm')
   ort.env.wasm.wasmPaths = '/ort/'
-  ort.env.wasm.numThreads = globalThis.crossOriginIsolated ? Math.min(4, navigator.hardwareConcurrency || 1) : 1
+  // `?threads=1` pins one thread on an isolated page, so M1.1 can time the
+  // same swing pass both ways on one server.
+  const asked = Number(new URLSearchParams(location.search).get('threads'))
+  const threads = globalThis.crossOriginIsolated ? Math.min(4, navigator.hardwareConcurrency || 1) : 1
+  ort.env.wasm.numThreads = asked > 0 ? Math.min(asked, threads) : threads
   const bytes = new Uint8Array(await (await fetch(url)).arrayBuffer())
   const session = await ort.InferenceSession.create(bytes, { executionProviders: ['wasm'] })
   const afterLoad = Math.max(0, ...memories.map((m) => m.buffer.byteLength))
@@ -61,6 +65,8 @@ async function run() {
     wasmHeapAfterRunMB: MB(afterRun),
     memoriesSeen: memories.length,
     msPerRead: Math.round(perRead),
+    threads: ort.env.wasm.numThreads,
+    isolated: globalThis.crossOriginIsolated,
     jsHeapMB: MB((performance as unknown as { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize ?? 0),
   }
   ;(window as unknown as { __footprint: typeof result }).__footprint = result

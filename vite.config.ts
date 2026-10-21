@@ -69,6 +69,39 @@ const ENGINE_ASSET_RE = new RegExp(`${escapeRegExp(base)}(models|wasm|ort)/`)
 // heavy assets are cached on first use (see lib/pose/poseEngine.ts, which warms
 // them with a progress bar the user can watch).
 /**
+ * The two headers that make the page cross-origin isolated (M1.1).
+ *
+ * ONNX Runtime asks for threads, and threads need SharedArrayBuffer, which a
+ * browser only hands to an isolated page. No build served these, so the swing
+ * refine always ran on one thread. Every asset this app loads is its own, on
+ * its own origin, so `require-corp` blocks nothing; `isolation.test.ts` holds
+ * that. Not shipped to a static host yet: see the plugin list below.
+ *
+ * On the dev server and on `vite preview` both, ahead of every other
+ * middleware, so the raw `ort/` files below get them too.
+ */
+export const ISOLATION_HEADERS = {
+  'Cross-Origin-Opener-Policy': 'same-origin',
+  'Cross-Origin-Embedder-Policy': 'require-corp',
+} as const
+
+function isolationHeaders(): Plugin {
+  // Returns nothing on purpose: a function returned from `configureServer`
+  // is run by Vite as a post hook, and `use` returns the app.
+  const add = (server: { middlewares: { use: (fn: (req: unknown, res: { setHeader: (k: string, v: string) => void }, next: () => void) => void) => unknown } }): void => {
+    server.middlewares.use((_req, res, next) => {
+      for (const [k, v] of Object.entries(ISOLATION_HEADERS)) res.setHeader(k, v)
+      next()
+    })
+  }
+  return {
+    name: 'serve-coach:isolation',
+    configureServer: add,
+    configurePreviewServer: add,
+  }
+}
+
+/**
  * Dev server only: hand `public/ort/` over untouched.
  *
  * ONNX Runtime loads its WASM glue with a dynamic `import()` of
@@ -106,6 +139,10 @@ export default defineConfig({
     __ENGINE_CACHE__: JSON.stringify(engineCacheName(fileURLToPath(new URL('.', import.meta.url)))),
   },
   plugins: [
+    // Opt-in (`ISOLATE=1`) until a quiet machine settles M1.1: threads made
+    // each RTMPose read 1.7x faster, but every isolated whole analysis timed
+    // here abandoned the swing refine, and the one without isolation did not.
+    ...(process.env.ISOLATE ? [isolationHeaders()] : []),
     serveOrtRaw(),
     react(),
     VitePWA({
