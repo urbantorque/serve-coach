@@ -14,6 +14,8 @@ import { meteredConnection } from './lib/engineDownload'
 import { interruptedLine, takeInterrupted } from './lib/interrupted'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
 import HistoryEmpty from './components/HistoryEmpty'
+import { tripDrillCheck } from './lib/tripCheck'
+import type { FlawId } from './lib/analysis/flaws'
 import { faultMoveOnTrip, rotationMoveOnTrip, scoreMoveAgainst, scoringVersionOf, streakLine, typeOf } from './lib/progress'
 import { bestPriorTo } from './lib/bestServe'
 import { tossMapFor } from './lib/tossMap'
@@ -165,7 +167,8 @@ export type View =
    * supplies one directly, for the same reason `?demo=glance-refused` exists:
    * the branch would otherwise never be looked at.
    */
-  | { kind: 'glance'; analysis: Analysis; videoUrl: string; move?: FaultMove }
+  // A reopened report has no clip, so no `videoUrl` (N1.8).
+  | { kind: 'glance'; analysis: Analysis | Session; videoUrl?: string; move?: FaultMove }
   /**
    * `example` marks the simulated serve from "See an example report". It
    * renders with none of the player's own history attached — no deltas
@@ -262,9 +265,15 @@ export default function App() {
   const [metered] = useState(() => meteredConnection(navigator as Navigator & { connection?: { saveData?: boolean; type?: string } }))
   const [prefs, setPrefs] = useState<Prefs>(readPrefs)
 
+  /** The drill a week-plan "Check this drill" tap chose (N1.4), until it moves. */
+  const [checkTarget, setCheckTarget] = useState<{ flaw: FlawId; drill: string }>()
+
   /** The player moving a fault's ladder a rung, from the report. */
   const moveLadder = useCallback((flaw: string, step: number) => {
-    setPrefs((p) => writePrefs({ ladder: { ...p.ladder, [flaw]: step } }))
+    setCheckTarget((t) => (t?.flaw === flaw ? undefined : t))
+    setPrefs((p) =>
+      writePrefs({ ladder: { ...p.ladder, [flaw]: step }, ladderMovedAt: { ...p.ladderMovedAt, [flaw]: Date.now() } }),
+    )
   }, [])
   /**
    * The report on screen looks saved and is not.
@@ -517,16 +526,8 @@ export default function App() {
   }
 
   /**
-   * "Go again", straight to the capture it needs (N0.4).
-   *
-   * Every way out of a report or a refusal used to land on Home, one or two
-   * taps short of what the player had asked for. A refusal's fix is the
-   * framing check, so "Film it again" opens the viewfinder; a serve recorded in
-   * the app goes back to the viewfinder it came from; a picked clip goes back
-   * to the picker. Home is still underneath, so closing either lands there.
-   *
-   * The picker is the app's own input, clicked a tick after Home mounts, the
-   * way the first-run guide and the session's "pick again" already do it.
+   * "Go again", straight to the capture it needs (N0.4): the viewfinder for a
+   * refusal or an in-app recording, the picker for a picked clip, over Home.
    */
   const captureAgain = (how: 'pick' | 'framing') => {
     goHome()
@@ -676,6 +677,8 @@ export default function App() {
               onPick={(f) => void openClip(f)}
               onRecorded={(f) => void openClip(f, true)}
               openFraming={framingNonce}
+              checkTarget={checkTarget?.drill}
+              onCheckDrill={(flaw, drill) => setCheckTarget({ flaw: flaw as FlawId, drill })}
               onOpen={openSaved}
               ladder={prefs.ladder}
               onShowGuide={() => setSheet('guide')}
@@ -745,6 +748,8 @@ export default function App() {
               // `glanceStrain`. Same reasoning as `move` above: it needs the
               // session list, which this screen has no business holding.
               strain={glanceStrainLine(view.analysis)}
+              tripCheck={tripDrillCheck(sessions, view.analysis, prefs.ladder, prefs.ladderMovedAt, checkTarget?.flaw)}
+              onLadderStep={moveLadder}
               speak={prefs.speakGlance}
               onToggleSpeak={(on) => setPrefs(writePrefs({ speakGlance: on }))}
               onBack={goHome}
@@ -756,7 +761,11 @@ export default function App() {
                 setFramingNonce((n) => n + 1)
               }}
               onOpenReport={() =>
-                setView({ kind: 'report', analysis: view.analysis, videoUrl: view.videoUrl })
+                setView(
+                  view.videoUrl && 'frames' in view.analysis
+                    ? { kind: 'report', analysis: view.analysis, videoUrl: view.videoUrl }
+                    : { kind: 'saved', session: view.analysis },
+                )
               }
               /*
                * The two taps, and they were unreachable until now.
@@ -829,10 +838,14 @@ export default function App() {
               onUndoDrill={practice?.drilled ? undoDrill : undefined}
               ladder={prefs.ladder}
               onLadderStep={moveLadder}
-              onGlance={
-                liveReport
-                  ? () => setView({ kind: 'glance', analysis: liveReport.analysis, videoUrl: liveReport.videoUrl })
-                  : undefined
+              // From a reopened report too (N1.8): the glance reads the report,
+              // never the clip.
+              onGlance={() =>
+                setView(
+                  liveReport
+                    ? { kind: 'glance', analysis: liveReport.analysis, videoUrl: liveReport.videoUrl }
+                    : { kind: 'glance', analysis: shownReport },
+                )
               }
               onFlipHandedness={
                 liveReport && lastFileRef.current

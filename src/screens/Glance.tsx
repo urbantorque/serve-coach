@@ -8,6 +8,7 @@ import type { Analysis } from '../lib/analysis/types'
 import { OUTCOME_LABEL, SERVE_NUMBER_LABEL } from '../lib/serveTagCopy'
 import { hasLocalVoice, onVoicesChanged, speakLocally, stopSpeaking } from '../lib/speech'
 import { scoreMoveCaption, scoreMoveWords, type ScoreMove } from '../lib/progress'
+import { canMoveUp, tripCheckLine, type TripCheck } from '../lib/tripCheck'
 
 /**
  * What the serve was, in one number and one line, without leaving the court.
@@ -31,7 +32,8 @@ import { scoreMoveCaption, scoreMoveWords, type ScoreMove } from '../lib/progres
  * caveats the report carries.
  */
 interface Props {
-  analysis: Analysis
+  /** No frames needed: a reopened report opens this screen too (N1.8). */
+  analysis: Omit<Analysis, 'frames'>
   /** Read this screen aloud on arrival — `Prefs.speakGlance`. */
   speak?: boolean
   onToggleSpeak?: (on: boolean) => void
@@ -102,6 +104,13 @@ interface Props {
   /** Start a set of ten of one serve number. Absent where taps cannot be stored. */
   onStartSet?: (serveNumber: 1 | 2) => void
   onStopSet?: () => void
+  /**
+   * The drill being worked on, checked across this trip's recorded serves
+   * (N1.3): "4 of 6 clean so far", and the move once the bar is met.
+   */
+  tripCheck?: TripCheck
+  /** Move the checked fault's ladder to a step. Absent where prefs cannot be kept. */
+  onLadderStep?: (flaw: string, step: number) => void
 }
 
 export default function Glance({
@@ -120,6 +129,8 @@ export default function Glance({
   set,
   onStartSet,
   onStopSet,
+  tripCheck,
+  onLadderStep,
   speak = false,
   onToggleSpeak,
 }: Props) {
@@ -270,6 +281,27 @@ export default function Glance({
               <Icon name={move?.verdict === 'wider' ? 'info' : 'check'} size={15} />
               <span>{moveLine}</span>
             </p>
+          )}
+
+          {/* The drill check across this trip's serves (N1.3). The one place the
+              record-and-glance route can say "move up a step": until this, only
+              a basket picked from the gallery was ever checked. */}
+          {tripCheck && (
+            <div className="glance-move glance-check" role="status">
+              <Icon name={tripCheck.outcome === 'passed' ? 'check' : 'info'} size={15} />
+              <span>
+                <strong>{tripCheck.step}</strong> · <Cue text={tripCheckLine(tripCheck)} />
+              </span>
+              {canMoveUp(tripCheck) && onLadderStep && (
+                <button
+                  type="button"
+                  className="btn btn--primary glance-check-move"
+                  onClick={() => onLadderStep(tripCheck.flaw, tripCheck.rung + 1)}
+                >
+                  Move up a step
+                </button>
+              )}
+            </div>
           )}
 
           {/* The racket against the last serve. Same class, same shape, and the

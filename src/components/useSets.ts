@@ -39,7 +39,7 @@ export function useSets(deps: { prefs: Prefs; setPrefs: Dispatch<SetStateAction<
     const done = finishedSet(active, sessions, serveTags)
     if (done) setPrefs(writePrefs({ activeSet: undefined, sets: [...(prefs.sets ?? []), done].slice(-SETS_KEPT) }))
   }, [prefs.activeSet, prefs.sets, sessions, serveTags, setPrefs])
-  const glanceSet = (analysis: Analysis): { line: string; running: boolean } | undefined => {
+  const glanceSet = (analysis: Pick<Analysis, 'createdAt'>): { line: string; running: boolean } | undefined => {
     const active = prefs.activeSet
     if (active) {
       const counted = setServes(active, sessions, serveTags)

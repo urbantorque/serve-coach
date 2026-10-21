@@ -45,6 +45,11 @@ export interface Prefs {
    */
   ladder?: Partial<Record<string, number>>
   /**
+   * When each fault's ladder was last moved (N1.3). A trip's drill check counts
+   * only serves filmed since, so serves on the step below never pass this one.
+   */
+  ladderMovedAt?: Partial<Record<string, number>>
+  /**
    * Read the glance aloud after each serve, with a voice on this device
    * (`lib/speech.ts`). Off until the player turns it on, from the glance.
    */
@@ -68,6 +73,12 @@ export interface Prefs {
   lastExportedAt?: number
   /** When "Not now" was tapped on the move from Safari (L6.5). */
   moveQuietedAt?: number
+  /** The viewfinder starts on a countdown and stops itself (N1.1). */
+  handsFree?: boolean
+  /** How many serves a hands-free recording stops after (N1.1). */
+  handsFreeServes?: 1 | 6
+  /** The viewfinder says its verdict aloud (N1.2). */
+  speakFraming?: boolean
 }
 
 const KEY = 'serve-coach-prefs'

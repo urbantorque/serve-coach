@@ -105,9 +105,15 @@ export const MOVES: Record<Screen, Move[]> = {
   ],
   glance: [
     { to: 'report', via: 'onOpenReport' },
+    // Back to the reopened report it came from (N1.8).
+    { to: 'saved', via: 'onOpenReport (no clip)' },
     { to: 'home', via: 'onBack / onRecordAnother' },
   ],
-  saved: [{ to: 'home', via: 'goHome / onAnalyzeAnother (captureAgain)' }],
+  saved: [
+    { to: 'home', via: 'goHome / onAnalyzeAnother (captureAgain)' },
+    // The glance from a reopened report too (N1.8).
+    { to: 'glance', via: 'onGlance' },
+  ],
   error: [{ to: 'home', via: 'captureAgain (pick, or the framing check)' }],
   // Was a sheet over home until it outgrew one; see `screens/Progress.tsx`.
   progress: [{ to: 'home', via: 'goHome' }],

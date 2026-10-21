@@ -442,6 +442,11 @@ button.badge[disabled] {
 /* A fault fixed lately, or a retired one's re-check (L3.4): a sentence
    above the plan, in the glance's aside voice, the tick in the colour the app
    gives a good outcome. */
+/* "Check this drill" under a week-plan item (N1.4). */
+.week-check {
+  margin-top: 10px;
+}
+
 .week-note {
   display: flex;
   align-items: flex-start;

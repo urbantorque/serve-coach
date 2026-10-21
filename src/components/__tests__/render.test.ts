@@ -442,6 +442,30 @@ check('a live report draws the best serve under the video, and says so (L4.8)', 
   assert(!alone.includes('The dashed body is'), 'a dashed body was promised with no serve to draw')
 })
 
+check('each week-plan item can be checked straight from home, where the app can record (N1.4)', () => {
+  const last = stored(sampleAnalysis(DEMO_DIALS.injury))
+  const base = {
+    sessions: [last, { ...last, id: 'serve-older-0', createdAt: last.createdAt - 2 * 86_400_000 }],
+    offlineReady: true,
+    sessionsLoaded: true,
+    onPick: noop,
+    onOpen: noop,
+    onShowGuide: noop,
+    onShowHistory: noop,
+    onShowSettings: noop,
+    onShowProgress: noop,
+    onGuideThen: noop,
+    onShowExample: noop,
+    needsHandedness: false,
+    onMakeOffline: noop,
+  }
+  const can = html(createElement(Home, { ...base, onRecorded: noop, onCheckDrill: noop }))
+  assert(can.includes('This week'), 'the seeded season has no plan')
+  assert(can.includes('Check this drill'), 'no week-plan item offered a check')
+  const cannot = html(createElement(Home, { ...base, onCheckDrill: noop }))
+  assert(!cannot.includes('Check this drill'), 'a check was offered where nothing can record')
+})
+
 check('home knows a returning player: a compact hero, then This week and the form, before the straps (L4.10)', () => {
   const last = stored(sampleAnalysis(DEMO_DIALS.injury))
   const older = (n: number) => ({ ...stored(sampleAnalysis({ seed: 40 + n })), id: `serve-old${n}-0`, createdAt: last.createdAt - n * 3 * 86_400_000 })
@@ -495,6 +519,20 @@ check('the glance sets the score against the last serve, on the line the camera 
   )
   assert(soft.includes('measured differently from your last serve'), 'the soft move was captioned as a comparison')
   assert(!soft.includes('delta--great'), 'a move between serves read differently was coloured as a gain')
+})
+
+check('the glance shows the trip drill check, and offers the move only once it is passed (N1.3)', () => {
+  const base = { flaw: 'shallow_drop' as const, read: 6, need: 4, rung: 1, steps: 4, step: 'Let the racket fall' }
+  const glance = (tripCheck?: Parameters<typeof Glance>[0]['tripCheck']) =>
+    html(createElement(Glance, { analysis: sampleAnalysis(), onOpenReport: noop, onBack: noop, tripCheck, onLadderStep: noop }))
+  const passed = glance({ ...base, clean: 5, outcome: 'passed' })
+  assert(passed.includes('Let the racket fall') && passed.includes('passed this step'), 'a passed trip did not say so')
+  assert(passed.includes('Move up a step'), 'a passed trip offered no move')
+  const short = glance({ ...base, clean: 2, outcome: 'not_yet' })
+  assert(short.includes('Stay on this step') && !short.includes('Move up a step'), 'a failed trip offered the move')
+  const top = glance({ ...base, rung: 3, clean: 5, outcome: 'passed' })
+  assert(!top.includes('Move up a step'), 'the last step offered a move past the end of the ladder')
+  assert(!glance().includes('glance-check'), 'a check was drawn with nothing to check')
 })
 
 check('the trip chart draws each trip with the range its serves ran over (L3.2)', () => {

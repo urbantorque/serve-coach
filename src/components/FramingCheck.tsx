@@ -12,7 +12,21 @@ import {
 import { MAX_RECORDING_SECONDS, recordClip, recordingOutcome, recordingType } from '../lib/framing/record'
 import { loadEngine, nextVideoTimestamp } from '../lib/pose/poseEngine'
 import { recordingConstraints } from '../lib/framing/camera'
-import { primeSpeech } from '../lib/speech'
+import { primeSpeech, speakLocally } from '../lib/speech'
+import {
+  COUNTDOWN_S,
+  RECORDING_DUTY,
+  RECORDING_INTERVAL_MS,
+  SERVE_COUNTS,
+  countdownWord,
+  handSample,
+  shouldStop,
+  speakVerdict,
+  spoken,
+  type HandSample,
+  type ServeCount,
+} from '../lib/framing/handsFree'
+import { readPrefs, writePrefs } from '../lib/storage/prefs'
 import type { Frame } from '../lib/analysis/types'
 
 /**
@@ -96,9 +110,14 @@ interface Props {
    * does that on its own.
    */
   onRecorded?: (file: File) => void
+  /**
+   * The drill a "Check this drill" tap came from (N1.4), said above the
+   * viewfinder so the player knows what the next serves are counted for.
+   */
+  target?: string
 }
 
-export default function FramingCheck({ onRecorded }: Props) {
+export default function FramingCheck({ onRecorded, target }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   // Mounted only while the viewfinder is open, and that is a phone propped on
   // a fence while its owner walks to the baseline — the screen must not lock.
@@ -137,6 +156,29 @@ export default function FramingCheck({ onRecorded }: Props) {
    */
   const liveRef = useRef(true)
 
+  /*
+   * Hands-free and the voice (N1.1, N1.2): kept in prefs, so a player who
+   * films from the fence every time sets them once. A drill check defaults to
+   * six serves, the basket its bar is out of.
+   */
+  const [handsFree, setHandsFree] = useState(() => Boolean(readPrefs().handsFree))
+  const [speak, setSpeak] = useState(() => Boolean(readPrefs().speakFraming))
+  const [serveCount, setServeCount] = useState<ServeCount>(() => (target ? 6 : (readPrefs().handsFreeServes ?? 1)))
+  const [countdown, setCountdown] = useState<number | null>(null)
+  const countdownTimer = useRef(0)
+  const handsFreeRef = useRef(handsFree)
+  const speakRef = useRef(speak)
+  const serveCountRef = useRef(serveCount)
+  handsFreeRef.current = handsFree
+  speakRef.current = speak
+  serveCountRef.current = serveCount
+  const samplesRef = useRef<HandSample[]>([])
+  const recordStartRef = useRef(0)
+  const lastSpokenRef = useRef<{ call: string; at: number } | undefined>(undefined)
+  const say = (text: string) => {
+    if (speakRef.current) speakLocally(text)
+  }
+  useEffect(() => () => clearInterval(countdownTimer.current), [])
   /**
    * Which container this browser will record, decided once.
    *
@@ -271,7 +313,9 @@ export default function FramingCheck({ onRecorded }: Props) {
          * know that half of wall clock is too much while something else has the
          * device.
          */
-        if (recordingRef.current) return
+        // Hands-free is the exception (N1.1): it reads the pose at a lower rate
+        // and duty while recording, only to see when the serve is over.
+        if (recordingRef.current && !handsFreeRef.current) return
         if (now < nextAt) return
         // `readyState` below HAVE_CURRENT_DATA means there is no picture yet;
         // handing that to the model returns a pose from nothing.
@@ -287,6 +331,16 @@ export default function FramingCheck({ onRecorded }: Props) {
         } catch {
           // A detection that throws is a frame that did not happen. The window
           // ages by one below, exactly as it would for a frame with nobody in it.
+        }
+
+        if (recordingRef.current) {
+          const cost = performance.now() - started
+          nextAt = performance.now() + Math.max(RECORDING_INTERVAL_MS - cost, (cost * (1 - RECORDING_DUTY)) / RECORDING_DUTY)
+          samplesRef.current.push(handSample((started - recordStartRef.current) / 1000, image))
+          if (shouldStop(samplesRef.current, serveCountRef.current).stop && recorderRef.current?.state === 'recording') {
+            recorderRef.current.stop()
+          }
+          return
         }
 
         if (image && world) {
@@ -311,6 +365,11 @@ export default function FramingCheck({ onRecorded }: Props) {
         // though nothing here draws it — a caller that starts drawing it should
         // not have to discover that this comparison was quietly deciding not to.
         const next = judgeFraming(readFraming(ring))
+        // Said aloud when it changes, for a player already at the baseline (N1.2).
+        if (speakRef.current && next.grade !== 'looking' && speakVerdict(next, lastSpokenRef.current, now)) {
+          speakLocally(spoken(next.cue))
+          lastSpokenRef.current = { call: next.call, at: now }
+        }
         setVerdict((prev) =>
           prev.call === next.call &&
           prev.grade === next.grade &&
@@ -348,9 +407,43 @@ export default function FramingCheck({ onRecorded }: Props) {
       if (existing.state === 'recording') existing.stop()
       return
     }
+    // A tap during the countdown calls it off.
+    if (countdown !== null) {
+      clearInterval(countdownTimer.current)
+      setCountdown(null)
+      return
+    }
+    if (!streamRef.current || !type || !onRecorded) return
+    // This tap is the gesture iOS wants before anything here can speak (L6.10).
+    primeSpeech()
+    if (!handsFree) {
+      startRecording()
+      return
+    }
+    // Hands-free (N1.1): a countdown long enough to walk to the baseline,
+    // spoken whether or not the verdict is, since nobody can see it from there.
+    let left = COUNTDOWN_S
+    setCountdown(left)
+    speakLocally(countdownWord(left)!)
+    countdownTimer.current = setInterval(() => {
+      left -= 1
+      const word = countdownWord(left)
+      if (word) speakLocally(word)
+      if (left > 0) {
+        setCountdown(left)
+        return
+      }
+      clearInterval(countdownTimer.current)
+      setCountdown(null)
+      startRecording()
+    }, 1000) as unknown as number
+  }
 
+  const startRecording = () => {
     const stream = streamRef.current
-    if (!stream || !type || !onRecorded) return
+    if (!stream || !type || !onRecorded || !liveRef.current) return
+    samplesRef.current = []
+    recordStartRef.current = performance.now()
 
     let capped = 0
     const settle = () => {
@@ -359,8 +452,6 @@ export default function FramingCheck({ onRecorded }: Props) {
       recordingRef.current = false
       setRecording(false)
     }
-    // This tap is the gesture iOS wants before the glance can speak (L6.10).
-    primeSpeech()
     let recorder: MediaRecorder
     try {
       recorder = recordClip(stream, type, MediaRecorder as never, {
@@ -370,6 +461,7 @@ export default function FramingCheck({ onRecorded }: Props) {
           // The recorder cannot say, and the two mean opposite things — see
           // `recordingOutcome`, which is where that is reasoned about and tested.
           if (recordingOutcome({ previewLive: liveRef.current, chunks }) !== 'analyse') return
+          say('Stopped')
           onRecorded(file)
         },
         failed: settle,
@@ -386,6 +478,7 @@ export default function FramingCheck({ onRecorded }: Props) {
     recorderRef.current = recorder
     recordingRef.current = true
     setRecording(true)
+    if (!handsFree) say('Recording')
 
     // The backstop. See MAX_RECORDING_SECONDS: chunks accumulate in memory
     // until something stops the recorder, and the likeliest way for nothing to
@@ -396,9 +489,21 @@ export default function FramingCheck({ onRecorded }: Props) {
     }, MAX_RECORDING_SECONDS * 1000) as unknown as number
   }
 
+  // Said with the camera or without it (N1.4): a blocked viewfinder still
+  // tells the player what their next serves are counted for.
+  const targetLine = target && (
+    <p className="framer-target">
+      <Icon name="target" size={15} />
+      <span>
+        Checking <strong>{target}</strong>. Film six serves on it.
+      </span>
+    </p>
+  )
+
   if (block) {
     return (
       <div className="framer">
+        {targetLine}
         <p className="framer-cue framer-cue--blocked" role="status">
           <Cue text={PREVIEW_BLOCK_CUE[block]} />
         </p>
@@ -412,6 +517,7 @@ export default function FramingCheck({ onRecorded }: Props) {
 
   return (
     <div className="framer">
+      {targetLine}
       <div className={`framer-stage framer-stage--${verdict.grade}`}>
         {/* The preview is the instruction's evidence, not the instruction. A
             screen reader gets the verdict from the live region below, which is
@@ -426,6 +532,11 @@ export default function FramingCheck({ onRecorded }: Props) {
         <span className="framer-badge">
           <Icon name={BADGE[verdict.grade]} size={15} />
         </span>
+        {countdown !== null && (
+          <span className="framer-count" aria-hidden="true">
+            {countdown}
+          </span>
+        )}
       </div>
 
       {/* The download replaces the verdict rather than sitting under it: until
@@ -446,6 +557,54 @@ export default function FramingCheck({ onRecorded }: Props) {
       {/* Only where the browser will record something this app can then read.
           See `recordingType` — a control that produces a file the analyser
           refuses is worse than no control. */}
+      {/* Hands-free and the voice (N1.1, N1.2). Hidden while recording: a
+          setting changed mid-serve would change what the recording does. */}
+      {onRecorded && type && !block && !recording && countdown === null && (
+        <div className="framer-options">
+          <button
+            type="button"
+            className={`chip chip--button chip--toggle${handsFree ? ' is-on' : ''}`}
+            aria-pressed={handsFree}
+            onClick={() => {
+              setHandsFree(!handsFree)
+              writePrefs({ handsFree: !handsFree })
+            }}
+          >
+            Hands-free
+          </button>
+          <button
+            type="button"
+            className={`chip chip--button chip--toggle${speak ? ' is-on' : ''}`}
+            aria-pressed={speak}
+            onClick={() => {
+              if (!speak) primeSpeech()
+              setSpeak(!speak)
+              writePrefs({ speakFraming: !speak })
+            }}
+          >
+            Read it aloud
+          </button>
+          {handsFree && (
+            <div className="seg" role="group" aria-label="Stop after">
+              {SERVE_COUNTS.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  className={`seg-item${serveCount === n ? ' is-on' : ''}`}
+                  aria-pressed={serveCount === n}
+                  onClick={() => {
+                    setServeCount(n)
+                    if (!target) writePrefs({ handsFreeServes: n })
+                  }}
+                >
+                  {n === 1 ? '1 serve' : `${n} serves`}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {onRecorded && type && !block && (
         <button
           type="button"
@@ -453,15 +612,23 @@ export default function FramingCheck({ onRecorded }: Props) {
           onClick={toggleRecording}
         >
           <Icon name={recording ? 'check' : 'camera'} size={17} />
-          {recording ? 'Stop and analyse' : 'Record the serve here'}
+          {recording
+            ? 'Stop and analyse'
+            : countdown !== null
+              ? 'Cancel'
+              : handsFree
+                ? 'Start hands-free'
+                : 'Record the serve here'}
         </button>
       )}
 
       <p className="framer-foot">
         {warming !== null
           ? 'This is the same download an analysis needs, so it only happens once.'
-          : recording
-            ? 'Recording. Serve, then stop — the clip is read on this device and never uploaded.'
+          : recording && handsFree
+            ? `Recording. Serve, and I stop by myself once ${serveCount === 1 ? 'the serve is' : `${serveCount} serves are`} over. The clip is read on this device and never uploaded.`
+            : recording
+              ? 'Recording. Serve, then stop — the clip is read on this device and never uploaded.'
             : /*
                * The old line ended "and nothing here is recorded", which stopped
                * being true the moment this button existed. Left alone it would

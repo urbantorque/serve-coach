@@ -50,6 +50,12 @@ interface Props {
    * not open a camera on first load.
    */
   openFraming?: number
+  /**
+   * "Check this drill" on a week-plan item (N1.4): which drill the next
+   * recorded serves are counted for, and the tap that sets it.
+   */
+  checkTarget?: string
+  onCheckDrill?: (flaw: string, drill: string) => void
   onOpen: (session: Session) => void
   /** Which rung of each fault's ladder the player is on — see `Prefs.ladder`. */
   ladder?: Partial<Record<string, number>>
@@ -142,6 +148,8 @@ export default function Home({
   onPick,
   onRecorded,
   openFraming = 0,
+  checkTarget,
+  onCheckDrill,
   onOpen,
   ladder,
   onShowGuide,
@@ -464,6 +472,21 @@ export default function Home({
                     </span>
                   </p>
                   <p className="focus-next-why">{item.check}</p>
+                  {/* Straight to the viewfinder, with this drill as what the
+                      next serves are counted for (N1.4). */}
+                  {onCheckDrill && onRecorded && item.flaw && (
+                    <button
+                      type="button"
+                      className="chip chip--button week-check"
+                      onClick={() => {
+                        onCheckDrill(item.flaw!, item.drill.name)
+                        setChecking(true)
+                      }}
+                    >
+                      <Icon name="camera" size={14} />
+                      Check this drill
+                    </button>
+                  )}
                 </div>
               </li>
             ))}
@@ -758,6 +781,7 @@ export default function Home({
             at a viewfinder while the screen behind it starts working. */}
         <Suspense fallback={null}>
           <FramingCheck
+            target={checkTarget}
             onRecorded={
               onRecorded &&
               ((file) => {

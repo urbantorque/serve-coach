@@ -67,11 +67,12 @@ check('no screen can only be left by going home', () => {
   // are "look at this, then start again" — so this states which those are
   // rather than asserting there are none, and a new one appearing is worth a
   // second look rather than an automatic failure. `progress` had that look
-  // when it stopped being a sheet: it is read, then left, like a saved report.
+  // when it stopped being a sheet: it is read, then left. A saved report was
+  // terminal too until it could open the glance (N1.8).
   const terminal = SCREENS.filter((s) => MOVES[s].every((m) => m.to === 'home'))
   note(`terminal screens: ${terminal.join(', ') || 'none'}`)
   assert(
-    terminal.length === 3 && ['saved', 'error', 'progress'].every((s) => terminal.includes(s as never)),
+    terminal.length === 2 && ['error', 'progress'].every((s) => terminal.includes(s as never)),
     `terminal screens changed: ${terminal.join(', ')}`,
   )
 })
@@ -234,6 +235,9 @@ const HISTORY_CONSUMERS = [
   'strainBehindOf',
   'streakLine',
   'thenAndNow',
+  // A drill checked across a trip's recorded serves (N1.3). Refused serves are
+  // never judged (`judgeServe`), which is R55's filter.
+  'tripDrillCheck',
   // The graduation card and what it is built from (L3.12).
   'graduation',
   'graduationCard',
