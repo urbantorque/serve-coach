@@ -40,6 +40,27 @@
   gap: 6px;
 }
 
+/* A trip to the court, headed by its day and its typical score (N3.5). */
+.history {
+  gap: 18px;
+}
+
+.history-trip ul {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.history-trip-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 2px 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--fg-muted);
+}
+
 .recent {
   display: flex;
   align-items: center;

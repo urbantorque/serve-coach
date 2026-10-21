@@ -44,6 +44,7 @@ import Report from '../../screens/Report'
 import Analyzing from '../../screens/Analyzing'
 import FilmingGuide from '../FilmingGuide'
 import FirstRunDownload from '../FirstRunDownload'
+import HistoryList from '../HistoryList'
 import ModelServe from '../ModelServe'
 import { faultDemo, modelServe } from '../../lib/faultDemo'
 import { PHASE_COPY } from '../../lib/analysis/phases'
@@ -785,6 +786,17 @@ check('the first-run sheet offers the download with its size, only while it is n
   assert(html(createElement(FirstRunDownload, { ready: true, busy: false, onDownload: noop })) === '', 'offered a download already stored')
   assert(html(createElement(FirstRunDownload, { ready: undefined, busy: false, onDownload: noop })) === '', 'offered a download before the cache answered')
   assert(html(createElement(FirstRunDownload, { ready: false, busy: true, onDownload: noop })).includes('Downloading'), 'a running download was offered again')
+})
+
+check('the history groups serves by trip, newest first, each with its typical score (N3.5)', () => {
+  const base = stored(sampleAnalysis())
+  const at = (id: string, day: number, hour: number, overall: number) =>
+    ({ ...base, id, overall, createdAt: day * 86_400_000 + hour * 3_600_000 }) as Session
+  const sessions = [at('a', 100, 9, 60), at('b', 100, 10, 70), at('c', 100, 11, 80), at('d', 103, 9, 75)]
+  const out = html(createElement(HistoryList, { sessions, onOpen: noop, onDelete: noop }))
+  assert((out.match(/history-trip"/g) ?? []).length === 2, 'serves three days apart were one trip')
+  assert(out.includes('3 serves, typical 70'), 'the trip of three did not lead with its median')
+  assert(out.indexOf('1 serve') < out.indexOf('3 serves'), 'the older trip came first')
 })
 
 check('the glance says the best set on each set chip (N3.2)', () => {

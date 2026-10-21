@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import HandednessPicker from './components/HandednessPicker'
-import { Icon, ScoreRing, Sheet } from './components/primitives'
+import { Icon, Sheet } from './components/primitives'
 import { useBackLayer } from './components/useBackLayer'
 import { useWakeLock, wakeLockLine } from './components/useWakeLock'
 import { useHistory } from './components/useHistory'
@@ -14,6 +14,7 @@ import { meteredConnection } from './lib/engineDownload'
 import { interruptedLine, takeInterrupted } from './lib/interrupted'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
 import HistoryEmpty from './components/HistoryEmpty'
+import HistoryList from './components/HistoryList'
 import FirstRunDownload from './components/FirstRunDownload'
 import { captureAgainWith } from './components/captureAgain'
 import { tripDrillCheck } from './lib/tripCheck'
@@ -1093,43 +1094,14 @@ export default function App() {
             }}
           />
         ) : (
-          <ul className="history">
-            {sessions.filter((s) => s.id !== pendingDelete).map((s) => (
-              <li key={s.id}>
-                {/* Literally the same row Home draws — same `.recent` rules,
-                    same ring. A past serve was two objects in this app, which
-                    made the history read as a separate feature rather than the
-                    same list seen somewhere else. */}
-                <button
-                  className="recent"
-                  onClick={() => {
-                    setSheet(null)
-                    openSaved(s)
-                  }}
-                >
-                  <ScoreRing score={s.overall} status={s.overallStatus} size={42} animate={false} />
-                  <span className="recent-text">
-                    <strong>{s.focus.title}</strong>
-                    <span>
-                      {new Date(s.createdAt).toLocaleString(undefined, {
-                        day: 'numeric',
-                        month: 'short',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  </span>
-                </button>
-                <button
-                  className="icon-btn icon-btn--quiet"
-                  onClick={() => remove(s.id)}
-                  aria-label={`Delete serve from ${new Date(s.createdAt).toLocaleDateString()}`}
-                >
-                  <Icon name="trash" size={17} />
-                </button>
-              </li>
-            ))}
-          </ul>
+          <HistoryList
+            sessions={sessions.filter((s) => s.id !== pendingDelete)}
+            onOpen={(s) => {
+              setSheet(null)
+              openSaved(s)
+            }}
+            onDelete={remove}
+          />
         )}
         {/* Follows the setting (L6.7). Passive on purpose, as `jsxCopy.test.ts`
             ruled when it was plain text: the promise is that nobody does the
