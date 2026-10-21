@@ -128,6 +128,14 @@ const ALLOWED: (Site & { why: string })[] = [
       'production build never bundles. Reads a refinement model from the dev server. Same origin.',
   },
   {
+    file: 'dev/workerSpike/worker.ts',
+    pattern: 'XMLHttpRequest',
+    why:
+      'The dev-only M1.2 spike, reached through `workerspike.html`, which the production build ' +
+      'never bundles. Stands in for `importScripts`, which a module worker lacks, to load ' +
+      "MediaPipe's own wasm glue from `/wasm/` on the dev server. Same origin.",
+  },
+  {
     file: 'dev/bench/main.ts',
     pattern: 'Image()',
     why:
