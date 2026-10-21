@@ -3373,7 +3373,9 @@ The same rules hold:
 - nothing leaves the device;
 - every new line passes the copy lint;
 - the entry bundle stays under 130 kB. It is at 126.8 kB, so every new screen
-  or sheet loads lazily.
+  or sheet loads lazily. *(2026-10-22: measured from a fresh build, the entry
+  is 381.0 kB raw against a 385 kB budget and 128.5 kB gzip. `bundle.test.ts`
+  reads `dist/`, so run `npm run build` before trusting its figure.)*
 
 ### Wave N0 — Fix what a player trips on
 - [x] **N0.1 One message per line on the glance** · S.
@@ -3655,39 +3657,47 @@ exists, a speed is:
       - *Proof:* a rig table in `ANALYSIS-REVIEW.md`.
 
 ### Wave N3 — Show what is already computed
-- [ ] **N3.1 What your misses have in common** · S.
+- [x] **N3.1 What your misses have in common** · S.
+      - *Done:* 2026-10-22 (e55a59d). Under first and second serves on Progress; `missesInCommon` is on the history-reader list.
       - **What:** `missesInCommon` (`progress.ts:1617`) gets a line under first
         and second serves on Progress, behind its existing gates.
       - *Proof:* a render test with seeded tags that pass the gates, and one
         where noise renders nothing.
-- [ ] **N3.2 Sets you can look back on** · S.
+- [x] **N3.2 Sets you can look back on** · S.
+      - *Done:* 2026-10-22 (e55a59d). `bestSetLines` in the Progress records; "· best 7" on the glance's set chips.
       - **What:** `bestSet` (`sets.ts:95`) goes into the Progress records, and
         the glance's "Start a set" chip shows your best and today's target.
       - *Proof:* render tests.
-- [ ] **N3.3 Before and after, in the app** · M.
+- [x] **N3.3 Before and after, in the app** · M.
+      - *Done:* 2026-10-22 (2b9be73). `beforeAfter` in `graduationCard.ts`, drawn by `FixedPair`: a "Fixed lately" section on Progress, and on the glance once a trip passes its step. Not on the report: the glance is where a step is passed.
       - **What:** when a drill check passes or a fault graduates, the report
         shows the old focus moment beside today's, through `MomentPair` and
         `graduationCard`.
       - *Proof:* a render test on seeded history; a `?demo=history`
         screenshot.
-- [ ] **N3.4 The glossary everywhere** · S.
+- [x] **N3.4 The glossary everywhere** · S.
+      - *Done:* 2026-10-22 (2b9be73). `termSpans` + a lazy `TermCue` on the glance's why line and the week plan's check lines. The session dashboard's lines hold no glossary word, so it was left. Only four words are in the glossary; adding words is content work, not done here.
       - **What:** `Term` on fault titles and drill names in the glance, the
         week plan and the session dashboard.
       - *Proof:* a test that every glossary id in player copy renders as a
         `Term` wherever it appears.
-- [ ] **N3.5 History by trip** · S.
+- [x] **N3.5 History by trip** · S.
+      - *Done:* 2026-10-22 (94f8edd). `HistoryList`: trips newest first, each with its count and median. Practice sessions are still listed on Home only.
       - **What:** rows are grouped by trip with the trip's median, and session
         rows sit in the same list.
       - *Proof:* a render test.
-- [ ] **N3.6 Sessions you can find** · S.
+- [x] **N3.6 Sessions you can find** · S.
+      - *Done:* 2026-10-22 (aa4e538). A Home strap once there is a report and until there is a session, and the guide's third rule.
       - **What:** a Home strap and a guide line: "Film a whole practice with
         your camera app, then pick it."
       - *Proof:* a render test; the copy lint.
-- [ ] **N3.7 The download offered at first run** · S.
+- [x] **N3.7 The download offered at first run** · S.
+      - *Done:* 2026-10-22 (aa4e538). `FirstRunDownload` on the first-run sheet, lazily loaded.
       - **What:** when the engines are not stored, the guide sheet gets one
         line with the size, a Wi-Fi note and the button. This complements M1.3.
       - *Proof:* a render test, in both the stored and the unstored state.
-- [ ] **N3.8 A target on the toss map** · S.
+- [x] **N3.8 A target on the toss map** · S.
+      - *Done:* already there: L4.7 (acab9f4) draws `TOSS_TARGET` as a dashed band. The review missed it.
       - **What:** draw the front-foot band the toss ladder aims for.
       - *Proof:* a geometry unit test; a preview screenshot.
 
