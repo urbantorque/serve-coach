@@ -13,11 +13,7 @@ import { loadAnalysis, loadAnalyzing, loadReport, loadSessionScreen, loadGlance 
 import { meteredConnection } from './lib/engineDownload'
 import { interruptedLine, takeInterrupted } from './lib/interrupted'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
-import HistoryEmpty from './components/HistoryEmpty'
-import HistoryList from './components/HistoryList'
-import FirstRunDownload from './components/FirstRunDownload'
 import { captureAgainWith } from './components/captureAgain'
-import { tripDrillCheck } from './lib/tripCheck'
 import type { FlawId } from './lib/analysis/flaws'
 import { faultMoveOnTrip, rotationMoveOnTrip, scoreMoveAgainst, scoringVersionOf, streakLine, typeOf } from './lib/progress'
 import { bestPriorTo } from './lib/bestServe'
@@ -50,6 +46,10 @@ import Home from './screens/Home'
  * this costs nothing but a microtask.
  */
 const Progress = lazy(() => import('./screens/Progress'))
+// Sheet contents, out of the entry chunk (its budget is the reason).
+const HistoryEmpty = lazy(() => import('./components/HistoryEmpty'))
+const HistoryList = lazy(() => import('./components/HistoryList'))
+const FirstRunDownload = lazy(() => import('./components/FirstRunDownload'))
 /*
  * The report too, which is the larger half: the player, the fundamentals, the
  * comparison panel and the share-card renderer. Nothing on the first screen
@@ -739,7 +739,8 @@ export default function App() {
               // `glanceStrain`. Same reasoning as `move` above: it needs the
               // session list, which this screen has no business holding.
               strain={glanceStrainLine(view.analysis)}
-              tripCheck={tripDrillCheck(sessions, view.analysis, prefs.ladder, prefs.ladderMovedAt, checkTarget?.flaw)}
+              trip={{ ladder: prefs.ladder, movedAt: prefs.ladderMovedAt, target: checkTarget?.flaw }}
+              history={sessions}
               onLadderStep={moveLadder}
               speak={prefs.speakGlance}
               onToggleSpeak={(on) => setPrefs(writePrefs({ speakGlance: on }))}
@@ -1036,7 +1037,9 @@ export default function App() {
           value={prefs.handedness}
           onChange={(handedness) => setPrefs(writePrefs({ handedness }))}
         />
-        <FirstRunDownload ready={offlineReady} busy={warming !== undefined && warming.stage !== 'failed'} onDownload={() => void makeOffline()} />
+        <Suspense fallback={null}>
+          <FirstRunDownload ready={offlineReady} busy={warming !== undefined && warming.stage !== 'failed'} onDownload={() => void makeOffline()} />
+        </Suspense>
         <button
           className="btn btn--primary btn--full"
           onClick={finishFirstRunGuide}
@@ -1081,6 +1084,7 @@ export default function App() {
             </button>
           </p>
         )}
+        <Suspense fallback={null}>
         {sessions.filter((s) => s.id !== pendingDelete).length === 0 ? (
           <HistoryEmpty
             onAnalyse={() => {
@@ -1103,6 +1107,7 @@ export default function App() {
             onDelete={remove}
           />
         )}
+        </Suspense>
         {/* Follows the setting (L6.7). Passive on purpose, as `jsxCopy.test.ts`
             ruled when it was plain text: the promise is that nobody does the
             keeping — no server, no account. */}

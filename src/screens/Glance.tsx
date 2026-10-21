@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Cue, Icon, ScoreRing } from '../components/primitives'
 import { DeltaChip } from '../components/Trend'
 import { causalPlan, faultMoveLine, refusalFor, rotationMoveLine } from '../lib/analysis/verdict'
@@ -8,7 +8,12 @@ import type { Analysis } from '../lib/analysis/types'
 import { OUTCOME_LABEL, SERVE_NUMBER_LABEL } from '../lib/serveTagCopy'
 import { hasLocalVoice, onVoicesChanged, speakLocally, stopSpeaking } from '../lib/speech'
 import { scoreMoveCaption, scoreMoveWords, type ScoreMove } from '../lib/progress'
-import { canMoveUp, tripCheckLine, type TripCheck } from '../lib/tripCheck'
+import { canMoveUp, tripCheckLine, tripDrillCheck } from '../lib/tripCheck'
+import type { FlawId } from '../lib/analysis/flaws'
+import { beforeAfter } from '../lib/graduationCard'
+import FixedPair from '../components/FixedPair'
+import TermCue from '../components/TermCue'
+import type { Session } from '../lib/storage/db'
 
 /**
  * What the serve was, in one number and one line, without leaving the court.
@@ -106,13 +111,12 @@ interface Props {
   onStopSet?: () => void
   /** Each serve number's best set of ten, said on its chip (N3.2). */
   bestSets?: { 1?: number; 2?: number }
-  /**
-   * The drill being worked on, checked across this trip's recorded serves
-   * (N1.3): "4 of 6 clean so far", and the move once the bar is met.
-   */
-  tripCheck?: TripCheck
   /** Move the checked fault's ladder to a step. Absent where prefs cannot be kept. */
   onLadderStep?: (flaw: string, step: number) => void
+  /** The saved serves: for the trip's drill check (N1.3) and a passed step's before and after (N3.3). */
+  history?: readonly Session[]
+  /** What the trip check needs besides the history: the ladder, when it moved, a chosen drill (N1.4). */
+  trip?: { ladder?: Partial<Record<string, number>>; movedAt?: Partial<Record<string, number>>; target?: FlawId }
 }
 
 export default function Glance({
@@ -132,12 +136,27 @@ export default function Glance({
   onStartSet,
   onStopSet,
   bestSets,
-  tripCheck,
   onLadderStep,
+  history,
+  trip,
   speak = false,
   onToggleSpeak,
 }: Props) {
   const refusal = refusalFor(analysis.triage)
+  // The step's evidence, once a trip has passed it (N3.3): the fault's moment
+  // on the last serve that named it before, beside today's clean one.
+  // Worked out here, in the glance's own chunk, so the entry carries none of it.
+  const tripCheck = useMemo(
+    () => (history ? tripDrillCheck(history as Session[], analysis as Session, trip?.ladder, trip?.movedAt, trip?.target) : undefined),
+    [history, analysis, trip],
+  )
+  const stepPair = useMemo(
+    () =>
+      tripCheck?.outcome === 'passed' && history
+        ? beforeAfter([...history.filter((s) => s.id !== analysis.id), analysis as Session], tripCheck.flaw, tripCheck.since)
+        : undefined,
+    [tripCheck, history, analysis],
+  )
   const plan = causalPlan(analysis.triage, analysis.diagnosis)
   const first = plan[0]
   /*
@@ -263,7 +282,7 @@ export default function Glance({
             <>
               <h1 className="t-headline glance-fix">{first.title}</h1>
               <p className="glance-why">
-                <Cue text={first.why} />
+                <TermCue text={first.why} />
               </p>
             </>
           ) : (
@@ -306,6 +325,7 @@ export default function Glance({
               )}
             </div>
           )}
+          {stepPair && <FixedPair then={stepPair.then} now={stepPair.now} title="That step, then and now" />}
 
           {/* The racket against the last serve. Same class, same shape, and the
               neutral icon in both directions on purpose: nothing grades this

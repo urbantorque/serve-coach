@@ -124,10 +124,10 @@ check('a refused serve is not judged, and nothing is said from none', () => {
 
 check('every line it can say passes the copy lint', () => {
   const lines = [
-    tripCheckLine({ flaw: DROP, read: 6, clean: 5, need, outcome: 'passed', rung: 1, steps: 4, step: 'x' }),
-    tripCheckLine({ flaw: DROP, read: 6, clean: 5, need, outcome: 'passed', rung: 3, steps: 4, step: 'x' }),
-    tripCheckLine({ flaw: DROP, read: 6, clean: 2, need, outcome: 'not_yet', rung: 1, steps: 4, step: 'x' }),
-    tripCheckLine({ flaw: DROP, read: 2, clean: 2, need, outcome: 'unread', rung: 1, steps: 4, step: 'x' }),
+    tripCheckLine({ flaw: DROP, read: 6, clean: 5, need, outcome: 'passed', rung: 1, steps: 4, step: 'x', since: 0 }),
+    tripCheckLine({ flaw: DROP, read: 6, clean: 5, need, outcome: 'passed', rung: 3, steps: 4, step: 'x', since: 0 }),
+    tripCheckLine({ flaw: DROP, read: 6, clean: 2, need, outcome: 'not_yet', rung: 1, steps: 4, step: 'x', since: 0 }),
+    tripCheckLine({ flaw: DROP, read: 2, clean: 2, need, outcome: 'unread', rung: 1, steps: 4, step: 'x', since: 0 }),
   ]
   for (const l of lines) {
     const issues = cueIssues(l)

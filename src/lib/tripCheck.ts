@@ -28,6 +28,8 @@ export interface TripCheck extends DrillCheck {
   steps: number
   /** That rung's drill, by name. */
   step: string
+  /** When the counted serves begin: the trip's start, or the last move of the ladder. */
+  since: number
 }
 
 export function tripDrillCheck(
@@ -61,7 +63,7 @@ export function tripDrillCheck(
   const check = checkDrill(flaw, judged)
   if (!check) return undefined
   const rung = rungFor(flaw, ladder, rungs, lastSeverity(all, flaw))
-  return { ...check, rung, steps: ladder.steps.length, step: ladder.steps[rung].name }
+  return { ...check, rung, steps: ladder.steps.length, step: ladder.steps[rung].name, since: Math.max(trip[0].createdAt, since) }
 }
 
 /** Whether the glance should offer "Move up a step": passed, and a step left to move to. */

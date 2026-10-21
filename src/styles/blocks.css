@@ -121,3 +121,40 @@
   border-color: var(--lime);
   color: var(--lime);
 }
+
+/* Then and now at the fault's moment (N3.3). */
+.fixed-pair {
+  display: grid;
+  gap: 8px;
+}
+
+.fixed-pair-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.fixed-pair-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.fixed-pair-half {
+  margin: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.fixed-pair-half canvas {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--r-sm);
+  background: var(--ink-2);
+}
+
+.fixed-pair-half figcaption,
+.fixed-pair-line {
+  font-size: 12.5px;
+  color: var(--fg-muted);
+}

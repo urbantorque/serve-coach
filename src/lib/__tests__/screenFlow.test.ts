@@ -224,6 +224,9 @@ const HISTORY_CONSUMERS = [
   // A set's aim, from the player's own taps (L3.7).
   'inRateFor',
   'longestStreakLine',
+  // What the misses share (N3.1). Refused serves are dropped at its first
+  // filter, which is R55's.
+  'missesInCommon',
   'recurringStrainOf',
   // A second serve swung slower than the first (L5.8).
   'secondServeSlower',
@@ -235,9 +238,6 @@ const HISTORY_CONSUMERS = [
   'strainBehindOf',
   'streakLine',
   'thenAndNow',
-  // A drill checked across a trip's recorded serves (N1.3). Refused serves are
-  // never judged (`judgeServe`), which is R55's filter.
-  'tripDrillCheck',
   // The graduation card and what it is built from (L3.12).
   'graduation',
   'graduationCard',

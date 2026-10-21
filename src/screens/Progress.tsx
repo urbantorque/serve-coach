@@ -43,6 +43,7 @@ import { bestSetLines, type SetResult } from '../lib/sets'
 import { serveProfile } from '../lib/serveProfile'
 import { graduation } from '../lib/graduation'
 import { graduationCard } from '../lib/graduationCard'
+import FixedPair from '../components/FixedPair'
 import { weekPlan } from '../lib/weekPlan'
 import type { PracticeSession } from '../lib/session/session'
 import { SERVE_NUMBER_LABEL } from '../lib/serveTagCopy'
@@ -355,6 +356,17 @@ export default function Progress({
               order, same conditions. Guarded on the whole cluster so a
               player short of every record never sees a heading over
               nothing. */}
+          {/* Each fault fixed lately, drawn: the evidence for it was the player's
+              own two serves, and only the share card ever showed them (N3.3). */}
+          {fixedCards.length > 0 && (
+            <section className="block" id="progress-fixed">
+              <h2 className="block-title">Fixed lately</h2>
+              {fixedCards.map((c) => (
+                <FixedPair key={c.flaw} then={c.then} now={c.now} title={c.name} line={c.line} />
+              ))}
+            </section>
+          )}
+
           {(streak || longestStreakText || sheetBestScore || bests.length > 0 || setLines.length > 0) && (
             <section className="block" id="progress-records">
               <h2 className="block-title">Your records</h2>

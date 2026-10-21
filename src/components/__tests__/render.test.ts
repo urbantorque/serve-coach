@@ -45,6 +45,12 @@ import Analyzing from '../../screens/Analyzing'
 import FilmingGuide from '../FilmingGuide'
 import FirstRunDownload from '../FirstRunDownload'
 import HistoryList from '../HistoryList'
+import FixedPair from '../FixedPair'
+import { beforeAfter } from '../../lib/graduationCard'
+import { CLEAN_SERVE } from '../../lib/analysis/syntheticServe'
+import { Cue } from '../primitives'
+import TermCue from '../TermCue'
+import { termSpans } from '../../lib/glossary'
 import ModelServe from '../ModelServe'
 import { faultDemo, modelServe } from '../../lib/faultDemo'
 import { PHASE_COPY } from '../../lib/analysis/phases'
@@ -524,17 +530,37 @@ check('the glance sets the score against the last serve, on the line the camera 
 })
 
 check('the glance shows the trip drill check, and offers the move only once it is passed (N1.3)', () => {
-  const base = { flaw: 'shallow_drop' as const, read: 6, need: 4, rung: 1, steps: 4, step: 'Let the racket fall' }
-  const glance = (tripCheck?: Parameters<typeof Glance>[0]['tripCheck']) =>
-    html(createElement(Glance, { analysis: sampleAnalysis(), onOpenReport: noop, onBack: noop, tripCheck, onLadderStep: noop }))
-  const passed = glance({ ...base, clean: 5, outcome: 'passed' })
-  assert(passed.includes('Let the racket fall') && passed.includes('passed this step'), 'a passed trip did not say so')
+  // Driven the way the app drives it: the history and the ladder, worked out
+  // inside the glance. Six serves of this trip judged for the drop.
+  const live = sampleAnalysis()
+  const judged = (k: number, detected: boolean) =>
+    ({
+      ...stored(sampleAnalysis()),
+      id: `serve-trip${k}-0`,
+      createdAt: live.createdAt - (6 - k) * 60_000,
+      triage: { schema: 1, status: 'ok', injury_risk: [], suppressed_count: 0 },
+      diagnosis: { flaws: [{ flaw: 'shallow_drop', detected, severity: detected ? 'medium' : 'none', confidence: 0.9, signal: 's', value: 0, unit: 'ratio', miss: 0, target: [0, 1], target_tier: 4 }], signals: {} },
+    }) as unknown as Session
+  const glance = (history: Session[], rung = 1) =>
+    html(
+      createElement(Glance, {
+        analysis: live,
+        onOpenReport: noop,
+        onBack: noop,
+        onLadderStep: noop,
+        history,
+        trip: { ladder: { shallow_drop: rung }, target: 'shallow_drop' },
+      }),
+    )
+  const clean = [0, 1, 2, 3, 4, 5].map((k) => judged(k, false))
+  const passed = glance(clean)
+  assert(passed.includes('passed this step'), 'a passed trip did not say so')
   assert(passed.includes('Move up a step'), 'a passed trip offered no move')
-  const short = glance({ ...base, clean: 2, outcome: 'not_yet' })
+  const short = glance([0, 1, 2, 3, 4, 5].map((k) => judged(k, true)))
   assert(short.includes('Stay on this step') && !short.includes('Move up a step'), 'a failed trip offered the move')
-  const top = glance({ ...base, rung: 3, clean: 5, outcome: 'passed' })
-  assert(!top.includes('Move up a step'), 'the last step offered a move past the end of the ladder')
-  assert(!glance().includes('glance-check'), 'a check was drawn with nothing to check')
+  const steps = progressionFor('shallow_drop')!.steps.length
+  assert(!glance(clean, steps - 1).includes('Move up a step'), 'the last step offered a move past the end of the ladder')
+  assert(!html(createElement(Glance, { analysis: live, onOpenReport: noop, onBack: noop })).includes('glance-check'), 'a check was drawn with no history')
 })
 
 check('the trip chart draws each trip with the range its serves ran over (L3.2)', () => {
@@ -797,6 +823,33 @@ check('the history groups serves by trip, newest first, each with its typical sc
   assert((out.match(/history-trip"/g) ?? []).length === 2, 'serves three days apart were one trip')
   assert(out.includes('3 serves, typical 70'), 'the trip of three did not lead with its median')
   assert(out.indexOf('1 serve') < out.indexOf('3 serves'), 'the older trip came first')
+})
+
+check('a glossary word in a coaching line is a tap away, once, wherever the line opts in (N3.4)', () => {
+  const spans = termSpans('Hold the trophy. At the trophy, let the racket drop begin.')
+  const terms = spans.filter((s) => 'id' in s)
+  assert(terms.length === 2, `marked ${terms.length} words`)
+  assert(spans.map((s) => s.text).join('') === 'Hold the trophy. At the trophy, let the racket drop begin.', 'the sentence changed')
+  assert(termSpans('Stanced trophyish').every((s) => !('id' in s)), 'a word inside another word was marked')
+  const on = html(createElement(TermCue, { text: '**Knees bent** at the trophy.' }))
+  assert(on.includes('term-word') && on.includes('cue-key'), 'the term or the bold was lost')
+  assert(!html(createElement(Cue, { text: 'At the trophy.' })).includes('term-word'), 'a line that did not opt in was marked')
+})
+
+check('a step passed draws the fault then and now; nothing is drawn without both halves (N3.3)', () => {
+  // The example serve names its tossing arm; the rig's clean serve judges it clean.
+  const then = { ...stored(sampleAnalysis(DEMO_DIALS.example)), id: 'serve-then-0', createdAt: 1_000 }
+  const now = { ...stored(sampleAnalysis(CLEAN_SERVE)), id: 'serve-now-0', createdAt: 5_000 }
+  const flaw = then.triage?.primary_flaw?.flaw
+  assert(Boolean(flaw), 'the example serve named nothing, so this checks nothing')
+  const pair = beforeAfter([then, now], flaw!, 2_000)
+  assert(Boolean(pair), 'a named serve before and a clean one after drew no pair')
+  assert(beforeAfter([then], flaw!, 2_000) === undefined, 'a pair was drawn with no serve after')
+  if (!pair) return
+  assert(pair.then.at === 1_000 && pair.now.at === 5_000, 'the halves were the wrong serves')
+  const out = html(createElement(FixedPair, { then: pair.then, now: pair.now, title: 'That step, then and now' }))
+  assert(out.includes('Then,') && out.includes('Now,') && (out.match(/<canvas/g) ?? []).length === 2, 'the pair did not draw both halves')
+  assert(beforeAfter([then, now], flaw!, 10_000) === undefined, 'a pair was drawn with nothing since the change')
 })
 
 check('the glance says the best set on each set chip (N3.2)', () => {

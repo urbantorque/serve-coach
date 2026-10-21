@@ -66,6 +66,32 @@ function poseAt(s: Session, moment: PhaseId): CardPose | undefined {
 }
 
 /**
+ * The fault's moment before and after a change (N3.3): the newest serve before
+ * `since` that named it, beside the newest one since that came back clean, each
+ * where its stored body can be drawn. What a graduation card shows, and what
+ * the glance shows when a trip passes a step.
+ */
+export function beforeAfter(
+  sessions: readonly Session[],
+  flaw: FlawId,
+  since: number,
+): { moment: PhaseId; then: CardPose; now: CardPose } | undefined {
+  const moment = momentOf(flaw)
+  const newestFirst = [...sessions].sort((a, b) => b.createdAt - a.createdAt)
+  const pick = (when: (s: Session) => boolean, verdict: 'named' | 'clean') => {
+    for (const s of newestFirst) {
+      if (!when(s) || judgeServe(s, flaw) !== verdict) continue
+      const pose = poseAt(s, moment)
+      if (pose) return pose
+    }
+    return undefined
+  }
+  const then = pick((s) => s.createdAt < since, 'named')
+  const now = pick((s) => s.createdAt >= since, 'clean')
+  return then && now ? { moment, then, now } : undefined
+}
+
+/**
  * The card for one graduation, or nothing when the history cannot draw both
  * halves: a serve named for the fault before it graduated, and a clean one
  * since, each with its keyframe pose.
@@ -75,18 +101,7 @@ export function graduationCard(
   g: Graduation,
   next?: FlawId,
 ): GraduationCard | undefined {
-  const moment = momentOf(g.flaw)
-  const newestFirst = [...sessions].sort((a, b) => b.createdAt - a.createdAt)
-  const pick = (when: (s: Session) => boolean, verdict: 'named' | 'clean') => {
-    for (const s of newestFirst) {
-      if (!when(s) || judgeServe(s, g.flaw) !== verdict) continue
-      const pose = poseAt(s, moment)
-      if (pose) return pose
-    }
-    return undefined
-  }
-  const then = pick((s) => s.createdAt < g.since, 'named')
-  const now = pick((s) => s.createdAt >= g.since, 'clean')
-  if (!then || !now) return undefined
-  return { flaw: g.flaw, name: FAULT_NAME[g.flaw], line: graduationLine(g, next), moment, then, now }
+  const pair = beforeAfter(sessions, g.flaw, g.since)
+  if (!pair) return undefined
+  return { flaw: g.flaw, name: FAULT_NAME[g.flaw], line: graduationLine(g, next), ...pair }
 }

@@ -23,3 +23,27 @@ export const GLOSSARY = {
 } as const
 
 export type GlossaryId = keyof typeof GLOSSARY
+
+/**
+ * A sentence cut into plain runs and glossary words (N3.4): the first mention
+ * of each word, whole words only, in any case. Later mentions stay plain, so a
+ * line that says "trophy" twice offers one tap, not two.
+ */
+export function termSpans(text: string): ({ text: string } | { text: string; id: GlossaryId })[] {
+  const ids = Object.keys(GLOSSARY) as GlossaryId[]
+  const words = ids.map((id) => GLOSSARY[id].word.toLowerCase()).join('|')
+  const pattern = new RegExp('\\b(' + words + ')\\b', 'gi')
+  const seen = new Set<GlossaryId>()
+  const out: ({ text: string } | { text: string; id: GlossaryId })[] = []
+  let last = 0
+  for (const m of text.matchAll(pattern)) {
+    const id = ids.find((i) => GLOSSARY[i].word.toLowerCase() === m[0].toLowerCase())!
+    if (seen.has(id)) continue
+    seen.add(id)
+    if (m.index! > last) out.push({ text: text.slice(last, m.index) })
+    out.push({ text: m[0], id })
+    last = m.index! + m[0].length
+  }
+  if (last < text.length) out.push({ text: text.slice(last) })
+  return out
+}

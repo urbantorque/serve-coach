@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { DeltaChip, Sparkline } from '../components/Trend'
-import { Icon, ScoreRing, Sheet } from '../components/primitives'
+import { Cue, Icon, ScoreRing, Sheet } from '../components/primitives'
 import { engineMegabytes } from '../lib/engineManifest'
 import { NUDGE_COPY, type StorageNudge } from '../lib/storage/nudge'
 import { previewSupported } from '../lib/framing/access'
@@ -17,6 +17,8 @@ import type { PracticeSession } from '../lib/session/session'
 
 /** The viewfinder, a sheet opened on demand: out of the first screen's bundle. */
 const FramingCheck = lazy(() => import('../components/FramingCheck'))
+// Glossary words in the week plan (N3.4), kept out of the entry chunk.
+const TermCue = lazy(() => import('../components/TermCue'))
 
 /** One empty ledger for every render, so a memo keyed on it holds. */
 const NO_TRIPS: TripRecord[] = []
@@ -471,7 +473,11 @@ export default function Home({
                       {item.step && `, step ${item.step.at} of ${item.step.of}`}
                     </span>
                   </p>
-                  <p className="focus-next-why">{item.check}</p>
+                  <p className="focus-next-why">
+                    <Suspense fallback={<Cue text={item.check} />}>
+                      <TermCue text={item.check} />
+                    </Suspense>
+                  </p>
                   {/* Straight to the viewfinder, with this drill as what the
                       next serves are counted for (N1.4). */}
                   {onCheckDrill && onRecorded && item.flaw && (
