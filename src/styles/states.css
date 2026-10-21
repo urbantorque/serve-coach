@@ -393,3 +393,13 @@
 .undo-row span {
   flex: 1;
 }
+
+/* The download on the first-run sheet (N3.7). */
+.first-download {
+  display: grid;
+  gap: 10px;
+  margin: 4px 0 14px;
+  font-size: 13.5px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}

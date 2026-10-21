@@ -43,6 +43,7 @@ import Progress from '../../screens/Progress'
 import Report from '../../screens/Report'
 import Analyzing from '../../screens/Analyzing'
 import FilmingGuide from '../FilmingGuide'
+import FirstRunDownload from '../FirstRunDownload'
 import ModelServe from '../ModelServe'
 import { faultDemo, modelServe } from '../../lib/faultDemo'
 import { PHASE_COPY } from '../../lib/analysis/phases'
@@ -754,6 +755,36 @@ check('progress says what the misses share, and the best sets, and nothing from 
     createElement(Progress, { sessions: same.map((p) => p.s), tags: same.map((p) => p.tag), onLogDrill: noop, onUndoDrill: noop, seeded: false, onBack: noop }),
   )
   assert(!noise.includes('Your serves into the net had'), 'a pattern was read out of noise')
+})
+
+check('home points a player with reports at reading a whole practice, until they have one (N3.6)', () => {
+  const last = stored(sampleAnalysis(DEMO_DIALS.injury))
+  const base = {
+    offlineReady: true,
+    sessionsLoaded: true,
+    onPick: noop,
+    onOpen: noop,
+    onShowGuide: noop,
+    onShowHistory: noop,
+    onShowSettings: noop,
+    onShowProgress: noop,
+    onGuideThen: noop,
+    onShowExample: noop,
+    needsHandedness: false,
+    onMakeOffline: noop,
+  }
+  assert(html(createElement(Home, { ...base, sessions: [last] })).includes('Read a whole practice'), 'no way into sessions was offered')
+  assert(!html(createElement(Home, { ...base, sessions: [] })).includes('Read a whole practice'), 'a new player was offered sessions before a serve')
+  const withSession = html(createElement(Home, { ...base, sessions: [last], practiceSessions: [{ id: 'p1', createdAt: last.createdAt, updatedAt: last.createdAt, fileName: 'p.mp4', duration: 600, serveType: 'flat', handedness: 'right', mode: 'sample', found: [10, 20], lines: [], phase: 'done' } as never] }))
+  assert(!withSession.includes('Read a whole practice'), 'a player with a session was still told how to make one')
+})
+
+check('the first-run sheet offers the download with its size, only while it is needed (N3.7)', () => {
+  const needed = html(createElement(FirstRunDownload, { ready: false, busy: false, onDownload: noop }))
+  assert(/one-time \d+ MB download/.test(needed) && needed.includes('Download now'), 'the download was not offered with its size')
+  assert(html(createElement(FirstRunDownload, { ready: true, busy: false, onDownload: noop })) === '', 'offered a download already stored')
+  assert(html(createElement(FirstRunDownload, { ready: undefined, busy: false, onDownload: noop })) === '', 'offered a download before the cache answered')
+  assert(html(createElement(FirstRunDownload, { ready: false, busy: true, onDownload: noop })).includes('Downloading'), 'a running download was offered again')
 })
 
 check('the glance says the best set on each set chip (N3.2)', () => {

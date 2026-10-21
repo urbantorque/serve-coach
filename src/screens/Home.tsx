@@ -580,6 +580,20 @@ export default function Home({
         <Icon name="chevron" size={16} />
       </button>
 
+      {/* Sessions had no way in a player could see (N3.6): a clip over two and
+          a half minutes becomes one, and nothing said so. Offered once there
+          is a report, until there is a session. */}
+      {sessions.length > 0 && practiceSessions.length === 0 && (
+        <button className="strap" onClick={() => (needsHandedness ? onGuideThen('pick') : pickRef.current?.click())}>
+          <Icon name="target" size={17} />
+          <span>
+            <strong>Read a whole practice</strong>
+            Film it with your camera app, then pick it here. I find every serve in it.
+          </span>
+          <Icon name="chevron" size={16} />
+        </button>
+      )}
+
       {/* The guide's four rules, checked against the camera the player is
           actually holding. Everything the engine gives up on because of where
           the phone was — the depth axis outside eighteen to seventy-eight

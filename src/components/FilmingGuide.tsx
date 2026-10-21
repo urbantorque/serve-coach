@@ -22,7 +22,9 @@ const RULES = [
   {
     title: 'Start filming before the toss',
     body:
-      'Hit record a second before the ball leaves your hand. Three to five seconds for one serve, or keep rolling for a whole basket.',
+      // Says where a practice session comes from (N3.6): the app's own
+      // recording stops at 90 seconds, so a whole practice is the camera app's.
+      'Hit record a second before the ball leaves your hand. For a whole practice, film it with your camera app and pick it: I find every serve.',
   },
   {
     title: 'Use slow motion if your phone has it',

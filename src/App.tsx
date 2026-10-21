@@ -14,6 +14,8 @@ import { meteredConnection } from './lib/engineDownload'
 import { interruptedLine, takeInterrupted } from './lib/interrupted'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
 import HistoryEmpty from './components/HistoryEmpty'
+import FirstRunDownload from './components/FirstRunDownload'
+import { captureAgainWith } from './components/captureAgain'
 import { tripDrillCheck } from './lib/tripCheck'
 import type { FlawId } from './lib/analysis/flaws'
 import { faultMoveOnTrip, rotationMoveOnTrip, scoreMoveAgainst, scoringVersionOf, streakLine, typeOf } from './lib/progress'
@@ -525,19 +527,7 @@ export default function App() {
     refreshSessions()
   }
 
-  /**
-   * "Go again", straight to the capture it needs (N0.4): the viewfinder for a
-   * refusal or an in-app recording, the picker for a picked clip, over Home.
-   */
-  const captureAgain = (how: 'pick' | 'framing') => {
-    goHome()
-    if (how === 'framing') {
-      setFramingNonce((n) => n + 1)
-      return
-    }
-    setFirstRunIntent('pick')
-    setTimeout(() => firstRunPickRef.current?.click(), 0)
-  }
+  const captureAgain = captureAgainWith({ goHome, setFramingNonce, setFirstRunIntent, pickRef: firstRunPickRef })
 
   /** Off the session screen: the reading stops with its place kept, and the video goes. */
   const leaveSession = () => {
@@ -1045,6 +1035,7 @@ export default function App() {
           value={prefs.handedness}
           onChange={(handedness) => setPrefs(writePrefs({ handedness }))}
         />
+        <FirstRunDownload ready={offlineReady} busy={warming !== undefined && warming.stage !== 'failed'} onDownload={() => void makeOffline()} />
         <button
           className="btn btn--primary btn--full"
           onClick={finishFirstRunGuide}
