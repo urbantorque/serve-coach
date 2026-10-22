@@ -79,6 +79,8 @@ export interface Prefs {
   handsFreeServes?: 1 | 6
   /** The viewfinder says its verdict aloud (N1.2). */
   speakFraming?: boolean
+  /** How long the player usually has on court, for today's plan (N1.6). */
+  courtMinutes?: 30 | 45 | 60
 }
 
 const KEY = 'serve-coach-prefs'

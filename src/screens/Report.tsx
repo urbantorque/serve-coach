@@ -1014,6 +1014,54 @@ export default function Report({
         )}
       </section>
 
+      {/* Out of the fold since N1.9: in-rate, first and second serves, sets and
+          the toss map all read these taps, and folded they were rarely made.
+
+          What the player says about this serve, on every report and not only
+          after a recorded one (D5.1): which serve it was and where it went. The
+          app never sees the court, so these are taps and nothing else, stored
+          exactly as given. Built from the "Judged as" row above, so it adds
+          no styles. */}
+      {(onTagServe || onTagOutcome) && (
+        <section className="reading" aria-label="What you said about this serve">
+          <h2 className="t-overline reading-title">Tag this serve</h2>
+          {onTagServe && (
+            <div className="judged">
+              <span className="t-overline judged-lead">Which serve</span>
+              <div className="judged-options">
+                {([1, 2] as const).map((n) => (
+                  <button
+                    key={n}
+                    className={`serve-chip${serveNumber === n ? ' is-on' : ''}`}
+                    aria-pressed={serveNumber === n}
+                    onClick={() => onTagServe(serveNumber === n ? undefined : n)}
+                  >
+                    {SERVE_NUMBER_LABEL[n]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {onTagOutcome && (
+            <div className="judged">
+              <span className="t-overline judged-lead">Where it landed</span>
+              <div className="judged-options">
+                {SERVE_OUTCOMES.map((o) => (
+                  <button
+                    key={o}
+                    className={`serve-chip${outcome === o ? ' is-on' : ''}`}
+                    aria-pressed={outcome === o}
+                    onClick={() => onTagOutcome(outcome === o ? undefined : o)}
+                  >
+                    {OUTCOME_LABEL[o]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
       {/* The season-long focus, not this serve's own. See `Props.practice` —
           absent for anyone without two comparable sessions yet, exactly the
           condition the progress sheet's copy of this card already applies. */}
@@ -1349,50 +1397,6 @@ export default function Report({
           </div>
         </section>
 
-        {/* What the player says about this serve, on every report and not only
-            after a recorded one (D5.1): which serve it was and where it went. The
-            app never sees the court, so these are taps and nothing else, stored
-            exactly as given. Built from the "Judged as" row above, so it adds
-            no styles. */}
-        {(onTagServe || onTagOutcome) && (
-          <section className="reading" aria-label="What you said about this serve">
-            <h2 className="t-overline reading-title">Tag this serve</h2>
-            {onTagServe && (
-              <div className="judged">
-                <span className="t-overline judged-lead">Which serve</span>
-                <div className="judged-options">
-                  {([1, 2] as const).map((n) => (
-                    <button
-                      key={n}
-                      className={`serve-chip${serveNumber === n ? ' is-on' : ''}`}
-                      aria-pressed={serveNumber === n}
-                      onClick={() => onTagServe(serveNumber === n ? undefined : n)}
-                    >
-                      {SERVE_NUMBER_LABEL[n]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            {onTagOutcome && (
-              <div className="judged">
-                <span className="t-overline judged-lead">Where it landed</span>
-                <div className="judged-options">
-                  {SERVE_OUTCOMES.map((o) => (
-                    <button
-                      key={o}
-                      className={`serve-chip${outcome === o ? ' is-on' : ''}`}
-                      aria-pressed={outcome === o}
-                      onClick={() => onTagOutcome(outcome === o ? undefined : o)}
-                    >
-                      {OUTCOME_LABEL[o]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </section>
-        )}
 
         <section className="block">
           <h2 className="block-title">Every area I scored</h2>

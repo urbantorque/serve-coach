@@ -45,6 +45,7 @@ import Analyzing from '../../screens/Analyzing'
 import FilmingGuide from '../FilmingGuide'
 import FirstRunDownload from '../FirstRunDownload'
 import HistoryList from '../HistoryList'
+import TodayPlan from '../TodayPlan'
 import FixedPair from '../FixedPair'
 import { beforeAfter } from '../../lib/graduationCard'
 import { CLEAN_SERVE } from '../../lib/analysis/syntheticServe'
@@ -354,11 +355,12 @@ check('the report reads hero, fix, plan, the serve, then one fold for the rest (
     ['the score', 'class="hero"'],
     ['the fix', 'class="focus"'],
     ['the plan', 'focus-next'],
+    // Out of the fold since N1.9.
+    ['tagging', 'Tag this serve'],
     ['the six moments', 'Six moments in your serve'],
     ['the fold', 'More about this clip'],
     ['the basket', 'best serve against your worst'],
     ['how it was read', 'How I read this clip'],
-    ['tagging', 'Tag this serve'],
     ['the areas', 'Every area I scored'],
   ] as const
   for (let i = 1; i < order.length; i++) {
@@ -369,7 +371,7 @@ check('the report reads hero, fix, plan, the serve, then one fold for the rest (
   }
   // Everything after the six moments sits inside the one fold.
   const fold = out.slice(at('<details class="report-more"'), out.indexOf('</details>', at('<details class="report-more"')))
-  for (const [what, marker] of order.slice(5)) assert(fold.includes(marker), `${what} is outside the fold`)
+  for (const [what, marker] of order.slice(6)) assert(fold.includes(marker), `${what} is outside the fold`)
   assert(!/<details class="report-more"[^>]*open/.test(out), 'the fold starts open')
 })
 
@@ -850,6 +852,26 @@ check('a step passed draws the fault then and now; nothing is drawn without both
   const out = html(createElement(FixedPair, { then: pair.then, now: pair.now, title: 'That step, then and now' }))
   assert(out.includes('Then,') && out.includes('Now,') && (out.match(/<canvas/g) ?? []).length === 2, 'the pair did not draw both halves')
   assert(beforeAfter([then, now], flaw!, 10_000) === undefined, 'a pair was drawn with nothing since the change')
+})
+
+check("today's plan lays the week out in minutes, with a court card for the first drill (N1.6, N1.7)", () => {
+  const week = {
+    from: {},
+    items: [{ title: 'Toss', flaw: 'toss_height', drill: { name: 'Toss and point', how: 'Toss and point.', reps: '15 tosses' }, check: 'Twelve of fifteen.' }],
+    graduated: [],
+  } as unknown as Parameters<typeof TodayPlan>[0]['week']
+  const out = html(createElement(TodayPlan, { week }))
+  assert(out.includes('Today on court') && out.includes('45 min'), 'the plan or its default length is missing')
+  assert(out.includes('Toss and point: 15 tosses'), "the first drill is not in today's plan")
+  assert(out.includes('Open the court card'), 'no way to the court card')
+})
+
+check('tagging sits above the fold, under the focus (N1.9)', () => {
+  const out = html(createElement(Report, { analysis: sampleAnalysis(), onBack: noop, onAnalyzeAnother: noop, onTagServe: noop, onTagOutcome: noop }))
+  const tag = out.indexOf('Tag this serve')
+  assert(tag > 0, 'no tag row on a live report')
+  assert(tag < out.indexOf('More about this clip'), 'tagging is still inside the fold')
+  assert(tag > out.indexOf('Work on this next'), 'tagging jumped above the fix')
 })
 
 check('the glance says the best set on each set chip (N3.2)', () => {

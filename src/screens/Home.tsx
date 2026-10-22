@@ -19,6 +19,8 @@ import type { PracticeSession } from '../lib/session/session'
 const FramingCheck = lazy(() => import('../components/FramingCheck'))
 // Glossary words in the week plan (N3.4), kept out of the entry chunk.
 const TermCue = lazy(() => import('../components/TermCue'))
+// Today's plan and its court card (N1.6, N1.7), out of the entry chunk.
+const TodayPlan = lazy(() => import('../components/TodayPlan'))
 
 /** One empty ledger for every render, so a memo keyed on it holds. */
 const NO_TRIPS: TripRecord[] = []
@@ -433,6 +435,12 @@ export default function Home({
       {/* Numbered, in the report's causal order, with the report's own queue
           styles: the order is the instruction. The rung and the check are
           what the report does not say. */}
+      {week && week.items.length > 0 && (
+        <Suspense fallback={null}>
+          <TodayPlan week={week} />
+        </Suspense>
+      )}
+
       {week && (
         <section className="block week" aria-labelledby="week-title">
           <div className="block-head">

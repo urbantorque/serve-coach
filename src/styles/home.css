@@ -493,3 +493,86 @@ button.badge[disabled] {
 .home-foot .badge {
   font-variant-numeric: tabular-nums;
 }
+
+/* Today on court (N1.6). */
+.today-list {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
+.today-list li {
+  display: grid;
+  grid-template-columns: 4.2em 1fr;
+  gap: 10px;
+}
+
+.today-min {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* The court card (N1.7): readable from the baseline, on the phone left on the fence. */
+.court-card {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: calc(16px + var(--safe-top, 0px)) 20px calc(20px + var(--safe-bottom, 0px));
+  overflow-y: auto;
+  background: var(--ink);
+  color: var(--fg);
+}
+
+.court-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.court-card-name {
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.court-card-how,
+.court-card-feel,
+.court-card-bar {
+  font-size: 24px;
+  line-height: 1.35;
+}
+
+.court-card-feel {
+  color: var(--lime);
+}
+
+.court-card-bar {
+  color: var(--fg-muted);
+}
+
+.court-card-count {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding: 22px;
+  border-radius: var(--r-lg);
+  background: var(--ink-2);
+  border: 1px solid var(--hairline);
+  color: var(--fg-muted);
+  font-size: 18px;
+}
+
+.court-card-count .tnum {
+  font-size: 72px;
+  font-weight: 700;
+  color: var(--fg);
+}
