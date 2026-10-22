@@ -1074,3 +1074,23 @@ on more than 2.5% under MediaPipe's, and no toss drift at all.
 **Still a model.** The spacing is inferred from the wrist's travel, and
 carrying the correlation to 50 fps assumes it decays exponentially. Everything
 here moves again with labelled footage at a phone's frame rate.
+
+## Speed from the sound of the bounce (N2.10, 2026-10-22) — not adopted
+
+The question: could the time from the strike's sound to the bounce's give a
+serve speed without slow motion? Simulated with drag and gravity, launches of
+30–55 m/s from 2.6 m, 2–10° down, keeping only serves that land in the box
+(12.5–18.3 m out). The phone stands by the server, so the bounce is heard
+x/343 s late. The estimator cannot know the bounce depth, so it assumes the
+middle of the box (15.4 m).
+
+| | |
+|---|---|
+| Serves in the box | 16 |
+| Median error against launch speed | 20% |
+| Worst | 38% |
+| Mean | −20% (always slow: drag takes a fifth of the speed by the bounce) |
+
+Even against the flight's own average speed the error runs from −25% to +10%,
+from the unknown bounce depth alone. The bar was 10%, so this does not ship,
+not even as a cross-check on the ball reading (N2.7).
