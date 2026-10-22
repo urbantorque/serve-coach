@@ -781,7 +781,8 @@ async function ballCandidates(
             ),
           }),
           // The column at up to 384 px wide: for a distant player that is every
-          // pixel of it, and a portrait close-up never gets a region at all.
+          // pixel of it, and for a portrait close-up the full-width band above
+          // the shoulders (N5.1).
           { signal, region, maxWidth: 384 },
         )
       : await readBitmaps(

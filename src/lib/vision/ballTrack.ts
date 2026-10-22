@@ -80,8 +80,12 @@ export const TOSS_REGION_WIDTH = 1.4
  * already calls out — so the same pixel budget spent on that column reads the
  * ball at every pixel the phone recorded.
  *
- * `undefined` when the column would be most of the frame anyway (a player
- * filling a portrait frame), so the caller reads the whole frame as before.
+ * When the column would be most of the frame anyway (a player filling a
+ * portrait frame), the band above the shoulders across the frame's whole width
+ * (N5.1). It used to be `undefined`, and the caller read the whole frame shrunk
+ * to 256 px — below the shoulders included, where the ball never is. The band
+ * read at the region's 384 px puts about half as many pixels again across the
+ * ball on a 1080 × 1920 portrait clip.
  */
 export function tossRegion(opts: {
   /** Tossing hand at release, source pixels. */
@@ -95,7 +99,8 @@ export function tossRegion(opts: {
   const { handX, floorY, bodyHeightPx, frameWidth, frameHeight } = opts
   const w = Math.min(frameWidth, TOSS_REGION_WIDTH * bodyHeightPx)
   const h = Math.min(frameHeight, floorY)
-  if (!(w > 0) || !(h >= 8) || w >= frameWidth * 0.9) return undefined
+  if (!(w > 0) || !(h >= 8)) return undefined
+  if (w >= frameWidth * 0.9) return { x: 0, y: 0, w: frameWidth, h }
   const x = Math.min(frameWidth - w, Math.max(0, handX - w / 2))
   return { x, y: 0, w, h }
 }

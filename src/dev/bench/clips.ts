@@ -43,6 +43,8 @@ interface Row {
   overall?: number
   /** The speed pass (N2.6): a reading with its range, or why there is none. Reported, not graded. */
   speed?: string
+  /** Whether the toss was found at all (N5.2): the ruler every metre and the speed stand on. */
+  toss?: string
   focus?: string
   metrics?: Record<string, number | undefined>
   ms: number
@@ -67,6 +69,7 @@ function describe(a: Analysis): Omit<Row, 'clip' | 'mode' | 'ms'> {
     contact: contact ? `${contact.t.toFixed(2)}${a.contact ? ` ${a.contact.from}` : ''}` : undefined,
     chest: a.diagnosis?.chestTurn ? `${a.diagnosis.chestTurn.shouldersMs}/${a.diagnosis.chestTurn.hipsMs}` : undefined,
     overall: a.overall,
+    toss: a.tossFlight ? 'found' : 'not found',
     speed: !a.speed ? 'not run' : 'speed' in a.speed ? `${(a.speed.speed.ms * 3.6).toFixed(0)} km/h [${(a.speed.speed.low * 3.6).toFixed(0)}–${(a.speed.speed.high * 3.6).toFixed(0)}] on ${a.speed.speed.samples}` : a.speed.miss,
     focus: a.focus?.title,
     metrics: {
@@ -107,11 +110,11 @@ async function run() {
   }
   ;(window as unknown as { __clips: Row[] }).__clips = rows
   document.getElementById('table')!.innerHTML =
-    '<table><tr><th>clip</th><th>mode</th><th>outcome</th><th>crop</th><th>refined</th><th>tracked</th><th>contact s</th><th>chest ms</th><th>overall</th><th>speed</th><th>focus</th><th>metrics</th><th>ms</th></tr>' +
+    '<table><tr><th>clip</th><th>mode</th><th>outcome</th><th>crop</th><th>refined</th><th>tracked</th><th>contact s</th><th>chest ms</th><th>overall</th><th>toss</th><th>speed</th><th>focus</th><th>metrics</th><th>ms</th></tr>' +
     rows
       .map(
         (r) =>
-          `<tr><td>${r.clip}</td><td>${r.mode}</td><td>${r.outcome}</td><td>${r.cropped ?? ''}</td><td>${r.refined ?? ''}</td><td>${r.tracked ?? ''}</td><td>${r.contact ?? ''}</td><td>${r.chest ?? ''}</td><td>${r.overall ?? ''}</td><td>${r.speed ?? ''}</td><td>${r.focus ?? ''}</td><td>${r.metrics ? JSON.stringify(r.metrics) : ''}</td><td>${r.ms.toFixed(0)}</td></tr>`,
+          `<tr><td>${r.clip}</td><td>${r.mode}</td><td>${r.outcome}</td><td>${r.cropped ?? ''}</td><td>${r.refined ?? ''}</td><td>${r.tracked ?? ''}</td><td>${r.contact ?? ''}</td><td>${r.chest ?? ''}</td><td>${r.overall ?? ''}</td><td>${r.toss ?? ''}</td><td>${r.speed ?? ''}</td><td>${r.focus ?? ''}</td><td>${r.metrics ? JSON.stringify(r.metrics) : ''}</td><td>${r.ms.toFixed(0)}</td></tr>`,
       )
       .join('') +
     '</table>'

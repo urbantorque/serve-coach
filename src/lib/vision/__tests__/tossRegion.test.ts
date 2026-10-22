@@ -81,11 +81,13 @@ check('the column is centred on the hand, a body and a half wide, and stops at t
   assert(r.y === 0 && r.h === 260, 'from the top of the frame to the shoulder line')
 })
 
-check('a player filling the frame gets no column, and the whole frame is read as before', () => {
-  assert(
-    tossRegion({ handX: 360, floorY: 500, bodyHeightPx: 1100, frameWidth: 720, frameHeight: 1280 }) === undefined,
-    'a column nearly the width of the frame was made',
-  )
+check('a player filling a portrait frame gets the band above the shoulders, full width, at a sharper read (N5.1)', () => {
+  const r = tossRegion({ handX: 360, floorY: 500, bodyHeightPx: 1100, frameWidth: 720, frameHeight: 1280 })
+  assert(r !== undefined && r.x === 0 && r.w === 720 && r.y === 0 && r.h === 500, `the band was ${JSON.stringify(r)}`)
+  // Pixels across the ball, against the old whole frame shrunk to 256 px wide.
+  const bandScale = Math.min(1, 384 / r!.w)
+  const oldScale = 256 / 720
+  assert(bandScale / oldScale >= 1.4, `the band reads the ball only ${(bandScale / oldScale).toFixed(2)}x as sharply`)
 })
 
 check('a candidate found in the column lands where it is in the frame', () => {
