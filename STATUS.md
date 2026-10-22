@@ -36,16 +36,19 @@ in that folder under the same names.
 
 ## What is open
 
-- **M1.2 build.** The spike passed: pose runs in a module worker with
-  identical landmarks. Moving every caller to it is not started.
+- **The pose worker as the default.** Every pose read in the analysis goes
+  through one switch, and `?worker=1` reads in a module worker with identical
+  landmarks (M1.2). It stays opt-in until a quiet machine has timed whole
+  analyses both ways and counted the long tasks.
 - **M1.4, and the timing half of M1.1.** This machine runs at up to 100% CPU
   from other apps, and headless Chrome crashes after reports, so no
   phone-shaped timing could be trusted. The threaded refine stays behind
   `ISOLATE=1` until a quiet machine settles it.
 - **N1.10.** Recording a whole practice in the app. Optional, not started.
-- **M4.2.** Install-sheet screenshots. Waiting on the same quiet machine.
 - **Bench tables.** The clip-bench speed and toss columns exist; the table
   needs a run on a quiet machine.
+- **Measured and not adopted:** per-tracker noise floors (M2.1) and speed
+  from the bounce's sound (N2.10). Both results are in the ledger.
 
 ## The owner's call
 
@@ -67,7 +70,7 @@ Work is on `roadmap/market-ready`, and its ledger is `ROADMAP.md`: the Notch
 programme (N0–N5) and the Lift programme (M0–M5), with one order of play at
 the end of the Notch section. Pick the first open item there.
 
-The suite runs **1,892 checks** (2026-10-22). The last loop tag is
+The suite runs **1,899 checks** (2026-10-22). The last loop tag is
 `loop-green-15`, from the August loop.
 
 Before trusting a size figure, run `npm run build`: `bundle.test.ts` reads

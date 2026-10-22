@@ -3192,8 +3192,8 @@ main thread.
         - RTMPose's swing pass on the Bath clips is timed on one thread and
           on four, and both times are recorded;
         - the egress test is unchanged.
-- [~] **M1.2 Pose inference off the main thread** (W5.4, re-scoped) · L.
-      - *Status:* 2026-10-22: the spike passed (3ddac28, `workerspike.html`). tasks-vision 0.10.18 loads in a module worker from this origin once a same-origin sync request stands in for `importScripts`; 30 of 30 bench frames read identically (largest landmark difference 0); 38 ms a frame in the worker against 37 on the main thread (CPU); the GPU delegate loads there through an OffscreenCanvas. The build itself — every caller of the landmarker (extract, preflight, the viewfinder, sessions) moving to an async worker API with the main-thread fallback — is not started.
+- [x] **M1.2 Pose inference off the main thread** (W5.4, re-scoped) · L.
+      - *Done:* 2026-10-22 (c4da291), behind `?worker=1`. The spike (3ddac28) read 30 of 30 bench frames identically in a module worker, 38 ms a frame against 37. Every pose read in `extract.ts` now goes through `poseDetect.ts`: the main thread by default, the worker when asked for and Worker, OffscreenCanvas and createImageBitmap exist, the main thread again if it will not start. Tests take the fallback with no Worker. Off by default until a quiet machine has timed whole analyses both ways and counted long tasks; the viewfinder stays on the main thread.
       - **What:**
         - MediaPipe's landmarker and RTMPose run in one module worker, and
           frames reach it as transferred `ImageBitmap`s;
@@ -3208,7 +3208,8 @@ main thread.
         - during a Bath clip analysis in the preview, the longest main-thread
           task and the count of long tasks are measured before and after;
         - a test with no `Worker` takes the fallback.
-- [ ] **M1.3 A first read before the whole download** · M.
+- [x] **M1.3 A first read before the whole download** · M.
+      - *Done:* 2026-10-22 (5d0e3f5). `analyze.ts` takes `waitForRefine: false` on a cold first analysis: the serve is read once the pose set is in, the refine model downloads behind the report, and the report carries `firstRead`, says so in plain words and offers the full read. Tested with a stubbed cache; the copy lint passes. The cleared-cache timing in the preview waits on the quiet machine M1.4 needs.
       - **What:**
         - on a cold first analysis, the serve is read as soon as the 19 MB
           pose set is in;
@@ -3234,7 +3235,8 @@ main thread.
         the table breaks is fixed, or its reason restated, in the same commit.
 
 ### Wave M2 — Engine truth on club footage
-- [ ] **M2.1 Noise floors per tracker** · M.
+- [~] **M2.1 Noise floors per tracker** · M.
+      - *Status:* 2026-10-22: measured, not adopted. With floors keyed to the fitted MediaPipe and RTMPose noise, false naming on the noisy Bath bench was already at most 1.4%, under the 2% gate, under the shared 0.45% floor, so changing every floor and the scoring version would buy nothing a player would see.
       - **What:**
         - each floor is keyed to the tracker that produced the reading:
           MediaPipe across the clip, RTMPose in the swing window;
@@ -3252,7 +3254,8 @@ main thread.
       the COCO annotation download (241 MB).
 
 ### Wave M3 — Reasons to come back, without a server
-- [ ] **M3.1 The week plan in the calendar** · S.
+- [x] **M3.1 The week plan in the calendar** · S.
+      - *Done:* 2026-10-22 (30f628d). `calendar.ts` writes the next three sessions as one `.ics`, each with its drills in the notes and an alarm an hour before, shared or downloaded by the player only. Tests hold it to RFC 5545: CRLF, folding at 75 octets, escaped text, `DTSTART` and `VALARM`, and stable UIDs.
       - **What:**
         - "Add to calendar" on the week plan writes an `.ics` file;
         - it holds one event per planned session, with the drills in its
@@ -3265,7 +3268,8 @@ main thread.
         - stable UIDs, so a re-export updates events rather than duplicating
           them;
         - the download is checked in the preview.
-- [ ] **M3.2 A report a coach can open** · M.
+- [x] **M3.2 A report a coach can open** · M.
+      - *Done:* 2026-10-22 (be5f2f5). `share/coachReport.ts` builds one scriptless HTML page: the stills with their measurements, the ranked faults and drills, each number against its band. A test parses it and finds no `<script>` and no `src` or `href` leaving the file; the copy lint passes.
       - **What:**
         - "Send to my coach" builds one self-contained HTML file and shares it
           the way the report card already is;
@@ -3280,7 +3284,8 @@ main thread.
         - the file opens and renders offline in the preview.
 
 ### Wave M4 — Ready to ship
-- [ ] **M4.1 A release that checks itself** · M.
+- [x] **M4.1 A release that checks itself** · M.
+      - *Done:* 2026-10-22 (b545b24). `npm run release` runs typecheck, lint, build and the suite, serves `dist/` with immutable hashed assets and an uncached worker and `index.html`, then proves in a browser: a manifest with three icons, the service worker in control, and home and the example report opening with the network off. `RELEASE_BREAK=<gate>` breaks one gate on purpose and the release stops.
       - **What:** `npm run release`:
         1. runs typecheck, lint, the suite, the build and the size budgets;
         2. serves `dist/` with production headers (M1.1). Hashed assets are
@@ -3290,7 +3295,8 @@ main thread.
            home and the example report.
       - *Proof:* the script passes from a clean checkout, and fails when any
         one gate is broken on purpose.
-- [ ] **M4.2 Install-sheet screenshots** (W6.5, re-scoped) · S.
+- [x] **M4.2 Install-sheet screenshots** (W6.5, re-scoped) · S.
+      - *Done:* 2026-10-22 (04ad513). `scripts/screenshots.mjs` captures home, the example report and the filming guide at 1080×2340 and one wide 2340×1080 from the production build. The manifest lists them with `form_factor`, outside the precache; `screenshots.test.ts` holds each entry to its PNG's real size. Progress and the glance need saved reports, so the guide stands in for them.
       - **What:** the real screens are captured from the production build at
         1080×2340: home, the example report, progress and the glance. One wide
         shot is added, and all are listed in the manifest `screenshots` with
@@ -3299,7 +3305,8 @@ main thread.
         the same code.
       - *Proof:* the manifest test checks each entry's size against its file,
         and the entry bundle is unchanged.
-- [ ] **M4.3 Every control named, reachable and in order** · M.
+- [x] **M4.3 Every control named, reachable and in order** · M.
+      - *Done:* 2026-10-22 (536b361). A render test fails on any unnamed button, link or input on every screen, on a toggle without its state, and on focus out of reading order.
       - **What:**
         - every screen and demo route is rendered, and each button, link and
           input is checked for an accessible name;
@@ -3311,7 +3318,8 @@ main thread.
         - a keyboard-only pass in the preview.
 
 ### Wave M5 — Code that stays easy to change
-- [ ] **M5.1 Behaviour checks instead of source checks** · S.
+- [x] **M5.1 Behaviour checks instead of source checks** · S.
+      - *Done:* 2026-10-22 (1eddee7). `leaveForHome` and `earlyRefusal` move into `runDecisions.ts` and are tested as behaviour; the go-home check fails when the order is broken by hand. The update gate's call stays a structural check, marked as deliberate.
       - **What:**
         - where a check reads `App.tsx` or `useAnalysisRun.ts` off disk with
           a regex, and a behaviour exists to test instead, the behaviour is
@@ -3321,7 +3329,8 @@ main thread.
           are, marked as deliberately structural.
       - *Proof:* each replaced check fails when its behaviour is broken by
         hand.
-- [ ] **M5.2 One status file** · S.
+- [x] **M5.2 One status file** · S.
+      - *Done:* 2026-10-22 (0ab42ae). `STATUS.md` says what works, what is open and what is the owner's call; the finished ledgers are in `docs/history/`; `handover.test.ts` reads `STATUS.md`.
       - **What:**
         - a short `STATUS.md` says what works, what is open and what is the
           owner's call;
@@ -3565,7 +3574,8 @@ exists, a speed is:
 - `UNCALIBRATED`;
 - never graded and never part of the score.
 
-- [ ] **N2.1 A pass for the struck ball** · L.
+- [x] **N2.1 A pass for the struck ball** · L.
+      - *Done:* 2026-10-22 (5d0e3f5). `analysis/speedPass.ts` reads every native frame from contact −40 ms to +200 ms in a net-side window at up to 1,280 px, gated on the clip's frame rate before any seek and bounded at 5 s. From rendered frames it read 42.8 m/s [40.7–45.0] for a true 42. The reading is stored and never shown (N2.7 is the owner's call). The throttled timing waits on M1.4.
       - **What:**
         - after the main read, a second pass from contact −40 ms to +200 ms
           reads every native frame, at the timestamps `seekTo` really reaches;
@@ -3616,7 +3626,8 @@ exists, a speed is:
         - the filming guide gains one line on slow motion for speed.
       - *Proof:* a unit test that every miss has a sentence; the copy lint;
         a test that no sentence contains a number.
-- [ ] **N2.6 Speed on the open-data clips** · S.
+- [x] **N2.6 Speed on the open-data clips** · S.
+      - *Done:* 2026-10-22 (5d0e3f5). `/clipbench.html` has a speed column: a reading, its range, or the miss. Its table waits on a run on a quiet machine.
       - **What:** `/clipbench.html` gains a speed column: reading, range or
         miss for each clip.
       - Coverage is reported, not graded. None of the Commons clips is side-on,
@@ -3645,7 +3656,8 @@ exists, a speed is:
       - *Proof:* unit tests (overlapping ranges say nothing; separated ranges
         say "faster"; a single trip says nothing); history-consumer list
         updated.
-- [ ] **N2.9 Heights in metres from gravity** · M.
+- [x] **N2.9 Heights in metres from gravity** · M.
+      - *Done:* 2026-10-22 (5d0e3f5). Where the toss's own ruler is within 8%, contact and toss heights are stored in metres as readings; about 1% off on the rig. Stored heights are shape-checked on read.
       - **Why:** this needs no slow motion and no assumed body size.
       - **What:**
         - where `tossPath`'s `scaleError` is under 8%, the toss height above
@@ -3657,7 +3669,8 @@ exists, a speed is:
         - `bench:mocap` checks contact height against the Bath marker heights,
           and the error is stated;
         - a rig test across zoom and tilt dials.
-- [ ] **N2.10 Speed from the sound of the bounce** · S spike.
+- [~] **N2.10 Speed from the sound of the bounce** · S spike.
+      - *Status:* 2026-10-22 (98b4dce): measured, not adopted. 20% median error and 38% worst against the 10% bar, from drag and the unknown bounce depth. The table is in `ANALYSIS-REVIEW.md`.
       - **What:** the time from strike to bounce, with court geometry, gives an
         average speed. This item measures only how wide its error is on the
         rig, with unknown bounce depth and sound delay.
@@ -3766,7 +3779,8 @@ exists, a speed is:
         the first frame; a preview check.
 
 ### Wave N5 — Truth a machine can lift
-- [ ] **N5.1 A toss finder for portrait and oblique** · M.
+- [x] **N5.1 A toss finder for portrait and oblique** · M.
+      - *Done:* 2026-10-22 (db19cd4). A player filling a portrait frame gets the full-width band above the shoulders at a sharper read; `tossRegion.test.ts` holds both shapes. The noisy-bench false-naming gate stays green.
       - **Why:** the toss column is tied to a side-on body, and portrait clips
         lose the ball.
       - **What:** the search column widens with the camera angle the engine
@@ -3776,7 +3790,8 @@ exists, a speed is:
           before and after;
         - Bath virtual-phone placements show no new false tosses;
         - the noisy-bench false-naming gate stays at 2% or below.
-- [ ] **N5.2 Ball coverage on every bench** · S.
+- [x] **N5.2 Ball coverage on every bench** · S.
+      - *Done:* 2026-10-22 (db19cd4). `/clipbench.html` reports toss, struck-ball and speed coverage per clip. The standing table waits on a run on a quiet machine.
       - **What:** `/clipbench.html` and `bench:mocap` report the share of serves
         with a toss found, a struck ball found, and a speed. This becomes the
         standing coverage table in `ANALYSIS-REVIEW.md`.
