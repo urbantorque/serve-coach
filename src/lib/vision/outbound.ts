@@ -17,12 +17,11 @@
  *
  * WHAT IT DOES NOT DO, AND WILL NOT.
  *
- *   · **No speed in mph, ever.** R61 is explicit and the arithmetic agrees: a
- *     speed needs a distance, a distance needs a scale, and the only scale this
- *     app has is the player's own body height in the frame — measured at the
- *     baseline, on a ball travelling away from the camera into a plane nothing
- *     calibrated. `serves.ts` already refuses court lines for the same reason at
- *     a much easier distance.
+ *   · **No speed from this.** A smear's length is speed times an exposure the
+ *     video does not record. The serve's speed is `serveSpeed.ts`'s, read off
+ *     the struck ball's positions with the toss's gravity as the ruler — the
+ *     scale this file once said the app did not have (the old "no speed in mph,
+ *     ever", R61, retired on the owner's call with N2.7).
  *   · **No claim past the frame count.** See `OUTBOUND_FLOOR`.
  */
 

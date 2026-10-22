@@ -440,5 +440,9 @@ export function sampleAnalysis(dials: Partial<ServeDials> = {}, tier?: number, f
     frames,
     window: { start: frames[0].t, end: frames[frames.length - 1].t },
     serves: { count: 1, index: 0 },
+    // A club serve's speed as the reader states one (N2.7): 130 km/h, the
+    // range a 60 fps clip from the speed placement typically carries. The rig
+    // flies no ball, so this is the one figure on the example not measured.
+    speed: { speed: { ms: 36.1, low: 34.0, high: 38.4, samples: 6, span: 0.083, depthAngle: 4 } },
   }
 }

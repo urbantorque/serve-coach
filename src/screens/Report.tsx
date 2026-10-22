@@ -10,6 +10,8 @@ import PosePlayer from '../components/PosePlayer'
 import PracticeCard from '../components/PracticeCard'
 import { DeltaChip } from '../components/Trend'
 import { Cue, Icon, ScoreRing } from '../components/primitives'
+import SpeedRow from '../components/SpeedRow'
+import { SPEED_MISS_LINE } from '../lib/speedCopy'
 import { SOFT_READ, readQuality } from '../components/statusLabels'
 import PoseStill from '../components/PoseStill'
 import FaultDemoPanel from '../components/FaultDemoPanel'
@@ -713,6 +715,11 @@ export default function Report({
         )}
       </section>
 
+      {/* The serve's speed, when one was read (N2.7). A miss is said in the
+          fold, not here: a player who did not film for a speed should not
+          meet a refusal under their score. */}
+      {analysis.speed && 'speed' in analysis.speed && <SpeedRow speed={analysis.speed.speed} />}
+
       {analysis.serves && analysis.serves.count > 1 && (
         <section className="serves">
           <p className="serves-lead">
@@ -1270,6 +1277,12 @@ export default function Report({
           <Icon name="chevron" size={16} />
         </summary>
         <div className="report-more-body">
+        {analysis.speed && 'miss' in analysis.speed && (
+          <section className="speed-why" aria-label="Serve speed">
+            <h2 className="block-title">Serve speed</h2>
+            <p className="speed-range">{SPEED_MISS_LINE[analysis.speed.miss]}</p>
+          </section>
+        )}
         {/*
          * Comparing the serves in the clip, and the caveats on how it was read.
          *

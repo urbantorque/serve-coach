@@ -3633,7 +3633,8 @@ exists, a speed is:
       - Coverage is reported, not graded. None of the Commons clips is side-on,
         and none has a radar figure.
       - *Proof:* the bench runs and the table goes into `ANALYSIS-REVIEW.md`.
-- [ ] **N2.7 The speed on the report and the glance** · M. Owner's OK first.
+- [x] **N2.7 The speed on the report and the glance** · M. Owner's OK first.
+      - *Done:* 2026-10-22, on the owner's OK ("worth showing serve speed"). `SpeedRow.tsx` under the hero: the best figure, the likely range with `Term` on "Likely", the range drawn on a short scale, and a km/h · mph switch that is remembered (`Prefs.speedUnit`; the locale's unit until then). The glance says it in one line; a miss is said only inside the report's fold. No status colour, and `speedCopy.test.ts` fails if anything that scores, grades or plans reads the speed. Render tests for a reading, a miss and none (`speedRow.test.ts`); checked at 375×812 in a browser, no console errors; the install screenshot recaptured. The old "no speed in mph, ever" rule is retired in `outbound.ts` and `ANALYSIS-REVIEW.md`.
       - **What:**
         - when a speed is read, one row sits under the hero: "About 150 km/h ·
           likely 138–162", drawn as a band on a short scale, with `Term` on
@@ -3677,6 +3678,13 @@ exists, a speed is:
       - It ships only if the error is under 10%, and then only as a cross-check
         on N2.7, never as a reading on its own.
       - *Proof:* a rig table in `ANALYSIS-REVIEW.md`.
+- [x] **N2.11 A short track pinned to the toss** · M.
+      - *Done:* 2026-10-22. Where the free fit needs five sightings of the struck ball, `SHORT_SAMPLES` reads three, with two more rows from where the toss had the ball at impact (`TossPath.anchorError`) and the moment of impact searched for, its range taken across every moment the samples allow. Candidates within `SEPARATION` (0.3 m) of the toss are left out, since the racket is there too: without that, a racket point read a serve 17% slow inside a range of 9%. Four samples are tested one out; three have no row to spare. Only for tracks the free fit could not take. Real-time clips are now read down to `LOWEST_FPS` (24).
+      - *Proof:* `serveSpeed.test.ts`, from the speed placement at 30 and 60 fps with decoys: the range holds the truth 98.8%, p95 error 4.5%, worst 8.3%. From rendered pixels (`serveSpeedPixels.test.ts`) 60 fps read 4 of 4 and 30 fps 1 of 4, every range holding the truth. Decoys alone never read, now at 30, 60 and 240 fps.
+- [x] **N2.12 Still points are not the struck ball** · S.
+      - *Done:* 2026-10-22. A candidate found in the same place on another frame is dropped before the search: a ball lying on the court on the struck ball's path read a pinned serve 41% fast. It also lifted slow motion: 83 of 240 read against 76, p95 error 4.5% against 5.3%, and a rendered 240 fps serve that was `not_found` now reads 42.7 for a true 42.
+- [x] **N2.13 A placement for a speed** · S.
+      - *Done:* 2026-10-22. `SPEED_PLACEMENT`: the phone on its side, six to seven metres back, with the player in the half of the picture away from the net. Measured on the simulated launches: 30 fps from 3% of serves to 44%, 60 fps from 19% to 79%, 120 fps from 56% to 83%, the range holding the truth 97–100%. A new rule in the filming guide, and the `not_found` and `frame_rate` lines now say how. The guide's own upright placement is unchanged: it is the right one for the body, and an upright clip almost never gives a speed, which the guide now says.
 
 ### Wave N3 — Show what is already computed
 - [x] **N3.1 What your misses have in common** · S.

@@ -1707,3 +1707,60 @@
 .pair-list--one .pair-label {
   display: none;
 }
+
+/* The serve's speed (N2.7): a reading, not a grade, so no status colour. */
+.speed {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  max-width: 340px;
+  margin: 4px auto 0;
+  padding: 14px 16px 12px;
+  border-radius: var(--r-md);
+  background: var(--ink-1);
+  border: 1px solid var(--hairline);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+}
+
+.speed-head,
+.speed-ends {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.speed strong {
+  font-size: 34px;
+  font-weight: var(--wt-title);
+  color: var(--fg);
+}
+
+.speed-scale {
+  position: relative;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--ink-3);
+}
+
+.speed-scale span {
+  position: absolute;
+  inset: 0 auto;
+  min-width: 3px;
+  border-radius: var(--r-pill);
+  background: var(--fg-faint);
+}
+
+.speed .speed-best {
+  inset: -3px auto;
+  margin-left: -1.5px;
+  background: var(--fg);
+}
+
+.speed-ends {
+  font-size: 11px;
+}
+
+.speed-range {
+  font-size: 13px;
+}

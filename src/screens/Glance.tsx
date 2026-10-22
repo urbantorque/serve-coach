@@ -14,6 +14,8 @@ import { beforeAfter } from '../lib/graduationCard'
 import FixedPair from '../components/FixedPair'
 import TermCue from '../components/TermCue'
 import type { Session } from '../lib/storage/db'
+import { readPrefs } from '../lib/storage/prefs'
+import { defaultSpeedUnit, speedFigures, speedGlanceLine } from '../lib/speedCopy'
 
 /**
  * What the serve was, in one number and one line, without leaving the court.
@@ -335,6 +337,14 @@ export default function Glance({
             <p className="glance-move">
               <Icon name="info" size={15} />
               <span>{rotationLine}</span>
+            </p>
+          )}
+
+          {/* The speed in one line, when one was read (N2.7); a miss waits
+              for the report's fold. */}
+          {analysis.speed && 'speed' in analysis.speed && (
+            <p className="glance-serves">
+              {speedGlanceLine(speedFigures(analysis.speed.speed, readPrefs().speedUnit ?? defaultSpeedUnit()))}
             </p>
           )}
 

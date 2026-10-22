@@ -390,7 +390,9 @@ engineer familiar with the codebase.
 - **No cloud inference**, however good — `LOOP.md` §7.
 - **No external-rotation number from one camera** (~21° RMSE); the current
   refusal is right.
-- **No speed in mph** from a 30 fps single camera; the R61 refusal is right.
+- **No speed from the body.** A serve speed is read off the ball, with the
+  toss as its ruler, and said only with the range it is good to (N2.7, which
+  replaced the old "no speed in mph" rule on the owner's call, 2026-10-22).
 - **No threshold lowered to admit clips** — the new frame-rate and crop work
   admits more footage honestly.
 - **No bigger model before a validation set exists.** Without Tier 0, a model
@@ -1094,3 +1096,53 @@ middle of the box (15.4 m).
 Even against the flight's own average speed the error runs from −25% to +10%,
 from the unknown bounce depth alone. The bar was 10%, so this does not ship,
 not even as a cross-check on the ball reading (N2.7).
+
+
+## Serve speed, against the market (N2.7, N2.11–N2.13, 2026-10-22)
+
+**What the leading products do** (V = vendor claim, I = independent):
+
+| Product | Method | Accuracy |
+|---|---|---|
+| Pocket Radar, Bushnell, Stalker | Doppler radar, in line with the ball | ±1 mph (V); reads v·cosθ, so a wide serve reads low |
+| SwingVision | Ball tracked through the whole flight from behind the baseline | Reports the flight's *average*, about 10% under radar (V); I: up to 11 km/h off radar on fast serves |
+| Athla Velocity | One phone about 20 ft to the side | ±0.3 mph of a Stalker (V); I: ICC 0.970, 67 players |
+| ServeSpeed (iOS) | Player marks contact and bounce | "Verified at the Australian Open" (V, no figure) |
+| Zepp, Babolat, Sony sensors | Racket speed × about 1.4 | Fit for one player's trend only (I) |
+| Kelley et al. 2010 | One high-speed camera, automatic | 4.5% against light gates (I) |
+
+**What this app does.** It reads the launch speed, which a radar reads, off
+the struck ball's own positions, with the toss's gravity as the ruler (no
+height entered, no court lines), the depth motion fitted, drag taken out, and
+a range sized by the clip's own fit. On the simulated launches with decoys:
+
+| Clip | Read | Range holds the truth | p95 error | Worst |
+|---|---|---|---|---|
+| Slow motion, 120/240 fps, guide placement | 83 of 240 (65% landscape) | 98.8% | 4.5% | 8.6% |
+| 30/60 fps, speed placement | 37% at 30, 75% at 60 (landscape) | 98.8% | 4.5% | 8.3% |
+| 30 fps, guide placement | 2 of 60 | all | — | — |
+
+That puts it beside Kelley's single high-speed camera on error, ahead of a
+whole-flight average on what it measures, and alone in stating how far each
+reading can be trusted. What it is not yet: checked against a radar on real
+serves. Until one is filmed the speed stays `UNCALIBRATED`, said as a range,
+and never graded.
+
+**Placement matters more than any fit.** From the guide's placement, centred
+at four to six metres, the ball leaves the picture within two frames at 30
+fps. Six to seven metres back with the net side of the picture open:
+
+| Placement | 30 fps | 60 fps | 120 fps |
+|---|---|---|---|
+| Guide, 4–6 m, centred | 3% | 19% | 56% |
+| 5–6 m, looking 1.5 m netwards | 39% | 69% | 85% |
+| 6–7 m, looking 1.5 m netwards (`SPEED_PLACEMENT`) | 44% | 79% | 83% |
+| 6–7 m, looking 2.5 m netwards | 49% | 93% | 81% |
+| 8–9 m, looking 2.5 m netwards | 35% | 93% | 78% |
+
+One and a half metres rather than two and a half: the wider lead read more at
+60 fps but held the truth only 94% of the time at 30, and it pushes the player
+towards the edge of the picture. Not adopted: speed from the bounce's sound
+(N2.10, 20% median error), from the wrist (11% average error on the Bath
+serves, blind to racket speed), and from blur length (needs an exposure time
+the video does not record).

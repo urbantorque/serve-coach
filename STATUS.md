@@ -29,10 +29,12 @@ in that folder under the same names.
   calendar (`.ics`), and a scriptless HTML report for a coach.
 - **Offline.** One download with its size stated, a first read before the
   refinement model is in, backups, and a crash screen that keeps data.
-- **Serve speed, measured and not shown.** On slow-motion clips the struck
-  ball is read at the clip's own frame rate. The speed and its range, or the
-  reason there is none, are stored on the report. Contact and toss heights in
-  metres come from the toss's own gravity. Nothing displays either one yet.
+- **Serve speed, on the report.** The launch speed and its likely range,
+  under the score and on the glance, in km/h or mph. Read on slow motion, and
+  on ordinary 30 and 60 fps clips filmed from the speed placement (six to
+  seven metres back, net side of the picture open). A miss says what to change.
+  Never graded, and still uncalibrated against a radar. Contact and toss heights
+  in metres come from the toss's own gravity and are stored, not shown.
 
 ## What is open
 
@@ -52,8 +54,8 @@ in that folder under the same names.
 
 ## The owner's call
 
-- **Showing a serve speed at all** (N2.7, N2.8). It reverses the written
-  rule "No speed in mph, ever". The engine side is done and stored.
+- **Speed over time** (N2.8): trends, first against second serve, and a
+  fastest-serve record. Showing a speed was approved and is done (N2.7).
 - **A radar-checked serve.** One would move the speed from `UNCALIBRATED` to
   checked.
 - **Real club players**, filmed by a coach and sent through `?fixture`. Every
@@ -70,7 +72,7 @@ Work is on `roadmap/market-ready`, and its ledger is `ROADMAP.md`: the Notch
 programme (N0–N5) and the Lift programme (M0–M5), with one order of play at
 the end of the Notch section. Pick the first open item there.
 
-The suite runs **1,899 checks** (2026-10-22). The last loop tag is
+The suite runs **1,910 checks** (2026-10-22). The last loop tag is
 `loop-green-15`, from the August loop.
 
 Before trusting a size figure, run `npm run build`: `bundle.test.ts` reads
