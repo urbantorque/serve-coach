@@ -15,6 +15,7 @@ import { interruptedLine, takeInterrupted } from './lib/interrupted'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
 import { captureAgainWith } from './components/captureAgain'
 import { withTransition } from './components/viewTransition'
+import { forgetAll } from './lib/analysisCache'
 import type { FlawId } from './lib/analysis/flaws'
 import { faultMoveOnTrip, rotationMoveOnTrip, scoreMoveAgainst, scoringVersionOf, streakLine, typeOf } from './lib/progress'
 import { bestPriorTo } from './lib/bestServe'
@@ -828,6 +829,14 @@ export default function App() {
               onBack={goHome}
               onAnalyzeAnother={() => captureAgain(shownReport.capture ? 'framing' : 'pick')}
               onFilmAgain={() => captureAgain('framing')}
+              onReadFully={
+                liveReport?.analysis.firstRead && lastFileRef.current
+                  ? () => {
+                      forgetAll()
+                      void run(lastFileRef.current!, liveReport.analysis.handedness, liveReport.analysis.serves.index, liveReport.analysis.serveType, 'report', { waitForRefine: true })
+                    }
+                  : undefined
+              }
               bestGap={bestGapFor(typeOf(shownReport))}
               basketGapDelta={gapDeltaForView(shownReport.id, typeOf(shownReport))}
               bestScore={bestScoreFor(typeOf(shownReport))}

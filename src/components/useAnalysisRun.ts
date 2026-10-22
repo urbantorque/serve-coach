@@ -130,6 +130,8 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
        * which reads as a glitch rather than as a step.
        */
       landOn: 'report' | 'sweep' = 'report',
+      /** A full read of a clip first read without the refinement model (M1.3). */
+      extra: { waitForRefine?: boolean } = {},
     ): Promise<Analysis | undefined> => {
       if (file.size > MAX_BYTES) {
         setView({
@@ -238,6 +240,7 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
           handedness,
           serveIndex,
           serveType,
+          waitForRefine: extra.waitForRefine,
           // Same clip, so the serves are in the same places. This is what makes
           // tapping a second serve chip cost the two seconds of footage it is
           // about rather than another full scan of the video.

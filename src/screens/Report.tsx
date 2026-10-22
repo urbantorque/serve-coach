@@ -119,6 +119,8 @@ interface Props {
    * where the caller has no viewfinder to open, as the example report does not.
    */
   onFilmAgain?: () => void
+  /** Read this clip again with the refinement model, after a first read (M1.3). */
+  onReadFully?: () => void
   onFlipHandedness?: () => void
   /** Re-run against a different serve in the same clip. */
   onPickServe?: (index: number) => void
@@ -256,6 +258,7 @@ export default function Report({
   onBack,
   onAnalyzeAnother,
   onFilmAgain,
+  onReadFully,
   onFlipHandedness,
   onPickServe,
   onCheckConsistency,
@@ -616,6 +619,24 @@ export default function Report({
           <span>
             <strong>This is an example.</strong> It comes from a simulated serve, so you can see
             what a report looks like before you film your own.
+          </span>
+        </p>
+      )}
+
+      {/* A first read (M1.3): read before the sharper swing model was on the
+          phone, rather than waiting on its download. Said, with the full read
+          a tap away; the model keeps coming down behind this report. */}
+      {analysis.firstRead && (
+        <p className="example-banner">
+          <Icon name="info" size={16} />
+          <span>
+            <strong>A first read.</strong> I read your swing before the sharper swing model finished
+            downloading.{' '}
+            {onReadFully && (
+              <button type="button" className="levelled-btn" onClick={onReadFully}>
+                Read it in full
+              </button>
+            )}
           </span>
         </p>
       )}

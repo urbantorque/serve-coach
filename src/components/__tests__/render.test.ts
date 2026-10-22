@@ -894,6 +894,13 @@ check('a basket\'s drill check leads the focus card, above the drill (N4.2)', ()
   assert(said < out.indexOf('class="focus-drill"'), 'the check still follows the drill')
 })
 
+check('a first read says so, with the full read a tap away; a full read says nothing (M1.3)', () => {
+  const first = html(createElement(Report, { analysis: { ...sampleAnalysis(), firstRead: true }, onBack: noop, onAnalyzeAnother: noop, onReadFully: noop }))
+  assert(first.includes('A first read.') && first.includes('Read it in full'), 'a first read was not said, or had no way to the full read')
+  const full = html(createElement(Report, { analysis: sampleAnalysis(), onBack: noop, onAnalyzeAnother: noop, onReadFully: noop }))
+  assert(!full.includes('A first read.'), 'a full read was called a first read')
+})
+
 check('tagging sits above the fold, under the focus (N1.9)', () => {
   const out = html(createElement(Report, { analysis: sampleAnalysis(), onBack: noop, onAnalyzeAnother: noop, onTagServe: noop, onTagOutcome: noop }))
   const tag = out.indexOf('Tag this serve')

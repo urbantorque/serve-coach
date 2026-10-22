@@ -787,4 +787,16 @@ check('an unprofiled report is counted under the default, not as its own player'
   assert(found.length === 1 && found[0] === DEFAULT_PROFILE, `found ${JSON.stringify(found)}`)
 })
 
+heading('A stored serve speed (N2.1)')
+
+check('a whole reading and a known miss survive storage; anything else is dropped', () => {
+  const withSpeed = (speed: unknown) => normalise({ ...(storedBasket(undefined) as object), speed })?.speed
+  const reading = { speed: { ms: 40, low: 38, high: 43, samples: 9, span: 0.07, depthAngle: 3 } }
+  assert(JSON.stringify(withSpeed(reading)) === JSON.stringify(reading), 'a whole reading was changed or dropped')
+  assert((withSpeed({ miss: 'frame_rate' }) as { miss: string })?.miss === 'frame_rate', 'a known miss was dropped')
+  assert(withSpeed({ miss: 'gremlins' }) === undefined, 'an unknown miss was kept')
+  assert(withSpeed({ speed: { ms: 40, low: 38 } }) === undefined, 'half a reading was kept')
+  assert(withSpeed({ speed: { ms: 50, low: 38, high: 43, samples: 9, span: 0.07, depthAngle: 3 } }) === undefined, 'a best figure outside its own range was kept')
+})
+
 report()

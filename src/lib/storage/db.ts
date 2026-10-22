@@ -860,7 +860,25 @@ export function normalise(raw: unknown): Session | undefined {
      * some report in a real store.
      */
     track: readSwingTrack(s.track),
+    // Dropped rather than repaired (N2.1): a speed is a number with a range,
+    // and half of one from a hand-edited backup must not reach a screen.
+    speed: usableSpeed(s.speed),
+    heights:
+      s.heights && ['contactM', 'tossAboveHandM', 'rulerError'].every((k) => Number.isFinite((s.heights as unknown as Record<string, number>)[k]))
+        ? s.heights
+        : undefined,
   }
+}
+
+const MISSES = ['view', 'frame_rate', 'no_toss', 'timing', 'not_found', 'unsure']
+
+function usableSpeed(v: unknown): Session['speed'] {
+  if (!v || typeof v !== 'object') return undefined
+  const o = v as { miss?: unknown; speed?: Record<string, unknown> }
+  if (typeof o.miss === 'string') return MISSES.includes(o.miss) ? (o as Session['speed']) : undefined
+  const r = o.speed
+  const ok = r && ['ms', 'low', 'high', 'samples', 'span', 'depthAngle'].every((k) => typeof r[k] === 'number' && Number.isFinite(r[k] as number))
+  return ok && (r.low as number) <= (r.ms as number) && (r.ms as number) <= (r.high as number) ? (o as Session['speed']) : undefined
 }
 
 /* ------------------------------------------------------------ field repairs */

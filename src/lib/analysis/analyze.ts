@@ -11,6 +11,10 @@ import {
   refineSwing,
 } from '../pose/extract'
 import { framingIssues } from './framingIssues'
+import { readServeSpeed, type SpeedReading } from './speedPass'
+import { gravityHeights, type GravityHeights } from '../vision/heights'
+import { tossAt, tossPath } from '../vision/serveSpeed'
+import { forwardDirection } from './contactAhead'
 import type { ServeType } from '../storage/prefs'
 import {
   candidateToFrame,
@@ -166,6 +170,14 @@ export interface AnalyzeOptions {
    * second model per serve; also the clip benchmark's before-and-after.
    */
   skipPoseRefine?: boolean
+  /**
+   * Wait for the refinement model if it is not in yet (M1.3). Off, a cold
+   * first analysis reads without it rather than stalling on a 33 MB download,
+   * says so on the report, and fetches the model behind it for next time.
+   */
+  waitForRefine?: boolean
+  /** Leave out the serve speed pass (N2.1): a sweep reads every serve and has no slow motion to spend it on. */
+  skipSpeed?: boolean
   /** Serve times already located, so the clip is not scanned again per serve. */
   knownServeTimes?: number[]
   /**
@@ -380,6 +392,7 @@ export const SWEEP_SKIPS = {
   skipThumbnails: true,
   skipRacketBoxes: true,
   skipPoseRefine: true,
+  skipSpeed: true,
 } as const
 
 export async function sweepServes(
@@ -1527,10 +1540,14 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
    * on, so every serve in a basket is read on one clock.
    */
   let stretch: Stretch = opts.knownStretch ?? { factor: 1, source: 'none' }
+  // The file's own frame rate, where its container says (N2.1's gate).
+  let fileFps: number | undefined
   if (!opts.knownStretch && opts.file) {
     // Loaded only for a clip that came with its file — see `pose/container.ts`.
     const { readContainerTiming, stretchFromContainer } = await import('../pose/container')
-    const fromFile = stretchFromContainer(await readContainerTiming(opts.file))
+    const timing = await readContainerTiming(opts.file)
+    fileFps = timing?.fileFps
+    const fromFile = stretchFromContainer(timing)
     if (fromFile) stretch = { factor: fromFile, source: 'file' }
   }
 
@@ -1690,10 +1707,15 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
    * pixels: levelling rotates them, and the model reads pixels.
    */
   let refined = 0
-  if (!opts.skipPoseRefine) {
+  // A first read (M1.3): the refinement model is not on the phone yet, so this
+  // pass reads without it and the model comes down behind the report.
+  const refineMissing = !opts.skipPoseRefine && !refineEngineResident() && !(await isRefineModelCached())
+  const firstRead = refineMissing && !opts.waitForRefine
+  if (firstRead) void loadRefineEngine().catch(() => undefined)
+  if (!opts.skipPoseRefine && !firstRead) {
     // Same reasoning as the racket pass's check below: asked only when this
     // pass runs, so a sweep that skips it never reports a download it did not make.
-    coldEngine = coldEngine || (!refineEngineResident() && !(await isRefineModelCached()))
+    coldEngine = coldEngine || refineMissing
     const read = await poseReader()
     if (read) {
       onProgress({ step: 'measuring', ratio: 0.3, detail: 'Sharpening the swing' })
@@ -1919,6 +1941,54 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
       })
     : undefined
 
+  // The serve's speed (N2.1): read on slow motion, kept on the report, not
+  // shown until that is the owner's call. A real-time clip is answered
+  // `frame_rate` before a single seek; the file's rate comes from its
+  // container or the in-app camera, and counts as 30 when neither says.
+  let speed: SpeedReading | undefined
+  if (!opts.skipSpeed) {
+    const nativeFps = fileFps ?? (opts.file ? cameraOf(opts.file)?.frameRate : undefined) ?? 30
+    const e = engine()
+    const wristLM = skel.racket === 'left' ? LM.leftWrist : LM.rightWrist
+    const at = e[skel.keys.contact]
+    const dir = forwardDirection(e, skel.keys.trophy, skel.keys.contact, wristLM, skel.bodyHeight)
+    speed = await readServeSpeed(
+      {
+        realFps: nativeFps * stretch.factor,
+        factor: stretch.factor,
+        contactT: at.t,
+        contactAt: { x: at.image[wristLM].x, y: at.image[wristLM].y },
+        bodyHeight: skel.bodyHeight,
+        netSide: dir.sign >= 0 ? 1 : -1,
+        toss: retimeFlight(rawBall, stretch.factor),
+        signal,
+      },
+      { width: video.videoWidth, height: video.videoHeight },
+      (times, read, o) => readBitmaps(video, times, read, o),
+    )
+  }
+
+  // Heights in metres off the toss's own gravity (N2.9): readings, where the
+  // ruler is sure enough, and nothing where it is not.
+  let heights: GravityHeights | undefined
+  if (rawBall && rawBall.samples.length >= 8) {
+    const aspectNow = video.videoWidth / Math.max(1, video.videoHeight)
+    const served = retimeFlight(rawBall, stretch.factor)!
+    const e = engine()
+    const contactT = e[skel.keys.contact].t
+    const ruler = tossPath(
+      served.samples.map((p) => ({ t: p.t, x: p.x * aspectNow, y: p.y })),
+      { noise: 1 / Math.max(1, video.videoHeight), aspect: aspectNow, t0: contactT },
+    )
+    const tossHand = skel.racket === 'left' ? LM.rightWrist : LM.leftWrist
+    heights = gravityHeights(ruler, {
+      groundY: skel.groundY,
+      contactY: ruler ? tossAt(ruler, contactT).y : 0,
+      releaseY: e[skel.keys.toss].image[tossHand].y,
+      apexY: served.apex.y,
+    })
+  }
+
   onProgress({ step: 'done', ratio: 1 })
 
   // Read the metadata before the finally block detaches the source: `load()`
@@ -1935,6 +2005,9 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
     // `Analysis.cost`. Rounded to the millisecond: nothing reads it at finer
     // resolution and a long float in every stored report is noise.
     cost: { ms: Math.round(clock() - startedAt), coldEngine, cropped: extracted.crop !== undefined, refined },
+    ...(firstRead ? { firstRead: true } : {}),
+    ...(speed ? { speed } : {}),
+    ...(heights ? { heights } : {}),
     video: {
       name: fileName,
       durationMs: video.duration * 1000,

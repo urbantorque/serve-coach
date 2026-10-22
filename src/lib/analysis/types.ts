@@ -436,6 +436,18 @@ export interface Analysis {
    * Optional because every report filed before this existed has none, and
    * because the dev fixtures assemble an `Analysis` by hand.
    */
+  /**
+   * Read before the refinement model was on the phone (M1.3): MediaPipe's
+   * swing alone. The report says so and offers a full read once it is in.
+   */
+  firstRead?: boolean
+  /**
+   * The serve's speed off the ball, or why there is none (N2.1): measured on
+   * slow motion, never graded, and not shown until that is decided (N2.7).
+   */
+  /** Contact and toss heights in metres off the toss's gravity, where its ruler was sure (N2.9). Readings only. */
+  heights?: import('../vision/heights').GravityHeights
+  speed?: { speed: import('../vision/serveSpeed').ServeSpeed } | { miss: import('../vision/serveSpeed').SpeedMiss }
   cost?: {
     /** Wall clock from the first frame read to the finished report. */
     ms: number
