@@ -1,7 +1,7 @@
 # ROADMAP — from prototype to product
 
 Written 2026-09-23 after a full review of the app, the engine and the ledgers.
-`NEXT.md` stays the ledger for engine rounds; this file is the product plan that
+`docs/history/NEXT.md` stays the ledger for engine rounds; this file is the product plan that
 sits above it. Every item obeys `LOOP.md`'s eight constraints — in particular,
 no new colours, no re-skin, no confident nonsense, nothing leaves the device.
 
@@ -30,7 +30,7 @@ picture follows it, for the record.*
   fixture shoot. And still **no git remote.**
 - **Next:** the Level-up programme at the end of this file (L1–L6). It covers
   trust fixes, every serve in a session, a score that can show progress, and
-  seeing what good looks like. The reasoning is in `LEVEL-UP-REVIEW.md`.
+  seeing what good looks like. The reasoning is in `docs/history/LEVEL-UP-REVIEW.md`.
 
 ### As it stood on 2026-09-23
 
@@ -923,7 +923,7 @@ to the literature, never re-derived from one player.
 
 This programme came from a six-area review: coaching and ease of use, visuals,
 engine accuracy, grading and progression, long sessions, and everyday pain
-points. `LEVEL-UP-REVIEW.md` holds the reasoning and the `file:line` evidence.
+points. `docs/history/LEVEL-UP-REVIEW.md` holds the reasoning and the `file:line` evidence.
 This section is the ledger.
 
 The Depth programme's rules still hold:
@@ -1024,7 +1024,7 @@ Small items, and everything after builds on them.
       labels, titles, ladder lines, captions, every practice headline and every
       toss placement. The posture ladder's head-up framing for a sideways fold
       is left as it was. Original plan:*
-      - **What:** the rewrites in `LEVEL-UP-REVIEW.md` §1. The worst offenders:
+      - **What:** the rewrites in `docs/history/LEVEL-UP-REVIEW.md` §1. The worst offenders:
         - focus titles taken from readouts rather than from the target;
         - `practiceHeadline`'s grammar;
         - the best-serve line said in words;
@@ -1303,7 +1303,7 @@ L2.4 onward is session mode.
           estimate runs about a minute long.
         - The run moved out of `App.tsx` into `session/drive.ts` to keep
           the entry bundle at 128.5 kB.
-      - **What:** the nine sections in `LEVEL-UP-REVIEW.md` §5, and
+      - **What:** the nine sections in `docs/history/LEVEL-UP-REVIEW.md` §5, and
         `?demo=session`. Serves per week counts sessions, not reports.
       - *Proof:* render tests, the copy lint, and a 375×812 preview. After L2.7.
 - [x] **L2.9 Hear the serves** · L.
@@ -3091,7 +3091,7 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         - `LOOP.md` points at `roadmap/market-ready` and `ROADMAP.md`, says
           the `loop/top-ten` loop it describes has ended, and keeps its
           governing constraints.
-        - `NEXT.md` and `PROGRESS.md` open with a historical banner.
+        - `docs/history/NEXT.md` and `docs/history/PROGRESS.md` open with a historical banner.
           PROGRESS's "Resuming this loop" check count is still kept, because
           `handover.test.ts` holds it to the suite.
         - `run-tests.mjs` bundles into a directory of its own per run,
@@ -3100,7 +3100,7 @@ Everything here is built from `primitives.tsx` and the existing tokens.
         - Proof: the full suite ran through the new runner, 1,794 checks
           passed, and it left no run directory behind.
       - **What:** `LOOP.md` points at this branch and at `ROADMAP.md`.
-        `NEXT.md` and `PROGRESS.md` are marked historical. The test cache is
+        `docs/history/NEXT.md` and `docs/history/PROGRESS.md` are marked historical. The test cache is
         set per run by default.
 
 ### Order of play
@@ -3126,7 +3126,7 @@ Out of scope, because they need a person or data leaving the device:
 - phone timing (W5.4);
 - the fixture shoot.
 
-`LEVEL-UP-REVIEW.md` lists them as the owner's call.
+`docs/history/LEVEL-UP-REVIEW.md` lists them as the owner's call.
 
 ---
 

@@ -1723,7 +1723,7 @@ always the better serve, which is only true by construction for the basket
 caller. "Then, and now" orders by date, not by score — a player whose serve
 has gone backwards over six weeks still sees the older, worse one tinted as
 if it were the good one. Named in `FramePair.tsx`'s own doc comment and in
-`NEXT.md`'s R21 entry for a future round that is allowed to move a pixel.
+`docs/history/NEXT.md`'s R21 entry for a future round that is allowed to move a pixel.
 
 The target dial — the joint-angle callout drawn on the keyframe strip —
 turned out to already meet the standard, measured rather than assumed:
@@ -1828,7 +1828,7 @@ separate, cost of not having reckoned with it sooner: `findPracticeFocus`'s
 several serves in one sitting through the coached live preview — the
 default mobile path since R18 — could fill that entire window with one
 visit's own variance rather than the cross-visit persistence the feature's
-own doc comment says it exists to catch. Named in `NEXT.md` for a future
+own doc comment says it exists to catch. Named in `docs/history/NEXT.md` for a future
 round rather than fixed there, and closed by R38: `tripsOf` in `progress.ts`
 cuts a history into visits by chaining the same `sameTrip` threshold, and
 the window takes the last five of those and every serve on them. The two

@@ -11,7 +11,7 @@ comes a roadmap that takes the app up another notch, built so it can be
 carried out without a person in the loop.
 
 This file is the reasoning. The ledger is the **Notch programme** at the end of
-`ROADMAP.md`, the same way `LEVEL-UP-REVIEW.md` sits behind the Level-up
+`ROADMAP.md`, the same way `docs/history/LEVEL-UP-REVIEW.md` sits behind the Level-up
 programme.
 
 **How it was done.**

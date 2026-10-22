@@ -8,8 +8,8 @@ was proved. Continue there unless the user says otherwise. The trunk is
 `master`; never commit to it, and never rebase or merge onto it without being
 asked.
 
-The loop this file describes below ran on `loop/top-ten`, with `NEXT.md` as its
-ledger and `PROGRESS.md` as its log. That loop has ended; both files are
+The loop this file describes below ran on `loop/top-ten`, with `docs/history/NEXT.md` as its
+ledger and `docs/history/PROGRESS.md` as its log. That loop has ended; both files are
 historical. Its governing constraints still hold, and are the reason they are
 kept here.
 
@@ -21,13 +21,13 @@ the round you are about to touch before editing them.
 
 `ROADMAP.md` at the repo root tracks the current programme. Read it first. It
 is the source of truth for what is done — not the git log, not your memory.
-`NEXT.md` is the record of the loop before it, and is no longer updated.
+`docs/history/NEXT.md` is the record of the loop before it, and is no longer updated.
 
 Each iteration: pick the **topmost round that is not done and not blocked**,
-implement it completely, and update `NEXT.md` in the same commit. One round per
+implement it completely, and update `docs/history/NEXT.md` in the same commit. One round per
 iteration. Never start a second round because the first was small — stop and let
 the next iteration begin cleanly. If a round proves bigger than one iteration,
-split it in `NEXT.md` into named sub-rounds, do the first, and leave the rest.
+split it in `docs/history/NEXT.md` into named sub-rounds, do the first, and leave the rest.
 Do not leave half-built code behind a flag.
 
 ## Governing constraints — these outrank the feature work
@@ -84,7 +84,7 @@ Do not leave half-built code behind a flag.
 
 ## Per-iteration protocol
 
-1. Read `NEXT.md`; pick the topmost actionable round; mark it `[~]`.
+1. Read `docs/history/NEXT.md`; pick the topmost actionable round; mark it `[~]`.
 2. Read the files it names, plus their doc comments — this codebase explains its
    own decisions in prose above the code, and those comments are usually the
    spec.
@@ -102,7 +102,7 @@ Do not leave half-built code behind a flag.
 6. Update `README.md` in the same commit if the change alters behaviour,
    measurement, storage or a decision worth knowing about. The README is the
    deliverable, not an afterthought.
-7. Update `NEXT.md` to `[x]`, in one or two sentences saying what was actually
+7. Update `docs/history/NEXT.md` to `[x]`, in one or two sentences saying what was actually
    settled — including any deliberate departure from the round as written, and
    why. **Delta only.** Do not restate what the previous round already recorded.
 8. Commit. Message style, matched to this repo's history: one declarative
@@ -138,7 +138,7 @@ programme.
 
 **Purge at every phase boundary.** The close-out round compresses the phase's
 ledger entries to their deltas and drops the working notes underneath them. The
-README carries the standing description; `NEXT.md` carries the moves; git carries
+README carries the standing description; `docs/history/NEXT.md` carries the moves; git carries
 the rest. A ledger nobody can read in one sitting has stopped being a ledger.
 
 ## Verification standard
@@ -157,7 +157,7 @@ it with a test and a README line, not by inventing a change.
 
 ## When you are blocked
 
-Say so plainly, mark the round `[!]` in `NEXT.md` with the reason, and move to
+Say so plainly, mark the round `[!]` in `docs/history/NEXT.md` with the reason, and move to
 the next actionable round. Do not invent data to unblock yourself, do not lower
 a threshold to make a test pass, and do not widen scope to avoid a hard part. If
 every remaining round is blocked, stop the loop and report what is needed.
@@ -188,7 +188,7 @@ read by the lenses of the others.
 | **4** | R22–28 | Feature and retention | The share card is one serve and a coach wants the basket; a trip to the court is not a thing the app knows about. |
 | **5** | R29–35 | Security, privacy, QA, freeze | Zero egress is asserted rather than pinned by a test, the uncalibrated registers need re-reading, README end to end, stop. |
 
-The round list, with what each one has to answer, is in `NEXT.md`. Terminate at
+The round list, with what each one has to answer, is in `docs/history/NEXT.md`. Terminate at
 R35. Do not start an R36.
 
 ---
@@ -205,6 +205,6 @@ report pasteable under a fixed vocabulary, wrote `COURT-CHECK.md`, and fixed the
 one defect it found: `recordingType` chose a container by an ordering that
 assumed decodability and never asked the decoder.
 
-Both ledgers are compressed at the foot of `NEXT.md`. Two entries are kept in
+Both ledgers are compressed at the foot of `docs/history/NEXT.md`. Two entries are kept in
 full because they are still open and **nothing in the thirty-five rounds below
 closes either** — the fixture shoot, and the court trip.

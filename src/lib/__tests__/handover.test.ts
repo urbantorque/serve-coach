@@ -39,12 +39,13 @@ const cp = cpUntyped as { execSync: (c: string, o: unknown) => string }
 declare const process: { cwd(): string }
 
 const root = process.cwd()
-const progress = fs.readFileSync(path.join(root, 'PROGRESS.md'), 'utf8')
+// The handover lives in STATUS.md since M5.2; the old log is in docs/history/.
+const progress = fs.readFileSync(path.join(root, 'STATUS.md'), 'utf8')
 const handover = progress.slice(progress.lastIndexOf('## Resuming this loop'))
 
 heading('The handover a cold session reads first')
 
-assert(handover.length > 500, 'PROGRESS.md has no "Resuming this loop" section to check')
+assert(handover.length > 500, 'STATUS.md has no "Resuming this loop" section to check')
 
 check('the tag it tells you to compare against is the newest one', () => {
   const claimed = /`(loop-green-\d+)`/.exec(handover)?.[1]
