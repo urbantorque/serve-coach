@@ -330,6 +330,8 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
 
 const PATHS: Record<string, ReactNode> = {
   close: <path d="M6 6l12 12M18 6L6 18" />,
+  // A week page with two rings (M3.1).
+  calendar: <path d="M4 7h16v13H4zM4 11h16M8 4v5M16 4v5" />,
   play: <path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none" />,
   pause: <path d="M9 5v14M15 5v14" />,
   chevron: <path d="M9 6l6 6-6 6" />,

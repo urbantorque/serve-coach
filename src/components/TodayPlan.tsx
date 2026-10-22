@@ -6,6 +6,8 @@ import { readPrefs, writePrefs } from '../lib/storage/prefs'
 import { primeSpeech, speakLocally } from '../lib/speech'
 import { useWakeLock } from './useWakeLock'
 import type { WeekItem, WeekPlan } from '../lib/weekPlan'
+import { weekCalendar } from '../lib/calendar'
+import { shareBlob } from '../lib/share/reportCard'
 
 /**
  * The drill in large type, for a phone on the fence (N1.7).
@@ -96,6 +98,19 @@ export default function TodayPlan({ week }: { week: WeekPlan }) {
           Open the court card
         </button>
       )}
+      {/* The next sessions in the phone's own calendar (M3.1): reminders
+          without a server. Shared or downloaded; the app sends nothing. */}
+      <button
+        type="button"
+        className="btn btn--ghost btn--full"
+        onClick={() => {
+          const ics = weekCalendar(week, { now: new Date(), cadence: readPrefs().cadence, minutes })
+          void shareBlob(new Blob([ics], { type: 'text/calendar' }), 'serve-practice.ics', 'Serve practice', 'text/calendar')
+        }}
+      >
+        <Icon name="calendar" size={17} />
+        Add to calendar
+      </button>
       {card && first && <CourtCard item={first} onClose={() => setCard(false)} />}
     </section>
   )

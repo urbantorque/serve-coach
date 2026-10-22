@@ -485,12 +485,14 @@ export async function attemptShare(
  * itself. Shared by both card kinds, so a basket card and a single-serve one
  * cannot drift apart on how the same three outcomes are decided.
  */
-async function shareBlob(
+export async function shareBlob(
   blob: Blob,
   name: string,
   title: string,
+  /** The calendar file (M3.1) and the coach's report (M3.2) are not pictures. */
+  type = 'image/png',
 ): Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'> {
-  const file = new File([blob], name, { type: 'image/png' })
+  const file = new File([blob], name, { type })
   const outcome = await attemptShare(navigator as ShareNavigator, file, title)
   if (outcome === 'shared' || outcome === 'cancelled') return outcome
 
