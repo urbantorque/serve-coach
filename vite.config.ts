@@ -175,6 +175,13 @@ export default defineConfig({
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
           { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
+        // The real screens, from the production build (M4.2, `scripts/screenshots.mjs`).
+        screenshots: [
+          { src: 'screenshots/home.png', sizes: '1080x2340', type: 'image/png', form_factor: 'narrow', label: 'Film a serve, or pick one from your camera roll' },
+          { src: 'screenshots/report.png', sizes: '1080x2340', type: 'image/png', form_factor: 'narrow', label: 'The fix that matters most, with its drill' },
+          { src: 'screenshots/guide.png', sizes: '1080x2340', type: 'image/png', form_factor: 'narrow', label: 'Where to stand the phone' },
+          { src: 'screenshots/wide.png', sizes: '2340x1080', type: 'image/png', form_factor: 'wide', label: 'Serve Coach on a wide screen' },
+        ],
         // Long-press on the installed icon. Only destinations that need no
         // gesture to open: a file picker cannot be opened without a tap, so
         // "Analyse a serve" is not one of them. `?open=` is read in App.tsx.
@@ -186,7 +193,9 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
         // never precache the model or wasm — they are runtime-cached instead
-        globIgnores: ['**/models/**', '**/wasm/**', '**/ort/**'],
+        // The install-sheet screenshots (M4.2) are for the browser's install
+        // prompt, not the app; precaching them would cost 1.3 MB of every install.
+        globIgnores: ['**/models/**', '**/wasm/**', '**/ort/**', '**/screenshots/**'],
         navigateFallbackDenylist: enginePathPrefixes.map(
           (p) => new RegExp(`^${escapeRegExp(p)}`),
         ),
