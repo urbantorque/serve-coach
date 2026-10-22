@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { drawSkeleton, fitContain } from '../lib/pose/skeleton'
+import { drawSkeleton, fitBody } from '../lib/pose/skeleton'
 import { poseFrameAt, type KeyframePoses } from '../lib/storage/poseTrack'
 import type { PhaseId } from '../lib/analysis/types'
 
@@ -68,12 +68,12 @@ export default function PoseStill({
       frame,
       aspect: poses.aspect,
       /*
-       * `fitContain` rather than the whole canvas, so the body keeps the
-       * proportions the clip was filmed at. Stretching a portrait serve to fill
-       * a landscape box would change every angle the drawing shows, which is the
-       * one thing this picture is for.
+       * Fitted to the body rather than the frame (N4.1): a player filmed from
+       * across the court was a small figure afloat in a large tile. One scale
+       * both ways, so the body keeps the proportions the clip was filmed at:
+       * a stretched body would change every angle the drawing shows.
        */
-      rect: fitContain(canvas.width, canvas.height, poses.aspect),
+      rect: fitBody(frame, poses.aspect, canvas.width, canvas.height),
       racket,
     })
   }, [frame, poses, racket])

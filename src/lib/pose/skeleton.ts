@@ -539,12 +539,15 @@ export function fitContain(boxW: number, boxH: number, videoAspect: number): Dra
  * a racket or a ball may reach past the fit, as they do past a body.
  */
 export function fitBody(frame: Frame, aspect: number, w: number, h: number, fill = 0.78): DrawRect {
-  const xs = frame.image.map((l) => l.x / aspect).filter(Number.isFinite)
+  // In the landmarks' own units, where x and y are both frame heights: one
+  // scale for both, or a 16:9 clip is drawn squashed sideways by its aspect.
+  // The renderer divides x by the aspect, so the width carries it back (N4.1).
+  const xs = frame.image.map((l) => l.x).filter(Number.isFinite)
   const ys = frame.image.map((l) => l.y).filter(Number.isFinite)
   const [x0, x1] = [Math.min(...xs), Math.max(...xs)]
   const [y0, y1] = [Math.min(...ys), Math.max(...ys)]
   const d = Math.min((w * 0.9) / Math.max(1e-3, x1 - x0), (h * fill) / Math.max(1e-3, y1 - y0))
-  return { ox: w / 2 - ((x0 + x1) / 2) * d, oy: h / 2 - ((y0 + y1) / 2) * d, dw: d, dh: d }
+  return { ox: w / 2 - ((x0 + x1) / 2) * d, oy: h / 2 - ((y0 + y1) / 2) * d, dw: d * aspect, dh: d }
 }
 
 export interface SkeletonOptions {
@@ -769,6 +772,23 @@ function drawTossMark(
  * apart — the stills are the only part of a serve that outlives the session, and
  * they should look like what the player showed.
  */
+/** Below this a joint is one the tracker was unsure of (N4.1). */
+export const UNSURE_JOINT = 0.5
+/** How strongly an unsure bone is drawn, against a sure one. */
+const UNSURE_ALPHA = 0.35
+
+/** The bones split by whether both their ends were seen with confidence (N4.1). */
+export function splitBones<B extends readonly [number, number, ...unknown[]]>(
+  frame: Pick<Frame, 'image'>,
+  bones: readonly B[],
+): { sure: B[]; unsure: B[] } {
+  const seen = (i: number) => (frame.image[i]?.visibility ?? 1) >= UNSURE_JOINT
+  const sure: B[] = []
+  const unsure: B[] = []
+  for (const b of bones) (seen(b[0]) && seen(b[1]) ? sure : unsure).push(b)
+  return { sure, unsure }
+}
+
 export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions): void {
   const { frame: f, aspect, rect } = o
   const { ox, oy, dw, dh } = rect
@@ -878,13 +898,25 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
       ctx.arc(q.x, q.y, rb, 0, Math.PI * 2)
     }
   }
-  const limbs = (bones: readonly Bone[], color: string) => {
+  const fill = (bones: readonly Bone[], color: string) => {
+    if (!bones.length) return
     bonePath(bones, UNDER_GROW * scale)
     ctx.fillStyle = PALETTE.under
     ctx.fill()
     bonePath(bones, 0)
     ctx.fillStyle = color
     ctx.fill()
+  }
+  // A bone with an end the tracker was unsure of is drawn faded, never as
+  // though it was seen (N4.1). The sure ones stay one fill, as above.
+  const limbs = (bones: readonly Bone[], color: string) => {
+    const { sure, unsure } = splitBones(o.frame, bones)
+    fill(sure, color)
+    if (!unsure.length) return
+    const alpha = ctx.globalAlpha
+    ctx.globalAlpha = alpha * UNSURE_ALPHA
+    fill(unsure, color)
+    ctx.globalAlpha = alpha
   }
 
   // The trunk's area first, faint, so the figure has a body between its lines.
