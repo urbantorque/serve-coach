@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "node scripts/run-tests.mjs",
+    "release": "node scripts/release.mjs",
     "replay:fixture": "node scripts/replay-fixture.mjs",
     "setup:assets": "node scripts/fetch-assets.mjs",
     "setup:bench": "node scripts/fetch-bench.mjs",
