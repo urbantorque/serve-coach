@@ -14,6 +14,7 @@ import { meteredConnection } from './lib/engineDownload'
 import { interruptedLine, takeInterrupted } from './lib/interrupted'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
 import { captureAgainWith } from './components/captureAgain'
+import { withTransition } from './components/viewTransition'
 import type { FlawId } from './lib/analysis/flaws'
 import { faultMoveOnTrip, rotationMoveOnTrip, scoreMoveAgainst, scoringVersionOf, streakLine, typeOf } from './lib/progress'
 import { bestPriorTo } from './lib/bestServe'
@@ -757,10 +758,12 @@ export default function App() {
                 setFramingNonce((n) => n + 1)
               }}
               onOpenReport={() =>
-                setView(
-                  view.videoUrl && 'frames' in view.analysis
-                    ? { kind: 'report', analysis: view.analysis, videoUrl: view.videoUrl }
-                    : { kind: 'saved', session: view.analysis },
+                withTransition(() =>
+                  setView(
+                    view.videoUrl && 'frames' in view.analysis
+                      ? { kind: 'report', analysis: view.analysis, videoUrl: view.videoUrl }
+                      : { kind: 'saved', session: view.analysis },
+                  ),
                 )
               }
               /*

@@ -403,3 +403,10 @@
   line-height: var(--lh-snug);
   color: var(--fg-muted);
 }
+
+/* The score ring moves from the glance to the report (N4.6). One of each on a
+   screen, never both at once, so the name is unique. */
+.glance .ring,
+.hero .ring {
+  view-transition-name: score-ring;
+}

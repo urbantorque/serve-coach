@@ -651,6 +651,8 @@ export default function Report({
           status={analysis.overallStatus}
           size={148}
           label="overall"
+          // Fills once, on the report just made (N4.6); a reopened one opens filled.
+          animate={'frames' in analysis && !example}
         />
         {/* The break is said out loud rather than left as an absence. Every
             comparison on this page goes at once when the rubric changes — this

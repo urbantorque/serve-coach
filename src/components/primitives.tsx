@@ -13,8 +13,11 @@ import { useBackLayer } from './useBackLayer'
  * when the stroke does, rather than finishing early or lagging behind it.
  */
 function useCountUp(target: number, enabled: boolean): number {
-  const [value, setValue] = useState(enabled ? 0 : target)
-  const from = useRef(enabled ? 0 : target)
+  // Under reduced motion the first frame is already the final score (N4.6):
+  // starting at 0 and jumping in an effect flashed a zero first.
+  const moving = enabled && !(typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
+  const [value, setValue] = useState(moving ? 0 : target)
+  const from = useRef(moving ? 0 : target)
   const raf = useRef(0)
 
   useEffect(() => {
