@@ -866,6 +866,16 @@ check("today's plan lays the week out in minutes, with a court card for the firs
   assert(out.includes('Open the court card'), 'no way to the court card')
 })
 
+check('a basket\'s drill check leads the focus card, above the drill (N4.2)', () => {
+  const base = sampleAnalysis()
+  const flaw = causalPlan(base.triage, base.diagnosis)[0].flaw!
+  const analysis = { ...base, drillCheck: { flaw, read: 6, clean: 5, need: progressionFor(flaw)!.pass, outcome: 'passed' as const } }
+  const out = html(createElement(Report, { analysis, onBack: noop, onAnalyzeAnother: noop, onLadderStep: noop }))
+  const said = out.indexOf('passed this step')
+  assert(said > 0, 'the passed check was not said')
+  assert(said < out.indexOf('class="focus-drill"'), 'the check still follows the drill')
+})
+
 check('tagging sits above the fold, under the focus (N1.9)', () => {
   const out = html(createElement(Report, { analysis: sampleAnalysis(), onBack: noop, onAnalyzeAnother: noop, onTagServe: noop, onTagOutcome: noop }))
   const tag = out.indexOf('Tag this serve')

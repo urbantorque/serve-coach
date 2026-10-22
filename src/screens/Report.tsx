@@ -735,6 +735,51 @@ export default function Report({
         <p>
           <Cue text={plan[0].why} />
         </p>
+        {/* Leads the card since N4.2: a step passed or not is the first news a
+            basket brings, so it sits under the why rather than after the drill.
+
+            What the last basket said about this step, and the one move it
+            earns. Moving is the player's tap, never automatic: a step is
+            theirs to take, and a ladder that moved itself would be a ladder
+            nobody trusted. */}
+        {check && ladder && rung >= 0 && (
+          <div className="drill-check">
+            <p>
+              {movedTo === undefined
+                ? drillCheckLine(check)
+                : `Now on step ${movedTo + 1} of ${ladder.steps.length}: ${ladder.steps[movedTo].name}.`}
+            </p>
+            {onLadderStep && plan[0].flaw && movedTo === undefined && (
+              <>
+                {check.outcome === 'passed' && rung < ladder.steps.length - 1 && (
+                  <button
+                    className="drill-show"
+                    onClick={() => {
+                      onLadderStep(plan[0].flaw!, rung + 1)
+                      setMovedTo(rung + 1)
+                    }}
+                  >
+                    Move up a step
+                  </button>
+                )}
+                {check.outcome === 'not_yet' && check.clean <= check.need / 2 && rung > 0 && (
+                  <button
+                    className="drill-show"
+                    onClick={() => {
+                      onLadderStep(plan[0].flaw!, rung - 1)
+                      setMovedTo(rung - 1)
+                    }}
+                  >
+                    Try the step before
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        )}
+        {/* How this step is passed, when no basket has judged it yet
+            (L4.2). A step the app cannot read — a toss, a throw, a swing
+            with no ball — is the player's to pass, so it gets its own tap. */}
         {/* The same reading on the player's own best serve: the model they can
             reach. Silent for a fault with no row on the cards. */}
         {againstBest && (
@@ -806,48 +851,6 @@ export default function Report({
             )}
             </span>
           </div>
-          {/* What the last basket said about this step, and the one move it
-              earns. Moving is the player's tap, never automatic: a step is
-              theirs to take, and a ladder that moved itself would be a ladder
-              nobody trusted. */}
-          {check && ladder && rung >= 0 && (
-            <div className="drill-check">
-              <p>
-                {movedTo === undefined
-                  ? drillCheckLine(check)
-                  : `Now on step ${movedTo + 1} of ${ladder.steps.length}: ${ladder.steps[movedTo].name}.`}
-              </p>
-              {onLadderStep && plan[0].flaw && movedTo === undefined && (
-                <>
-                  {check.outcome === 'passed' && rung < ladder.steps.length - 1 && (
-                    <button
-                      className="drill-show"
-                      onClick={() => {
-                        onLadderStep(plan[0].flaw!, rung + 1)
-                        setMovedTo(rung + 1)
-                      }}
-                    >
-                      Move up a step
-                    </button>
-                  )}
-                  {check.outcome === 'not_yet' && check.clean <= check.need / 2 && rung > 0 && (
-                    <button
-                      className="drill-show"
-                      onClick={() => {
-                        onLadderStep(plan[0].flaw!, rung - 1)
-                        setMovedTo(rung - 1)
-                      }}
-                    >
-                      Try the step before
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-          {/* How this step is passed, when no basket has judged it yet
-              (L4.2). A step the app cannot read — a toss, a throw, a swing
-              with no ball — is the player's to pass, so it gets its own tap. */}
           {!check && ladder && rung >= 0 && (
             <div className="drill-check">
               <p>
