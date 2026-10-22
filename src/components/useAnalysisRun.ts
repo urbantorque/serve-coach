@@ -27,9 +27,8 @@ import { applyWhenIdle, onUpdateWaiting } from '../lib/updates'
 import type { SweepProgress } from '../screens/Analyzing'
 import { loadAnalysis, loadAnalyzing, loadReport, loadSessionScreen, loadSessionLive, loadGlance } from '../appLoaders'
 import type { View } from '../App'
-import { sweepAfterRead, updateMayLand } from './runDecisions'
+import { earlyRefusal, sweepAfterRead, updateMayLand } from './runDecisions'
 
-const MAX_BYTES = 400 * 1024 * 1024
 
 /** What the work needs from the app around it, by the names it used there. */
 export interface AnalysisRunDeps {
@@ -133,34 +132,9 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
       /** A full read of a clip first read without the refinement model (M1.3). */
       extra: { waitForRefine?: boolean } = {},
     ): Promise<Analysis | undefined> => {
-      if (file.size > MAX_BYTES) {
-        setView({
-          kind: 'error',
-          // Said for a session as well as a single serve (L2.2). "Three to
-          // five seconds is all it needs" told somebody who filmed a whole
-          // practice that it was the wrong thing to have done.
-          title: 'That video is too large to read here',
-          hints: [
-            'For one serve, trim the clip to a few seconds around it.',
-            'For a whole session, trim it into clips of a few minutes, or film at 1080p rather than 4K.',
-            'Most phones let you trim in the photo library before sharing.',
-          ],
-        })
-        return
-      }
-
-      // Caught before the decoder is asked to explain a failure it did not
-      // have — see `looksLikeNonVideo` for why this cannot be left to
-      // `describeDecodeFailure` alone, on a browser with no HEVC support.
-      if (looksLikeNonVideo(file.type)) {
-        setView({
-          kind: 'error',
-          title: 'That does not look like a video',
-          hints: [
-            'Pick a video clip from your camera roll rather than a photo or a document.',
-            'MP4 and MOV clips from a phone camera work best.',
-          ],
-        })
+      const refused = earlyRefusal(file)
+      if (refused) {
+        setView({ kind: 'error', ...refused })
         return
       }
 

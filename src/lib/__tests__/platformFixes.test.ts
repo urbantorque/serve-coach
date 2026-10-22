@@ -8,20 +8,32 @@ import fsUntyped from 'fs'
 import { primeSpeech } from '../speech'
 import { deviceReportText, platformVerdict, type DeviceReport } from '../selfCheck'
 import { assert, check, heading, note, report } from '../analysis/__tests__/harness'
+import { MAX_BYTES, earlyRefusal, leaveForHome, updateMayLand } from '../../components/runDecisions'
 
 const fs = fsUntyped as { readFileSync: (p: string, e: 'utf8') => string }
 
 heading('The small platform fixes')
 
-check('going home lets go of the clip, which is what the update gate waits for', () => {
-  // Read off App.tsx, as the screen-flow checks are: the two halves of one
-  // decision, in two places, held together here.
-  const app = fs.readFileSync('src/App.tsx', 'utf8')
-  const goHome = app.slice(app.indexOf('const goHome = () => {'), app.indexOf('}', app.indexOf('const goHome = () => {') + 30) + 200)
-  assert(/releaseVideo\(\)/.test(goHome.slice(0, goHome.indexOf("setView({ kind: 'home' })") + 1)), 'home keeps the clip, so an update waits for the next analysis')
-  // The gate moved out with the reading (L6.11); it asks whether a clip is held.
+check('going home lets go of the clip first, and the update gate then opens (M5.1)', () => {
+  // Behaviour, not source: the order of the steps, and what the gate says after.
+  const order: string[] = []
+  let held = true
+  leaveForHome({ releaseVideo: () => { order.push('release'); held = false }, showHome: () => order.push('home'), refresh: () => order.push('refresh') })
+  assert(order.join() === 'release,home,refresh', `went home in the order ${order.join()}`)
+  assert(updateMayLand({ view: 'home', holdsVideo: held, sweeping: false }), 'home after going home still keeps a waiting update shut')
+  assert(!updateMayLand({ view: 'home', holdsVideo: true, sweeping: false }), 'the gate opened with a clip still held')
+  // Structural, deliberately: the hook has to ask the gate about the clip it holds.
   const run = fs.readFileSync('src/components/useAnalysisRun.ts', 'utf8')
   assert(/updateMayLand\(\{ view: view\.kind, holdsVideo: Boolean\(urlRef\.current\)/.test(run), 'the update gate no longer waits for the clip to go')
+})
+
+check('a clip too large or not a video is refused before the decoder is asked, with a way forward (M5.1)', () => {
+  const big = earlyRefusal({ size: MAX_BYTES + 1, type: 'video/mp4' })
+  assert(big?.title === 'That video is too large to read here' && big.hints.length === 3, JSON.stringify(big))
+  const photo = earlyRefusal({ size: 1000, type: 'image/jpeg' })
+  assert(photo?.title === 'That does not look like a video', JSON.stringify(photo))
+  assert(earlyRefusal({ size: 1000, type: 'video/mp4' }) === undefined, 'a small video was refused')
+  assert(earlyRefusal({ size: 1000, type: '' }) === undefined, 'a file with no type, as some phones send, was refused')
 })
 
 check('the record tap unlocks the voice, through a voice on the phone or not at all', () => {

@@ -135,9 +135,10 @@ check('the error screen is reachable without passing through analyzing', () => {
   }
   // And the code still does it, checked rather than remembered: both refusals
   // set the view and return before the analysing screen is ever shown.
+  // What the two refusals say is tested as behaviour (`earlyRefusal`, M5.1);
+  // here only that the hook asks it, and lands on the error screen, first.
   const early = RUN.slice(0, RUN.indexOf("setView({ kind: 'analyzing'"))
-  const refusals = [...early.matchAll(/kind: 'error'/g)].length
-  assert(refusals >= 2, `expected run's two early refusals before 'analyzing', found ${refusals}`)
+  assert(early.includes('earlyRefusal(file)') && /kind: 'error'/.test(early), "run no longer refuses a bad file before 'analyzing'")
 })
 
 check('nothing reaches the saved screen from analyzing', () => {

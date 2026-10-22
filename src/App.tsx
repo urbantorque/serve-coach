@@ -15,6 +15,7 @@ import { interruptedLine, takeInterrupted } from './lib/interrupted'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
 import { captureAgainWith } from './components/captureAgain'
 import { withTransition } from './components/viewTransition'
+import { leaveForHome } from './components/runDecisions'
 import { forgetAll } from './lib/analysisCache'
 import type { FlawId } from './lib/analysis/flaws'
 import { faultMoveOnTrip, rotationMoveOnTrip, scoreMoveAgainst, scoringVersionOf, streakLine, typeOf } from './lib/progress'
@@ -520,15 +521,8 @@ export default function App() {
   }, [seedHistory, urlRef])
 
 
-  const goHome = () => {
-    // The clip goes with the report (L6.10). Home holding its object URL kept
-    // the update gate above shut — it waits for no video to be held — so a
-    // player who had looked at a report never got a waiting update until
-    // they analysed again.
-    releaseVideo()
-    setView({ kind: 'home' })
-    refreshSessions()
-  }
+  // The clip goes with the report (L6.10), before home shows: `leaveForHome`.
+  const goHome = () => leaveForHome({ releaseVideo, showHome: () => setView({ kind: 'home' }), refresh: refreshSessions })
 
   const captureAgain = captureAgainWith({ goHome, setFramingNonce, setFirstRunIntent, pickRef: firstRunPickRef })
 
