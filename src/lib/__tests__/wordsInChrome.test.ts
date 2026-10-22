@@ -107,4 +107,26 @@ check('every font size in every stylesheet is at least 11px', () => {
   assert(small.length === 0, `text under 11px:\n    ${small.join('\n    ')}`)
 })
 
+heading('Signposts a player can read (N4.4)')
+
+check('the labels that carry meaning are 12px and in the readable grey, not the faint one', () => {
+  const where: Record<string, string> = {
+    '.t-overline': 'tokens.css',
+    '.block-title': 'blocks.css',
+    '.reading-title': 'report.css',
+    '.judged-lead': 'report.css',
+    '.focus-kicker': 'report.css',
+    '.drill-kicker': 'fundamentals.css',
+  }
+  for (const [sel, file] of Object.entries(where)) {
+    const css = fs.readFileSync(path.join(process.cwd(), 'src', 'styles', file), 'utf8')
+    const i = css.indexOf(sel + ' {')
+    assert(i >= 0, `${sel} not found in ${file}`)
+    const body = css.slice(i, css.indexOf('}', i))
+    const size = Number(/font-size:\s*([\d.]+)px/.exec(body)?.[1])
+    assert(size >= 12, `${sel} is ${size}px`)
+    assert(!/--fg-faint/.test(body), `${sel} is still in the faint grey`)
+  }
+})
+
 report()

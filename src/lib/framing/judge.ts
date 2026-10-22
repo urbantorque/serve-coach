@@ -34,6 +34,7 @@ import { ANKLES_SEEN_FLOOR, MIN_STANDING_HEIGHT, NOSE_SHARE_OF_HEIGHT } from '..
 import { NOTABLE_ROLL, assessSpatial, type Spatial } from '../analysis/spatial'
 import type { Frame, Landmark } from '../analysis/types'
 import { cue } from '../analysis/voice'
+import { PLACEMENT } from '../placement'
 
 /**
  * How many preview frames a verdict is taken over.
@@ -217,7 +218,7 @@ const RANKING: {
     // hedged for it.
     call: 'turn-off-square',
     grade: 'hedged',
-    say: '**Move the phone round to your side**, level with the baseline. A front view loses how far in front you hit.',
+    say: `**Move the phone round to your side**, ${PLACEMENT.where}. A front view loses how far in front you hit.`,
     fires: (r) => collapsed(r) === 'depth',
   },
   {

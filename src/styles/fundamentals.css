@@ -386,7 +386,7 @@
    carries its rank in size, weight and tracking rather than in colour alone,
    which is what lets it move up a step without competing with the heading. */
 .drill-kicker {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.11em;
   text-transform: uppercase;

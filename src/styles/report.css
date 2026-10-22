@@ -858,7 +858,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1469,11 +1469,11 @@
 }
 
 .reading-title {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 660;
   letter-spacing: var(--tr-kicker);
   text-transform: uppercase;
-  color: var(--fg-faint);
+  color: var(--fg-muted);
 }
 
 /* Left-aligned, where the hero's copy of these was centred. In a card with a
@@ -1513,11 +1513,11 @@
 
 .judged-lead {
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--fg-faint);
+  color: var(--fg-muted);
 }
 
 .judged-options {

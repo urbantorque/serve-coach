@@ -291,12 +291,12 @@ ol {
 }
 
 .t-overline {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: var(--wt-key);
   letter-spacing: var(--tr-kicker);
   line-height: 1.2;
   text-transform: uppercase;
-  color: var(--fg-faint);
+  color: var(--fg-muted);
 }
 
 @media (prefers-reduced-motion: reduce) {

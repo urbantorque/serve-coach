@@ -15,11 +15,11 @@
 }
 
 .block-title {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 660;
   letter-spacing: var(--tr-kicker);
   text-transform: uppercase;
-  color: var(--fg-faint);
+  color: var(--fg-muted);
 }
 
 .block-aside {

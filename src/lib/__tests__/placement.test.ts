@@ -70,4 +70,18 @@ check('the phrase reads as part of a sentence and passes the editor', () => {
   }
 })
 
+check('every placement sentence says where the phone goes in the same words (N4.5)', () => {
+  // The guide, the viewfinder, the early refusal and the triage refusal all
+  // tell the player where to stand the phone; each takes "where" from here.
+  for (const file of ['components/FilmingGuide.tsx', 'lib/framing/judge.ts', 'lib/analysis/framingIssues.ts', 'lib/analysis/verdict.ts']) {
+    // Comments may describe the rule in its own words; only code is held to it.
+    const src = fs
+      .readFileSync(path.join(process.cwd(), 'src', file), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/^\s*\/\/.*$/gm, '')
+    assert(src.includes('PLACEMENT.where'), `${file} gives placement without PLACEMENT.where`)
+    assert(!src.includes("'" + PLACEMENT.where) && !src.includes(' ' + PLACEMENT.where + '.'), `${file} spells the phrase out instead of using PLACEMENT.where`)
+  }
+})
+
 report()

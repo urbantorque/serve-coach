@@ -116,7 +116,7 @@ export function refusalFor(triage: Triage | undefined): Refusal | undefined {
       reason: triage.reason ?? 'camera_unusable',
       title: 'I could not read that clip',
       hints: [
-        `Film side-on from ${PLACEMENT.distance} away, with your whole body in frame.`,
+        `Film side-on from ${PLACEMENT.distance} away, ${PLACEMENT.where}, with your whole body in frame.`,
         'Bright light and slow motion fix most of what goes wrong.',
       ],
     }
