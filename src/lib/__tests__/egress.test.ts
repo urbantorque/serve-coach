@@ -136,6 +136,14 @@ const ALLOWED: (Site & { why: string })[] = [
       "MediaPipe's own wasm glue from `/wasm/` on the dev server. Same origin.",
   },
   {
+    file: 'lib/pose/pose.worker.ts',
+    pattern: 'XMLHttpRequest',
+    why:
+      'The pose worker behind `?worker=1` (M1.2). Stands in for `importScripts`, which a module ' +
+      "worker lacks, to load MediaPipe's own wasm glue from the app's `/wasm/`, the same files " +
+      'the main thread loads. Same origin; the model itself is handed over by the page.',
+  },
+  {
     file: 'dev/bench/main.ts',
     pattern: 'Image()',
     why:

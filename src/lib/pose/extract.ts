@@ -11,6 +11,7 @@ import {
 import { bridgeDetectionGaps, type PoseSample } from '../analysis/kalman'
 import { UnreadableVideoError, type Frame, type Landmark } from '../analysis/types'
 import { nextVideoTimestamp } from './poseEngine'
+import { poseDetector } from './poseDetect'
 import { Cancelled } from './errors'
 
 // In their own module so the app can name them without the extractor (L2.10).
@@ -452,6 +453,8 @@ export async function scanForServes(
   }
   const aspect = video.videoWidth / Math.max(1, video.videoHeight)
 
+  // The main thread, or a worker on `?worker=1` (M1.2).
+  const detectPose = await poseDetector(landmarker)
   /** Read the highest either hand gets at one moment, and the pose around it. */
   const sampleAt = async (t: number) => {
     check()
@@ -461,7 +464,7 @@ export async function scanForServes(
     const at = await seekTo(video, t)
     if (at === false) return
     input.draw?.()
-    const res = landmarker.detectForVideo(input.source, nextVideoTimestamp(landmarker, video.currentTime))
+    const res = await detectPose(input.source, nextVideoTimestamp(landmarker, video.currentTime))
     const image = res.landmarks?.[0]?.map((l) => input.back(toLandmark(l)))
     if (image) {
       // Image y grows downwards, so negate it. The feet's x is put on the same
@@ -529,13 +532,14 @@ export async function timeScanSamples(
   count: number,
   signal?: AbortSignal,
 ): Promise<number[]> {
+  const detectPose = await poseDetector(landmarker)
   const out: number[] = []
   for (let k = 0; k < count; k++) {
     if (signal?.aborted) throw new Cancelled()
     const started = performance.now()
     const at = await seekTo(video, (video.duration * (k + 0.5)) / count)
     if (at === false) continue
-    landmarker.detectForVideo(video, nextVideoTimestamp(landmarker, video.currentTime))
+    await detectPose(video, nextVideoTimestamp(landmarker, video.currentTime))
     out.push(performance.now() - started)
   }
   return out
@@ -593,9 +597,10 @@ export async function extractFrames(
 
   // Set once the window is known, below; the scan above reads its own.
   let input = poseInput(video, undefined)
-  const detect = (): { image: Landmark[]; world: Landmark[] } | null => {
+  const detectPose = await poseDetector(landmarker)
+  const detect = async (): Promise<{ image: Landmark[]; world: Landmark[] } | null> => {
     input.draw?.()
-    const res = landmarker.detectForVideo(input.source, nextVideoTimestamp(landmarker, video.currentTime))
+    const res = await detectPose(input.source, nextVideoTimestamp(landmarker, video.currentTime))
     const image = res.landmarks?.[0]
     const world = res.worldLandmarks?.[0]
     if (!image || !world) return null
@@ -645,7 +650,7 @@ export async function extractFrames(
     // derivative in `kinematics.ts` reads this array's own gaps, so a fictional
     // even spacing here is fictional precision in every velocity built from it.
     const at = await seekTo(video, t)
-    samples.push({ t: at === false ? t : at, pose: at === false ? null : detect() })
+    samples.push({ t: at === false ? t : at, pose: at === false ? null : await detect() })
     onProgress({ phase: 'tracking', ratio: (i + 1) / count })
   }
 
@@ -739,6 +744,7 @@ export async function preflight(
     if (opts.signal?.aborted) throw new Cancelled()
   })
   const input = poseInput(video, crop)
+  const detectPose = await poseDetector(landmarker)
 
   for (let i = 0; i < n; i++) {
     if (opts.signal?.aborted) throw new Cancelled()
@@ -748,7 +754,7 @@ export async function preflight(
     const at = await seekTo(video, t)
     if (at === false) continue
     input.draw?.()
-    const res = landmarker.detectForVideo(input.source, nextVideoTimestamp(landmarker, video.currentTime))
+    const res = await detectPose(input.source, nextVideoTimestamp(landmarker, video.currentTime))
     const image = res.landmarks?.[0]
     const world = res.worldLandmarks?.[0]
     if (!image || !world) continue
