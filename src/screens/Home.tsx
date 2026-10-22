@@ -6,6 +6,7 @@ import { NUDGE_COPY, type StorageNudge } from '../lib/storage/nudge'
 import { previewSupported } from '../lib/framing/access'
 import { findPracticeFocus } from '../lib/practice'
 import { weekPlan } from '../lib/weekPlan'
+import { sessionEvidence } from '../lib/session/evidence'
 import { faultForMetric } from '../lib/analysis/progressions'
 import { buildProgress, currentRubricEra, sixWeekMilestone, streakLine, tripDay } from '../lib/progress'
 import type { Session } from '../lib/storage/db'
@@ -182,7 +183,8 @@ export default function Home({
    * and that is what this carries. Newest report first, walking past a refused
    * clip, so one bad clip does not blank the plan.
    */
-  const week = useMemo(() => weekPlan(sessions, ladder), [sessions, ladder])
+  // A practice session's judged serves count towards graduation (N1.5).
+  const week = useMemo(() => weekPlan(sessions, ladder, Date.now(), sessionEvidence(practiceSessions)), [sessions, ladder, practiceSessions])
   const progress = useMemo(() => buildProgress(sessions, undefined, ledger), [sessions, ledger])
   const milestone = useMemo(() => (progress ? sixWeekMilestone(progress) : undefined), [progress])
   // The newest trip's first body-position best, if it set one (L3.8).

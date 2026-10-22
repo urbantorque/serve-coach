@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
+import { canMoveUp, tripCheckLine, type TripCheck } from '../lib/tripCheck'
 import { Icon, Sheet } from './primitives'
 import { readoutOf } from '../lib/analysis/anatomy'
 import { METRICS } from '../lib/analysis/coaching'
@@ -39,9 +40,13 @@ interface Props {
   videoUrl?: string
   /** Pick the video again, for a session opened without it. */
   onPickAgain?: () => void
+  /** The drill the player came in with, checked across this practice (N1.5). */
+  check?: TripCheck
+  /** Move that drill's ladder; absent where prefs cannot be kept. */
+  onLadderStep?: (flaw: string, step: number) => void
 }
 
-export default function SessionDashboard({ session, previous, videoUrl, onPickAgain }: Props) {
+export default function SessionDashboard({ session, previous, videoUrl, onPickAgain, check, onLadderStep }: Props) {
   const [watching, setWatching] = useState<Highlight>()
   const highlights = useMemo(
     () => new Map((session.highlights ?? highlightsOf(session.lines, session.duration)).map((h) => [h.number, h])),
@@ -104,6 +109,21 @@ export default function SessionDashboard({ session, previous, videoUrl, onPickAg
           </ol>
         ) : (
           <p className="session-meta">{noFixLine(stats.read)}</p>
+        )}
+        {/* The drill the player came in with, across this practice (N1.5): a
+            session used to show drills but never move the ladder. */}
+        {check && (
+          <div className="glance-move glance-check" role="status">
+            <Icon name={check.outcome === 'passed' ? 'check' : 'info'} size={15} />
+            <span>
+              <strong>{check.step}</strong> · {tripCheckLine(check, 'practice')}
+            </span>
+            {canMoveUp(check) && onLadderStep && (
+              <button type="button" className="btn btn--primary glance-check-move" onClick={() => onLadderStep(check.flaw, check.rung + 1)}>
+                Move up a step
+              </button>
+            )}
+          </div>
         )}
       </section>
 

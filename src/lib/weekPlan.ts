@@ -73,6 +73,11 @@ export function weekPlan(
   sessions: Session[],
   rungs?: Partial<Record<string, number>>,
   now: number = Date.now(),
+  /**
+   * Judged serves from practice sessions (N1.5, `sessionEvidence`): counted
+   * towards graduation, never planned from.
+   */
+  evidence: readonly Session[] = [],
 ): WeekPlan | undefined {
   const bearing: { session: Session; plan: Entry[] }[] = []
   for (const session of sessions) {
@@ -90,7 +95,7 @@ export function weekPlan(
   const named = new Set(bearing.flatMap((b) => b.plan.map((e) => e.flaw)).filter((f): f is FlawId => !!f))
   const fixed = new Map<FlawId, Graduation>()
   for (const flaw of named) {
-    const g = graduation(sessions, flaw)
+    const g = graduation(evidence.length ? [...sessions, ...evidence] : sessions, flaw)
     if (g) fixed.set(flaw, g)
   }
 

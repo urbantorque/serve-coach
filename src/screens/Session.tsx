@@ -1,4 +1,6 @@
 import { Icon } from '../components/primitives'
+import { sessionDrillCheck } from '../lib/session/evidence'
+import type { Session as SavedReport } from '../lib/storage/db'
 import SessionDashboard, { ServeGrid } from '../components/SessionDashboard'
 import { clipLabel } from '../lib/clipLabel'
 import { PLACEMENT } from '../lib/placement'
@@ -25,6 +27,11 @@ interface Props {
   onStop: () => void
   onPickAgain: () => void
   onLeave: () => void
+  /** For the practice's drill check (N1.5): the saved reports, the ladder and when it moved. */
+  history?: SavedReport[]
+  ladder?: Partial<Record<string, number>>
+  movedAt?: Partial<Record<string, number>>
+  onLadderStep?: (flaw: string, step: number) => void
 }
 
 /** The two choices, in the player's words. */
@@ -51,6 +58,10 @@ export default function Session({
   onStop,
   onPickAgain,
   onLeave,
+  history,
+  ladder,
+  movedAt,
+  onLadderStep,
 }: Props) {
   const label = clipLabel(session.fileName)
   const length = minutesOf(session.duration).replace(/^about /, '')
@@ -184,6 +195,8 @@ export default function Session({
             previous={previous}
             videoUrl={canRead ? videoUrl : undefined}
             onPickAgain={onPickAgain}
+            check={history ? sessionDrillCheck(session, history, ladder, movedAt) : undefined}
+            onLadderStep={onLadderStep}
           />
         )}
         <button className="btn btn--ghost btn--full" onClick={onLeave}>

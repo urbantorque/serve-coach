@@ -713,6 +713,10 @@ export default function App() {
                 setTimeout(() => firstRunPickRef.current?.click(), 0)
               }}
               onLeave={leaveSession}
+              history={sessions}
+              ladder={prefs.ladder}
+              movedAt={prefs.ladderMovedAt}
+              onLadderStep={moveLadder}
             />
           )}
 
