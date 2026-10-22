@@ -754,6 +754,24 @@ check('progress keeps first and second serves apart, and counts the weeks (D5.3,
   assert(!bare.includes('First and second serves'), 'a serve-number block with no taps behind it')
 })
 
+check('progress leads its faults and serves with pictures, and folds the prose (N4.3)', () => {
+  const day = 86_400_000
+  const history = Array.from({ length: 12 }, (_, i) => ({
+    ...stored(sampleAnalysis(DEMO_DIALS.injury)),
+    id: `serve-pic-${i}`,
+    overall: 70 + (i % 5),
+    createdAt: Date.now() - (11 - i) * 3 * day,
+  }))
+  const tags = history.map((s, i) => ({ id: s.id, serveNumber: (i % 2 ? 2 : 1) as 1 | 2, outcome: i % 3 ? ('in' as const) : ('net' as const), taggedAt: s.createdAt }))
+  const out = html(createElement(Progress, { sessions: history, tags, onLogDrill: noop, onUndoDrill: noop, seeded: false, onBack: noop }))
+  assert(/<svg class="fault-strip"[^>]*role="img"[^>]*aria-label="[^"]+named on \d+ of \d+/.test(out), 'no fault strip with a text version')
+  assert((out.match(/class="fault-dot is-named"/g) ?? []).length > 0, 'the strip drew no named serve')
+  assert(out.includes('class="inrate-bars"') && /aria-label="First serves: in on \d+ of \d+"/.test(out), 'no in-rate bar with a text version')
+  const open = (out.match(/<section class="block"/g) ?? []).length
+  assert(open <= 7, `${open} sections stand open`)
+  assert(out.includes('class="block progress-more"'), 'nothing was folded')
+})
+
 check('progress says what the misses share, and the best sets, and nothing from noise (N3.1, N3.2)', () => {
   // The fixture `misses.test.ts` plants: the net serves struck lower.
   let clock = 0

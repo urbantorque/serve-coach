@@ -44,6 +44,7 @@ import { serveProfile } from '../lib/serveProfile'
 import { graduation } from '../lib/graduation'
 import { graduationCard } from '../lib/graduationCard'
 import FixedPair from '../components/FixedPair'
+import { FaultStrip, InRateBars } from '../components/ProgressCharts'
 import { weekPlan } from '../lib/weekPlan'
 import type { PracticeSession } from '../lib/session/session'
 import { SERVE_NUMBER_LABEL } from '../lib/serveTagCopy'
@@ -290,8 +291,8 @@ export default function Progress({
           {/* How you serve (L3.12): the newest trip described, not graded — the
               readout's body position for each row, with no colour or target. */}
           {profile && profile.lines.length > 0 && (
-            <section className="block">
-              <h2 className="block-title">How you served, {tripDay(profile.at)}</h2>
+            <details className="block progress-more">
+              <summary className="block-title">How you served, {tripDay(profile.at)}</summary>
               <ul className="profile">
                 {profile.lines.map((l) => (
                   <li key={l.id} className="profile-line">
@@ -300,7 +301,7 @@ export default function Progress({
                   </li>
                 ))}
               </ul>
-            </section>
+            </details>
           )}
 
           {/* Above the records rather than below them, and above the charts,
@@ -392,6 +393,7 @@ export default function Progress({
           {faults.length > 0 && (
             <section className="block">
               <h2 className="block-title">Faults over your last serves</h2>
+              <FaultStrip faults={faults} />
               {faults.map((f) => (
                 <p key={f.flaw} className="progress-foot">
                   <strong>{f.title}</strong>: named on {f.named} of {f.judged} serves
@@ -408,6 +410,11 @@ export default function Progress({
           {(numbers.length > 0 || inRates.length > 0 || slowSecond || misses.length > 0) && (
             <section className="block">
               <h2 className="block-title">First and second serves</h2>
+              <InRateBars
+                rows={numbers
+                  .filter((n) => n.outcomes >= MIN_OUTCOMES_FOR_RATE)
+                  .map((n) => ({ label: `${SERVE_NUMBER_LABEL[n.serveNumber]}s`, inServes: n.inServes, outcomes: n.outcomes }))}
+              />
               {numbers.map((n) => (
                 <p key={n.serveNumber} className="progress-foot">
                   {SERVE_NUMBER_LABEL[n.serveNumber]}s: {n.serves} tagged, averaging {n.average}
@@ -438,8 +445,8 @@ export default function Progress({
               served or what their shoulder feels like. Shown once there are two
               weeks of serves to set side by side. */}
           {weeks.filter((w) => w.serves > 0).length >= 2 && (
-            <section className="block">
-              <h2 className="block-title">Serves per week</h2>
+            <details className="block progress-more">
+              <summary className="block-title">Serves per week</summary>
               <p className="progress-foot tnum">
                 This week {weeks[weeks.length - 1].serves}. The four before:{' '}
                 {weeks
@@ -449,7 +456,7 @@ export default function Progress({
                 .
               </p>
               {weekJump && <p className="sheet-note">{weekJump}</p>}
-            </section>
+            </details>
           )}
 
           {/* One share button (L4.9): the season, the last trip and each
@@ -507,10 +514,10 @@ export default function Progress({
           </section>
 
           {form.areaDeltas.length > 0 && (
-            <section className="block">
-              <h2 className="block-title">Change since your last serve</h2>
+            <details className="block progress-more">
+              <summary className="block-title">Change since your last serve</summary>
               <DeltaBars deltas={form.areaDeltas} />
-            </section>
+            </details>
           )}
 
           {/* The long loop: not whether one serve scored higher, but whether
@@ -518,16 +525,8 @@ export default function Progress({
               sweep has been run on more than one clip, because a single
               basket is a reading rather than a trend. */}
           {spread && spread.points.length > 1 && (
-            <section className="block">
-              {/* No summary chip on the head. The rows already show the
-                  direction, and a chip here would be one more number in a
-                  sheet that already carries the hero score, its own chip, a
-                  sparkline and a value per fundamental. */}
-              {/* "Repeatable" is the one word this app uses for the idea, on
-                  the report and here. It was "gap" in this heading and
-                  "steadier" in the chart's own note — three names for one
-                  thing the player is meant to be tracking. */}
-              <h2 className="block-title">How repeatable, over time</h2>
+            <details className="block progress-more">
+              <summary className="block-title">How repeatable, over time</summary>
               <GapTrend points={spread.points} />
               {/* buildConsistencyTrend has computed this since it was
                   written; the chart above never said it in words. */}
@@ -542,7 +541,7 @@ export default function Progress({
                   one number this chart's own shape already contains, not a
                   second computation that could disagree with it. */}
               {sheetBestGap && <p className="sheet-note">{bestGapEverLine(sheetBestGap)}</p>}
-            </section>
+            </details>
           )}
 
           <details className="progress-table">

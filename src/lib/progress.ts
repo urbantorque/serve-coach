@@ -1896,6 +1896,8 @@ export interface FaultTrend {
   direction: 'fewer' | 'same' | 'more'
   /** The ladder step the player is on for it, when it has a ladder. */
   step?: { at: number; of: number }
+  /** Named (true) or clean on each judged serve, oldest first: the strip on Progress draws it (N4.3). */
+  sequence: boolean[]
 }
 
 /**
@@ -1939,6 +1941,7 @@ export function faultTrends(
       named: verdicts.filter(Boolean).length,
       judged: verdicts.length,
       direction: newer <= older - 2 ? 'fewer' : newer >= older + 2 ? 'more' : 'same',
+      sequence: verdicts,
       step:
         ladder && stored !== undefined && Number.isInteger(stored) && stored >= 0 && stored < ladder.steps.length
           ? { at: stored + 1, of: ladder.steps.length }

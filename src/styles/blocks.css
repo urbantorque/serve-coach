@@ -158,3 +158,60 @@
   font-size: 12.5px;
   color: var(--fg-muted);
 }
+
+/* Faults serve by serve, and in-rate by serve number (N4.3). */
+.fault-strip {
+  display: block;
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+  margin: 4px 0 10px;
+}
+
+.fault-dot {
+  fill: none;
+  stroke: var(--fg-faint);
+  stroke-width: 1.5;
+}
+
+.fault-dot.is-named {
+  fill: var(--fair);
+  stroke: var(--fair);
+}
+
+.progress-more > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.progress-more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.inrate-bars {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 10px;
+}
+
+.inrate-row {
+  display: grid;
+  grid-template-columns: 7.5em 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--fg-muted);
+}
+
+.inrate-track {
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--ink-3);
+  overflow: hidden;
+}
+
+.inrate-fill {
+  display: block;
+  height: 100%;
+  background: var(--lime);
+}
