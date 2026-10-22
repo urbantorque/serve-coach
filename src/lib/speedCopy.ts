@@ -93,3 +93,13 @@ export function serveNumberSpeedLine(s: { first: Ranged; second: Ranged; directi
   // A slower second serve is what a second serve is for: said as a fact, not a fault.
   return s.direction === 'faster' ? `${first} Your second serve is the quicker one.` : first
 }
+
+/** A practice session's speeds, on its dashboard (N2.8). */
+export function sessionSpeedLine(s: { read: number; fastest: Ranged; typical?: Ranged }, unit: SpeedUnit): string {
+  const fastest = `Fastest serve ${aboutSpeed(s.fastest, unit)}.`
+  return s.typical ? `${fastest} Typical serve ${aboutSpeed(s.typical, unit)}, over ${s.read} serves.` : fastest
+}
+
+/** A session read for speeds where no serve gave one. */
+export const NO_SESSION_SPEED =
+  'No serve in this practice gave a speed. Turn the phone on its side, step it back and leave the net side of the picture open.'

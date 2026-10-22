@@ -159,6 +159,12 @@ export async function runDemoRoute(
       now,
     )
     seedHistory({ sessions: [], practice: [], practiceSessions: [session, previous] })
+    // `&plan`: the same clip before it is read, priced, with the speed choice (N2.8).
+    if (new URLSearchParams(location.search).has('plan')) {
+      const fresh: PracticeSession = { ...session, found: undefined, chosen: undefined, lines: [], phase: 'locating', duration: 600, stills: undefined }
+      setView({ kind: 'session', session: fresh, stage: { state: 'planning', timed: true, perSampleMs: 110 }, canRead: true })
+      return
+    }
     setView({ kind: 'session', session, stage: { state: 'done' }, canRead: false })
     return
   }

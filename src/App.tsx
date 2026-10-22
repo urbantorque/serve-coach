@@ -702,7 +702,7 @@ export default function App() {
               videoUrl={view.canRead ? urlRef.current : undefined}
               stage={view.stage}
               canRead={view.canRead}
-              onStart={(mode) => void startSession(mode)}
+              onStart={(mode, withSpeed) => void startSession(mode, withSpeed)}
               onStop={() => stopSession('player')}
               onPickAgain={() => {
                 setFirstRunIntent('pick')

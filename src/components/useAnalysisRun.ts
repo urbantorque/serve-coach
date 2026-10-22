@@ -594,13 +594,16 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
    * place.
    */
   const startSession = useCallback(
-    async (mode: 'sample' | 'every') => {
+    async (mode: 'sample' | 'every', withSpeed = false) => {
       const shown = sessionViewRef.current
       const reader = sessionVideoRef.current
       if (!shown || !reader || !shown.canRead) return
       const perSampleMs =
         shown.stage.state === 'planning' || shown.stage.state === 'paused' ? shown.stage.perSampleMs : undefined
-      const start: PracticeSession = { ...shown.session, mode: shown.session.found ? shown.session.mode : mode }
+      // A session already begun keeps the choices it began with, speeds included.
+      const start: PracticeSession = shown.session.found
+        ? shown.session
+        : { ...shown.session, mode, ...(withSpeed ? { withSpeed } : {}) }
 
       sessionAbortRef.current?.abort()
       const controller = new AbortController()

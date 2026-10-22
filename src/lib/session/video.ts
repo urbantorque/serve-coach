@@ -33,6 +33,8 @@ export interface ReadOptions {
   onProgress?: (p: AnalyzeProgress) => void
   /** Read the ball too: a full read, for a picture (L5.10). */
   withBall?: boolean
+  /** Read the ball and the serve's speed (N2.8), when the player chose speeds on the plan. */
+  withSpeed?: boolean
 }
 
 export interface SessionVideo {
@@ -67,11 +69,14 @@ export function openSessionVideo(videoUrl: string, file: Blob): SessionVideo {
    * read the container again, which on a long clip is a walk past a gigabyte of
    * media boxes per serve for an answer that cannot change.
    */
-  let stretch: Promise<Stretch> | undefined
+  let stretch: Promise<{ stretch: Stretch; fileFps?: number }> | undefined
   const stretchOf = () =>
-    (stretch ??= readContainerTiming(file).then((timing): Stretch => {
+    (stretch ??= readContainerTiming(file).then((timing) => {
       const factor = stretchFromContainer(timing)
-      return factor ? { factor, source: 'file' } : { factor: 1, source: 'none' }
+      return {
+        stretch: factor ? { factor, source: 'file' as const } : { factor: 1, source: 'none' as const },
+        fileFps: timing?.fileFps,
+      }
     }))
 
   const reader: SessionVideo = {
@@ -119,7 +124,7 @@ export function openSessionVideo(videoUrl: string, file: Blob): SessionVideo {
     },
 
     read: async (index, found, opts) => {
-      const knownStretch = await stretchOf()
+      const { stretch: knownStretch, fileFps: knownFileFps } = await stretchOf()
       const once = (handedness: 'right' | 'left') =>
         analyzeServe(
           {
@@ -137,8 +142,11 @@ export function openSessionVideo(videoUrl: string, file: Blob): SessionVideo {
             // the stills and the second pose model are not what a session line
             // keeps (`lineOf`).
             ...SWEEP_SKIPS,
-            skipBall: !opts.withBall,
+            skipBall: !opts.withBall && !opts.withSpeed,
+            // The speed needs the toss, so it rides on the ball's pass (N2.8).
+            skipSpeed: !opts.withSpeed,
             knownStretch,
+            knownFileFps,
           },
           video,
         )

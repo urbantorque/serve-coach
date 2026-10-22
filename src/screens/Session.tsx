@@ -1,10 +1,11 @@
+import { useState } from 'react'
 import { Icon } from '../components/primitives'
 import { sessionDrillCheck } from '../lib/session/evidence'
 import type { Session as SavedReport } from '../lib/storage/db'
 import SessionDashboard, { ServeGrid } from '../components/SessionDashboard'
 import { clipLabel } from '../lib/clipLabel'
 import { PLACEMENT } from '../lib/placement'
-import { SESSION_SAMPLE, costLeft, guessServes, minutesOf, planChoices, type PlanChoice } from '../lib/session/plan'
+import { SESSION_SAMPLE, costLeft, guessServes, minutesOf, planChoices, speedCostLine, type PlanChoice } from '../lib/session/plan'
 import { toRead, type PracticeSession, type SessionStage } from '../lib/session/session'
 
 export type { SessionStage }
@@ -23,7 +24,8 @@ interface Props {
    * never keeps the file, so carrying on means picking it again.
    */
   canRead: boolean
-  onStart: (mode: 'sample' | 'every') => void
+  /** Start reading: a sample or every serve, and each serve's speed or not (N2.8). */
+  onStart: (mode: 'sample' | 'every', withSpeed: boolean) => void
   onStop: () => void
   onPickAgain: () => void
   onLeave: () => void
@@ -83,7 +85,7 @@ export default function Session({
           )}
           {resuming &&
             (canRead ? (
-              <button className="btn btn--primary btn--full" onClick={() => onStart(session.mode)}>
+              <button className="btn btn--primary btn--full" onClick={() => onStart(session.mode, !!session.withSpeed)}>
                 Carry on
               </button>
             ) : (
@@ -162,7 +164,7 @@ export default function Session({
             {left && ` ${left} left.`}
           </p>
           {session.found !== undefined && <ServeGrid session={session} />}
-          <button className="btn btn--primary btn--full" onClick={() => onStart(session.mode)}>
+          <button className="btn btn--primary btn--full" onClick={() => onStart(session.mode, !!session.withSpeed)}>
             Carry on
           </button>
           <button className="btn btn--ghost btn--full" onClick={onLeave}>
@@ -215,8 +217,9 @@ function Choices({
 }: {
   session: PracticeSession
   stage: SessionStage
-  onStart: (mode: 'sample' | 'every') => void
+  onStart: (mode: 'sample' | 'every', withSpeed: boolean) => void
 }) {
+  const [withSpeed, setWithSpeed] = useState(false)
   const guess = guessServes(session.duration)
   const timed = stage.state === 'planning' && stage.timed
   const perSampleMs = stage.state === 'planning' ? stage.perSampleMs : undefined
@@ -235,13 +238,28 @@ function Choices({
             ? 'I could not time your phone on this video, so I cannot say how long it will take.'
             : 'Times are from your phone, on this video.'}
       </p>
+      {/* Off by default: a speed costs the ball's pass on every serve. */}
+      <div className="seg" role="group" aria-label="Serve speeds" style={{ width: 'fit-content' }}>
+        {[false, true].map((on) => (
+          <button
+            key={String(on)}
+            type="button"
+            className={`seg-item${withSpeed === on ? ' is-on' : ''}`}
+            aria-pressed={withSpeed === on}
+            onClick={() => setWithSpeed(on)}
+          >
+            {on ? 'With speeds' : 'Without speeds'}
+          </button>
+        ))}
+      </div>
+      <p className="session-meta">{speedCostLine(choices)}</p>
       <ul className="session-choices">
         {choices.map((choice) => {
           const copy = choiceCopy(choice)
-          const time = timeOf(choice.seconds)
+          const time = timeOf(withSpeed ? choice.speedSeconds : choice.seconds)
           return (
             <li key={choice.mode}>
-              <button className="session-choice" onClick={() => onStart(choice.mode)} disabled={!timed}>
+              <button className="session-choice" onClick={() => onStart(choice.mode, withSpeed)} disabled={!timed}>
                 <span className="session-choice-text">
                   <strong>{copy.title}</strong>
                   <span>{copy.body}</span>

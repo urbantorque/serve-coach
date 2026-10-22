@@ -140,3 +140,27 @@ export function fastestServe(sessions: readonly Session[]): FastestServe | undef
     isNew: read.length > 1 && holder === newest,
   }
 }
+
+export interface SessionSpeeds {
+  /** Serves a speed was read on. */
+  read: number
+  /** The serve the reader is surest was fast: the highest bottom of a range. */
+  fastest: { ms: number; low: number; high: number }
+  /** The middle serve and the middle of the ranges, when two or more were read. */
+  typical?: { ms: number; low: number; high: number }
+}
+
+/**
+ * A practice session's speeds (N2.8), from the lines that carry one: the
+ * fastest serve and the typical one. Nothing when no serve gave a speed.
+ */
+export function sessionSpeeds(lines: readonly { speed?: { ms: number; low: number; high: number } }[]): SessionSpeeds | undefined {
+  const read = lines.map((l) => l.speed).filter((s): s is NonNullable<typeof s> => s !== undefined)
+  if (!read.length) return undefined
+  const fastest = read.reduce((a, b) => (b.low > a.low ? b : a))
+  const typical =
+    read.length >= MIN_SPEED_SERVES
+      ? { ms: median(read.map((s) => s.ms)), low: median(read.map((s) => s.low)), high: median(read.map((s) => s.high)) }
+      : undefined
+  return { read: read.length, fastest, ...(typical ? { typical } : {}) }
+}

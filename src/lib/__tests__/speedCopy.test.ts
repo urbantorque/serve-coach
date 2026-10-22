@@ -71,7 +71,10 @@ check('nothing that scores, grades or plans reads the speed', () => {
   // The speed is written by `analyze.ts` and stored; only the screens and the
   // storage check read it back. A score, band, plan or drill that read it
   // would make speed a grade, which the speed rules forbid.
-  const allowed = new Set(['analyze.ts', 'types.ts', 'speedPass.ts', 'db.ts'])
+  // A practice session carries it the same way (N2.8): `line.ts` writes it on
+  // a serve's line, `session.ts` checks it on load, `drive.ts` passes the
+  // player's choice and prices it. None of them grades or plans with it.
+  const allowed = new Set(['analyze.ts', 'types.ts', 'speedPass.ts', 'db.ts', 'line.ts', 'session.ts', 'drive.ts'])
   const offenders: string[] = []
   const walk = (dir: string) => {
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {

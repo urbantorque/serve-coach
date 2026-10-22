@@ -13,6 +13,7 @@
  *
  * Pure: no video, no storage, no clock. The runner and the screens call it.
  */
+import { SPEED_PLACEMENT } from '../placement'
 import { MIN_SERVE_GAP, SCAN_FPS, planScan } from '../analysis/serves'
 
 export { SESSION_SECONDS, isSession } from './length'
@@ -34,6 +35,17 @@ export const LIGHT_READ_SAMPLES = 91
 
 /** Seeks a full read costs: the light read plus the ball, the racket, the refinement and the stills. */
 export const FULL_READ_SAMPLES = 200
+
+/**
+ * Seeks a serve's speed adds to its light read (N2.8): the ball's pass, every
+ * frame from two before the toss to two after contact at the light read's 32
+ * a second, and the speed pass, every native frame of a quarter second round
+ * contact. The rig's toss reaches contact in 28 seeks; a club player's
+ * slower toss is priced at a second and a quarter, 45. The speed pass is
+ * priced at 60 frames a second, 15; a slow-motion session costs more than this
+ * says, and is the rare one.
+ */
+export const SPEED_READ_SAMPLES = 45 + 15
 
 /** How many serves are read in full, for pictures: the best, the worst and the middle one. */
 export const FULL_READS = 3
@@ -91,6 +103,8 @@ export interface SessionCost {
   read: number
   /** Seeks the full reads for the pictures cost. */
   full: number
+  /** Seeks reading each serve's speed adds (N2.8): nothing unless asked for. */
+  speed: number
   /** All of it, in seconds, at the measured cost of one seek. */
   seconds: number
 }
@@ -110,13 +124,16 @@ export function sessionCost(opts: {
   perSampleMs: number
   /** The scan has already run, so its cost is spent. */
   located?: boolean
+  /** Read each serve's speed too (N2.8). */
+  withSpeed?: boolean
 }): SessionCost {
   const locate = opts.located ? 0 : planScan(opts.duration).times.length + opts.serves * REFINE_SAMPLES
   const reading = Math.max(0, Math.min(opts.reading, opts.serves))
   const read = reading * LIGHT_READ_SAMPLES
   const full = Math.min(FULL_READS, reading) * FULL_READ_SAMPLES
-  const seconds = ((locate + read + full) * Math.max(0, opts.perSampleMs)) / 1000
-  return { locate, read, full, seconds }
+  const speed = opts.withSpeed ? reading * SPEED_READ_SAMPLES : 0
+  const seconds = ((locate + read + full + speed) * Math.max(0, opts.perSampleMs)) / 1000
+  return { locate, read, full, speed, seconds }
 }
 
 /**
@@ -140,6 +157,8 @@ export interface PlanChoice {
   reading: number
   /** Seconds, or nothing when this file could not be timed. */
   seconds?: number
+  /** Seconds with each serve's speed read too (N2.8). */
+  speedSeconds?: number
 }
 
 /**
@@ -155,13 +174,19 @@ export function planChoices(opts: {
   perSampleMs?: number
   located?: boolean
 }): PlanChoice[] {
-  const price = (reading: number) =>
+  const price = (reading: number, withSpeed = false) =>
     opts.perSampleMs === undefined
       ? undefined
-      : sessionCost({ ...opts, reading, perSampleMs: opts.perSampleMs }).seconds
-  const every: PlanChoice = { mode: 'every', reading: opts.serves, seconds: price(opts.serves) }
+      : sessionCost({ ...opts, reading, perSampleMs: opts.perSampleMs, withSpeed }).seconds
+  const choice = (mode: 'sample' | 'every', reading: number): PlanChoice => ({
+    mode,
+    reading,
+    seconds: price(reading),
+    speedSeconds: price(reading, true),
+  })
+  const every = choice('every', opts.serves)
   if (opts.serves <= SESSION_SAMPLE) return [every]
-  return [{ mode: 'sample', reading: SESSION_SAMPLE, seconds: price(SESSION_SAMPLE) }, every]
+  return [choice('sample', SESSION_SAMPLE), every]
 }
 
 /**
@@ -169,20 +194,42 @@ export function planChoices(opts: {
  * file could not be timed. The scan is spent once it has found the serves.
  */
 export function costLeft(
-  session: { duration: number; found?: number[]; chosen?: number[]; lines: { number: number }[] },
+  session: { duration: number; found?: number[]; chosen?: number[]; lines: { number: number }[]; withSpeed?: boolean },
   perSampleMs: number | undefined,
 ): number | undefined {
   if (perSampleMs === undefined) return undefined
   const done = new Set(session.lines.map((l) => l.number))
   const serves = session.found?.length ?? guessServes(session.duration)
   const left = session.chosen ? session.chosen.filter((i) => !done.has(i + 1)).length : serves
-  return sessionCost({ duration: session.duration, serves, reading: left, perSampleMs, located: !!session.found }).seconds
+  return sessionCost({ duration: session.duration, serves, reading: left, perSampleMs, located: !!session.found, withSpeed: session.withSpeed }).seconds
 }
+
+/** Whole minutes, never 0: the figure every time on the plan is said in. */
+const wholeMinutes = (seconds: number) => Math.max(1, Math.round(seconds / 60))
 
 /** A duration in whole minutes, for a sentence: "about 7 minutes", never "about 0". */
 export function minutesOf(seconds: number): string {
-  const m = Math.max(1, Math.round(seconds / 60))
+  const m = wholeMinutes(seconds)
   return m === 1 ? 'about a minute' : `about ${m} minutes`
+}
+
+/**
+ * What reading speeds adds, said before the player chooses (N2.8): the extra
+ * minutes on each way to read, and where to have stood for a speed to come
+ * out at all. The extra is the gap between the two times the plan shows, as
+ * rounded, so the sentence and the figures beside it always agree: priced
+ * apart, "about 6 minutes" more sat beside a time going from 15 to 20.
+ */
+export function speedCostLine(choices: PlanChoice[]): string {
+  const extra = choices
+    .filter((c) => c.seconds !== undefined && c.speedSeconds !== undefined)
+    .map((c) => {
+      const more = wholeMinutes(c.speedSeconds!) - wholeMinutes(c.seconds!)
+      const said = more < 1 ? 'under a minute' : more === 1 ? 'about a minute' : `about ${more} minutes`
+      return `${said} to ${c.mode === 'sample' ? 'the sample' : 'every serve'}`
+    })
+  const added = extra.length ? `Speeds add ${extra.join(' and ')}.` : 'Speeds add the ball\u2019s flight to every serve read.'
+  return `${added} Film from ${SPEED_PLACEMENT.distance} away for them to come out.`
 }
 
 /** Serves closer together than this in the scan are one. Re-exported for the runner's checks. */

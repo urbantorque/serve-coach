@@ -49,6 +49,8 @@ export interface ServeLine {
   judged?: FlawId[]
   /** Where the toss peaked against the front foot. */
   toss?: Pick<TossPlacement, 'ahead' | 'across' | 'confidence'>
+  /** The serve's speed and its range, metres a second, when the session read speeds (N2.8). */
+  speed?: { ms: number; low: number; high: number }
   /**
    * The player's size, footing and place across the picture, for telling the
    * sides apart and noticing the phone move (`stats.ts`).
@@ -88,6 +90,8 @@ export interface PracticeSession {
   handedness: 'right' | 'left'
   /** A sample of the serves, or every one. */
   mode: 'sample' | 'every'
+  /** Read each serve's speed too (N2.8): the ball's pass on every serve, priced on the plan. */
+  withSpeed?: boolean
   /** Where every serve the scan found is, seconds. Absent until the scan has run. */
   found?: number[]
   /** Which of them to read, as zero-based indexes into `found`. */
@@ -150,6 +154,16 @@ export function normalisePracticeSession(raw: unknown): PracticeSession | undefi
   const lines = (Array.isArray(s.lines) ? s.lines : [])
     .filter((l): l is ServeLine => !!l && typeof l === 'object' && typeof l.number === 'number' && typeof l.t === 'number')
     .filter((l) => l.status === 'read' || l.status === 'unclear')
+    // A stored speed is kept whole or not at all (N2.8): three finite numbers in order.
+    .map((l) => {
+      const v = l.speed as Partial<NonNullable<ServeLine['speed']>> | undefined
+      if (v === undefined) return l
+      const ok = [v.ms, v.low, v.high].every((x) => typeof x === 'number' && Number.isFinite(x)) && v.low! <= v.ms! && v.ms! <= v.high!
+      if (ok) return l
+      const { speed: _drop, ...rest } = l
+      void _drop
+      return rest
+    })
   const phase: SessionPhase = ['locating', 'reading', 'done', 'stopped'].includes(s.phase as string)
     ? (s.phase as SessionPhase)
     : 'stopped'
@@ -162,6 +176,7 @@ export function normalisePracticeSession(raw: unknown): PracticeSession | undefi
     serveType: s.serveType === 'kick' || s.serveType === 'slice' ? s.serveType : 'flat',
     handedness: s.handedness === 'left' ? 'left' : 'right',
     mode: s.mode === 'every' ? 'every' : 'sample',
+    ...(s.withSpeed === true ? { withSpeed: true } : {}),
     ...(found ? { found } : {}),
     ...(chosen ? { chosen } : {}),
     ...(numbers(s.unsure)?.length ? { unsure: numbers(s.unsure) } : {}),

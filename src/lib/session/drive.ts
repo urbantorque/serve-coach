@@ -39,10 +39,10 @@ export async function driveSession(d: Drive): Promise<void> {
   const located = start.found !== undefined
   const serves = start.found?.length ?? guessServes(start.duration)
   const reading = start.chosen?.length ?? (start.mode === 'every' ? serves : sampleServes(serves).length)
-  const cost = sessionCost({ duration: start.duration, serves, reading, perSampleMs: 1, located })
-  const total = Math.max(1, cost.locate + cost.read + cost.full)
+  const cost = sessionCost({ duration: start.duration, serves, reading, perSampleMs: 1, located, withSpeed: start.withSpeed })
+  const total = Math.max(1, cost.locate + cost.read + cost.speed + cost.full)
   const scanShare = cost.locate / total
-  const readShare = cost.read / total
+  const readShare = (cost.read + cost.speed) / total
   const ratioOf = (s: PracticeSession, scan = 1) =>
     s.chosen === undefined
       ? scanShare * scan
@@ -56,7 +56,7 @@ export async function driveSession(d: Drive): Promise<void> {
   }
 
   let latest = start
-  const readOpts = { handedness: start.handedness, serveType: start.serveType, tier: d.tier, signal }
+  const readOpts = { handedness: start.handedness, serveType: start.serveType, tier: d.tier, signal, withSpeed: start.withSpeed }
   /*
    * The best and worst serves read so far, whole, so their stills can be drawn
    * at the end without reading them again. Never more than six, so memory does

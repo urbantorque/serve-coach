@@ -33,7 +33,11 @@ in that folder under the same names.
   under the score and on the glance, in km/h or mph. Read on slow motion, and
   on ordinary 30 and 60 fps clips filmed from the speed placement (six to
   seven metres back, net side of the picture open). A miss says what to change.
-  Never graded, and still uncalibrated against a radar. Contact and toss heights
+  Progress keeps the fastest serve and says a change between trips only when
+  the ranges are apart. A practice session reads every serve's speed when the
+  player chooses it on the plan, priced first, and its dashboard gives the
+  fastest and the typical serve. Never graded, and still uncalibrated against a
+  radar. Contact and toss heights
   in metres come from the toss's own gravity and are stored, not shown.
 
 ## What is open
@@ -54,9 +58,6 @@ in that folder under the same names.
 
 ## The owner's call
 
-- **A speed on every session serve** (the rest of N2.8). It needs the ball
-  read on each one, which roughly doubles a session's reading time. The trend,
-  first against second serve and the fastest-serve record are done.
 - **A radar-checked serve.** One would move the speed from `UNCALIBRATED` to
   checked.
 - **Real club players**, filmed by a coach and sent through `?fixture`. Every
@@ -73,7 +74,7 @@ Work is on `roadmap/market-ready`, and its ledger is `ROADMAP.md`: the Notch
 programme (N0–N5) and the Lift programme (M0–M5), with one order of play at
 the end of the Notch section. Pick the first open item there.
 
-The suite runs **1,922 checks** (2026-10-22). The last loop tag is
+The suite runs **1,931 checks** (2026-10-22). The last loop tag is
 `loop-green-15`, from the August loop.
 
 Before trusting a size figure, run `npm run build`: `bundle.test.ts` reads

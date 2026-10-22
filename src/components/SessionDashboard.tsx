@@ -19,6 +19,9 @@ import {
   unsureLine,
 } from '../lib/session/sessionCopy'
 import { extremes, highlightsOf, sessionStats, type Highlight } from '../lib/session/stats'
+import { sessionSpeeds } from '../lib/speedTrend'
+import { NO_SESSION_SPEED, defaultSpeedUnit, sessionSpeedLine } from '../lib/speedCopy'
+import { readPrefs } from '../lib/storage/prefs'
 
 /*
  * A finished practice session, read together (L2.8): the nine parts of
@@ -57,6 +60,7 @@ export default function SessionDashboard({ session, previous, videoUrl, onPickAg
   const picks = useMemo(() => extremes(session.lines), [session.lines])
   const byNumber = useMemo(() => new Map(session.lines.map((l) => [l.number, l])), [session.lines])
   const fixes = stats.faults.filter((f) => f.verdict).slice(0, 4)
+  const speeds = useMemo(() => sessionSpeeds(session.lines), [session.lines])
   const found = session.found?.length ?? 0
 
   return (
@@ -145,6 +149,18 @@ export default function SessionDashboard({ session, previous, videoUrl, onPickAg
           <p className="session-meta">{cue('Held steady from start to end.')}</p>
         )}
       </section>
+
+      {/* Only for a session read with speeds, or one whose lines carry them (N2.8). */}
+      {(speeds || session.withSpeed) && (
+        <section className="block" aria-labelledby="session-speed">
+          <h2 className="block-title" id="session-speed">
+            Serve speed
+          </h2>
+          <p className="session-meta">
+            {speeds ? sessionSpeedLine(speeds, readPrefs().speedUnit ?? defaultSpeedUnit()) : NO_SESSION_SPEED}
+          </p>
+        </section>
+      )}
 
       {(contactPoints(session.lines).length >= 2 || tossPoints(session.lines).points.length >= 2) && (
         <section className="block" aria-labelledby="session-every">

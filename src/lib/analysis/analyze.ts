@@ -219,6 +219,11 @@ export interface AnalyzeOptions {
    * basket on the clock the first one was read on.
    */
   knownStretch?: Stretch
+  /**
+   * The file's own frame rate, already read with `knownStretch` — a session
+   * reads its container once, not once a serve — for the speed pass's clock.
+   */
+  knownFileFps?: number
 }
 
 /**
@@ -1542,7 +1547,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
    */
   let stretch: Stretch = opts.knownStretch ?? { factor: 1, source: 'none' }
   // The file's own frame rate, where its container says (N2.1's gate).
-  let fileFps: number | undefined
+  let fileFps: number | undefined = opts.knownFileFps
   if (!opts.knownStretch && opts.file) {
     // Loaded only for a clip that came with its file — see `pose/container.ts`.
     const { readContainerTiming, stretchFromContainer } = await import('../pose/container')

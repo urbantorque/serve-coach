@@ -53,6 +53,9 @@ export function lineOf(analysis: Analysis, number: number, t: number): ServeLine
     named: findings.filter((f) => f.detected).map((f) => f.flaw),
     judged: findings.filter((f) => f.confidence >= MIN_EVIDENCE).map((f) => f.flaw),
     ...(Object.keys(past).length ? { past } : {}),
+    ...(analysis.speed && 'speed' in analysis.speed
+      ? { speed: { ms: round(analysis.speed.speed.ms), low: round(analysis.speed.speed.low), high: round(analysis.speed.speed.high) } }
+      : {}),
     ...(placement
       ? {
           toss: {
