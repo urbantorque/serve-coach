@@ -409,6 +409,10 @@ export default function Report({
   const { sharing, trigger: share } = useShareState(() =>
     shareReportCard(analysis, streak, bestScore && bestTripLine(bestScore, analysis.createdAt)),
   )
+  // The coach's report (M3.2): one self-contained page, built only when asked.
+  const { sharing: sendingCoach, trigger: sendCoach } = useShareState(() =>
+    import('../lib/share/coachShare').then(({ sendCoachReport }) => sendCoachReport(analysis)),
+  )
 
   const goToPhase = (phase: PhaseId) => {
     setSeek((prev) => ({ phase, n: (prev?.n ?? 0) + 1 }))
@@ -1539,6 +1543,17 @@ export default function Report({
               : sharing === 'done'
                 ? 'Saved'
                 : 'Save or share this report'}
+          </button>
+        )}
+        {!example && (
+          <button
+            className="btn btn--ghost btn--full"
+            onClick={() => void sendCoach()}
+            disabled={sendingCoach === 'working'}
+            aria-live="polite"
+          >
+            <Icon name={sendingCoach === 'done' ? 'check' : 'share'} size={17} />
+            {sendingCoach === 'working' ? 'Preparing…' : sendingCoach === 'done' ? 'Ready to send' : 'Send to my coach'}
           </button>
         )}
         <p className="fineprint">
