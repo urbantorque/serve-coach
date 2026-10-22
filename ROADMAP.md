@@ -3494,7 +3494,8 @@ The same rules hold:
         viewfinder with that drill as the target, and the glance counts
         towards the 6.
       - *Proof:* a render test; a `screenFlow` MOVES entry and its test.
-- [ ] **N1.5 Practice sessions move the ladder** · M.
+- [x] **N1.5 Practice sessions move the ladder** · M.
+      - *Done:* 2026-10-22 (ed8e80d). `session/evidence.ts`: `sessionDrillCheck` on the dashboard with "Move up a step"; `sessionEvidence` turns judged lines into judgement-only rows, stamped with the scoring version, that `weekPlan` counts towards graduation. A session is one trip by the app's own trip rule.
       - **Why:** a whole practice's evidence never reaches the ladder,
         graduation or the week plan (`weekPlan.ts:72`).
       - **What:**
@@ -3506,7 +3507,8 @@ The same rules hold:
         - a unit test that a session with 6 clean judged serves passes;
         - a weekPlan test that a session counts as one trip, not as twelve;
         - the history-consumer list in `screenFlow.test` is updated.
-- [ ] **N1.6 Today's plan** · M.
+- [x] **N1.6 Today's plan** · M.
+      - *Done:* 2026-10-22 (6ab0ba5). `courtPlan.ts` and a lazy `TodayPlan` on Home, remembered length in `Prefs.courtMinutes`. Not on the glance: the glance is read between serves, after the plan is under way.
       - **Why:** there is no plain "what to do on court today".
       - **What:**
         - a pure `courtPlan(week, minutes)` splits a 30, 45 or 60 minute hit
@@ -3516,7 +3518,8 @@ The same rules hold:
           glance.
       - *Proof:* unit tests (each length, one fault, three faults, a graduated
         fault); a Home render test; a preview screenshot.
-- [ ] **N1.7 The court card** · M. Lazy.
+- [x] **N1.7 The court card** · M. Lazy.
+      - *Done:* 2026-10-22 (6ab0ba5). In `TodayPlan`: name 34 px, body 24 px, feel cue, pass bar, read aloud, a whole-card rep counter, wake lock.
       - **What:**
         - a full-screen, large-type card for the current drill: its feel cue,
           its reps and its pass bar;
@@ -3529,7 +3532,8 @@ The same rules hold:
       - *Done:* 2026-10-21 (6295c23). The glance takes a saved report (no frames needed); back goes to the saved report.
       - **What:** reopened reports pass `onGlance` too (`App.tsx:808-812`).
       - *Proof:* a render test; a MOVES entry.
-- [ ] **N1.9 Tagging out of the fold** · S.
+- [x] **N1.9 Tagging out of the fold** · S.
+      - *Done:* 2026-10-22 (6ab0ba5). The one tag block moved under the focus card rather than a second compact copy.
       - **Why:** in-rate, first and second serves, sets and the toss map all
         depend on tags, and they are inside "More about this clip".
       - **What:** a compact row on live reports, under the drill: which serve,
@@ -3707,7 +3711,8 @@ exists, a speed is:
       - *Proof:* a geometry unit test; a preview screenshot.
 
 ### Wave N4 — Look and feel, inside the skin
-- [ ] **N4.1 The player drawn as well as the model** · M.
+- [x] **N4.1 The player drawn as well as the model** · M.
+      - *Done:* 2026-10-22 (50e4046). The tracked body was already drawn with L4.4's tapered limbs; it looked thin because each still fitted the whole frame. Stills and the then-and-now pair now use `fitBody`; unsure joints draw faded (`splitBones`). Found on the way: `fitBody` squashed 16:9 bodies sideways by the aspect — fixed, so the moment pair's player half is in proportion now.
       - **What:** the tapered, filled limbs from L4.4 are used for the tracked
         body in `PoseStill`, `PosePlayer` and `MomentPair`.
         - Joints the tracker was unsure of are drawn faded, not invented.
@@ -3717,13 +3722,15 @@ exists, a speed is:
         - a crop test that the body fills at least 70% of the tile height;
         - before and after screenshots at 375×812;
         - the report chunk grows by under 2 kB.
-- [ ] **N4.2 A lighter report** · S.
+- [x] **N4.2 A lighter report** · S.
+      - *Done:* 2026-10-22 (see the N4.2 commit). The focus card had seven top-level blocks already (L4.1); the drill check now leads it. "Then, in this order" and the practice card were left as they are: both already compact.
       - **What:**
         - a drill-check result, when there is one, leads the focus card;
         - "Then, in this order" folds to titles;
         - the practice card hides when it repeats the focus (with N0.2).
       - *Proof:* a render test caps the focus card at 8 visible children.
-- [ ] **N4.3 Progress as pictures** · M. Lazy.
+- [x] **N4.3 Progress as pictures** · M. Lazy.
+      - *Done:* 2026-10-22 (d374ab2). `ProgressCharts.tsx`: a fault strip (dot per judged serve) and in-rate bars, each with a text version; four prose sections fold. The tiles were left as they are rather than turned into doors.
       - **What:** the tiles become doors to four groups: Path, Records, Serves
         and Charts. Each group leads with a chart:
         - the score over trips, with noise bands;
@@ -3736,17 +3743,20 @@ exists, a speed is:
         - the chart geometry is unit tested, like `trendGeometry.ts`;
         - screenshots;
         - every chart has a text alternative.
-- [ ] **N4.4 Signposts you can read** · S.
+- [x] **N4.4 Signposts you can read** · S.
+      - *Done:* 2026-10-22 (2c9ccd7). Six overline classes at 12 px in `--fg-muted`; held by `wordsInChrome.test.ts`.
       - **What:** overlines that carry meaning move to the muted token at
         12 px: "Work on this next", "Then, in this order", "Your form". This is a
         contrast fix, not a re-tone.
       - *Proof:* `contrast.test` asserts 4.5:1 for every overline class; the
         floor test gains a 12 px rule for those classes.
-- [ ] **N4.5 One placement rule** · S.
+- [x] **N4.5 One placement rule** · S.
+      - *Done:* 2026-10-22 (2c9ccd7). The viewfinder and the triage refusal now take `PLACEMENT.where`; `placement.test.ts` holds all four sources to it.
       - **What:** the guide, the viewfinder cue, the report hints and the
         refusal hints all take their wording from `PLACEMENT`.
       - *Proof:* a copy test that the placement phrases match across all four.
-- [ ] **N4.6 Motion with a purpose** · S.
+- [x] **N4.6 Motion with a purpose** · S.
+      - *Done:* 2026-10-22. `withTransition` (View Transitions API) from glance to report on a shared `score-ring` name; the ring fills only on a live report; under reduced motion the count-up starts at the score instead of flashing 0.
       - **What:**
         - the score ring fills once, on a live report only;
         - the glance hands over to the report with a shared-element move of the
