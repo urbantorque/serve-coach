@@ -54,8 +54,9 @@ in that folder under the same names.
 
 ## The owner's call
 
-- **Speed over time** (N2.8): trends, first against second serve, and a
-  fastest-serve record. Showing a speed was approved and is done (N2.7).
+- **A speed on every session serve** (the rest of N2.8). It needs the ball
+  read on each one, which roughly doubles a session's reading time. The trend,
+  first against second serve and the fastest-serve record are done.
 - **A radar-checked serve.** One would move the speed from `UNCALIBRATED` to
   checked.
 - **Real club players**, filmed by a coach and sent through `?fixture`. Every
@@ -72,7 +73,7 @@ Work is on `roadmap/market-ready`, and its ledger is `ROADMAP.md`: the Notch
 programme (N0–N5) and the Lift programme (M0–M5), with one order of play at
 the end of the Notch section. Pick the first open item there.
 
-The suite runs **1,910 checks** (2026-10-22). The last loop tag is
+The suite runs **1,922 checks** (2026-10-22). The last loop tag is
 `loop-green-15`, from the August loop.
 
 Before trusting a size figure, run `npm run build`: `bundle.test.ts` reads

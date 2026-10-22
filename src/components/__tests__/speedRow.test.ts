@@ -7,6 +7,8 @@ import { renderToStaticMarkup } from 'react-dom/server.browser'
 import Report from '../../screens/Report'
 import Glance from '../../screens/Glance'
 import SpeedRow from '../SpeedRow'
+import Progress from '../../screens/Progress'
+import { normalise, type Session } from '../../lib/storage/db'
 import { DEMO_DIALS, sampleAnalysis } from '../../dev/sampleAnalysis'
 import { SPEED_MISS_LINE } from '../../lib/speedCopy'
 import { assert, check, heading, note, report } from '../../lib/analysis/__tests__/harness'
@@ -58,6 +60,31 @@ check('a reading is one line on the glance, and a miss is not there at all', () 
   assert(/About (130 km\/h|81 mph) off the racket, likely (122–139|76–86)\./.test(read), 'the glance does not say the speed')
   const missed = renderToStaticMarkup(createElement(Glance, { analysis: { ...base, speed: { miss: 'not_found' } }, onOpenReport: noop, onBack: noop }))
   assert(!missed.includes(SPEED_MISS_LINE.not_found) && !missed.includes('off the racket'), 'the glance said a miss')
+})
+
+heading('Serve speed over time, on Progress (N2.8)')
+
+check('the record and a clear trend are said; without readings there is no section', () => {
+  const { frames: _f, ...rest } = base
+  void _f
+  const DAY = 86_400_000
+  /** A report on trip `trip` (three days apart), `hour` hours in. */
+  const at = (trip: number, hour: number, ms?: number): Session => ({
+    ...normalise({
+      ...rest,
+      id: `speed-${trip}-${hour}`,
+      speed: ms ? { speed: { ms, low: ms * 0.95, high: ms * 1.05, samples: 6, span: 0.08, depthAngle: 3 } } : undefined,
+    })!,
+    createdAt: Date.now() - (3 - trip) * 3 * DAY + hour * 3600_000,
+  })
+  const props = { onLogDrill: noop, onUndoDrill: noop, seeded: false, onBack: noop }
+  const quicker = renderToStaticMarkup(createElement(Progress, { ...props, sessions: [at(0, 0, 33), at(0, 1, 33.5), at(1, 0, 40), at(1, 1, 40.5)] }))
+  assert(quicker.includes('id="progress-speed"'), 'no speed section with readings')
+  // 40.5 overlaps the 40 that took the record, so the record stands, not new.
+  assert(/>Fastest serve: about/.test(quicker), "the record is not said, or is said as new")
+  assert(/Serving faster than your last trip/.test(quicker), 'a clear rise between trips is not said')
+  const none = renderToStaticMarkup(createElement(Progress, { ...props, sessions: [at(0, 0), at(0, 1), at(1, 0)] }))
+  assert(!none.includes('progress-speed'), 'a speed section with nothing in it')
 })
 
 report()

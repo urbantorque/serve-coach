@@ -39,6 +39,9 @@ import type { TripRecord } from '../lib/storage/ledger'
 import type { Cadence } from '../lib/storage/prefs'
 import { partLabel, servePath, type PartState } from '../lib/servePath'
 import { bodyBestLine, bodyBests } from '../lib/bests'
+import { fastestServe, speedByServeNumber, speedTrend } from '../lib/speedTrend'
+import { defaultSpeedUnit, fastestLine, serveNumberSpeedLine, speedTrendLine } from '../lib/speedCopy'
+import { readPrefs } from '../lib/storage/prefs'
 import { bestSetLines, type SetResult } from '../lib/sets'
 import { serveProfile } from '../lib/serveProfile'
 import { graduation } from '../lib/graduation'
@@ -163,6 +166,11 @@ export default function Progress({
   const inRates = useMemo(() => inRateByType(sessions, tags), [sessions, tags])
   // A second serve swung slower than the first, past the camera's noise (L5.8).
   const slowSecond = useMemo(() => secondServeSlower(sessions, tags), [sessions, tags])
+  // Serve speed over time (N2.8): ranges against ranges, silent where they overlap.
+  const fastest = useMemo(() => fastestServe(sessions), [sessions])
+  const quicker = useMemo(() => speedTrend(sessions, tags), [sessions, tags])
+  const numberSpeeds = useMemo(() => speedByServeNumber(sessions, tags), [sessions, tags])
+  const unit = readPrefs().speedUnit ?? defaultSpeedUnit()
   const weeks = useMemo(
     () => servesPerWeek(sessions, undefined, undefined, practiceSessions),
     [sessions, practiceSessions],
@@ -384,6 +392,15 @@ export default function Progress({
                   {l}
                 </p>
               ))}
+            </section>
+          )}
+
+          {(fastest || quicker || numberSpeeds) && (
+            <section className="block" id="progress-speed">
+              <h2 className="block-title">Serve speed</h2>
+              {fastest && <p className="progress-foot">{fastestLine(fastest, unit)}</p>}
+              {quicker && <p className="progress-foot">{speedTrendLine(quicker, unit)}</p>}
+              {numberSpeeds && <p className="progress-foot">{serveNumberSpeedLine(numberSpeeds, unit)}</p>}
             </section>
           )}
 

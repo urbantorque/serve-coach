@@ -7,7 +7,7 @@
 import fsUntyped from 'fs'
 // @ts-expect-error - node's path, and this project carries no @types/node
 import pathUntyped from 'path'
-import { SPEED_MISS_LINE, SPEED_SCALE, defaultSpeedUnit, speedFigures, speedGlanceLine } from '../speedCopy'
+import { SPEED_MISS_LINE, SPEED_SCALE, defaultSpeedUnit, fastestLine, serveNumberSpeedLine, speedFigures, speedGlanceLine, speedTrendLine } from '../speedCopy'
 import { cueIssues } from '../analysis/voice'
 import { assert, check, heading, report } from '../analysis/__tests__/harness'
 
@@ -89,6 +89,20 @@ check('nothing that scores, grades or plans reads the speed', () => {
     }
   }
   assert(offenders.length === 0, `read the speed: ${offenders.join(', ')}`)
+})
+
+heading('Speed over time, in words (N2.8)')
+
+check('the record, the trend and the two serves each say their ranges, in the player’s unit', () => {
+  const a = { ms: 36.1, low: 34.04, high: 38.36 }
+  const b = { ms: 40, low: 38.5, high: 41.6 }
+  assert(fastestLine({ ...a, isNew: true }, 'kmh') === 'New fastest serve: about 130 km/h, likely 122–139.', fastestLine({ ...a, isNew: true }, 'kmh'))
+  assert(fastestLine({ ...a, isNew: false }, 'mph').startsWith('Fastest serve: about 81 mph'), 'the standing record reads as new')
+  const t = speedTrendLine({ direction: 'faster', now: b, then: a }, 'kmh')
+  assert(t === 'Serving faster than your last trip: about 144 km/h, likely 138–150, against about 130 km/h, likely 122–139.', t)
+  const slow = serveNumberSpeedLine({ first: b, second: a, direction: 'slower' }, 'kmh')
+  assert(!/fault|too slow/i.test(slow) && slow.startsWith('First serves about 144'), slow)
+  assert(serveNumberSpeedLine({ first: a, second: b, direction: 'faster' }, 'kmh').endsWith('Your second serve is the quicker one.'), 'a quicker second serve is not said')
 })
 
 report()

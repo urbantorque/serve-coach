@@ -68,3 +68,28 @@ export function speedFigures(s: Pick<ServeSpeed, 'ms' | 'low' | 'high'>, unit: S
 export function speedGlanceLine(f: SpeedFigures): string {
   return `About ${f.best} ${f.unit} off the racket, likely ${f.low}–${f.high}.`
 }
+
+type Ranged = Pick<ServeSpeed, 'ms' | 'low' | 'high'>
+
+/** A reading as "about 130 km/h, likely 122–139". */
+export function aboutSpeed(s: Ranged, unit: SpeedUnit): string {
+  const f = speedFigures(s, unit)
+  return `about ${f.best} ${f.unit}, likely ${f.low}–${f.high}`
+}
+
+/** The fastest serve on record, on Progress (N2.8). */
+export function fastestLine(s: Ranged & { isNew: boolean }, unit: SpeedUnit): string {
+  return `${s.isNew ? 'New fastest serve' : 'Fastest serve'}: ${aboutSpeed(s, unit)}.`
+}
+
+/** The newest trip against the one before, said only when their ranges are apart (N2.8). */
+export function speedTrendLine(t: { direction: 'faster' | 'slower'; now: Ranged; then: Ranged }, unit: SpeedUnit): string {
+  return `Serving ${t.direction} than your last trip: ${aboutSpeed(t.now, unit)}, against ${aboutSpeed(t.then, unit)}.`
+}
+
+/** Tagged first and second serves side by side (N2.8). */
+export function serveNumberSpeedLine(s: { first: Ranged; second: Ranged; direction?: 'faster' | 'slower' }, unit: SpeedUnit): string {
+  const first = `First serves ${aboutSpeed(s.first, unit)}; second serves ${aboutSpeed(s.second, unit)}.`
+  // A slower second serve is what a second serve is for: said as a fact, not a fault.
+  return s.direction === 'faster' ? `${first} Your second serve is the quicker one.` : first
+}

@@ -3647,7 +3647,8 @@ exists, a speed is:
         - a test that the speed never enters any score or band;
         - a 375×812 screenshot;
         - the copy lint.
-- [ ] **N2.8 Speed over time** · M. Needs N2.7.
+- [~] **N2.8 Speed over time** · M. Needs N2.7.
+      - *Status:* 2026-10-22: three of four parts done. `speedTrend.ts`: the newest trip against the one before it, said only when their ranges do not overlap (a trip's figure the middle serve, its range the middle of its serves' ranges, two readings at least, second serves left out); tagged first serves against second serves, a direction only when apart; and the fastest serve on record, which a serve takes only when its whole range sits above the holder's. On Progress as a "Serve speed" section. The record lives in `speedTrend.ts`, not `bests.ts`: the home screen loads `bests.ts` up front, and the record pushed the entry chunk to 385.03 kB against its 385 kB budget. Proof: `speedTrend.test.ts` (one trip, overlapping trips and overlapping sides say nothing; separated ranges say faster or slower; refused reports and second serves stay out; the record moves only on a clear range), the Progress render in `speedRow.test.ts`, and `fastestServe`, `speedByServeNumber` and `speedTrend` on the history-consumer list. **Not done: the session dashboard's best and median.** A session's light read skips the ball, and the speed needs the toss; reading the ball on every session serve would roughly double a session's reading time (91 seeks a serve to about 200). That trade is the owner's to make.
       - **What:**
         - Progress shows a speed trend only where two trips' ranges do not
           overlap. That is the same gate idea as `secondServeSlower`;

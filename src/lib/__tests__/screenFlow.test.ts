@@ -229,6 +229,11 @@ const HISTORY_CONSUMERS = [
   // filter, which is R55's.
   'missesInCommon',
   'recurringStrainOf',
+  // Serve speed over time (N2.8): the record, the trend between trips, and
+  // first serves against second. Refused reports are dropped in `readingOf`.
+  'fastestServe',
+  'speedByServeNumber',
+  'speedTrend',
   // A second serve swung slower than the first (L5.8).
   'secondServeSlower',
   'rotationMoveOnTrip',
