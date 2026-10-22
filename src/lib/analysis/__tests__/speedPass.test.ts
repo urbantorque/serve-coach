@@ -116,10 +116,10 @@ const input = (realFps: number, factor: number) => ({
 
 heading('The serve speed pass, in the engine')
 
-await check('a real-time clip is answered frame rate without a single seek', async () => {
-  const dec = fakeDecoder(1, 0.5 / 30)
-  const r = await readServeSpeed(input(30, 1), { width: W, height: H }, dec.readBitmaps)
-  assert(r !== undefined && 'miss' in r && r.miss === 'frame_rate', `30 fps gave ${JSON.stringify(r)}`)
+await check('a clip too slow for even a pinned track is answered frame rate without a single seek', async () => {
+  const dec = fakeDecoder(1, 0.5 / 20)
+  const r = await readServeSpeed(input(20, 1), { width: W, height: H }, dec.readBitmaps)
+  assert(r !== undefined && 'miss' in r && r.miss === 'frame_rate', `20 fps gave ${JSON.stringify(r)}`)
   assert(dec.seeks() === 0, `${dec.seeks()} seeks on a clip that could never give a speed`)
 })
 

@@ -184,7 +184,20 @@ interface Trial {
  */
 function trial(
   serve: MocapServe,
-  opts: { fps: number; bearing: number; portrait: boolean; seed: number; decoys: boolean; noisePx?: number; ball?: boolean },
+  opts: {
+    fps: number
+    bearing: number
+    portrait: boolean
+    seed: number
+    decoys: boolean
+    noisePx?: number
+    ball?: boolean
+    /** The phone's distance, metres: the guide's four to six unless given. */
+    near?: number
+    far?: number
+    /** How far towards the net the phone looks past the player, metres. */
+    lead?: number
+  },
 ): Trial {
   const r = seeded(opts.seed)
   const imp = impactOf(serve)
@@ -192,13 +205,13 @@ function trial(
   const cam = phoneAt(
     {
       bearing: opts.bearing + r.gauss() * 2,
-      distance: 4 + r.next() * 2,
+      distance: (opts.near ?? 4) + r.next() * ((opts.far ?? 6) - (opts.near ?? 4)),
       height: 0.8 + r.next() * 0.7,
       focalLong: 0.8 * (1 + (r.next() * 2 - 1) * 0.15),
       aspect,
       pp: { x: r.gauss() * 0.01, y: r.gauss() * 0.01 },
     },
-    imp.feet,
+    { ...imp.feet, x: imp.feet.x + (opts.lead ?? 0) },
   )
   // About a pixel on a 1080-line read.
   const noise = (opts.noisePx ?? 1.2) / 1080
@@ -266,9 +279,9 @@ function trial(
   return { setting, frames, truth, ruler: cam.ruler(imp.p0) }
 }
 
-type Outcome = { truth: number; ms?: number; low?: number; high?: number; miss?: string; portrait: boolean; fps: number }
+type Outcome = { truth: number; ms?: number; low?: number; high?: number; miss?: string; portrait: boolean; fps: number; pinned?: boolean }
 
-function run(fps: number[], opts: { decoys: boolean; reps: number; seed: number }): Outcome[] {
+function run(fps: number[], opts: { decoys: boolean; reps: number; seed: number; near?: number; far?: number; lead?: number }): Outcome[] {
   const out: Outcome[] = []
   let seed = opts.seed
   for (const serve of SERVES) {
@@ -276,7 +289,7 @@ function run(fps: number[], opts: { decoys: boolean; reps: number; seed: number 
       for (const portrait of [false, true]) {
         for (const bearing of [60, 75, 90, 105, 120]) {
           for (let k = 0; k < opts.reps; k++) {
-            const t = trial(serve, { fps: f, bearing, portrait, seed: seed++, decoys: opts.decoys })
+            const t = trial(serve, { fps: f, bearing, portrait, seed: seed++, decoys: opts.decoys, near: opts.near, far: opts.far, lead: opts.lead })
             if (!t.setting) {
               out.push({ truth: t.truth, miss: 'no_toss', portrait, fps: f })
               continue
@@ -284,7 +297,7 @@ function run(fps: number[], opts: { decoys: boolean; reps: number; seed: number 
             const r = measureServeSpeed(t.frames, t.setting)
             out.push(
               'speed' in r
-                ? { truth: t.truth, ms: r.speed.ms, low: r.speed.low, high: r.speed.high, portrait, fps: f }
+                ? { truth: t.truth, ms: r.speed.ms, low: r.speed.low, high: r.speed.high, portrait, fps: f, pinned: r.speed.pinned }
                 : { truth: t.truth, miss: r.miss, portrait, fps: f },
             )
           }
@@ -431,16 +444,48 @@ check('the stated range holds the true speed, with decoys in every frame', () =>
   assert(landRead >= 0.3, `landscape slow motion read only ${(landRead * 100).toFixed(0)}% of serves`)
 })
 
-check('thirty frames a second is too few, and says so by reading nothing', () => {
-  // A 150 km/h serve crosses a side-on picture in one or two frames at 30 fps:
-  // there is nothing to fit five unknowns to, and nothing is read.
+check('from the guide placement, thirty frames a second reads almost nothing, and says film in slow motion', () => {
+  // Centred in the picture at four to six metres, a 150 km/h serve crosses
+  // what is left of it in one or two frames at 30 fps, and is rarely seen
+  // three times clear of the racket.
   const out = run([30], { decoys: true, reps: 1, seed: 7000 })
   const read = out.filter((o) => o.ms !== undefined)
-  assert(read.length === 0, `${read.length} readings at 30 fps`)
-  note(`${out.length} serves at 30 fps, none read: ${[...new Set(out.map((o) => o.miss))].join(', ')}`)
+  const covered = read.filter((o) => o.truth >= o.low! && o.truth <= o.high!)
+  note(`${out.length} serves at 30 fps, ${read.length} read; otherwise ${[...new Set(out.filter((o) => !o.ms).map((o) => o.miss))].join(', ')}`)
+  assert(read.length <= out.length * 0.1, `${read.length} readings at 30 fps from the guide placement`)
+  assert(covered.length === read.length, 'a 30 fps reading missed the truth')
   // And it says why in the one way a player can act on: film in slow motion.
-  const why = out.filter((o) => o.miss !== 'no_toss')
+  const why = out.filter((o) => !o.ms && o.miss !== 'no_toss')
   assert(why.every((o) => o.miss === 'frame_rate'), `30 fps refused as ${[...new Set(why.map((o) => o.miss))].join(', ')}`)
+})
+
+check('from the speed placement, a short track pinned to the toss reads real-time clips, and its range holds the truth', () => {
+  // SPEED_PLACEMENT: six to seven metres back, the phone looking a metre and a
+  // half past the player towards the net. The ball stays in the picture for
+  // longer, and three sightings pinned to the toss are enough.
+  const out = run([30, 60], { decoys: true, reps: 2, seed: 7400, near: 6, far: 7, lead: 1.5 })
+  const land = out.filter((o) => !o.portrait)
+  const rate = (fps: number) => {
+    const at = land.filter((o) => o.fps === fps)
+    return at.filter((o) => o.ms !== undefined).length / at.length
+  }
+  const read = out.filter((o) => o.ms !== undefined)
+  const pinned = read.filter((o) => o.pinned)
+  const covered = read.filter((o) => o.truth >= o.low! && o.truth <= o.high!)
+  const abs = read.map((o) => Math.abs(o.ms! / o.truth - 1))
+  const half = read.map((o) => (o.high! - o.low!) / 2 / o.ms!)
+  note(
+    `landscape read ${(rate(30) * 100).toFixed(0)}% at 30 fps, ${(rate(60) * 100).toFixed(0)}% at 60; ${pinned.length} of ${read.length} pinned; ` +
+      `range holds the truth ${((covered.length / read.length) * 100).toFixed(1)}%; |error| p95 ${(pct(abs, 0.95) * 100).toFixed(1)}%, ` +
+      `worst ${(Math.max(...abs) * 100).toFixed(1)}%; typical range ±${(pct(half, 0.5) * 100).toFixed(1)}%`,
+  )
+  assert(rate(30) >= 0.25, `30 fps read only ${(rate(30) * 100).toFixed(0)}%`)
+  assert(rate(60) >= 0.5, `60 fps read only ${(rate(60) * 100).toFixed(0)}%`)
+  assert(pinned.length > 0, 'no reading came from a pinned track')
+  assert(covered.length / read.length >= 0.95, `the range held the truth only ${((covered.length / read.length) * 100).toFixed(1)}%`)
+  assert(pct(abs, 0.95) <= 0.08, `95th-percentile error ${(pct(abs, 0.95) * 100).toFixed(1)}%`)
+  assert(Math.max(...abs) <= 0.15, `a reading was ${(Math.max(...abs) * 100).toFixed(1)}% out`)
+  assert(Math.max(...half) <= MAX_SPREAD + 1e-9, 'a reading was given with a range wider than the cap')
 })
 
 check('every reason for no speed can be reached, so each one is a sentence a player sees (N0.7)', () => {
@@ -483,14 +528,14 @@ check('decoys alone are never read as a serve', () => {
   // frame, and no ball. Nothing here is a serve, and nothing is read.
   let readings = 0
   let trials = 0
-  for (let k = 0; k < 60; k++) {
-    const at = { fps: 240, bearing: 60 + (k % 5) * 15, portrait: k % 2 === 1, seed: 8000 + k, decoys: true, ball: false }
+  for (let k = 0; k < 120; k++) {
+    const at = { fps: [240, 60, 30][k % 3], bearing: 60 + (k % 5) * 15, portrait: k % 2 === 1, seed: 8000 + k, decoys: true, ball: false, near: k % 4 < 2 ? 4 : 6, far: k % 4 < 2 ? 6 : 7, lead: k % 4 < 2 ? 0 : 1.5 }
     const t = trial(SERVES[k % SERVES.length], at)
     if (!t.setting) continue
     trials++
     if ('speed' in measureServeSpeed(t.frames, t.setting)) readings++
   }
-  assert(trials >= 40, `${trials} trials`)
+  assert(trials >= 80, `${trials} trials`)
   assert(readings === 0, `${readings} of ${trials} decoy-only clips gave a speed`)
 })
 

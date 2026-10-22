@@ -33,9 +33,11 @@
  * (`fitTrack`), and the reading carries the speed along the depth axis too.
  *
  * WHAT IT NEEDS. The ball seen on at least five frames after it leaves the
- * strings (`MIN_SAMPLES`), with the timestamps those frames really have. At 30 frames a second
- * a 150 km/h serve crosses a side-on picture in one or two frames, so the
- * reading belongs to slow motion: the filming guide already asks for it.
+ * strings (`MIN_SAMPLES`), with the timestamps those frames really have — or
+ * on three, pinned to where the toss had it at impact (`SHORT_SAMPLES`). Slow
+ * motion gives the five; an ordinary 30 or 60 frames a second gives the three
+ * when the phone stands far enough back for the ball to stay in the picture
+ * (`SPEED_PLACEMENT` in `placement.ts`).
  *
  * WHAT IT SAYS. A best figure and a range the true launch speed sits in, sized
  * by this clip's own fit — its noise, its length, its scale — plus what cannot
@@ -107,6 +109,19 @@ export const MAX_SPEED = 270 / 3.6
 export const MIN_SAMPLES = 5
 
 /**
+ * Fewest frames a short track may be read from, when it is pinned to the toss.
+ *
+ * The ball is struck where the toss put it, and the toss is tracked across a
+ * second of flight, so where the ball was at impact is known to about a pixel
+ * before the struck ball is seen at all. Pinned there — two more rows, and the
+ * moment of impact searched for rather than assumed — three sightings leave
+ * two rows spare, and a racket point has to land on a ball's path out of the
+ * toss to be taken for one. This is what lets a real-time clip, where the ball
+ * is in shot on two to four frames, carry a speed (`LOWEST_FPS`).
+ */
+export const SHORT_SAMPLES = 3
+
+/**
  * Widest range a reading may carry, as its half-width over its best figure.
  *
  * Twelve and a half percent either way is a range of about 35 km/h on a club
@@ -147,9 +162,19 @@ export const LOOK_AFTER = 0.2
  * second. At 45 frames a second that is five frames, `MIN_SAMPLES`; slower
  * than that the ball cannot be seen often enough to fit, and saying so is
  * more use to a player than "I lost the ball". Measured on the simulated
- * launches: nothing is read at 30, about one serve in ten at 60.
+ * launches: nothing is read at 30, about one serve in ten at 60. Below this
+ * only a pinned short track is looked for (`LOWEST_FPS`).
  */
 export const MIN_FPS = 45
+
+/**
+ * The slowest frame rate a short, pinned track is looked for at
+ * (`SHORT_SAMPLES`): an ordinary phone clip, at thirty or twenty-five frames a
+ * second. Below `MIN_FPS` only a pinned track can be read, and a clip that
+ * gives none is told to film in slow motion, which is still the way to a
+ * reading.
+ */
+export const LOWEST_FPS = 24
 
 /**
  * How closely the struck ball can be placed on its modelled track, frame
@@ -233,6 +258,12 @@ export interface TossPath {
   unitsPerMetre: number
   /** The standard error of that, as a share of it. */
   scaleError: number
+  /**
+   * The standard error of where the toss puts the ball at `t0`, frame heights:
+   * how firmly a short track may be pinned to it (`SHORT_SAMPLES`). Missing,
+   * no track is pinned.
+   */
+  anchorError?: number
 }
 
 /** What the clip says about where and how the ball should be found. */
@@ -262,6 +293,11 @@ export interface StruckTrack {
   /** When the struck path meets the toss: the moment of impact, on the frames' clock. */
   impactT: number
   fit: TrackFit
+  /**
+   * A track pinned to the toss (`SHORT_SAMPLES`): the moments of impact its
+   * samples cannot tell apart, which the range is taken across.
+   */
+  impacts?: number[]
 }
 
 /** A serve speed, and the range it is good to. */
@@ -277,6 +313,8 @@ export interface ServeSpeed {
   span: number
   /** How much of the speed ran towards or away from the lens, degrees. */
   depthAngle: number
+  /** Read from a short track pinned to the toss (`SHORT_SAMPLES`). */
+  pinned?: boolean
 }
 
 /**
@@ -376,6 +414,7 @@ export function tossPath(
     cy,
     unitsPerMetre: (2 * b2) / GRAVITY,
     scaleError: Math.sqrt(Math.max(0, solved.cov[4][4])) / b2,
+    anchorError: Math.sqrt(Math.max(0, solved.cov[0][0], solved.cov[2][2])),
   }
 }
 
@@ -466,15 +505,23 @@ export function tossAt(toss: TossPath, t: number): { x: number; y: number } {
  * leaving from the toss at about the moment of contact. Only then are the
  * other frames asked whether they agree.
  */
-export function trackStruckBall(frames: readonly StruckFrame[], s: SpeedSetting): StruckTrack | undefined {
-  const pool: StruckSample[] = []
+export function trackStruckBall(frames: readonly StruckFrame[], s: SpeedSetting, pinned = false): StruckTrack | undefined {
+  if (pinned && !(s.toss.anchorError !== undefined)) return undefined
+  const fewest = pinned ? SHORT_SAMPLES : MIN_SAMPLES
+  const found: StruckSample[] = []
   for (const f of frames) {
     if (f.t < s.contactT - IMPACT.before || f.t > s.contactT + LOOK_AFTER) continue
-    for (const c of f.candidates.slice(0, 4)) pool.push({ t: f.t, x: c.x, y: c.y })
+    for (const c of f.candidates.slice(0, 4)) found.push({ t: f.t, x: c.x, y: c.y })
   }
+  // A struck ball is metres a second from where it was a frame ago, so anything
+  // found in the same place on another frame — a ball lying on the court, a
+  // light — is not it. On a long track one such point is outvoted; on a short
+  // pinned one, a still ball lying on the path read a serve 41% fast.
+  const still = Math.max(3 * s.noise, 3 * TRACK_FLOOR)
+  const pool = found.filter((p) => !found.some((q) => q.t !== p.t && Math.hypot(q.x - p.x, q.y - p.y) < still))
   // In time order, so one frame's candidates sit together for the count below.
   pool.sort((a, b) => a.t - b.t)
-  if (pool.length < MIN_SAMPLES) return undefined
+  if (pool.length < fewest) return undefined
 
   const u = s.toss.unitsPerMetre
   const meet = MEET * s.bodyHeight
@@ -518,7 +565,7 @@ export function trackStruckBall(frames: readonly StruckFrame[], s: SpeedSetting)
         if (!frameBest || r < frameBest.r) frameBest = { p, r }
       }
       flush()
-      if (inliers.length >= MIN_SAMPLES) hypotheses.push({ inliers, cost })
+      if (inliers.length >= fewest) hypotheses.push({ inliers, cost })
     }
   }
   if (!hypotheses.length) return undefined
@@ -531,7 +578,7 @@ export function trackStruckBall(frames: readonly StruckFrame[], s: SpeedSetting)
   hypotheses.sort((a, b) => b.inliers.length - a.inliers.length || a.cost - b.cost)
   let best: StruckTrack | undefined
   for (const h of hypotheses.slice(0, HYPOTHESES)) {
-    const track = refine(h.inliers, pool, s)
+    const track = refine(h.inliers, pool, s, pinned)
     if (!track) continue
     if (
       !best ||
@@ -566,18 +613,33 @@ const HYPOTHESES = 24
 const ON_TRACK = 4
 
 /**
+ * How far from the toss a short pinned track's samples must be, metres.
+ *
+ * Just after impact the racket is where the ball is, and on a long track one
+ * racket point is outvoted. On three samples it is a third of the evidence, and
+ * pinned to the toss it fits: a racket point on the frame at impact, standing
+ * in for a ball the detector missed a frame later, read a serve 17% slow inside
+ * a range of 9%. A third of a metre out the ball has left the strings behind.
+ */
+const SEPARATION = 0.3
+
+/**
  * A straight-line pick, fitted properly and then re-picked against that fit:
  * each frame's candidate nearest the modelled track, if it is near enough, and
  * the fit taken again — until the picks stop changing. A racket point taken
  * for the ball on an early frame sits off a track that bends the way a ball's
  * does, and is swapped for the ball or dropped.
  */
-function refine(start: readonly StruckSample[], pool: readonly StruckSample[], s: SpeedSetting): StruckTrack | undefined {
+function refine(start: readonly StruckSample[], pool: readonly StruckSample[], s: SpeedSetting, pinned: boolean): StruckTrack | undefined {
+  const fewest = pinned ? SHORT_SAMPLES : MIN_SAMPLES
+  const fitOf = pinned ? settlePinned : settle
   let samples = [...start]
-  let settled = settle(samples, s)
+  let settled = fitOf(samples, s)
   for (let pass = 0; pass < 4 && settled; pass++) {
     const { fit, impactT } = settled
     const band = ON_TRACK * Math.max(s.noise, TRACK_FLOOR)
+    const pin = pinned ? tossAt(s.toss, impactT) : undefined
+    const apart = SEPARATION * scaleAt(s.toss, impactT)
     const picked: StruckSample[] = []
     let frameT = Number.NaN
     let frameBest: { p: StruckSample; r: number } | undefined
@@ -593,20 +655,26 @@ function refine(start: readonly StruckSample[], pool: readonly StruckSample[], s
       // Strictly after: at impact the racket is where the ball is, and a racket
       // point there, filed under the ball, bent a twelve-sample fit 16% slow.
       if (!(p.t > impactT)) continue
+      if (pin && Math.hypot(p.x - pin.x, p.y - pin.y) < apart) continue
       const at = trackAt(fit, p.t)
       if (!at) continue
       const r = Math.hypot(p.x - at.x, p.y - at.y)
       if (r <= band && (!frameBest || r < frameBest.r)) frameBest = { p, r }
     }
     flush()
-    if (picked.length < MIN_SAMPLES) return undefined
+    if (picked.length < fewest) return undefined
     const same = picked.length === samples.length && picked.every((p, k) => p === samples[k])
     samples = picked
     if (same) break
-    settled = settle(samples, s)
+    settled = fitOf(samples, s)
   }
   if (!settled) return undefined
-  return steady({ samples, impactT: settled.impactT, fit: settled.fit }, s)
+  const track: StruckTrack = { samples, impactT: settled.impactT, fit: settled.fit, impacts: settled.impacts }
+  // Pinned is for the short tracks the free fit cannot take; a long track it
+  // refused stays refused. Four samples are tested one out like a long track;
+  // three have no row to spare for it.
+  if (pinned && samples.length >= MIN_SAMPLES) return undefined
+  return pinned && samples.length === SHORT_SAMPLES ? track : steady(track, s, pinned)
 }
 
 /**
@@ -629,7 +697,9 @@ const STEADY = 0.03
  * enough to make its residual look like noise, and what gives it away is that
  * the answer depends on it.
  */
-function steady(track: StruckTrack, s: SpeedSetting): StruckTrack | undefined {
+function steady(track: StruckTrack, s: SpeedSetting, pinned = false): StruckTrack | undefined {
+  const fitOf = pinned ? settlePinned : settle
+  const fewest = pinned ? SHORT_SAMPLES : MIN_SAMPLES
   let current = track
   for (let round = 0; round < 3; round++) {
     const v = current.fit.speed
@@ -641,7 +711,7 @@ function steady(track: StruckTrack, s: SpeedSetting): StruckTrack | undefined {
     let worstShift = 0
     for (let k = 0; k < current.samples.length; k++) {
       const without = current.samples.filter((_, j) => j !== k)
-      const fit = settle(without, s)
+      const fit = fitOf(without, s)
       // A sample the track cannot do without at all is the most influential of all.
       const shift = fit ? Math.abs(fit.fit.speed - v) / v : Infinity
       if (shift > worstShift) {
@@ -650,11 +720,11 @@ function steady(track: StruckTrack, s: SpeedSetting): StruckTrack | undefined {
       }
     }
     if (worstShift <= allowed) return current
-    if (round === 2 || current.samples.length - 1 < MIN_SAMPLES) return undefined
+    if (round === 2 || current.samples.length - 1 < fewest) return undefined
     const fewer = current.samples.filter((_, j) => j !== worst)
-    const again = settle(fewer, s)
+    const again = fitOf(fewer, s)
     if (!again) return undefined
-    current = { samples: fewer, impactT: again.impactT, fit: again.fit }
+    current = { samples: fewer, impactT: again.impactT, fit: again.fit, impacts: again.impacts }
   }
   return undefined
 }
@@ -668,7 +738,7 @@ function steady(track: StruckTrack, s: SpeedSetting): StruckTrack | undefined {
  * one leaving it as slow, by exactly that lag times the rate the depth
  * changes.
  */
-function settle(samples: readonly StruckSample[], s: SpeedSetting): { fit: TrackFit; impactT: number } | undefined {
+function settle(samples: readonly StruckSample[], s: SpeedSetting): Settled | undefined {
   let t0 = s.contactT
   let fit = fitTrack(samples, s, t0)
   for (let pass = 0; pass < 2 && fit; pass++) {
@@ -681,6 +751,56 @@ function settle(samples: readonly StruckSample[], s: SpeedSetting): { fit: Track
   // The ball cannot be seen struck before it was struck.
   if (!(samples[0].t > t0)) return undefined
   return { fit, impactT: t0 }
+}
+
+interface Settled {
+  fit: TrackFit
+  impactT: number
+  impacts?: number[]
+}
+
+/**
+ * A short track pinned to the toss: the moment of impact searched for, not
+ * found by where the line comes closest.
+ *
+ * Pinned, the track starts on the toss by construction, so "where it comes
+ * closest" says nothing — and the moment matters more than on a long track:
+ * thirty-three milliseconds from impact to the first sighting at thirty
+ * frames a second, a few milliseconds wrong is several percent of speed. So
+ * every moment impact could have been is tried, coarse then fine, and the one
+ * the samples fit best is kept, with every moment that fits within two
+ * standard errors of it (`impacts`), so the range is taken across them all.
+ */
+function settlePinned(samples: readonly StruckSample[], s: SpeedSetting): Settled | undefined {
+  const first = samples[0].t
+  const near = (t0: number) => {
+    const pin = tossAt(s.toss, t0)
+    return Math.hypot(samples[0].x - pin.x, samples[0].y - pin.y) < SEPARATION * scaleAt(s.toss, t0)
+  }
+  const from = s.contactT - IMPACT.before
+  const to = Math.min(s.contactT + IMPACT.after, first - 0.0005)
+  if (!(to > from)) return undefined
+  const costAt = (t0: number) => {
+    if (near(t0)) return undefined
+    const fit = fitTrack(samples, s, t0, true)
+    return fit ? { t0, fit, cost: fit.residuals.reduce((a, r) => a + r * r, 0) } : undefined
+  }
+  const tried: { t0: number; fit: TrackFit; cost: number }[] = []
+  for (let t0 = from; t0 <= to; t0 += 0.002) {
+    const c = costAt(t0)
+    if (c) tried.push(c)
+  }
+  if (!tried.length) return undefined
+  const coarse = tried.reduce((a, b) => (b.cost < a.cost ? b : a))
+  for (let t0 = Math.max(from, coarse.t0 - 0.002); t0 <= Math.min(to, coarse.t0 + 0.002); t0 += 0.00025) {
+    const c = costAt(t0)
+    if (c) tried.push(c)
+  }
+  const best = tried.reduce((a, b) => (b.cost < a.cost ? b : a))
+  // Two standard errors on one unknown: the cost may rise by four variances.
+  const allowed = best.cost + RANGE_SIGMAS ** 2 * best.fit.sigma ** 2
+  const impacts = tried.filter((c) => c.cost <= allowed).map((c) => c.t0)
+  return { fit: best.fit, impactT: best.t0, impacts }
 }
 
 function plausibleVelocity(vx: number, vy: number, u: number, netSide: 1 | -1): boolean {
@@ -770,8 +890,9 @@ export interface TrackFit {
   frame: { cx: number; cy: number; u: number }
 }
 
-export function fitTrack(samples: readonly StruckSample[], s: SpeedSetting, t0: number): TrackFit | undefined {
-  if (samples.length < MIN_SAMPLES) return undefined
+export function fitTrack(samples: readonly StruckSample[], s: SpeedSetting, t0: number, pinned = false): TrackFit | undefined {
+  if (samples.length < (pinned ? SHORT_SAMPLES : MIN_SAMPLES)) return undefined
+  if (pinned && s.toss.anchorError === undefined) return undefined
   // The ruler at the moment the fit's clock starts, which `settle` makes impact.
   const u = scaleAt(s.toss, t0)
   const focal = focalFrameHeights(s.aspect)
@@ -782,9 +903,12 @@ export function fitTrack(samples: readonly StruckSample[], s: SpeedSetting, t0: 
   // A first speed from the straight line, for the drag correction.
   let speed = lineSpeed(samples) / u
   if (!(speed > 0)) return undefined
+  // Pinned: where the toss had the ball at t0, weighted by how sure the toss is of it.
+  const anchor = pinned ? tossAt(s.toss, t0) : undefined
+  const pin = anchor && { x: anchor.x - cx, y: anchor.y - cy, weight: s.noise / Math.hypot(s.toss.anchorError ?? 0, s.noise) }
   let solved: Solved | undefined
   for (let pass = 0; pass < 3; pass++) {
-    solved = solve(samples, dragClock(speed, t0), { u, cx, cy, t0, noise: s.noise })
+    solved = solve(samples, dragClock(speed, t0), { u, cx, cy, t0, noise: s.noise }, pin)
     if (!solved) return undefined
     speed = speedFrom(solved.p[1], solved.p[3], solved.p[4], u, focal)
   }
@@ -851,6 +975,7 @@ function solve(
   samples: readonly StruckSample[],
   tau: (t: number) => number,
   at: { u: number; cx: number; cy: number; t0: number; noise: number },
+  pin?: { x: number; y: number; weight: number },
 ): Solved | undefined {
   const { u, cx, cy, t0, noise } = at
   const rows: number[][] = []
@@ -865,6 +990,13 @@ function solve(
     rhs.push(x)
     rows.push([0, 0, 1, tt, -tt * y])
     rhs.push(y)
+  }
+  if (pin) {
+    // At τ = 0 the model is (A, C): the ball where the toss had it.
+    rows.push([pin.weight, 0, 0, 0, 0])
+    rhs.push(pin.weight * pin.x)
+    rows.push([0, 0, pin.weight, 0, 0])
+    rhs.push(pin.weight * pin.y)
   }
   return leastSquares(rows, rhs, noise)
 }
@@ -934,13 +1066,22 @@ export function measureServeSpeed(
   const times = frames.map((f) => f.t)
   if (times.some((t, k) => !Number.isFinite(t) || (k > 0 && !(t > times[k - 1])))) return { miss: 'timing' }
   const gaps = times.slice(1).map((t, k) => t - times[k]).sort((a, b) => a - b)
-  if (gaps.length && gaps[Math.floor(gaps.length / 2)] > 1 / MIN_FPS) return { miss: 'frame_rate' }
+  const gap = gaps.length ? gaps[Math.floor(gaps.length / 2)] : 0
+  if (gap > 1 / LOWEST_FPS) return { miss: 'frame_rate' }
   if (!s.toss) return { miss: 'no_toss' }
   const setting: SpeedSetting = { ...s, toss: s.toss }
-  const track = trackStruckBall(frames, setting)
-  if (!track) return { miss: 'not_found' }
-  const reading = readingOf(track, setting)
-  return typeof reading === 'string' ? { miss: reading } : { speed: reading }
+  // A real-time clip can only be read pinned, and one that is not is told the
+  // way to a reading: slow motion.
+  const realTime = gap > 1 / MIN_FPS
+  const free = realTime ? undefined : trackStruckBall(frames, setting)
+  const freeReading = free && readingOf(free, setting)
+  if (freeReading && typeof freeReading !== 'string') return { speed: freeReading }
+  const pinned = trackStruckBall(frames, setting, true)
+  const pinnedReading = pinned && readingOf(pinned, setting)
+  if (pinnedReading && typeof pinnedReading !== 'string') return { speed: pinnedReading }
+  if (realTime) return { miss: 'frame_rate' }
+  const miss = freeReading ?? pinnedReading
+  return { miss: typeof miss === 'string' ? miss : 'not_found' }
 }
 
 /**
@@ -997,17 +1138,23 @@ function readingOf(track: StruckTrack, s: SpeedSetting): ServeSpeed | SpeedMiss 
   const depthAngle = (Math.atan2(Math.abs(w * focal), Math.hypot(B, D)) * 180) / Math.PI
   if (depthAngle > MAX_DEPTH_ANGLE) return 'view'
 
-  const root = cholesky3(fit.cov)
-  if (!root) return 'unsure'
+  // A pinned track's range is taken across every moment of impact its samples
+  // allow, each with its own fit; a free track's across its one.
+  const fits = track.impacts ? spread(track.impacts, 7).map((t0) => fitTrack(track.samples, s, t0, true)) : [fit]
   let lo = Infinity
   let hi = -Infinity
-  for (const d of ELLIPSOID) {
-    // A point on the ellipsoid: the fit plus two standard deviations of it in direction d.
-    const e = [0, 1, 2].map((r) => RANGE_SIGMAS * (root[r][0] * d[0] + root[r][1] * d[1] + root[r][2] * d[2]))
-    for (const lens of [1 - FOCAL_SPREAD, 1, 1 + FOCAL_SPREAD]) {
-      const at = speedFrom(B + e[0], D + e[1], w + e[2], u, focal * lens)
-      if (at < lo) lo = at
-      if (at > hi) hi = at
+  for (const f of fits) {
+    const root = f && cholesky3(f.cov)
+    if (!f || !root) return 'unsure'
+    const [, fB, , fD, fw] = f.terms
+    for (const d of ELLIPSOID) {
+      // A point on the ellipsoid: the fit plus two standard deviations of it in direction d.
+      const e = [0, 1, 2].map((r) => RANGE_SIGMAS * (root[r][0] * d[0] + root[r][1] * d[1] + root[r][2] * d[2]))
+      for (const lens of [1 - FOCAL_SPREAD, 1, 1 + FOCAL_SPREAD]) {
+        const at = speedFrom(fB + e[0], fD + e[1], fw + e[2], f.frame.u, focal * lens)
+        if (at < lo) lo = at
+        if (at > hi) hi = at
+      }
     }
   }
   const scale = RANGE_SIGMAS * s.toss.scaleError
@@ -1015,7 +1162,14 @@ function readingOf(track: StruckTrack, s: SpeedSetting): ServeSpeed | SpeedMiss 
   const high = hi * (1 + scale)
   if (Math.max(v - low, high - v) / v > MAX_SPREAD) return 'unsure'
   const span = track.samples[track.samples.length - 1].t - track.samples[0].t
-  return { ms: v, low, high, samples: track.samples.length, span, depthAngle }
+  return { ms: v, low, high, samples: track.samples.length, span, depthAngle, ...(track.impacts ? { pinned: true } : {}) }
+}
+
+/** At most `n` of `xs`, evenly spread and keeping both ends. */
+function spread(xs: readonly number[], n: number): number[] {
+  const sorted = [...xs].sort((a, b) => a - b)
+  if (sorted.length <= n) return sorted
+  return Array.from({ length: n }, (_, k) => sorted[Math.round((k * (sorted.length - 1)) / (n - 1))])
 }
 
 /**

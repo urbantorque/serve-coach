@@ -10,14 +10,13 @@
  * in it with `struckCandidates`.
  *
  * Gated before it seeks anything: a clip whose real-time rate is under
- * `MIN_FPS` is answered `frame_rate` at no cost, so real-time clips pay
+ * `LOWEST_FPS` is answered `frame_rate` at no cost, so a clip too slow to read pays
  * nothing. Bounded in time: past `SPEED_BUDGET_MS` the pass gives up and says
  * nothing, as the refine pass does.
  *
- * Measured, not shown: the reading goes on the report, and nothing draws it
- * until showing a speed is the owner's call (N2.7).
+ * The reading goes on the report, under the hero, with its range (N2.7).
  */
-import { MIN_FPS, measureServeSpeed, tossPath, type ServeSpeed, type SpeedMiss, type StruckFrame } from '../vision/serveSpeed'
+import { LOWEST_FPS, measureServeSpeed, tossPath, type ServeSpeed, type SpeedMiss, type StruckFrame } from '../vision/serveSpeed'
 import { struckCandidates } from '../vision/struckBall'
 import type { BallFlight } from '../vision/ballTrack'
 
@@ -85,7 +84,7 @@ export async function readServeSpeed(
   video: { width: number; height: number },
   readBitmaps: ReadBitmaps,
 ): Promise<SpeedReading | undefined> {
-  if (!(input.realFps >= MIN_FPS)) return { miss: 'frame_rate' }
+  if (!(input.realFps >= LOWEST_FPS)) return { miss: 'frame_rate' }
   const aspect = video.width / Math.max(1, video.height)
   const tossSamples = (input.toss?.samples ?? []).map((p) => ({ t: p.t, x: p.x * aspect, y: p.y }))
   const region = speedWindow(input, video)

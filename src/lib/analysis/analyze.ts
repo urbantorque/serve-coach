@@ -1942,8 +1942,8 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
       })
     : undefined
 
-  // The serve's speed (N2.1): read on slow motion, kept on the report, not
-  // shown until that is the owner's call. A real-time clip is answered
+  // The serve's speed (N2.1): read on slow motion, and on real-time clips as
+  // a short track pinned to the toss. A clip under `LOWEST_FPS` is answered
   // `frame_rate` before a single seek; the file's rate comes from its
   // container or the in-app camera, and counts as 30 when neither says.
   let speed: SpeedReading | undefined

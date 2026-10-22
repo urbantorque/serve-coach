@@ -20,3 +20,19 @@ export const PLACEMENT = {
   /** How high. */
   height: 'at about waist height',
 } as const
+
+/**
+ * Where the phone goes for a serve speed (N2.7), said once here like the rest.
+ *
+ * Further back and looking past the player towards the net, on its side, so
+ * the struck ball stays in the picture for longer. Measured on the simulated
+ * launches (`serveSpeed.test.ts`): from the guide's placement a 30 fps clip
+ * almost never gives a speed and a 60 fps one about one in five; from six to
+ * seven metres with the net side open, 30 fps gives one in three and 60 fps
+ * three in four. The body read is unchanged: the whole player is still in
+ * the picture, just smaller.
+ */
+export const SPEED_PLACEMENT = {
+  distance: 'six to seven metres',
+  where: 'with you in the half of the picture away from the net',
+} as const

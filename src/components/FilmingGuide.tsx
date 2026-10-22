@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { PLACEMENT } from '../lib/placement'
+import { PLACEMENT, SPEED_PLACEMENT } from '../lib/placement'
 import ModelServe from './ModelServe'
 import { Icon } from './primitives'
 
@@ -30,6 +30,11 @@ const RULES = [
     title: 'Use slow motion if your phone has it',
     body:
       'The racket travels from behind your back to the ball in a fraction of a second. More frames make that part sharper.',
+  },
+  {
+    // N2.7: the one placement that gives an ordinary clip a serve speed.
+    title: 'For a serve speed, stand the phone further back',
+    body: `Turn it on its side, ${SPEED_PLACEMENT.distance} away, ${SPEED_PLACEMENT.where}. The ball then stays in the picture long enough to time.`,
   },
 ]
 

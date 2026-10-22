@@ -7,8 +7,10 @@
  * shutter on a noisy court-coloured background. `struckCandidates` finds the
  * balls in those pixels, `tossPath` takes metres from the toss, and
  * `measureServeSpeed` reads the struck ball. The true launch speed has to sit
- * inside the range it states, at the frame rates slow motion films at, and 30
- * frames a second has to say so rather than guess.
+ * inside the range it states, at the frame rates slow motion films at — and at
+ * thirty frames a second from the speed placement, where the phone stands
+ * further back with the net side of the picture open. From the guide's own
+ * placement, centred, thirty frames a second has to say so rather than guess.
  *
  * What this still is not: a court. No racket, no player, no second ball. The
  * decoys are `serveSpeed.test.ts`'s.
@@ -23,7 +25,14 @@ const H = 720
 const ASPECT = W / H
 /** The long side's focal length over the long side, as `FOCAL_LONG_SIDE` assumes. */
 const FOCAL = 0.8 * ASPECT
-const DIST = 5
+/** Where the phone stands: metres from the player, and how far towards the net it looks. */
+interface Place {
+  dist: number
+  lead: number
+}
+const GUIDE: Place = { dist: 5, lead: 0 }
+/** `SPEED_PLACEMENT`: six to seven metres back, looking a metre and a half towards the net. */
+const SPEED: Place = { dist: 6.5, lead: 1.5 }
 const CAM_Y = 1.2
 const BALL_R = 0.0335
 
@@ -35,9 +44,9 @@ function seeded(seed: number) {
 type V = { x: number; y: number; z: number }
 
 /** World to picture, frame heights from the top-left, x times the aspect. */
-function project(p: V): { x: number; y: number; r: number } {
-  const d = p.z + DIST
-  return { x: ASPECT / 2 + (FOCAL * p.x) / d, y: 0.5 - (FOCAL * (p.y - CAM_Y)) / d, r: (FOCAL * BALL_R) / d }
+function project(p: V, place: Place): { x: number; y: number; r: number } {
+  const d = p.z + place.dist
+  return { x: ASPECT / 2 + (FOCAL * (p.x - place.lead)) / d, y: 0.5 - (FOCAL * (p.y - CAM_Y)) / d, r: (FOCAL * BALL_R) / d }
 }
 
 /** The struck ball's flight from contact, with drag and gravity. */
@@ -60,14 +69,14 @@ const ballAt = (struck: (t: number) => V) => (t: number): V =>
   t < 0 ? { x: 0, y: 2.6 + 0.5 - 0.5 * GRAVITY * (t + Math.sqrt(1 / GRAVITY)) ** 2, z: 0 } : struck(t)
 
 /** One frame: the ball swept over [t, t + shutter], on noise. */
-function render(t: number, shutter: number, where: (t: number) => V, rand: () => number): Bitmap {
+function render(t: number, shutter: number, where: (t: number) => V, rand: () => number, place: Place): Bitmap {
   const data = new Uint8ClampedArray(W * H * 4)
   const cover = new Float32Array(W * H)
-  const a = project(where(t))
-  const b = project(where(t + shutter))
+  const a = project(where(t), place)
+  const b = project(where(t + shutter), place)
   const steps = Math.max(6, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) * H * 2))
   for (let k = 0; k < steps; k++) {
-    const c = project(where(t + ((k + 0.5) / steps) * shutter))
+    const c = project(where(t + ((k + 0.5) / steps) * shutter), place)
     const cx = c.x * H
     const cy = c.y * H
     const rr = c.r * H
@@ -89,7 +98,7 @@ function render(t: number, shutter: number, where: (t: number) => V, rand: () =>
 }
 
 /** One serve filmed at `fps`, read from its pixels. */
-function film(fps: number, speed: number, depthDeg: number, seed: number) {
+function film(fps: number, speed: number, depthDeg: number, seed: number, place: Place = GUIDE) {
   const rand = seeded(seed)
   const el = (8 * Math.PI) / 180
   const psi = (depthDeg * Math.PI) / 180
@@ -97,24 +106,25 @@ function film(fps: number, speed: number, depthDeg: number, seed: number) {
   const shutter = 0.5 / fps
   const phase = rand() / fps
   const noise = 1 / H
-  // The toss, read every fourth frame as the pose pass would, each against the frame before it.
+  // The toss, read at about thirty a second as the pose pass would (every fourth frame of slow
+  // motion at most), each against the frame before it.
   const toss: StruckSample[] = []
-  for (let t = -0.9 + phase; t < -2 / fps; t += 4 / fps) {
-    const found = struckCandidates(render(t, shutter, where, rand), render(t - 1 / fps, shutter, where, rand))[0]
+  for (let t = -0.9 + phase; t < -2 / fps; t += Math.min(4, Math.max(1, Math.round(fps / 30))) / fps) {
+    const found = struckCandidates(render(t, shutter, where, rand, place), render(t - 1 / fps, shutter, where, rand, place))[0]
     if (found) toss.push({ t, x: found.x, y: found.y })
   }
   const contactT = -0.004
   const fit = tossPath(toss, { noise, aspect: ASPECT, t0: contactT })
   // Every frame round contact, each against the one before.
   const frames: StruckFrame[] = []
-  let previous = render(-0.06 + phase - 1 / fps, shutter, where, rand)
+  let previous = render(-0.06 + phase - 1 / fps, shutter, where, rand, place)
   for (let t = -0.06 + phase; t < 0.22; t += 1 / fps) {
-    const now = render(t, shutter, where, rand)
+    const now = render(t, shutter, where, rand, place)
     frames.push({ t, candidates: struckCandidates(now, previous).map((c) => ({ x: c.x, y: c.y })) })
     previous = now
   }
-  const feet = project({ x: 0, y: 0, z: 0 })
-  const head = project({ x: 0, y: 1.75, z: 0 })
+  const feet = project({ x: 0, y: 0, z: 0 }, place)
+  const head = project({ x: 0, y: 1.75, z: 0 }, place)
   return measureServeSpeed(frames, { contactT, bodyHeight: feet.y - head.y, netSide: 1, aspect: ASPECT, toss: fit, noise })
 }
 
@@ -143,7 +153,35 @@ check('slow motion reads the launch speed from pixels, with the truth inside its
   assert(held === read, `the range missed the truth on ${read - held} of ${read}`)
 })
 
-check('thirty frames a second, rendered, says frame rate rather than a number', () => {
+check('thirty and sixty frames a second, from the speed placement, read from pixels with the truth inside the range', () => {
+  const rows: string[] = []
+  let read = 0
+  let held = 0
+  let n = 0
+  for (const fps of [30, 60]) {
+    for (const [speed, depth] of [
+      [32, 0],
+      [42, 10],
+      [48, -12],
+      [38, 5],
+    ]) {
+      n++
+      const r = film(fps, speed, depth, 300 + n, SPEED)
+      if ('miss' in r) {
+        rows.push(`${fps}fps ${speed}m/s ${depth}°: ${r.miss}`)
+        continue
+      }
+      read++
+      if (speed >= r.speed.low && speed <= r.speed.high) held++
+      rows.push(`${fps}fps ${speed}m/s ${depth}°: ${r.speed.ms.toFixed(1)} [${r.speed.low.toFixed(1)}–${r.speed.high.toFixed(1)}] on ${r.speed.samples}`)
+    }
+  }
+  note(rows.join(' · '))
+  assert(read >= 4, `only ${read} of ${n} real-time serves gave a speed`)
+  assert(held === read, `the range missed the truth on ${read - held} of ${read}`)
+})
+
+check('thirty frames a second from the guide placement, rendered, says frame rate rather than a number', () => {
   const r = film(30, 42, 0, 7)
   assert('miss' in r && r.miss === 'frame_rate', `30 fps gave ${'miss' in r ? r.miss : 'a speed'}`)
 })
