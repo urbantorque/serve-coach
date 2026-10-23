@@ -117,6 +117,10 @@ check('the labels that carry meaning are 12px and in the readable grey, not the 
     '.judged-lead': 'report.css',
     '.focus-kicker': 'report.css',
     '.drill-kicker': 'fundamentals.css',
+    // The court's own (Q7): what a player reads and touches from the baseline.
+    '.seg-item': 'player.css',
+    '.framer-cue': 'court.css',
+    '.framer-foot': 'court.css',
   }
   for (const [sel, file] of Object.entries(where)) {
     const css = fs.readFileSync(path.join(process.cwd(), 'src', 'styles', file), 'utf8')

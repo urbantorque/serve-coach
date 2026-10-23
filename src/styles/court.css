@@ -160,8 +160,9 @@
   border-color: var(--lime);
 }
 
+/* Read from the baseline (Q7): 18px, up from 16. */
 .framer-cue {
-  font-size: 16px;
+  font-size: 18px;
   line-height: var(--lh-snug);
   color: var(--fg);
 }
@@ -216,9 +217,20 @@
 }
 
 .framer-foot {
-  font-size: 12.5px;
+  font-size: 13.5px;
   line-height: 1.62;
-  color: var(--fg-faint);
+  color: var(--fg-muted);
+}
+
+/* The setup a player touches on court, with sweat or a glove on (Q7): 14px
+   text and a taller press than the 12px pills the rest of the app uses. */
+.framer .seg-item,
+.framer .chip--toggle {
+  font-size: 14px;
+}
+
+.framer .seg-item {
+  padding: 9px 14px;
 }
 
 /* ============================================================================

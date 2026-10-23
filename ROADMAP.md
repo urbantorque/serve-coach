@@ -3878,7 +3878,7 @@ the vibration were checked in desktop Chrome with a fake camera.
       report the timeline sits far from the player, so a synced playhead buys
       little until the two share a screen.
 
-## Review fixes (Q1–Q6) — 2026-10-23
+## Review fixes (Q1–Q7) — 2026-10-23
 
 From the graded review of 2026-10-23: three small fixes a first player hits on
 the report and in the filming guide. Each was proved by machine and looked at
@@ -3960,3 +3960,14 @@ on its own branch (Q4).
         emulation: both toggles on and "Start hands-free" with a fake camera,
         and the button closing the sheet and opening the camera input when
         the camera is refused. Not run on a phone.
+- [x] **Q7 The viewfinder readable from the baseline** · S.
+      - *Done:* 2026-10-23. Inside the skin, in the lazy `court.css`: the
+        framing cue is 18px (was 16); the viewfinder's segments and toggles
+        are 14px (were 12–12.5), and its segments 39px tall; its footnote is
+        13.5px in the muted grey (was 12.5px, faint). In `player.css`, every
+        segmented control's unpicked option is muted rather than faint, and
+        each item takes a 44px press, growing only up and down so neighbours
+        never overlap. The entry stylesheet grew by the hit-area rule alone.
+        `wordsInChrome.test.ts` now holds `.seg-item`, `.framer-cue` and
+        `.framer-foot` to the readable-label rule. Measured in the browser with
+        touch emulation and a fake camera; not run on a phone in sunlight.

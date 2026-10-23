@@ -203,14 +203,26 @@
 }
 
 .seg-item {
+  position: relative;
   padding: 6px 11px;
   border-radius: var(--r-pill);
   font-size: 12px;
   font-weight: var(--wt-label);
   letter-spacing: 0.005em;
-  color: var(--fg-faint);
+  /* Muted, not faint (Q7): an unpicked option is still one to read. */
+  color: var(--fg-muted);
   transition: background var(--fast) var(--ease), color var(--fast) var(--ease),
     transform var(--fast) var(--ease);
+}
+
+/* A 44px press, painted nowhere: side by side the items share no edge to
+   overlap on, so each grows only up and down (see controls.css). */
+.seg-item::after {
+  content: '';
+  position: absolute;
+  inset: 50% 0 auto;
+  height: 44px;
+  transform: translateY(-50%);
 }
 
 .seg-item:active {
