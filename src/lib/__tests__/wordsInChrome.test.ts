@@ -13,7 +13,7 @@ import { GLOSSARY } from '../glossary'
 import Term from '../../components/Term'
 import Report from '../../screens/Report'
 import { DEMO_DIALS, sampleAnalysis } from '../../dev/sampleAnalysis'
-import { METRICS } from '../analysis/coaching'
+import { METRICS, READINGS } from '../analysis/coaching'
 import { cueIssues } from '../analysis/voice'
 import { assert, check, heading, note, report } from '../analysis/__tests__/harness'
 
@@ -67,9 +67,9 @@ check('trophy, racket drop, stance and firing order are each a tap away on the r
 heading('Renamed, and one narrator')
 
 check('the coil row is named for what it shows', () => {
-  const label = METRICS.hipShoulderSeparation.label
+  const label = READINGS.hipShoulderSeparation.label
   assert(label === 'Shoulders turned past the hips', `still "${label}"`)
-  for (const m of Object.values(METRICS)) assert(!/separation/i.test(m.label), `${m.id} is labelled "${m.label}"`)
+  for (const m of [...Object.values(METRICS), ...Object.values(READINGS)]) assert(!/separation/i.test(m.label), `${m.id} is labelled "${m.label}"`)
 })
 
 check('the lint holds the coach to "I"', () => {

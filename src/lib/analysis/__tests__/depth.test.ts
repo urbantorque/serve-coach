@@ -118,7 +118,7 @@ function readOnce(dials: Partial<ServeDials>): Read | undefined {
     },
   })
 
-  const all = fundamentals.flatMap((f) => f.metrics)
+  const all = fundamentals.flatMap((f) => [...f.metrics, ...(f.readings ?? [])])
   const sep = all.find((m) => m.id === 'hipShoulderSeparation')
   const tilt = all.find((m) => m.id === 'shoulderTilt')
   if (!sep || !tilt) return undefined

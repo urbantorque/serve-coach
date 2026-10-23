@@ -76,7 +76,7 @@ export interface SignalSpec {
  * Flat, not laddered, because none of the five has a figure per level the
  * camera can resolve. Contact's beginner-to-elite gap (Girard 2005) is half of
  * what the phone's position moves it; the toss has no club data; the hips' rise
- * and the coil have one professional figure each; and the drop was flattened on
+ * has one professional figure; and the drop was flattened on
  * real motion before this. So none of them rates a player either: a flat band's
  * `rungStep` is zero.
  *
@@ -92,7 +92,6 @@ export const CARD_SIGNAL: Record<string, string> = {
   contactAhead: 'contact_ahead_pct',
   // And the tossing arm since L5.4, through `tossArmHoldOf`.
   tossArmHold: 'toss_arm_hold_pct',
-  hipShoulderSeparation: 'separation_deg',
   legDrive: 'leg_drive_rise_ratio',
   dropDepth: 'drop_depth_ratio',
   contactHeight: 'contact_height_ratio',
@@ -147,11 +146,23 @@ export const SIGNALS: Record<string, SignalSpec> = {
     direction: 'higher',
     // Hip-to-shoulder coil at the trophy. A tour serve reaches the fifties; a
     // healthy club torso does not, and demanding it produces back pain rather
-    // than racket-head speed. The card's band (`CARD_SIGNAL`), where the reasons
-    // for its edges are written.
-    anchors: cardBand('hipShoulderSeparation'),
+    // than racket-head speed. No study gives serve X-factor norms.
+    //
+    // ITS OWN BAND SINCE THE CARD STOPPED GRADING IT. It was the card's, 8–38°,
+    // until the card row became a reading: a noise floor of 30° against a band
+    // 30° wide graded the camera, not the coil. The open chest is still named
+    // from here, past that floor. The floor came down from 8 to 5 on the way,
+    // because the forty Bath serves read 5.7–17° on this signal from every
+    // corner and end at 30 and 60 fps, four of them under 8 at 30 fps; the
+    // card's 8 was set against the card's readout and its six-serve fixture.
+    // The ceiling is the card's 38, where "Extreme coil" begins, and only caps a
+    // signal graded from below. Flat, because nothing gives a coil per level.
+    anchors: { 3: [5, 38], 5: [5, 38], 7: [5, 38], 9: [5, 38] },
     seriousMiss: 12,
-    source: { card: 'hipShoulderSeparation' },
+    source: {
+      motion:
+        "Forty Bath serves coil 5.7–17° at the trophy from every corner and end, inside the band and named at no rung; the rig's open chest (shoulders 10° ahead, from a corner) reads -44 and is named at every rung",
+    },
   },
 
   /* --- posture ------------------------------------------------------------ */
@@ -815,12 +826,22 @@ export const UNDER_RESOLVED: Record<string, string> = {
    * the shape `FLAW_COPY.early_shoulder_rotation` describes. As with the hip
    * lead, every finding now arrives at severity 'high'.
    *
+   * The table was read against a band floor of 13, so a fault was named from
+   * -17. The floor has moved twice since, and the floor of 30 has not: to the
+   * card's 8 (D2.3), and to 5 when the coil left the card and the band became
+   * this signal's own, because Bath reads down to 5.7. A fault is named from
+   * -25 now. At sixty seeds from a 45° camera, the rig's open chest 22° past
+   * the hips is named on 31 at 8 and 25 at 5; 26° past, 46 and 41; 45° past,
+   * 54 at both. A level trunk is named on none. Each move gave up a little of
+   * the middle and named nothing new.
+   *
    * `inferTier` already ignored this signal: 9° was wider than its 2.8° rung.
    */
   separation_deg:
     'kept: floor 30, far above its 14 — the first floor that names no real ' +
     'serve from the noise (0 of 2,400 takes, from 28% at 9), and an open ' +
-    'chest is still named on 85%',
+    'chest is still named: 85% at a band floor of 13, 42% of a 22° one and ' +
+    '90% of a 45° one at 5',
 
   /*
    * Not named. `pancake_contact` is measured and never reported to a player.

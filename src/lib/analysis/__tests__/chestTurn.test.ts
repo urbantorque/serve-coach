@@ -68,7 +68,7 @@ check('real serves turn after the racket drops, from both sides', () => {
 })
 
 check('from a corner or from behind it is not read, and the corner reads the coil instead', () => {
-  const corner = read({ cameraYaw: 45, shoulderYaw: 82, hipYaw: 108 })
+  const corner = read({ cameraYaw: 45, shoulderYaw: 82, hipYaw: 116 })
   assert(corner.turn === undefined, 'the turn was read from a corner')
   assert(corner.finding?.signal === 'separation_deg' && corner.finding.detected, 'the corner lost the coil reading')
   assert(read({ cameraYaw: 0 }).turn === undefined, 'the turn was read from behind')

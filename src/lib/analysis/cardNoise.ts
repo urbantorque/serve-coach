@@ -20,7 +20,6 @@ export const CARD_NOISE_SD: Record<string, number> = {
   tossArmHold: 1.53,
   tossPathWobble: 0.224,
   kneeBend: 3.77,
-  hipShoulderSeparation: 8.74,
   shoulderTilt: 2.59,
   legDrive: 0.0081,
   dropDepth: 0.0074,

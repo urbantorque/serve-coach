@@ -43,20 +43,24 @@ export type ChangeScope = 'overall' | 'trip' | FundamentalId
  * one past the 90th percentile of how far two takes of one serve, graded on
  * the same rows, moved apart. A change smaller than this is "no real change".
  *
- * The spread across the areas is the measurement, not a choice. Contact and
- * loading are scored on readings whose bands are narrow against their noise on
- * real motion (arm extension, knee bend, the trunk turn), so the camera moves
- * those areas far more than it moves the toss; rhythm is a single row, and one
- * row moves its area by everything it moves.
+ * The spread across the areas is the measurement, not a choice. Contact is
+ * scored on readings whose bands are narrow against their noise on real motion
+ * (arm extension), so the camera moves it far more than it moves the toss;
+ * rhythm is a single row, and one row moves its area by everything it moves.
+ *
+ * Loading was 17 while the trunk turn was one of its rows, the noisiest
+ * reading in the engine. It is a reading now, and loading re-derived at 10
+ * (9 at 24 takes, 8 at 60). The trip rose from 10 to 11 with it: the overall
+ * leans harder on each of loading's three rows than it did on four.
  */
 export const REAL_CHANGE: Record<ChangeScope, number> = {
   overall: 6,
   toss: 7,
-  loading: 17,
+  loading: 10,
   swing: 6,
   contact: 21,
   rhythm: 36,
-  trip: 10,
+  trip: 11,
 }
 
 /**
@@ -70,7 +74,8 @@ export const REAL_CHANGE: Record<ChangeScope, number> = {
  * moves further between them than between two takes graded alike.
  *
  * Measured where the ensembles produce such pairs — the overall, and the swing
- * whose rows the collapse takes. A change between the two floors is reported
+ * whose rows the collapse takes. The overall's rose from 14 to 15 when loading
+ * lost the trunk turn, for the trip's reason. A change between the two floors is reported
  * as soft: shown, and not called a change. Past this one it is a change
  * whatever the rows were. Absent for an area the ensembles never read
  * differently (the ball and the camera's side are what change its rows in
@@ -78,7 +83,7 @@ export const REAL_CHANGE: Record<ChangeScope, number> = {
  * however large.
  */
 export const READ_DIFFERENTLY: Partial<Record<ChangeScope, number>> = {
-  overall: 14,
+  overall: 15,
   swing: 42,
 }
 
@@ -119,7 +124,6 @@ export const ROW_CHANGE: Record<string, readonly [number, number, number]> = {
   tossArmHold: [8, 5, 5],
   tossPathWobble: [14, 12, 10],
   kneeBend: [15, 10, 8],
-  hipShoulderSeparation: [43, 29, 24],
   shoulderTilt: [16, 12, 10],
   legDrive: [6, 4, 4],
   dropDepth: [52, 34, 23],

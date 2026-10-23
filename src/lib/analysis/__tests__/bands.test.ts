@@ -24,8 +24,6 @@ import { assert, check, heading, note, report } from './harness'
 const MOTION_FAULTS: Record<string, { dials: Partial<ServeDials>; side: 'low' | 'high'; sideView?: boolean }> = {
   tossArmHold: { dials: { tossArmHold: 0.2 }, side: 'low' },
   tossPathWobble: { dials: { tossWobble: 0.12 }, side: 'high' },
-  // The coil is read from depth, so from a corner, where depth is read.
-  hipShoulderSeparation: { dials: { cameraYaw: 30, shoulderYaw: 10 }, side: 'low', sideView: false },
   handUnderElbow: { dials: { dropBelowShoulder: -0.25 }, side: 'low' },
 }
 
@@ -125,6 +123,9 @@ const MOTION_SIGNALS: Record<string, { flaw: FlawId; dials: Partial<ServeDials>;
   palm_to_sky_deg: { flaw: 'waiters_tray', dials: { palmToSky: 80, trophyArmLayOver: 1, trophyForearmDrop: 0.22 }, bearings: [90, 0, 180], yaw: 82 },
   spine_lean_deg: { flaw: 'posture_collapse', dials: { spineLean: 40 }, bearings: [0, 180], yaw: 8 },
   elbow_lift_ratio: { flaw: 'collapsed_elbow', dials: { dropBelowShoulder: 0.1, dropElbowLift: -1.5 }, bearings: [90, 0, 180], yaw: 82 },
+  // The coil is read from depth, so from a corner or an end, where depth is
+  // read; side-on the open chest is `chest_open_ms`'s (`chestTurn.test.ts`).
+  separation_deg: { flaw: 'early_shoulder_rotation', dials: { shoulderYaw: 10 }, bearings: [0, 45, 135, 180], yaw: 30 },
 }
 
 check('every diagnosis signal names what its band stands on', () => {

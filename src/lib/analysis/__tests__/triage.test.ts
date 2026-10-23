@@ -527,7 +527,7 @@ check('the swing is reached once the foundations are sound', () => {
   // square, so the coil is hedged there and nothing in this group can be named
   // from it (`flaws.test.ts`, "a chest already open at the trophy"). An open
   // chest, because a level trunk is under the floor real motion set.
-  const { result } = pipeline({ shoulderYaw: 82, hipYaw: 108, cameraYaw: 45 })
+  const { result } = pipeline({ shoulderYaw: 82, hipYaw: 116, cameraYaw: 45 })
   assert(result.primary_flaw?.group === 'sequence', `chose ${result.primary_flaw?.group}`)
 })
 

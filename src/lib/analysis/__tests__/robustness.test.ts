@@ -1839,7 +1839,7 @@ check('forcing the wrong hand mirrors the tilt and leaves the coil untouched', (
   const asRight = measure(frames, skel, false)
   const asLeft = measure(frames, { ...skel, racket: skel.toss, toss: skel.racket }, false)
   const of = (f: typeof asRight, id: string) =>
-    f.flatMap((x) => x.metrics).find((m) => m.id === id)!.value
+    f.flatMap((x) => [...x.metrics, ...(x.readings ?? [])]).find((m) => m.id === id)!.value
 
   note(`tilt ${of(asRight, 'shoulderTilt').toFixed(1)}° → ${of(asLeft, 'shoulderTilt').toFixed(1)}°, coil ${of(asRight, 'hipShoulderSeparation').toFixed(1)}° → ${of(asLeft, 'hipShoulderSeparation').toFixed(1)}°`)
   near(
@@ -2697,7 +2697,7 @@ check('a camera that cannot see depth cannot name the coil fault either', () => 
       depthUnreliable: resilience.spatial.depth_unreliable,
     },
   })
-  const coil = card.flatMap((f) => f.metrics).find((m) => m.id === 'hipShoulderSeparation')!
+  const coil = card.flatMap((f) => f.readings ?? []).find((m) => m.id === 'hipShoulderSeparation')!
   within(coil.confidence, 0, SOFT_MEASUREMENT, 'the card the player reads')
 
   const d = diagnose(frames, skel)
@@ -2719,7 +2719,7 @@ check('a camera that cannot see depth cannot name the coil fault either', () => 
 
   // And the same serve, filmed from a corner, is named outright — the hedge is
   // about the camera, not about refusing to call an open chest an open chest.
-  const corner = buildServe({ shoulderYaw: 82, hipYaw: 108, cameraYaw: 45 }, FPS)
+  const corner = buildServe({ shoulderYaw: 82, hipYaw: 116, cameraYaw: 45 }, FPS)
   const cornerSkel = detectServe(corner, FPS)
   const found = diagnose(corner, cornerSkel).flaws.find((f) => f.flaw === 'early_shoulder_rotation')
   assert(Boolean(found?.detected), 'an open chest went unnamed from a camera angle that could see it')

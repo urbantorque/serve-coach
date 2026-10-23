@@ -75,6 +75,13 @@ const PUSH_THROWS: Drill = {
   reps: '10 throws',
 }
 
+/** The open chest's drill: the hips turning first while the chest stays closed. */
+const HIP_LEAD_TURN: Drill = {
+  name: 'Hip lead turn',
+  how: 'Shadow serve and turn the hips to the court while the chest stays closed.',
+  reps: '10 reps',
+}
+
 /** The throwing arm's own action; the collapsed elbow's first rung and the drop elbow's row. */
 const OVERHEAD_THROW: Drill = {
   name: 'Overhead throws',
@@ -360,59 +367,6 @@ export const METRICS: Record<string, MetricCopy> = {
     },
     drill: PUSH_THROWS,
   },
-  hipShoulderSeparation: {
-    id: 'hipShoulderSeparation',
-    // Renamed for the player (L4.11): "separation" is the coach's word for
-    // what the row shows, which is the shoulders turned further than the hips.
-    label: 'Shoulders turned past the hips',
-    unit: '°',
-    phase: 'trophy',
-    source: {
-      motion:
-        "No study gives serve X-factor norms. The forty Bath serves coil 5–16° from every placement, and the rig's open chest reads below zero.",
-    },
-    weight: 1,
-    // One band with the diagnosis's `separation_deg` (`CARD_SIGNAL` in
-    // tiers.ts). The floor was 15, and the forty Bath serves coil 5–16° here
-    // from every placement, median 11, so it called nearly all of them short at
-    // a level the diagnosis never asked for. It is 8 now, the bottom of the
-    // readout's "Slight coil": a coil the camera can tell from none, and under
-    // the 10.5 the diagnosis asked of rung 4, where every clip starts. The
-    // ceiling stays at 38, where "Extreme coil" begins; the ladder's ceilings,
-    // up to 55, only capped a signal graded from below.
-    ideal: [8, 38],
-    // Below zero the chest has unwound past the hips before the racket has even
-    // dropped, which is a different fault from failing to coil and reads
-    // differently on the card. The axis has to reach far enough down to show it.
-    range: [-30, 55],
-    // The old axis, kept as the yardstick for the decay. Admitting the reverse
-    // side lengthened the axis by more than half without moving a single band,
-    // and letting the scorer see that as more room would have handed a locked
-    // trunk points it had not earned.
-    missSpan: 55,
-    decimals: 0,
-    insight: {
-      // Below the band covers two different faults — a chest that opened ahead
-      // of the hips, and hips and chest turning together — and `build()` has
-      // one string for the pair, because it picks by band and not by rung. So
-      // this names what both share, the stretch that never got stored, and
-      // leaves the direction to the readout beside it.
-      low: 'You reach the trophy with **too little coil** between hips and chest, so the arm swings on its own.',
-      // Over two rungs since the floor came down to 8: a slight coil and hips
-      // well ahead are both hips turning first, and neither is denied by it.
-      ok: 'Your hips **turn ahead** of your chest. That stretch whips the arm through.',
-      high: 'A **big coil** between hips and shoulders.',
-    },
-    fix: {
-      low: '**Hold the chest closed** while the hips turn to the court. Feel the stretch across your stomach.',
-      high: '**Hold the front hip** until the racket drops. Sliding early makes the timing fragile.',
-    },
-    drill: {
-      name: 'Hip lead turn',
-      how: 'Shadow serve and turn the hips to the court while the chest stays closed.',
-      reps: '10 reps',
-    },
-  },
   shoulderTilt: {
     id: 'shoulderTilt',
     label: 'Shoulder tilt',
@@ -432,8 +386,10 @@ export const METRICS: Record<string, MetricCopy> = {
     // the racket down across the ball, so the axis has to be able to show it
     // rather than reporting it as a level pair of shoulders.
     range: [-25, 50],
-    // The old axis, kept as the yardstick for the decay — see
-    // `hipShoulderSeparation` above. Without it a flat-shouldered trophy rose
+    // The old axis, kept as the yardstick for the decay — see `missSpan`.
+    // Admitting the reverse side lengthened the axis without moving the band,
+    // and letting the scorer see that as more room hands a miss points it had
+    // not earned. Without it a flat-shouldered trophy rose
     // from 45 to 58 on the strength of the widening alone, which moves the badge
     // from "work on this" to "fair" for a serve that did not change.
     missSpan: 50,
@@ -867,7 +823,9 @@ export const METRICS: Record<string, MetricCopy> = {
  * has no published figure from the first move, and its ceiling told a slow
  * serve it paused, which the hitch reading (`hitch.ts`) showed tempo is not.
  * Arm sync at release has no published figure and no rig fault that moves it,
- * so nothing showed which side of its edges a fault falls.
+ * so nothing showed which side of its edges a fault falls. The coil between
+ * hips and shoulders had a band on real motion, and a noise floor of 30° from
+ * the camera against a band 30° wide, so its grade was the camera's.
  *
  * Kept in `Fundamental.readings`, apart from `metrics`, so no score, plan,
  * focus or drawing can grade one by accident. A reading earns a row back on
@@ -886,6 +844,15 @@ export const READINGS: Record<string, ReadingCopy> = {
   bodyExtension: { id: 'bodyExtension', label: 'Body extension', unit: '×', phase: 'contact', decimals: 3 },
   totalTime: { id: 'totalTime', label: 'Motion length', unit: 'ms', phase: 'contact', decimals: 0 },
   syncAtRelease: { id: 'syncAtRelease', label: 'Arms in sync', unit: '×', phase: 'toss', decimals: 2 },
+  // "Separation" is the coach's word (L4.11); the row shows the shoulders
+  // turned further than the hips.
+  hipShoulderSeparation: {
+    id: 'hipShoulderSeparation',
+    label: 'Shoulders turned past the hips',
+    unit: '°',
+    phase: 'trophy',
+    decimals: 0,
+  },
 }
 
 /* -------------------------------------------------------------- body axes */
@@ -1007,7 +974,7 @@ export const DRILLS: Record<string, Drill> = {
   baseline_drop_toss: BASELINE_DROP_TOSS,
   one_line_toss: METRICS.tossPathWobble.drill,
   back_scratch_drop: METRICS.dropDepth.drill,
-  hip_lead_turn: METRICS.hipShoulderSeparation.drill,
+  hip_lead_turn: HIP_LEAD_TURN,
   push_throws: PUSH_THROWS,
   ball_in_a_sock: BALL_IN_A_SOCK,
 
@@ -1317,7 +1284,14 @@ export const FUNDAMENTALS: Record<
     blurb: 'Legs, hips and shoulders storing energy before they unwind.',
     phase: 'trophy',
     weight: 22,
-    metrics: ['kneeBend', 'hipShoulderSeparation', 'shoulderTilt', 'legDrive'],
+    metrics: ['kneeBend', 'shoulderTilt', 'legDrive'],
+    // The coil is shown, no longer scored. It is a difference of two bearings
+    // read from world z, the least reliable thing the pose model gives, and its
+    // noise floor (30°, `NOISE_FLOOR.separation_deg`) was as wide as the 8–38°
+    // band it was graded on, so its grade was mostly the camera. The open
+    // chest is still named from it, past that floor, on a band of the
+    // diagnosis's own (`SIGNALS.separation_deg`).
+    readings: ['hipShoulderSeparation'],
     drill: PUSH_THROWS,
   },
   swing: {

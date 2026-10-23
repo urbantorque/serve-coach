@@ -47,6 +47,7 @@ import {
   type Frame,
   type Fundamental,
   type Metric,
+  type Reading,
   type Status,
 } from '../types'
 import { assessSpatial, viewFromCourtYaw } from '../spatial'
@@ -101,6 +102,12 @@ const measured = (fundamentals: Fundamental[], id: string): { value: number; con
   const m = fundamentals.flatMap((f) => [...f.metrics, ...(f.readings ?? [])]).find((x) => x.id === id)
   if (!m) throw new Error(`"${id}" was not measured`)
   return m
+}
+/** An ungraded row off the card, with its words. */
+const reading = (fundamentals: Fundamental[], id: string): Reading => {
+  const r = fundamentals.flatMap((f) => f.readings ?? []).find((x) => x.id === id)
+  if (!r) throw new Error(`reading "${id}" was not produced`)
+  return r
 }
 const area = (fundamentals: Fundamental[], id: string): Fundamental => {
   const f = fundamentals.find((x) => x.id === id)
@@ -486,13 +493,13 @@ check('reads back the dialled shoulder tilt regardless of camera angle', () => {
 
 check('reads back hip–shoulder separation', () => {
   const { fundamentals } = run({ shoulderYaw: 82, hipYaw: 56 })
-  near(metric(fundamentals, 'hipShoulderSeparation').value, 26, 8, 'separation')
+  near(measured(fundamentals, 'hipShoulderSeparation').value, 26, 8, 'separation')
 })
 
 check('the trophy posture is not read off a single frame', () => {
   const frames = buildServe({}, FPS)
   const skel = detectServe(frames, FPS)
-  const clean = metric(measure(frames, skel, true), 'hipShoulderSeparation').value
+  const clean = measured(measure(frames, skel, true), 'hipShoulderSeparation').value
 
   // One frame where the tracker loses the depth of the trunk and puts the two
   // shoulders on the wrong sides of each other in z. This is the failure world z
@@ -514,7 +521,7 @@ check('the trophy posture is not read off a single frame', () => {
   )
   // The same skeleton is reused deliberately, so the keyframes cannot move and
   // the only thing under test is how the posture is sampled at them.
-  const averaged = metric(measure(spiked, skel, true), 'hipShoulderSeparation').value
+  const averaged = measured(measure(spiked, skel, true), 'hipShoulderSeparation').value
   // The same measurement with the trophy window closed to a single frame, which
   // is what this replaced.
   const single = trunkCoil(spiked, skel.keys.trophy, skel.keys.contact, 0)
@@ -544,7 +551,7 @@ check('the report and the diagnosis read the same trophy', () => {
   // of the app will speak.
   const frames = buildServe({ cameraYaw: CORNER }, FPS)
   const skel = detectServe(frames, FPS)
-  const reported = metric(measure(frames, skel, true), 'hipShoulderSeparation').value
+  const reported = measured(measure(frames, skel, true), 'hipShoulderSeparation').value
   const diagnosed = diagnose(frames, skel).signals.separation_deg
   near(diagnosed, reported, 1, 'the two readings of one trophy')
 })
@@ -579,32 +586,25 @@ check('a reverse cartwheel does not score like a textbook trophy', () => {
   )
 })
 
-check('a chest already open at the trophy does not score like coil', () => {
+check('a chest already open at the trophy does not read like coil', () => {
   // The shoulders have unwound past the hips before the racket has dropped. The
   // magnitude of that is the magnitude of a good coil, so the player losing the
-  // serve to it used to be congratulated for it.
+  // serve to it used to be congratulated for it. Ungraded on the card since its
+  // noise floor outgrew its band, so what has to hold is the sign and the words;
+  // the diagnosis names the fault (below).
   const good = run({ shoulderYaw: 82, hipYaw: 56 }).fundamentals
   const open = run({ shoulderYaw: 82, hipYaw: 108 }).fundamentals
-  const sep = metric(open, 'hipShoulderSeparation')
+  const sep = reading(open, 'hipShoulderSeparation')
 
   assert(sep.value < -15, `an open chest measured ${sep.value.toFixed(1)}°`)
   assert(
-    sep.score <= metric(good, 'hipShoulderSeparation').score - 40,
-    `an open chest scored ${sep.score} against ${metric(good, 'hipShoulderSeparation').score} for real coil`,
-  )
-  assert(sep.status === 'work', `an open chest was badged ${sep.status}`)
-  assert(
-    sep.readout !== metric(good, 'hipShoulderSeparation').readout,
+    sep.readout !== reading(good, 'hipShoulderSeparation').readout,
     `both directions read back as "${sep.readout}"`,
-  )
-  assert(
-    area(open, 'loading').score <= area(good, 'loading').score - 20,
-    `loading scored ${area(open, 'loading').score} against ${area(good, 'loading').score}`,
   )
 })
 
 check('the diagnosis names an open chest that the old sign could not see', () => {
-  const frames = buildServe({ shoulderYaw: 82, hipYaw: 108, cameraYaw: CORNER }, FPS)
+  const frames = buildServe({ shoulderYaw: 82, hipYaw: 116, cameraYaw: CORNER }, FPS)
   const skel = detectServe(frames, FPS)
   const found = diagnose(frames, skel).flaws.find((f) => f.flaw === 'early_shoulder_rotation')
   assert(Boolean(found?.detected), 'an already-open chest raised no early-rotation finding')
@@ -620,8 +620,8 @@ check('a mirrored trophy is wrong for a left-hander too', () => {
   const f = measure(frames, skel, sideViewOf(frames, skel))
   assert(metric(f, 'shoulderTilt').value < -15, `left-handed reverse tilt measured ${metric(f, 'shoulderTilt').value.toFixed(1)}°`)
   assert(
-    metric(f, 'hipShoulderSeparation').value < -15,
-    `left-handed open chest measured ${metric(f, 'hipShoulderSeparation').value.toFixed(1)}°`,
+    measured(f, 'hipShoulderSeparation').value < -15,
+    `left-handed open chest measured ${measured(f, 'hipShoulderSeparation').value.toFixed(1)}°`,
   )
 })
 
@@ -640,23 +640,25 @@ check('coil is measured the same whichever way the trunk turns', () => {
   for (const trunkRotationSign of [1, -1] as const) {
     const way = trunkRotationSign > 0 ? 'as dialled' : 'reversed'
     const coiled = run({ trunkRotationSign, shoulderYaw: 82, hipYaw: 56, cameraYaw: CORNER })
-    const open = run({ trunkRotationSign, shoulderYaw: 82, hipYaw: 108, cameraYaw: CORNER })
+    const open = run({ trunkRotationSign, shoulderYaw: 82, hipYaw: 116, cameraYaw: CORNER })
 
-    const good = metric(coiled.fundamentals, 'hipShoulderSeparation')
-    const bad = metric(open.fundamentals, 'hipShoulderSeparation')
+    const good = reading(coiled.fundamentals, 'hipShoulderSeparation')
+    const bad = reading(open.fundamentals, 'hipShoulderSeparation')
     note(`trunk ${way}: coil ${good.value.toFixed(1)}°, open chest ${bad.value.toFixed(1)}°`)
 
     near(good.value, 26, 8, `coil with the trunk ${way}`)
     assert(bad.value < -15, `an open chest measured ${bad.value.toFixed(1)}° with the trunk ${way}`)
-    assert(good.score >= bad.score + 40, `coil scored ${good.score} against ${bad.score} for an open chest, trunk ${way}`)
-    assert(bad.status === 'work', `an open chest was badged ${bad.status} with the trunk ${way}`)
+    // Ungraded on the card, so the fault is the diagnosis's to name, either way round.
+    const named = (r: typeof open) =>
+      diagnose(r.frames, r.skel).flaws.find((f) => f.flaw === 'early_shoulder_rotation')?.detected === true
+    assert(named(open) && !named(coiled), `the open chest was not told from the coil with the trunk ${way}`)
 
     // The diagnosis has to derive the direction the same way, or the card and
     // the flaw pass end up describing opposite trophies from one clip.
     for (const { frames, skel, fundamentals } of [coiled, open]) {
       near(
         diagnose(frames, skel).signals.separation_deg,
-        metric(fundamentals, 'hipShoulderSeparation').value,
+        measured(fundamentals, 'hipShoulderSeparation').value,
         1,
         `report and diagnosis with the trunk ${way}`,
       )
@@ -724,15 +726,15 @@ check('a trunk yawed past the wrap point measures the coil it actually held', ()
   // shoulder line 90° between two samples.
   const wrapped = run({ shoulderYaw: 200, hipYaw: 174, cameraYaw: CORNER })
   const plain = run({ shoulderYaw: 82, hipYaw: 56, cameraYaw: CORNER })
-  const a = metric(wrapped.fundamentals, 'hipShoulderSeparation')
-  const b = metric(plain.fundamentals, 'hipShoulderSeparation')
+  const a = reading(wrapped.fundamentals, 'hipShoulderSeparation')
+  const b = reading(plain.fundamentals, 'hipShoulderSeparation')
   note(`coil ${b.value.toFixed(1)}° at 82°, ${a.value.toFixed(1)}° with the same trunk yawed past the wrap`)
   near(a.value, 26, 8, 'coil across the wrap point')
-  // The same verdict, not the same badge: the band's middle sits at 23 since it
-  // became the diagnosis's band too (D2.3), and four degrees either side of 27
-  // straddle the line between "Strong" and "Solid" without either being wrong.
-  const praised = (m: typeof a) => m.value >= m.ideal[0] && m.value <= m.ideal[1] && !m.fix
-  assert(praised(a) && praised(b), `the same trophy read ${a.display} past the wrap and ${b.display} under it, and was not praised both times`)
+  // The same words both times, and the same verdict from the diagnosis.
+  assert(a.readout === b.readout, `the same trophy read "${a.readout}" past the wrap and "${b.readout}" under it`)
+  const named = (r: typeof plain) =>
+    diagnose(r.frames, r.skel).flaws.find((f) => f.flaw === 'early_shoulder_rotation')?.detected === true
+  assert(!named(wrapped) && !named(plain), 'a coiled trunk was named an open chest on one side of the wrap')
 })
 
 check('a trunk that barely rotates is not handed a coil sign by noise', () => {
@@ -748,7 +750,7 @@ check('a trunk that barely rotates is not handed a coil sign by noise', () => {
     // from the Bath serves) and parks them at `61 − dial` at the trophy, so these
     // hold the shoulders 2° short of where they finish, 6° of coil behind them.
     const armed = run({ trunkRotationSign, shoulderYaw: -17, hipYaw: -23 })
-    const sep = metric(armed.fundamentals, 'hipShoulderSeparation')
+    const sep = measured(armed.fundamentals, 'hipShoulderSeparation')
 
     // Measured off the rig rather than assumed from the dials, so this cannot
     // quietly stop exercising the degenerate branch if the rig's contact yaw
@@ -765,11 +767,6 @@ check('a trunk that barely rotates is not handed a coil sign by noise', () => {
       `the rig swept the shoulders ${sweep.toFixed(1)}°, past the ${MIN_OPENING_SWEEP_DEG}° this check needs it under`,
     )
     assert(sep.value === 0, `an unrotating trunk reported ${sep.value.toFixed(1)}° of coil`)
-    assert(
-      sep.status === 'work' || sep.status === 'fair',
-      `a trunk that never uncoiled was badged ${sep.status}`,
-    )
-    assert(Boolean(sep.fix), 'no fix offered for a trunk that never uncoiled')
   }
 })
 
@@ -907,13 +904,14 @@ check('the score curve is continuous across every band edge', () => {
 })
 
 check('the widened axes still score their misses on the old curve, and it still bites', () => {
-  // Both bands now sit on an axis that runs below zero, and `scoreAgainst` takes
+  // The tilt's band sits on an axis that runs below zero, and `scoreAgainst` takes
   // its miss tolerance as a fraction of that axis — so admitting the reverse side
-  // would, on its own, have made every miss on these two cheaper. A flat pair of
+  // would, on its own, have made every miss on it cheaper. A flat pair of
   // shoulders rose from 45 to 58 that way: the badge moving from "work on this"
   // to "fair" for a serve nobody changed. `missSpan` is what holds the curve
-  // still, and this walks the positive half of both axes to prove it did.
-  for (const id of ['shoulderTilt', 'hipShoulderSeparation']) {
+  // still, and this walks the positive half of the axis to prove it did. The
+  // coil had the same widened axis and is ungraded now.
+  for (const id of ['shoulderTilt']) {
     const copy = metricCopy(id)
     assert(copy.range[0] < 0, `${id} cannot show its own reverse: the axis stops at ${copy.range[0]}`)
     assert(copy.missSpan !== undefined, `${id} widened its axis without pinning the scoring span`)

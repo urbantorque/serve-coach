@@ -105,7 +105,7 @@ actually happens.
 | Area | Measurements |
 | --- | --- |
 | **Toss** | how high the ball actually goes, tossing-arm extension at release, release height, how long the arm stays up, sideways drift of the toss path |
-| **Loading** | knee bend at the trophy, hip–shoulder separation, shoulder tilt, leg drive |
+| **Loading** | knee bend at the trophy, shoulder tilt, leg drive; the shoulders turned past the hips is shown and not scored, since the camera moves it as far as its band is wide |
 | **Swing** | racket drop depth, hitting elbow at the drop, drop-to-contact time |
 | **Contact** | contact height, whether you hit the ball at its peak or waited for it to drop, arm extension, body extension, contact point in front |
 | **Rhythm** | motion length, share of the motion spent after the trophy, whether both arms arrive together |

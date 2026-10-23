@@ -94,7 +94,9 @@ export interface Frame {
 // counting as a 0 (L1.1, `overallOf`), about 9 points on the commonest club serve;
 // and contact height is the top of the reach between samples rather than the
 // nearest sample's, and contact in front is read at the contact moment itself
-// (L2.6, `between.ts`), which raises contact height slightly at lower frame rates.
+// (L2.6, `between.ts`), which raises contact height slightly at lower frame rates;
+// and the shoulders turned past the hips stopped being scored, its noise floor
+// being as wide as its band, so the Loading card averages three rows, not four.
 export const SCORING_VERSION = 5
 
 /**

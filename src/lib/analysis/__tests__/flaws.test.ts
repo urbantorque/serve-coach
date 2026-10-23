@@ -194,7 +194,11 @@ check('a chest already open at the trophy is caught, and a level one no longer i
   // no coil left, but not open — was, until real motion showed the camera
   // naming that on its own (`UNDER_RESOLVED.separation_deg`): the floor that
   // names no real serve from the noise is above it.
-  const open = run({ shoulderYaw: 82, hipYaw: 108, cameraYaw: 45 }, 5).diagnosis
+  //
+  // Shoulders 30° past the hips, where this was 22° (hipYaw 108). The band's
+  // floor came down from 8 to 5 when the coil left the card, so a fault is
+  // named from -25 now, and 22° of open chest sits under the noise floor.
+  const open = run({ shoulderYaw: 82, hipYaw: 116, cameraYaw: 45 }, 5).diagnosis
   assert(
     flagged(open).includes('early_shoulder_rotation'),
     `early rotation missed: ${flagged(open).join(', ')}`,

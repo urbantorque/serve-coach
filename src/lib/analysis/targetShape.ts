@@ -27,8 +27,8 @@
  * ONE RULE, inherited unchanged from `ghostFor` in `pose/skeleton.ts`: the
  * picture is built from the number the card prints and re-measures back to it.
  * `remeasure` below runs the app's OWN measurement over the drawn landmarks —
- * `jointAngle`, `signedElevationFromHorizontal`, `groundYaw` and `wrapHalfTurn`
- * straight out of `geometry.ts`, never a second copy of the arithmetic written
+ * `jointAngle` and `signedElevationFromHorizontal` straight out of
+ * `geometry.ts`, never a second copy of the arithmetic written
  * next to the drawing — and has to return the value the figure was built from.
  * `__tests__/targetShape.test.ts` asserts that for every metric here across its
  * whole range. A picture that disagrees with its own caption is worse than no
@@ -43,30 +43,25 @@
  * moving a real body inside a real photograph. It is not a limit on drawing.
  *
  * Every one of those three angles lives in a plane, and it is a different plane
- * each time:
+ * each time. Two are drawn here:
  *
  *   - `kneeBend` is `jointAngle` of three world points, which is planar by
  *     construction — three points determine a plane and the angle is measured
  *     in it.
  *   - `shoulderTilt` is `signedElevationFromHorizontal`, an `asin` of a height
  *     over a length: the vertical plane containing the shoulder line.
- *   - `hipShoulderSeparation` is a difference of two `groundYaw` bearings, and
- *     `groundYaw` is `atan2(dz, dx)` — the ground plane, seen from directly
- *     above.
+ *   - `hipShoulderSeparation` is a difference of two `groundYaw` bearings, the
+ *     ground plane seen from above. It was drawn that way, captioned "looking
+ *     down", until the coil lost its band: it is a reading now, with no target
+ *     to draw, so it has no figure.
  *
  * Draw each in its own plane and the drawn angle IS the measured angle, with no
  * projection in between to foreshorten it. That is why every figure below
- * carries the view it is drawn from as a string the player reads, and why the
- * plan view of the coil is captioned "looking down". A diagram whose viewpoint
+ * carries the view it is drawn from as a string the player reads. A diagram whose viewpoint
  * is not stated is a diagram inviting the reader to assume it is the camera's.
  */
 import type { Landmark } from './types'
-import {
-  groundYaw,
-  jointAngle,
-  signedElevationFromHorizontal,
-  wrapHalfTurn,
-} from './geometry'
+import { jointAngle, signedElevationFromHorizontal } from './geometry'
 
 export interface Pt {
   x: number
@@ -130,7 +125,6 @@ export interface ShapeView {
 }
 
 const rad = (deg: number) => (deg * Math.PI) / 180
-const DEG = 180 / Math.PI
 
 const lm = (x: number, y: number, z: number): Landmark => ({ x, y, z, visibility: 1 })
 
@@ -195,12 +189,6 @@ interface TiltSpec {
   ends: [string, string]
 }
 
-interface CoilSpec {
-  kind: 'coil'
-  view: string
-  ends: [string, string]
-}
-
 interface HeightSpec {
   kind: 'height'
   view: string
@@ -209,7 +197,7 @@ interface HeightSpec {
   marker: 'hand' | 'ball'
 }
 
-type ShapeSpec = JointSpec | TiltSpec | CoilSpec | HeightSpec
+type ShapeSpec = JointSpec | TiltSpec | HeightSpec
 
 /**
  * Every measurement this file can draw, and — by omission — every one it cannot.
@@ -249,15 +237,6 @@ const SHAPES: Record<string, ShapeSpec> = {
     // backwards would be a picture of somebody falling over.
     bisector: 180,
     sign: -1,
-  },
-  hipShoulderSeparation: {
-    kind: 'coil',
-    // The one figure in here that is not a view anybody films from, which is
-    // exactly why the caption says so. `groundYaw` is `atan2(dz, dx)`: the
-    // number is a bearing in the ground plane, so the plane it is honest in is
-    // the one seen from directly overhead.
-    view: 'Looking down on your hips and chest from above',
-    ends: ['hips', 'chest'],
   },
   shoulderTilt: {
     kind: 'tilt',
@@ -327,8 +306,6 @@ export function figureOf(id: string, value: number): Figure | undefined {
       return jointFigure(spec, value)
     case 'tilt':
       return tiltFigure(value)
-    case 'coil':
-      return coilFigure(value)
     case 'height':
       // Nothing off the spec is needed to build it: the standing body is the
       // same yardstick whatever is being measured against it, and the one thing
@@ -361,11 +338,6 @@ export function remeasure(id: string, fig: Figure): number {
       // uses, and the order that makes a positive reading the cartwheel the
       // report asks for rather than its mirror image.
       return signedElevationFromHorizontal(p[0], p[1])
-    case 'coil':
-      // Shoulders against hips, wrapped to the angle between two LINES. Exactly
-      // `trunkCoilReading`'s final step, minus the unwinding direction, which a
-      // still figure has nothing to say about — see `coilFigure`.
-      return wrapHalfTurn((groundYaw(p[2], p[3]) - groundYaw(p[0], p[1])) * DEG)
     case 'height':
       // `(groundY - landmark.y) / bodyHeight`, with the court at zero and
       // standing height at one, which is what `heightFigure` builds.
@@ -451,54 +423,6 @@ function tiltFigure(value: number): Figure {
     // measurement the same picture: `signedElevationFromHorizontal` is written
     // against MediaPipe's +y-down convention and says so.
     probe: [lm(toss.x, toss.y, 0), lm(hit.x, hit.y, 0)],
-  }
-}
-
-/**
- * The hips and the chest as two bars, seen from directly above.
- *
- * The hip line is held fixed and the chest line carries the whole angle. That is
- * not a claim that the hips point at anything in particular — the measurement is
- * the angle BETWEEN two lines and has no third line to state either of them
- * against — it is the only way to draw a difference of two bearings without
- * inventing a court to put them on. Holding one still and turning the other is
- * the difference itself, which is all there is.
- *
- * WHAT THIS DIAGRAM DOES NOT SHOW, and it is the honest half. `trunkCoilReading`
- * signs the reading by which way the shoulders sweep between the trophy and
- * contact — `deg = opening > 0 ? -lag : lag` — so the sign is a fact about a
- * rotation happening over time, and a still picture has no time in it. What the
- * sign means is still drawn correctly, because it is drawn as itself: a positive
- * value turns the chest one way and a negative value turns it the other, and the
- * card's own readout beside it names which fault that is ("hips lead the chest"
- * against "chest opens ahead of the hips"). The figure shows the shape; the
- * words say which of the two shapes it is.
- */
-function coilFigure(value: number): Figure {
-  const t = rad(Math.max(-89, Math.min(89, value)))
-  const h = HIP_SPAN / 2
-  const s = SHOULDER_SPAN / 2
-
-  // Drawing y is world z — the axis running away from the viewer when looking
-  // straight down. There is no world y in this figure at all, which is what
-  // "from above" means.
-  const hipL = { x: -h, y: 0 }
-  const hipR = { x: h, y: 0 }
-  const shL = { x: -s * Math.cos(t), y: -s * Math.sin(t) }
-  const shR = { x: s * Math.cos(t), y: s * Math.sin(t) }
-
-  return {
-    lines: [[shL, shR]],
-    joints: [shL, shR],
-    reference: [[hipL, hipR]],
-    head: { c: { x: 0, y: 0 }, r: HIP_SPAN * 0.34 },
-    focus: shR,
-    probe: [
-      lm(hipL.x, 0, hipL.y),
-      lm(hipR.x, 0, hipR.y),
-      lm(shL.x, 0, shL.y),
-      lm(shR.x, 0, shR.y),
-    ],
   }
 }
 
@@ -600,7 +524,7 @@ export function pointsIn(path: string): Pt[] {
  *
  * Fitted across ALL of them at once — the player's, the target's and both band
  * edges — rather than per figure, and that is the only reason the pair can be
- * read against each other. Scaled independently, a 20° coil and a 40° coil are
+ * read against each other. Scaled independently, a 20° knee bend and a 40° one are
  * two pictures of a wide angle and the difference vanishes; scaled together, one
  * is visibly half the other, which is the entire point of drawing them.
  */

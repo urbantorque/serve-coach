@@ -50,7 +50,8 @@ export function bestPriorTo(
  * The card reading each named fault is visible on, where there is one.
  *
  * The faults read from depth or from a hand landmark the card does not show —
- * the grip, the spine, the forearm, the arm order — have no row of their own,
+ * the grip, the spine, the forearm, the arm order, and the open chest, whose
+ * coil the card shows ungraded — have no row of their own,
  * and the line below says nothing for them rather than borrowing a neighbour.
  */
 const FLAW_READING: Partial<Record<FlawId, string[]>> = {
@@ -60,7 +61,6 @@ const FLAW_READING: Partial<Record<FlawId, string[]>> = {
   low_contact: ['ballContactHeight', 'contactHeight'],
   shallow_drop: ['dropDepth'],
   no_leg_drive: ['legDrive'],
-  early_shoulder_rotation: ['hipShoulderSeparation'],
 }
 
 const metricOf = (s: Pick<Session, 'fundamentals'>, id: string): Metric | undefined =>

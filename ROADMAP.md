@@ -3878,14 +3878,14 @@ the vibration were checked in desktop Chrome with a fake camera.
       report the timeline sits far from the player, so a synced playhead buys
       little until the two share a screen.
 
-## Review quick wins (Q1–Q3) — 2026-10-23
+## Review quick wins (Q1–Q4) — 2026-10-23
 
 From the graded review of 2026-10-23: three small fixes a first player hits on
 the report and in the filming guide. Each was proved by machine and looked at
 in the browser at phone width on `?demo=basket`. Taking the hip–shoulder coil
 off the graded card was the fourth. It was backed out here because the
 diagnosis's open-chest fault reads the same band, and it runs as its own item
-on its own branch.
+on its own branch (Q4).
 
 - [x] **Q1 The fix is the report's headline** · S.
       - *Done:* 2026-10-23. The `h1` is `plan[0].title` under "Work on this
@@ -3910,3 +3910,23 @@ on its own branch.
         "the exception to step 2". They used to read as two flat orders that
         disagreed. Checked in the guide sheet at phone width; nothing on a
         phone yet.
+- [x] **Q4 The coil is a reading, and the open chest has its own band** · S.
+      - *Done:* 2026-10-23. "Shoulders turned past the hips" left
+        `METRICS` and Loading's `metrics` for `READINGS`, so it is shown and
+        no longer scores, heads the card or draws a target figure. Its noise
+        floor (30°) was as wide as its 8–38° band. `SIGNALS.separation_deg`
+        lost its card pairing (`CARD_SIGNAL`) and stands on real motion
+        (`MOTION_SIGNALS` in `bands.test.ts`). The band's floor came down from
+        8 to 5, because the forty Bath serves read 5.7–17° on this signal from
+        every corner and end at 30 and 60 fps, four of them under 8. The rig's
+        open chest (−44) is named at every rung. The noise floor stays 30, so a
+        fault is named from −25, not −22. At sixty seeds from 45°, a chest 22°
+        open is named on 25 rather than 31, 26° open on 41 rather than 46, and
+        45° open on 54 at both. A level trunk is named on none. The checks that
+        named an open chest now use hipYaw 116 (−30), not 108 (−22).
+        `realChange.ts` was re-derived at 24 and 60 seeds. Loading went 17 → 10
+        (9 and 8 measured), the trip 10 → 11, and the overall read differently
+        14 → 15. Every other floor held. The coil's `CARD_NOISE_SD`,
+        `ROW_CHANGE`, `FLAW_READING` and copy-claim rows went, and so did the
+        coil's target figure (no band, so nothing to aim at). The scoring
+        version stays 5, which has not shipped.

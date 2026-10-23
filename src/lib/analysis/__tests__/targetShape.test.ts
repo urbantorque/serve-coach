@@ -37,7 +37,7 @@ heading('The figure measures back to the number under it')
 
 check('every drawn measurement re-measures to its own value across its whole axis', () => {
   /*
-   * The ONE RULE, as arithmetic, for all nine at once.
+   * The ONE RULE, as arithmetic, for all eight at once.
    *
    * Swept rather than spot-checked because the failure this catches is a
    * convention error, and a convention error is invisible at the value somebody
@@ -125,7 +125,7 @@ check('the number survives being written out as markup', () => {
        *
        * Compared line by line against the figure's own, rather than reassembled
        * into each metric's reading, and deliberately so — this needs no
-       * knowledge of which shape means what, so it covers all nine identically
+       * knowledge of which shape means what, so it covers all eight identically
        * and cannot quietly stop covering one when a convention changes. Every
        * measurement in this file is an angle between drawn lines or a position
        * along one, so a rounding that leaves every direction within a hundredth
@@ -203,14 +203,15 @@ check('both figures are fitted in one box, so the difference is to scale', () =>
   /*
    * The bug that makes an honest pair of figures lie.
    *
-   * Fitted separately, a 20° coil and a 40° coil are each drawn to fill their
-   * own box and come out looking identical — the difference the player is meant
-   * to read is exactly what the independent scaling removes. `boundsOf` takes
+   * Fitted separately, contact at 1.0 and at 1.6 standing heights are each
+   * drawn to fill their own box and come out looking identical — the
+   * difference the player is meant to read is exactly what the independent
+   * scaling removes. `boundsOf` takes
    * every figure at once for that reason, and this asserts the box it returns
    * genuinely contains all of them rather than the last one it saw.
    */
-  const small = figureOf('hipShoulderSeparation', 5)!
-  const large = figureOf('hipShoulderSeparation', 45)!
+  const small = figureOf('contactHeight', 1.0)!
+  const large = figureOf('contactHeight', 1.6)!
   const box = boundsOf([small, large])
   const own = boundsOf([large])
   assert(
@@ -223,7 +224,7 @@ check('both figures are fitted in one box, so the difference is to scale', () =>
     'the shared box is no taller than the small figure alone — the two are being fitted separately',
   )
   note(
-    `  5° spans ${(alone.max.y - alone.min.y).toFixed(3)}, 45° spans ` +
+    `  1.0 spans ${(alone.max.y - alone.min.y).toFixed(3)}, 1.6 spans ` +
       `${(own.max.y - own.min.y).toFixed(3)}, shared box ${(box.max.y - box.min.y).toFixed(3)}`,
   )
 })
@@ -233,11 +234,11 @@ heading('What is refused')
 check('a measurement with no shape gets no shape', () => {
   /*
    * Absent is the ordinary answer. Roughly twenty measurements reach the report
-   * and nine are drawable; the rest are timings and shares of a window, and a
+   * and eight are drawable; the rest are timings and shares of a window, and a
    * pictogram invented for one of those would be the app illustrating something
-   * it has not measured.
+   * it has not measured. The coil is shown ungraded, with no target to draw.
    */
-  for (const id of ['dropToContact', 'loadRatio', 'tossPathWobble', 'syncAtRelease', 'nonsense']) {
+  for (const id of ['dropToContact', 'loadRatio', 'tossPathWobble', 'syncAtRelease', 'hipShoulderSeparation', 'nonsense']) {
     assert(figureOf(id, 1) === undefined, `${id} was given a figure it has no construction for`)
     assert(viewOf(id) === undefined, `${id} was given a viewpoint caption with no figure under it`)
     assert(Number.isNaN(remeasure(id, figureOf('kneeBend', 40)!)), `${id} re-measured something`)
@@ -262,10 +263,8 @@ check('a value that is not a number never becomes a picture', () => {
 check('every drawable measurement states the view it is drawn from', () => {
   /*
    * A diagram whose viewpoint is not stated invites the reader to assume it is
-   * the camera's, and for the coil that assumption is wrong by ninety degrees —
-   * `groundYaw` is a bearing in the ground plane, so the plan view is the only
-   * one it is honest in. The caption is not decoration; it is what stops the
-   * figure being read as a photograph.
+   * the camera's. The caption is not decoration; it is what stops the figure
+   * being read as a photograph.
    */
   for (const id of DRAWN) {
     const v = viewOf(id)
@@ -273,10 +272,6 @@ check('every drawable measurement states the view it is drawn from', () => {
     assert(v!.view.length > 12, `${id}'s viewpoint caption is too terse to be one: "${v!.view}"`)
     assert(v!.ends[0] !== v!.ends[1], `${id} names both ends of the figure the same thing`)
   }
-  assert(
-    viewOf('hipShoulderSeparation')!.view.toLowerCase().includes('above'),
-    'the coil figure no longer says it is a plan view, which is the one caption that has to be there',
-  )
 })
 
 report()
