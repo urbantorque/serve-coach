@@ -1245,6 +1245,14 @@ Since L1.6:
 - the season's pick ignores readings the card marked approximate, as the plan
   and `pickFocus` do.
 
+**The fix is the headline (Q1).** The report's `h1` used to be one of four
+stock phrases for the score's band ("Good bones, a few gaps"), and the fix
+started most of a screen further down. The fix is the headline now, under
+"Work on this next" and with its why. The band is a one-line caption to the
+ring, and the focus card below is "How to fix it". A soft read
+(`SOFT_READ`) says "Rough read" beside the score, not only in a chip in the
+fold: softening by confidence is only forgiving if the player can see it.
+
 **A report is never traded for an error.**
 - **A failed sweep keeps the report.** A basket sweep that found too few
   readable serves used to replace the report it started from with "I could

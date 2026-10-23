@@ -52,30 +52,16 @@ import { shareReportCard } from '../lib/share/reportCard'
 import { SCORING_VERSION, type Analysis, type PhaseId, type Status } from '../lib/analysis/types'
 import type { Session } from '../lib/storage/db'
 
-const VERDICT: Record<Status, { title: string; sub: string }> = {
-  great: {
-    title: 'A seriously good serve',
-    sub: 'Every fundamental holds. Keep filming and prove it stays there.',
-  },
-  good: {
-    title: 'A solid, repeatable serve',
-    sub: 'The shape is right. One or two details keep you off your best.',
-  },
-  fair: {
-    title: 'Good bones, a few gaps',
-    // Not "the one thing" any more: the report hands over a short ordered plan
-    // rather than a single instruction, and a line promising one item above a
-    // list of three is the page disagreeing with itself. Phrased so it stays
-    // true whether the plan came out at one entry or at four.
-    sub: 'The motion works. Start with the first fix below and the rest gets easier.',
-  },
-  work: {
-    title: 'Plenty of free speed here',
-    // Not "two basics are missing" — nothing in this band guarantees two, and a
-    // count the report cannot stand behind is the kind of small invented
-    // certainty that makes a player stop believing the numbers.
-    sub: 'Some basics are missing. Fix them and everything after gets easier.',
-  },
+/*
+ * The band in words, as a caption to the score ring. It used to be the page's
+ * headline with a sub-line under it; the fix is the headline now, so the band
+ * is said once, and short.
+ */
+const VERDICT: Record<Status, string> = {
+  great: 'A seriously good serve',
+  good: 'A solid, repeatable serve',
+  fair: 'Good bones, a few gaps',
+  work: 'Plenty of free speed here',
 }
 
 interface Props {
@@ -705,8 +691,26 @@ export default function Report({
             among. Ungameable the same way: the only way to move it is to
             actually serve a higher score. */}
         {bestScore && <p>{bestTripLine(bestScore, analysis.createdAt)}</p>}
-        <h1>{verdict.title}</h1>
-        <p>{verdict.sub}</p>
+        {/* The band is a caption to the ring now, and the fix is the headline.
+            A player opens this page to learn what to change; four stock
+            phrases for the band said nothing that the ring had not, and the
+            fix itself started most of a screen further down. */}
+        <p className="hero-band">{verdict}</p>
+        <span className="t-overline focus-kicker hero-kicker">Work on this next</span>
+        <h1>{plan[0].title}</h1>
+        <p>
+          <Cue text={plan[0].why} />
+        </p>
+        {/* A soft read said beside the score it softens, not in the fold at
+            the foot of the page. Degrading confidence is only forgiving if the
+            player can see that it happened. A refused clip carries its own
+            banner, so it does not get this one too. */}
+        {!refusal && analysis.quality.confidence < SOFT_READ && (
+          <p className="hero-rough">
+            <Icon name="warn" size={14} />
+            <span>Rough read: I only saw part of this serve. Film it again side-on to be sure.</span>
+          </p>
+        )}
         {onGlance && (
           <button className="drill-show hero-glance" onClick={onGlance}>
             At a glance
@@ -764,11 +768,9 @@ export default function Report({
       )}
 
       <section className="focus">
-        <span className="t-overline focus-kicker">Work on this next</span>
-        <h2 className="t-headline">{plan[0].title}</h2>
-        <p>
-          <Cue text={plan[0].why} />
-        </p>
+        {/* The fix and its why are the page's headline, above; this card is
+            how to work on it. */}
+        <h2 className="t-overline focus-kicker">How to fix it</h2>
         {/* Leads the card since N4.2: a step passed or not is the first news a
             basket brings, so it sits under the why rather than after the drill.
 

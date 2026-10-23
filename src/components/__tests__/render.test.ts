@@ -237,6 +237,26 @@ check('a practice card that repeats the focus does not print the drill twice', (
   assert(out.includes('I did this drill'), 'the log button went with the duplicate')
 })
 
+check('the fix is the report\'s headline, and the band is its caption', () => {
+  const a = sampleAnalysis()
+  const out = html(createElement(Report, { analysis: a, onBack: noop, onAnalyzeAnother: noop }))
+  const h1 = /<h1>([^<]*)<\/h1>/.exec(out)?.[1]
+  const escaped = a.focus.title.replace(/&/g, '&amp;').replace(/'/g, '&#x27;').replace(/"/g, '&quot;')
+  assert(h1 === escaped, `the headline is "${h1}", not the fix "${a.focus.title}"`)
+  assert(out.includes('class="hero-band"'), 'the band caption is missing')
+})
+
+check('a soft read says so beside the score, and a clear one does not', () => {
+  const a = sampleAnalysis()
+  const soft: Analysis = { ...a, quality: { ...a.quality, confidence: 0.45 } }
+  const clear: Analysis = { ...a, quality: { ...a.quality, confidence: 0.9 } }
+  const softOut = html(createElement(Report, { analysis: soft, onBack: noop, onAnalyzeAnother: noop }))
+  const clearOut = html(createElement(Report, { analysis: clear, onBack: noop, onAnalyzeAnother: noop }))
+  assert(softOut.includes('Rough read'), 'a soft read looked as sure as any other')
+  assert(softOut.indexOf('Rough read') < softOut.indexOf('How to fix it'), 'the rough-read line is not up by the score')
+  assert(!clearOut.includes('Rough read'), 'a clear read was called rough')
+})
+
 check('the basket line beside the chips defers to the first fix', () => {
   const out = html(createElement(Report, { analysis: basket(), onBack: noop, onAnalyzeAnother: noop }))
   assert(!out.includes('before anything else'), 'the basket still claims to come first')

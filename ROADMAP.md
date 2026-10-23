@@ -3877,3 +3877,23 @@ the vibration were checked in desktop Chrome with a fake camera.
 - [ ] **C7 The chain timeline following the scrubber.** Not started: on the
       report the timeline sits far from the player, so a synced playhead buys
       little until the two share a screen.
+
+## Review quick wins (Q1–Q3) — 2026-10-23
+
+From the graded review of 2026-10-23: three small fixes a first player hits on
+the report and in the filming guide. Each was proved by machine and looked at
+in the browser at phone width on `?demo=basket`. Taking the hip–shoulder coil
+off the graded card was the fourth. It was backed out here because the
+diagnosis's open-chest fault reads the same band, and it runs as its own item
+on its own branch.
+
+- [x] **Q1 The fix is the report's headline** · S.
+      - *Done:* 2026-10-23. The `h1` is `plan[0].title` under "Work on this
+        next", with its why, and the band is a one-line caption to the ring
+        (`VERDICT` is four strings now; the sub-lines went, one of them pointing
+        at "the first fix below"). The focus card is headed "How to fix it" and
+        opens on the drill check. A read under `SOFT_READ` says "Rough read"
+        beside the score rather than only in the fold, except on a refused clip
+        shown anyway, which has its banner. Two checks in `render.test.ts`.
+- [ ] **Q2 One first priority per report** · S.
+- [ ] **Q3 The phone may turn, and the guide says when** · S.

@@ -88,6 +88,40 @@
   text-wrap: pretty;
 }
 
+/* The band, as a caption to the ring: the fix below it is the headline. */
+.hero p.hero-band {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.hero .hero-kicker {
+  margin-top: 8px;
+}
+
+.hero h1 + p {
+  margin-top: -4px;
+}
+
+/* A soft read, said next to the score it softens. */
+.hero p.hero-rough {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 13px;
+  border-radius: var(--r-sm);
+  background: var(--ink-3);
+  border-left: 2px solid var(--fair);
+  font-size: 13.5px;
+  text-align: left;
+}
+
+.hero-rough .icon {
+  color: var(--fair);
+  flex: none;
+  margin-top: 3px;
+}
+
 .serves {
   display: flex;
   align-items: center;
@@ -865,13 +899,11 @@
   color: var(--lime);
 }
 
-.focus h2 {
-  font-size: 22px;
-  font-weight: var(--wt-title);
-  line-height: var(--lh-tight);
-  letter-spacing: var(--tr-display);
-  margin: 12px 0 9px;
-  text-wrap: balance;
+/* The card's only heading since the fix moved up into the hero: a label over
+   how to work on it, not a second headline. */
+.focus > .focus-kicker {
+  display: flex;
+  margin: 0 0 14px;
 }
 
 .focus > p {
