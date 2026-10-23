@@ -1,5 +1,5 @@
 import { readoutOf } from '../analysis/anatomy'
-import { SOFT_MEASUREMENT } from '../analysis/confidence'
+import { SOFT_MEASUREMENT } from '../analysis/softness'
 import { LM, jointAngle, type Side, sided } from '../analysis/geometry'
 import { racketToDraw, smoothedRacket, type RacketEstimate } from '../analysis/racket'
 import { boundsOf, figureOf, type Figure } from '../analysis/targetShape'

@@ -28,14 +28,8 @@ import type { FaultMove, MoveVerdict, RotationMove } from './carryForward'
 import type { Diagnosis } from './diagnose'
 import type { FlawId } from './flaws'
 import type { BodyAxis } from './axes'
-import {
-  drillIdFor,
-  hierarchyFor,
-  isFirm,
-  type InjuryFlag,
-  type RejectReason,
-  type Triage,
-} from './triage'
+import { drillIdFor, hierarchyFor, isFirm } from './faultOrder'
+import type { InjuryFlag, RejectReason, Triage } from './triage'
 import { progressionFor, startingRung } from './progressions'
 import { STRAIN_WINDOW, type StrainCleared, type StrainRecord } from './strain'
 import { SEVERITY_RANK, rungName, type Severity } from './tiers'

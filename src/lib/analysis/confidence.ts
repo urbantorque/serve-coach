@@ -21,9 +21,9 @@ import { looksSlowedDown, type Skeleton } from './phases'
 import { assessSpatial } from './spatial'
 import type { Frame, Metric } from './types'
 import { cue } from './voice'
+import { SOFT_MEASUREMENT } from './softness'
 
-/** Below this a measurement is shown hedged and never becomes the focus. */
-export const SOFT_MEASUREMENT = 0.55
+export { SOFT_MEASUREMENT } from './softness'
 
 /**
  * The measurements read off the tracked ball rather than off the player.

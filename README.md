@@ -1285,6 +1285,17 @@ has a clean serve before the move and a named one before that. A serve filmed
 on the new step never stands in as the evidence. The card and its choice of
 step load in their own chunk; Home only asks whether any step was ever passed.
 
+**The engine stays out of the entry chunk (Q12).** Three small imports had
+pulled the clip-reading engine into the first screen's chunk: the fault order
+and drill tables from `triage`, the soft-reading line from `confidence`, and
+two shoulder constants from `diagnose`. Each brought its whole module, and with
+them the keyframes, the Kalman bridge and the camera read. The tables now live
+in `faultOrder.ts`, the line in `softness.ts` and the constants in
+`erNoise.ts`; the old modules re-export all of them, so the engine reads them
+as before. The entry went from 384.8 to 341.6 kB raw (130.2 to 114.2 kB
+gzip). `entryGraph.test.ts` walks the static imports from `main.tsx` and names
+the chain if an engine module is reachable again.
+
 **A session's fixes lead to their drills (Q11).** The dashboard's "What to
 work on" named the fault's base drill (`FLAW_DRILL`), which could differ from
 the step Home's week had the player on. Each fix now names the drill at the

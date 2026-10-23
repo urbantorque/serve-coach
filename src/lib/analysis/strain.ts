@@ -42,7 +42,8 @@
  * history this can only under-count. It never says "you will be injured" and it
  * never softens what it did see, and those two restraints are the whole design.
  */
-import { INJURY_INPUTS, injuryInputsRead, type InjuryFlag, type Triage } from './triage'
+import { INJURY_INPUTS, injuryInputsRead } from './faultOrder'
+import type { InjuryFlag, Triage } from './triage'
 import { SEVERITY_RANK, worseSeverity, type Severity } from './tiers'
 
 /**

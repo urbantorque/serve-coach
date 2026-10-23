@@ -15,7 +15,7 @@
  */
 import { rungsOf } from './analysis/anatomy'
 import { CARD_NOISE_SD } from './analysis/cardNoise'
-import { SOFT_MEASUREMENT } from './analysis/confidence'
+import { SOFT_MEASUREMENT } from './analysis/softness'
 import { MIN_TRIP_SERVES, currentRubricEra, dominantType, tripRuns, typeOf } from './progress'
 import type { Session } from './storage/db'
 import type { ServeType } from './storage/prefs'

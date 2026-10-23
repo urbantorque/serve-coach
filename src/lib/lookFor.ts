@@ -8,7 +8,7 @@
  * reading. The same band the card prints is the only judge, so a tick can
  * never disagree with the row it came from.
  */
-import { SOFT_MEASUREMENT } from './analysis/confidence'
+import { SOFT_MEASUREMENT } from './analysis/softness'
 import { faultForMetric } from './analysis/progressions'
 import type { FlawId } from './analysis/flaws'
 import type { Fundamental, Metric, PhaseId } from './analysis/types'

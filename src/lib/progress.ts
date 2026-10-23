@@ -15,7 +15,8 @@ import {
   type StrainCleared,
   type StrainRecord,
 } from './analysis/strain'
-import { INJURY_INPUTS, type InjuryFlag } from './analysis/triage'
+import { INJURY_INPUTS } from './analysis/faultOrder'
+import type { InjuryFlag } from './analysis/triage'
 import {
   LEGACY_SCORING_VERSION,
   type Analysis,

@@ -1,6 +1,6 @@
 import { FUNDAMENTALS, METRICS, SERVE_TYPES, metricCopy } from './analysis/coaching'
 import { areaOfFault, drillForMetric, faultForMetric, lastSeverity, progressionFor, rungFor } from './analysis/progressions'
-import { SOFT_MEASUREMENT } from './analysis/confidence'
+import { SOFT_MEASUREMENT } from './analysis/softness'
 import { mean } from './analysis/geometry'
 import { rowChange } from './analysis/realChange'
 import { cue } from './analysis/voice'

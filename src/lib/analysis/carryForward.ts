@@ -46,7 +46,7 @@
 import type { FlawFinding, FlawId } from './flaws'
 import { MIN_EVIDENCE } from './flaws'
 import { NOISE_FLOOR } from './tiers'
-import { ER_DEVIATION_DEG, ER_LEAN_SENSITIVITY } from './diagnose'
+import { ER_DEVIATION_DEG, ER_LEAN_SENSITIVITY } from './erNoise'
 import type { Diagnosis } from './diagnose'
 import type { Triage } from './triage'
 import type { ServeType } from '../storage/prefs'

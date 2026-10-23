@@ -22,10 +22,10 @@
  *     One serve can be read either side of a floor by the camera alone; a
  *     majority of thirty cannot.
  */
-import { SOFT_MEASUREMENT } from '../analysis/confidence'
+import { SOFT_MEASUREMENT } from '../analysis/softness'
 import { CARD_NOISE_SD, SAME_BODY_SLOPE } from '../analysis/consistency'
 import type { FlawId } from '../analysis/flaws'
-import { HIERARCHY } from '../analysis/triage'
+import { HIERARCHY } from '../analysis/faultOrder'
 import type { ServeLine } from './session'
 
 /** Serves needed at each end before the two ends are compared: D5.2's five. */

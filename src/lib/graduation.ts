@@ -16,7 +16,7 @@
  * named again on enough of its newest serves — undoes a graduation by itself.
  */
 import { CHECK_SERVES, judgeServe, progressionFor } from './analysis/progressions'
-import { HIERARCHY, hierarchyFor } from './analysis/triage'
+import { HIERARCHY, hierarchyFor } from './analysis/faultOrder'
 import type { FlawId } from './analysis/flaws'
 import { MIN_THEN_AND_NOW_GAP_MS, currentRubricEra, sameTrip, tripsOf } from './progress'
 import type { Session } from './storage/db'

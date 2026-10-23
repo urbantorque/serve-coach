@@ -13,7 +13,7 @@
  * player's style.
  */
 import { readoutOf } from './analysis/anatomy'
-import { SOFT_MEASUREMENT } from './analysis/confidence'
+import { SOFT_MEASUREMENT } from './analysis/softness'
 import type { Session } from './storage/db'
 
 /** The rows a profile describes, in the order a serve happens. */

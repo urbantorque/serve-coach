@@ -15,7 +15,7 @@
  * graduation lines cannot disagree about a fault. A relapse is a fault that
  * held once and does not now; the path moves its part back and says so.
  */
-import { HIERARCHY } from './analysis/triage'
+import { HIERARCHY } from './analysis/faultOrder'
 import { lastSeverity, progressionFor, rungFor } from './analysis/progressions'
 import { FLAWS, type FlawId } from './analysis/flaws'
 import { PART_NAME, RECHECK_EVERY, standing, tripsAfter, type Standing } from './graduation'

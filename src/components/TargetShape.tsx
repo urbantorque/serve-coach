@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { SOFT_MEASUREMENT } from '../lib/analysis/confidence'
+import { SOFT_MEASUREMENT } from '../lib/analysis/softness'
 import {
   boundsOf,
   figureOf,

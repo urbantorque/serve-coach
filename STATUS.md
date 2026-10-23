@@ -48,7 +48,7 @@ in that folder under the same names.
   speed by trip as range bars, and the replay draws the struck ball. None of it
   has run on a phone yet.
 
-- **Review fixes (Q1–Q11).** From the graded review of 2026-10-23:
+- **Review fixes (Q1–Q12).** From the graded review of 2026-10-23:
   - The report's headline is the fix, with "Rough read" beside the score when
     the read is soft, and one first priority per page.
   - The installed app turns with the phone.
@@ -63,8 +63,9 @@ in that folder under the same names.
     passed drill step for three days with the fault then and now.
   - A session's fixes name the drill at the player's own step, with how to do
     it and the court card.
-  - The entry chunk is at its budget (129.99 of 130 kB gzip, 384.78 of 385 kB
-    raw). The next addition to Home has to move something out first.
+  - The clip-reading engine is out of the entry chunk (Q12): 114.17 of 130 kB
+    gzip and 341.55 of 385 kB raw, so Home has about 16 kB gzip of room.
+    `entryGraph.test.ts` fails if the entry reaches the engine again.
 
 ## What is open
 
@@ -100,7 +101,7 @@ Work is on `roadmap/market-ready`, and its ledger is `ROADMAP.md`: the Notch
 programme (N0–N5) and the Lift programme (M0–M5), with one order of play at
 the end of the Notch section. Pick the first open item there.
 
-The suite runs **1,956 checks** (2026-10-23). The last loop tag is
+The suite runs **1,957 checks** (2026-10-23). The last loop tag is
 `loop-green-15`, from the August loop.
 
 Before trusting a size figure, run `npm run build`: `bundle.test.ts` reads

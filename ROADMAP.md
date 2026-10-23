@@ -3878,7 +3878,7 @@ the vibration were checked in desktop Chrome with a fake camera.
       report the timeline sits far from the player, so a synced playhead buys
       little until the two share a screen.
 
-## Review fixes (Q1–Q11) — 2026-10-23
+## Review fixes (Q1–Q12) — 2026-10-23
 
 From the graded review of 2026-10-23: three small fixes a first player hits on
 the report and in the filming guide. Each was proved by machine and looked at
@@ -4022,3 +4022,21 @@ on its own branch (Q4).
         `week.items.length > 0` blocks into one fragment paid it back (384.78
         kB raw, 129.99 kB gzip). One check in `sessionDashboard.test.ts`;
         seen on `?demo=session`, court card included.
+- [x] **Q12 The engine out of the entry chunk** · S.
+      - *Done:* 2026-10-23. Measured from a source-mapped build: after React
+        (130 kB), the entry's biggest avoidable weight was the clip-reading
+        engine, about 43 kB raw: `diagnose`, `phases`, `kinematics`,
+        `kalman`, `spatial`, `confidence` and what they bring. Three imports
+        pulled it in: `progress → carryForward → diagnose` for two shoulder
+        constants, `verdict`/`graduation`/`progress`/`servePath`/
+        `session/stats` → `triage` (which runs the Kalman and spatial checks)
+        for the fault order, drill tables, `isFirm` and the injury inputs, and
+        seven light readers → `confidence` for `SOFT_MEASUREMENT`. Those moved
+        to `faultOrder.ts`, `softness.ts` and `erNoise.ts`, each re-exported
+        from its old home. Entry 384.78 → 341.55 kB raw, 129.99 → 114.17 kB
+        gzip: 43.45 kB raw and 15.83 kB gzip of headroom under the 385/130
+        budgets, which stay where they are so Home has room to grow.
+        `entryGraph.test.ts` walks the static imports from `main.tsx` and fails
+        naming the chain (proved by putting carryForward's old import back).
+        A real bench clip (`Saque_con_pelota.webm`) still analyses end to end
+        in the browser, the engine loading with the analysis.
