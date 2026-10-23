@@ -3878,7 +3878,7 @@ the vibration were checked in desktop Chrome with a fake camera.
       report the timeline sits far from the player, so a synced playhead buys
       little until the two share a screen.
 
-## Review quick wins (Q1–Q4) — 2026-10-23
+## Review fixes (Q1–Q5) — 2026-10-23
 
 From the graded review of 2026-10-23: three small fixes a first player hits on
 the report and in the filming guide. Each was proved by machine and looked at
@@ -3930,3 +3930,20 @@ on its own branch (Q4).
         `ROW_CHANGE`, `FLAW_READING` and copy-claim rows went, and so did the
         coil's target figure (no band, so nothing to aim at). The scoring
         version stays 5, which has not shipped.
+- [x] **Q5 No graded band narrower than its noise** · S.
+      - *Done:* 2026-10-23. `bandNoise.test.ts` holds every graded card row
+        to one rule: a serve at the middle of its band reads inside it on 95%
+        of takes, so the half-width must be at least 1.96 × `CARD_NOISE_SD`.
+        Every row clears it but arm extension (1.08 of what it needs: 9.63° of
+        one-sided noise near a straight elbow, on a 35° band). It is `KNOWN`
+        and stays graded on its four studies; steadying the reading is its
+        fix, and the check fails when it clears. Load ratio is the next
+        closest at 0.90. The test also fails if a row is graded with no
+        measured noise (only the three ball rows may be), or if the noise
+        table keeps a row the card no longer grades.
+      - *Considered and not built:* gating the grip fault harder and grading
+        the toss in front, both from the review. The tray already needs a
+        second witness, the arm read from the shoulder, elbow and hip (L5.2),
+        and is named on at most 2.5% of noisy skilled takes
+        (`trackerNoise.test.ts`). A toss that isn't in front is already named
+        at contact as `contact_behind`, on a cited band, with its own ladder.
