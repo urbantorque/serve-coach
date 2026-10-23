@@ -198,6 +198,7 @@ export default function Session({
             videoUrl={canRead ? videoUrl : undefined}
             onPickAgain={onPickAgain}
             check={history ? sessionDrillCheck(session, history, ladder, movedAt) : undefined}
+            ladder={ladder}
             onLadderStep={onLadderStep}
           />
         )}

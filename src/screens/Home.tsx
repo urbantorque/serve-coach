@@ -233,6 +233,17 @@ export default function Home({
   const court = week ? courtPlan(week, minutes) : []
   // Each planned drill's share of today, in the plan's order; a fourth fix gets none.
   const drillMinutes = court.filter((b) => b.kind === 'drill').map((b) => b.minutes)
+  // The hit's other blocks, as timed lines around the drills.
+  const timed = (...kinds: string[]) => (
+    <ul className="today-list">
+      {court.filter((b) => kinds.includes(b.kind)).map((b) => (
+        <li key={b.kind}>
+          <span className="tnum today-min">{b.minutes} min</span>
+          <span>{b.line}</span>
+        </li>
+      ))}
+    </ul>
+  )
 
   // Asked for by the glance screen's "Record another", which is the loop this
   // whole route exists for: record, glance, record. Guarded on zero so the
@@ -490,90 +501,68 @@ export default function Home({
             the lines around them, in the order the hit runs.
           */}
           {week.items.length > 0 && (
-            <div className="seg week-length" role="group" aria-label="How long you have">
-              {COURT_MINUTES.map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  className={`seg-item${minutes === m ? ' is-on' : ''}`}
-                  aria-pressed={minutes === m}
-                  onClick={() => {
-                    setMinutes(m)
-                    writePrefs({ courtMinutes: m })
-                  }}
-                >
-                  {m} min
-                </button>
-              ))}
-            </div>
-          )}
-          {week.items.length > 0 && (
-            <ul className="today-list">
-              {court.filter((b) => b.kind === 'warm').map((b) => (
-                <li key={b.kind}>
-                  <span className="tnum today-min">{b.minutes} min</span>
-                  <span>{b.line}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-          {week.items.length > 0 && (
-          <ol className="week-list">
-            {week.items.map((item, i) => (
-              <li className="focus-next-item" key={item.flaw ?? item.drill.name}>
-                <span className="focus-next-rank">{i + 1}</span>
-                <div className="focus-next-body">
-                  <h3 className="focus-next-title">{item.title}</h3>
-                  <p className="focus-next-drill">
-                    <Icon name="target" size={14} />
-                    <span>
-                      <strong>{item.drill.name}</strong>
-                      {item.step && `, step ${item.step.at} of ${item.step.of}`}
-                      {drillMinutes[i] !== undefined && ` · ${drillMinutes[i]} min today`}
-                    </span>
-                  </p>
-                  <p className="focus-next-why">
-                    <Suspense fallback={<Cue text={item.check} />}>
-                      <TermCue text={item.check} />
-                    </Suspense>
-                  </p>
-                  {/* Straight to the viewfinder, with this drill as what the
-                      next serves are counted for (N1.4). */}
-                  {onCheckDrill && onRecorded && item.flaw && (
-                    <button
-                      type="button"
-                      className="chip chip--button week-check"
-                      onClick={() => {
-                        onCheckDrill(item.flaw!, item.drill.name)
-                        setChecking(true)
-                      }}
-                    >
-                      <Icon name="camera" size={14} />
-                      Check this drill
-                    </button>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ol>
-          )}
-          {week.items.length > 0 && (
-            <ul className="today-list">
-              {court
-                .filter((b) => b.kind === 'check' || b.kind === 'free')
-                .map((b) => (
-                  <li key={b.kind}>
-                    <span className="tnum today-min">{b.minutes} min</span>
-                    <span>{b.line}</span>
+            <>
+              <div className="seg week-length" role="group" aria-label="How long you have">
+                {COURT_MINUTES.map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    className={`seg-item${minutes === m ? ' is-on' : ''}`}
+                    aria-pressed={minutes === m}
+                    onClick={() => {
+                      setMinutes(m)
+                      writePrefs({ courtMinutes: m })
+                    }}
+                  >
+                    {m} min
+                  </button>
+                ))}
+              </div>
+              {timed('warm')}
+              <ol className="week-list">
+                {week.items.map((item, i) => (
+                  <li className="focus-next-item" key={item.flaw ?? item.drill.name}>
+                    <span className="focus-next-rank">{i + 1}</span>
+                    <div className="focus-next-body">
+                      <h3 className="focus-next-title">{item.title}</h3>
+                      <p className="focus-next-drill">
+                        <Icon name="target" size={14} />
+                        <span>
+                          <strong>{item.drill.name}</strong>
+                          {item.step && `, step ${item.step.at} of ${item.step.of}`}
+                          {drillMinutes[i] !== undefined && ` · ${drillMinutes[i]} min today`}
+                        </span>
+                      </p>
+                      <p className="focus-next-why">
+                        <Suspense fallback={<Cue text={item.check} />}>
+                          <TermCue text={item.check} />
+                        </Suspense>
+                      </p>
+                      {/* Straight to the viewfinder, with this drill as what the
+                          next serves are counted for (N1.4). */}
+                      {onCheckDrill && onRecorded && item.flaw && (
+                        <button
+                          type="button"
+                          className="chip chip--button week-check"
+                          onClick={() => {
+                            onCheckDrill(item.flaw!, item.drill.name)
+                            setChecking(true)
+                          }}
+                        >
+                          <Icon name="camera" size={14} />
+                          Check this drill
+                        </button>
+                      )}
+                    </div>
                   </li>
                 ))}
-            </ul>
-          )}
-          {/* The court card and the calendar, lazily: neither is needed to read the plan. */}
-          {week.items.length > 0 && (
-            <Suspense fallback={null}>
-              <TodayPlan week={week} minutes={minutes} />
-            </Suspense>
+              </ol>
+              {timed('check', 'free')}
+              {/* The court card and the calendar, lazily: neither is needed to read the plan. */}
+              <Suspense fallback={null}>
+                <TodayPlan week={week} minutes={minutes} />
+              </Suspense>
+            </>
           )}
         </section>
       )}

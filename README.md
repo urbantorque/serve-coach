@@ -1285,6 +1285,14 @@ has a clean serve before the move and a named one before that. A serve filmed
 on the new step never stands in as the evidence. The card and its choice of
 step load in their own chunk; Home only asks whether any step was ever passed.
 
+**A session's fixes lead to their drills (Q11).** The dashboard's "What to
+work on" named the fault's base drill (`FLAW_DRILL`), which could differ from
+the step Home's week had the player on. Each fix now names the drill at the
+player's own rung (the stored one, or `startingRung` where the ladder has never
+moved), places it ("step 2 of 4"), gives the reps and how to do it, and the
+first fix opens the same court card as Home (`CourtCard`, exported from
+`TodayPlan`).
+
 **The fix is the headline (Q1).** The report's `h1` used to be one of four
 stock phrases for the score's band ("Good bones, a few gaps"), and the fix
 started most of a screen further down. The fix is the headline now, under

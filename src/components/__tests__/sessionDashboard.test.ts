@@ -18,6 +18,7 @@ import { driftLine, fixCountLine, goneLine, headlineOf, noFixLine, sinceLine, un
 import { sessionStats } from '../../lib/session/stats'
 import { servesPerWeek } from '../../lib/progress'
 import { FLAWS } from '../../lib/analysis/flaws'
+import { progressionFor, startingRung } from '../../lib/analysis/progressions'
 import { CARD_NOISE_SD } from '../../lib/analysis/consistency'
 import { cueIssues } from '../../lib/analysis/voice'
 import { assert, check, heading, report } from '../../lib/analysis/__tests__/harness'
@@ -157,6 +158,25 @@ check('a session counts every serve it found, not one', () => {
   const weeks = servesPerWeek([], now, 2, [{ createdAt: now - 3600e3, found }])
   assert(weeks[weeks.length - 1].serves === found.length, `this week counted ${weeks[weeks.length - 1].serves}`)
   assert(servesPerWeek([], now, 2)[1].serves === 0, 'a week with nothing in it counted serves')
+})
+
+heading('A fix leads to its drill (Q11)')
+
+check("each fix names the drill at the player's own step, with how to do it, and the first opens the court card", () => {
+  const fixes = sessionStats(lines).faults.filter((f) => f.verdict)
+  assert(fixes.length > 0, 'the test session has no fix, so this checks nothing')
+  const flaw = fixes[0].flaw
+  const ladder = progressionFor(flaw)!
+  const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/'/g, '&#x27;').replace(/"/g, '&quot;')
+  const on = Math.min(2, ladder.steps.length - 1)
+  const moved = renderToStaticMarkup(createElement(SessionDashboard, { session, ladder: { [flaw]: on } }))
+  assert(moved.includes(esc(ladder.steps[on].name)), "the fix did not name the player's own step")
+  assert(moved.includes(`step ${on + 1} of ${ladder.steps.length}`), 'the step was not placed on its ladder')
+  assert(moved.includes(esc(ladder.steps[on].how)), 'the drill came without how to do it')
+  assert((moved.match(/Open the court card/g) ?? []).length === 1, 'the court card is offered on more than the first fix, or not at all')
+  const fresh = renderToStaticMarkup(createElement(SessionDashboard, { session }))
+  const start = startingRung(ladder)
+  assert(fresh.includes(`step ${start + 1} of ${ladder.steps.length}`), 'a ladder never moved did not start where the plan starts it')
 })
 
 report()

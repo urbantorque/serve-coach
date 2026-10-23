@@ -5,6 +5,10 @@ import { readoutOf } from '../lib/analysis/anatomy'
 import { METRICS } from '../lib/analysis/coaching'
 import { statusOf } from '../lib/analysis/geometry'
 import { FLAW_DRILL } from '../lib/analysis/triage'
+import { progressionFor, startingRung, stepCheckLine } from '../lib/analysis/progressions'
+import type { FlawId } from '../lib/analysis/flaws'
+import type { Drill } from '../lib/analysis/types'
+import { CourtCard } from './TodayPlan'
 import { drillFor } from '../lib/analysis/verdict'
 import { cue } from '../lib/analysis/voice'
 import { clockOf, toRead, type PracticeSession, type ServeLine } from '../lib/session/session'
@@ -31,6 +35,23 @@ import { readPrefs } from '../lib/storage/prefs'
  * decides what is true, only how `sessionStats` is said.
  */
 
+/**
+ * The drill for a fault at the rung the player is on (Q11): the stored rung
+ * where it is one this ladder has, the ladder's own starting rung where not,
+ * and the fault's one drill where it has no ladder. What Home's week names.
+ */
+function drillOf(flaw: FlawId, ladder?: Partial<Record<string, number>>) {
+  const own = progressionFor(flaw)
+  if (!own) return { drill: drillFor(FLAW_DRILL[flaw]), step: undefined, check: undefined }
+  const stored = ladder?.[flaw]
+  const rung = stored !== undefined && Number.isInteger(stored) && stored >= 0 && stored < own.steps.length ? stored : startingRung(own)
+  return {
+    drill: own.steps[rung],
+    step: { at: rung + 1, of: own.steps.length },
+    check: cue(stepCheckLine(own, own.steps[rung])),
+  }
+}
+
 interface Props {
   session: PracticeSession
   /** The last finished session of the same serve type and rubric, to set this one against. */
@@ -45,12 +66,18 @@ interface Props {
   onPickAgain?: () => void
   /** The drill the player came in with, checked across this practice (N1.5). */
   check?: TripCheck
+  /**
+   * Which rung of each fault's ladder the player is on (Q11), so each fix
+   * names the drill they are actually doing, not the ladder's first.
+   */
+  ladder?: Partial<Record<string, number>>
   /** Move that drill's ladder; absent where prefs cannot be kept. */
   onLadderStep?: (flaw: string, step: number, from?: number) => void
 }
 
-export default function SessionDashboard({ session, previous, videoUrl, onPickAgain, check, onLadderStep }: Props) {
+export default function SessionDashboard({ session, previous, videoUrl, onPickAgain, check, ladder, onLadderStep }: Props) {
   const [watching, setWatching] = useState<Highlight>()
+  const [card, setCard] = useState<{ drill: Drill; flaw: FlawId; check: string }>()
   const highlights = useMemo(
     () => new Map((session.highlights ?? highlightsOf(session.lines, session.duration)).map((h) => [h.number, h])),
     [session.highlights, session.lines, session.duration],
@@ -98,14 +125,37 @@ export default function SessionDashboard({ session, previous, videoUrl, onPickAg
         {fixes.length ? (
           <ol className="week-list">
             {fixes.map((f, i) => {
-              const drill = drillFor(FLAW_DRILL[f.flaw])
+              const { drill, step, check: bar } = drillOf(f.flaw, ladder)
               return (
                 <li className="focus-next-item" key={f.flaw}>
                   <span className="focus-next-rank">{i + 1}</span>
                   <div className="focus-next-body">
                     <h3 className="focus-next-title">{flawTitle(f.flaw)}</h3>
-                    {drill && <p className="focus-next-drill">{drill.name}</p>}
                     <p className="focus-next-why tnum">{fixCountLine(f, stats.read)}</p>
+                    {/* The drill for it, at the player's own step, and how (Q11):
+                        a name alone was a drill nobody could start from here. */}
+                    {drill && (
+                      <>
+                        <p className="focus-next-drill">
+                          <Icon name="target" size={14} />
+                          <span>
+                            <strong>{drill.name}</strong>
+                            {step && `, step ${step.at} of ${step.of}`} · {drill.reps}
+                          </span>
+                        </p>
+                        <p className="focus-next-why">{drill.how}</p>
+                        {i === 0 && bar && (
+                          <button
+                            type="button"
+                            className="chip chip--button week-check"
+                            onClick={() => setCard({ drill, flaw: f.flaw, check: bar })}
+                          >
+                            <Icon name="target" size={14} />
+                            Open the court card
+                          </button>
+                        )}
+                      </>
+                    )}
                   </div>
                 </li>
               )
@@ -130,6 +180,8 @@ export default function SessionDashboard({ session, previous, videoUrl, onPickAg
           </div>
         )}
       </section>
+
+      {card && <CourtCard item={card} onClose={() => setCard(undefined)} />}
 
       <section className="block" aria-labelledby="session-change">
         <h2 className="block-title" id="session-change">

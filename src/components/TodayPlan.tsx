@@ -17,7 +17,7 @@ import { shareBlob } from '../lib/share/reportCard'
  * big enough to read from there, read aloud on a tap, with a rep counter the
  * whole screen answers to and the screen kept awake while it is open.
  */
-function CourtCard({ item, onClose }: { item: WeekItem; onClose: () => void }) {
+export function CourtCard({ item, onClose }: { item: Pick<WeekItem, 'drill' | 'flaw' | 'check'>; onClose: () => void }) {
   useWakeLock(true)
   const [reps, setReps] = useState(0)
   const feel = item.flaw ? progressionFor(item.flaw)?.cue : undefined

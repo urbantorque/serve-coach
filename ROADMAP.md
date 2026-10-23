@@ -3878,7 +3878,7 @@ the vibration were checked in desktop Chrome with a fake camera.
       report the timeline sits far from the player, so a synced playhead buys
       little until the two share a screen.
 
-## Review fixes (Q1–Q10) — 2026-10-23
+## Review fixes (Q1–Q11) — 2026-10-23
 
 From the graded review of 2026-10-23: three small fixes a first player hits on
 the report and in the filming guide. Each was proved by machine and looked at
@@ -4008,3 +4008,17 @@ on its own branch (Q4).
         put in Home, they took the entry 0.07 kB over its gzip budget. Entry
         129.96 kB gzip, 385.00 kB raw, so Home has no room left. Two checks
         in `render.test.ts`; seen on `?demo=history`, and gone at four days.
+- [x] **Q11 A session's fixes lead to their drills** · S.
+      - *Done:* 2026-10-23. The dashboard's "What to work on" named
+        `FLAW_DRILL`'s base drill, which could differ from the step Home had
+        the player on. Each fix now names the drill at the player's rung (the
+        stored rung where the ladder has it, `startingRung` where it has never
+        moved; Home's week takes the report's own rung there, so the two can
+        still differ until the player moves a ladder once), with "step N of
+        M", the reps and how to do it. The first fix opens the court card,
+        `CourtCard` now exported from `TodayPlan` and typed on the three
+        fields it reads. `Session` passes the ladder. The entry went 20 bytes
+        over its raw budget through `Session.tsx`; folding Home's four
+        `week.items.length > 0` blocks into one fragment paid it back (384.78
+        kB raw, 129.99 kB gzip). One check in `sessionDashboard.test.ts`;
+        seen on `?demo=session`, court card included.
