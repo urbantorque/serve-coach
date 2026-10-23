@@ -3902,4 +3902,11 @@ on its own branch.
         arm" over "Practise this: knee bend at trophy"; the card is gone from
         it and stays on Progress. Matching a later plan item no longer counts
         on the report (it did since N0.2). One check in `render.test.ts`.
-- [ ] **Q3 The phone may turn, and the guide says when** · S.
+- [x] **Q3 The phone may turn, and the guide says when** · S.
+      - *Done:* 2026-10-23. The manifest's `orientation` is `'any'`: locked
+        to portrait, an installed Android app would not follow a phone turned
+        for the speed placement or the court mode. The filming guide's step 2
+        says "For the swing, stand the phone upright", and step 5 calls itself
+        "the exception to step 2". They used to read as two flat orders that
+        disagreed. Checked in the guide sheet at phone width; nothing on a
+        phone yet.

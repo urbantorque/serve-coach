@@ -16,8 +16,11 @@ const RULES = [
   },
   {
     title: 'Fit the whole body in, feet included',
+    // Upright for the swing, and said as the swing's rule: step 5 turns the
+    // phone on its side for a speed, and two flat instructions read as the
+    // guide contradicting itself.
     body:
-      'Hold the phone upright with room above the racket at full stretch. Every height uses your own body as the ruler.',
+      'For the swing, stand the phone upright with room above the racket at full stretch. Every height uses your own body as the ruler.',
   },
   {
     title: 'Start filming before the toss',
@@ -34,7 +37,7 @@ const RULES = [
   {
     // N2.7: the one placement that gives an ordinary clip a serve speed.
     title: 'For a serve speed, stand the phone further back',
-    body: `Turn it on its side, ${SPEED_PLACEMENT.distance} away, ${SPEED_PLACEMENT.where}. The ball then stays in the picture long enough to time.`,
+    body: `This one is the exception to step 2: turn it on its side, ${SPEED_PLACEMENT.distance} away, ${SPEED_PLACEMENT.where}. The ball then stays in the picture long enough to time.`,
   },
 ]
 

@@ -89,6 +89,11 @@ A front or back view works too — you get everything except how far in front of
 your body contact happens, which only a side view can see. The app detects the
 camera angle and drops that one measurement rather than guessing at it.
 
+Hold the phone upright for the swing. For a serve speed, turn it on its side
+and stand it six to seven metres back, so the ball stays in the picture long
+enough to time. The installed app follows the phone either way: the manifest
+asks for `orientation: 'any'`, not `'portrait'` (Q3).
+
 ---
 
 ## What it measures

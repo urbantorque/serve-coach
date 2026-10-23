@@ -159,7 +159,10 @@ export default defineConfig({
         theme_color: '#0a0c10',
         background_color: '#0a0c10',
         display: 'standalone',
-        orientation: 'portrait',
+        // Not locked to portrait: the speed placement and the court mode turn
+        // the phone on its side, and an installed app locked upright would
+        // refuse to follow it there.
+        orientation: 'any',
         // Both must respect the base, or an installed app launches at the wrong
         // URL and the service worker claims a scope it was not served from —
         // which on iOS is the difference between the history surviving and not,
