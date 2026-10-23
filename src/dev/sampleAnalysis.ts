@@ -21,7 +21,7 @@ import { buildConsistency } from '../lib/analysis/consistency'
 import { swingTrack } from '../lib/storage/poseTrack'
 import { findPracticeFocus } from '../lib/practice'
 import { KEEP_STILLS, type PracticeLog, type Session } from '../lib/storage/db'
-import type { Analysis } from '../lib/analysis/types'
+import type { Analysis, Frame } from '../lib/analysis/types'
 import { buildServe, type ServeDials } from '../lib/analysis/syntheticServe'
 import { assessSpatial, viewFromCourtYaw } from '../lib/analysis/spatial'
 
@@ -318,6 +318,9 @@ export function sampleHistory(now = Date.now()): {
         createdAt,
         serveType: serve.kick ? ('kick' as const) : ('flat' as const),
         scoringVersion: t < 3 ? 1 : 2,
+        // A speed that creeps up over the season (C5), so the chart on
+        // Progress has trips to tell apart; ±6%, a 60 fps clip's range.
+        speed: { speed: { ms: 33.4 + t * 0.62 + i * 0.25, low: (33.4 + t * 0.62 + i * 0.25) * 0.94, high: (33.4 + t * 0.62 + i * 0.25) * 1.06, samples: 3, span: 0.05, depthAngle: 4, pinned: true } },
       } as Session
 
       if (serve.basket) {
@@ -443,6 +446,23 @@ export function sampleAnalysis(dials: Partial<ServeDials> = {}, tier?: number, f
     // A club serve's speed as the reader states one (N2.7): 130 km/h, the
     // range a 60 fps clip from the speed placement typically carries. The rig
     // flies no ball, so this is the one figure on the example not measured.
-    speed: { speed: { ms: 36.1, low: 34.0, high: 38.4, samples: 6, span: 0.083, depthAngle: 4 } },
+    speed: { speed: { ms: 36.1, low: 34.0, high: 38.4, samples: 6, span: 0.083, depthAngle: 4, path: sampleStruckPath(frames, skel.keys.trophy, skel.keys.contact, skel.racket) } },
   }
+}
+
+/**
+ * Where the struck ball would have been found (C6), drawn by hand from the
+ * rig's contact: the rig flies no ball, so this path, like the figure, is the
+ * one part of the example not measured. Five samples a sixtieth of a second
+ * apart, from just above the racket hand towards the net.
+ */
+function sampleStruckPath(frames: Frame[], trophy: number, contact: number, racket: 'left' | 'right') {
+  const wrist = racket === 'left' ? 15 : 16
+  const at = frames[contact].image[wrist]
+  const net = Math.sign(at.x - frames[trophy].image[wrist].x) || 1
+  return [1, 2, 3, 4, 5].map((k) => ({
+    t: Math.round((frames[contact].t + k / 60) * 1e4) / 1e4,
+    x: Math.round((at.x + net * 0.075 * k) * 1e4) / 1e4,
+    y: Math.round((at.y - 0.09 + 0.028 * k) * 1e4) / 1e4,
+  }))
 }

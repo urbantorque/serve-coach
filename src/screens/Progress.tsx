@@ -39,8 +39,9 @@ import type { TripRecord } from '../lib/storage/ledger'
 import type { Cadence } from '../lib/storage/prefs'
 import { partLabel, servePath, type PartState } from '../lib/servePath'
 import { bodyBestLine, bodyBests } from '../lib/bests'
-import { fastestServe, speedByServeNumber, speedTrend } from '../lib/speedTrend'
-import { defaultSpeedUnit, fastestLine, serveNumberSpeedLine, speedTrendLine } from '../lib/speedCopy'
+import { fastestServe, speedByServeNumber, speedByTrip, speedTrend } from '../lib/speedTrend'
+import SpeedTrips from '../components/SpeedTrips'
+import { UNIT_LABEL, defaultSpeedUnit, fastestLine, serveNumberSpeedLine, speedTrendLine } from '../lib/speedCopy'
 import { readPrefs } from '../lib/storage/prefs'
 import { bestSetLines, type SetResult } from '../lib/sets'
 import { serveProfile } from '../lib/serveProfile'
@@ -170,6 +171,7 @@ export default function Progress({
   const fastest = useMemo(() => fastestServe(sessions), [sessions])
   const quicker = useMemo(() => speedTrend(sessions, tags), [sessions, tags])
   const numberSpeeds = useMemo(() => speedByServeNumber(sessions, tags), [sessions, tags])
+  const tripSpeeds = useMemo(() => speedByTrip(sessions, tags), [sessions, tags])
   const unit = readPrefs().speedUnit ?? defaultSpeedUnit()
   const weeks = useMemo(
     () => servesPerWeek(sessions, undefined, undefined, practiceSessions),
@@ -398,6 +400,16 @@ export default function Progress({
           {(fastest || quicker || numberSpeeds) && (
             <section className="block" id="progress-speed">
               <h2 className="block-title">Serve speed</h2>
+              {/* The trips as a picture (C5), above the sentences that say the
+                  same thing; each sentence still stands on its own. */}
+              {tripSpeeds.length >= 2 && (
+                <>
+                  <SpeedTrips trips={tripSpeeds} unit={unit} />
+                  <p className="progress-foot">
+                    Your typical first serve each trip, in {UNIT_LABEL[unit]}. Each bar is its likely range, and the bright one is your latest trip.
+                  </p>
+                </>
+              )}
               {fastest && <p className="progress-foot">{fastestLine(fastest, unit)}</p>}
               {quicker && <p className="progress-foot">{speedTrendLine(quicker, unit)}</p>}
               {numberSpeeds && <p className="progress-foot">{serveNumberSpeedLine(numberSpeeds, unit)}</p>}

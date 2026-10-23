@@ -5,7 +5,11 @@ import { rotateImagePoint, unlevelFrames } from '../lib/analysis/spatial'
 import type { RacketEstimate } from '../lib/analysis/racket'
 import type { Analysis, Frame, PhaseId } from '../lib/analysis/types'
 import { levelFlight } from '../lib/vision/ballTrack'
-import { type Ghost, drawSkeleton, fitContain, ghostFor } from '../lib/pose/skeleton'
+import { type Ghost, drawSkeleton, drawStruckBall, fitContain, ghostFor } from '../lib/pose/skeleton'
+import { defaultSpeedUnit, speedFigures } from '../lib/speedCopy'
+import { readPrefs } from '../lib/storage/prefs'
+import '../styles/speed.css'
+import type { ServeSpeed } from '../lib/vision/serveSpeed'
 import { SkeletonSmoother } from '../lib/pose/smoothing'
 import { pairedLookup, type TrackPair } from '../lib/trackPair'
 import { Icon } from './primitives'
@@ -186,6 +190,15 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired }: Props) 
   // `nearestFrameIndex` for why nearest beats next-lowest here.
   const frameAt = useCallback((t: number): number => nearestFrameIndex(frames, t), [frames])
 
+  /*
+   * The struck ball and its speed (C6): the samples the reading was fitted to,
+   * drawn from contact on, so the figure under the score is seen to come from
+   * somewhere. Absent on a report saved before the path was kept.
+   */
+  const struck = analysis.speed && 'speed' in analysis.speed ? analysis.speed.speed : undefined
+  const struckPath = struck?.path && struck.path.length >= 2 ? struck.path : undefined
+  const contactT = phases.find((p) => p.id === 'contact')?.t
+
   /* ------------------------------------------------------------- drawing --- */
 
   const draw = useCallback(() => {
@@ -256,7 +269,8 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired }: Props) 
       ghost,
       paired: ghost ? undefined : pairedAt?.(t),
     })
-  }, [activePhase, drawBall, drawRacketBoxes, ghosts, analysis.handedness, analysis.scale, aspect, frameAt, drawFrames, phases, skeletonOn, video.height, video.width, win.end, win.start, pairedAt])
+    if (struckPath && contactT !== undefined && t >= contactT - 0.01) drawStruckBall(ctx, struckPath, aspect, rect)
+  }, [struckPath, contactT, activePhase, drawBall, drawRacketBoxes, ghosts, analysis.handedness, analysis.scale, aspect, frameAt, drawFrames, phases, skeletonOn, video.height, video.width, win.end, win.start, pairedAt])
 
   /**
    * The latest `draw`, reachable from effects that must not re-run when it changes.
@@ -713,6 +727,12 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired }: Props) 
           onClick={toggle}
         />
         <canvas ref={canvasRef} onClick={toggle} />
+        {/* The reading where the ball left the racket (C6), in the DOM so it
+            stays crisp and readable. Parked on contact or the finish only: in
+            between, the picture is still on its way there. */}
+        {struck && struckPath && skeletonOn && (activePhase === 'contact' || activePhase === 'finish') && (
+          <SpeedTag speed={struck} at={struckPath[struckPath.length - 1]} aspect={aspect} />
+        )}
         <button className="player-scrim" onClick={toggle} aria-label={playing ? 'Pause' : 'Play'} tabIndex={-1}>
           {!playing && (
             <span className="player-play">
@@ -826,3 +846,20 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired }: Props) 
   )
 }
 
+/** The speed on a plate beside the last place the struck ball was found (C6). */
+function SpeedTag({ speed, at, aspect }: { speed: ServeSpeed; at: { x: number; y: number }; aspect: number }) {
+  const f = speedFigures(speed, readPrefs().speedUnit ?? defaultSpeedUnit())
+  // Kept inside the picture: the last sample can sit at its very edge.
+  const left = Math.min(86, Math.max(14, (at.x / aspect) * 100))
+  const top = Math.min(78, Math.max(4, at.y * 100))
+  return (
+    <p className="speed-tag" style={{ left: `${left}%`, top: `${top}%` }}>
+      <strong>
+        {f.best} {f.unit}
+      </strong>
+      <span>
+        likely {f.low}–{f.high}
+      </span>
+    </p>
+  )
+}

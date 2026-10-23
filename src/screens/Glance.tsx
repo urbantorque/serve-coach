@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Cue, Icon, ScoreRing } from '../components/primitives'
 import { DeltaChip } from '../components/Trend'
 import { causalPlan, faultMoveLine, refusalFor, rotationMoveLine } from '../lib/analysis/verdict'
@@ -15,7 +15,16 @@ import FixedPair from '../components/FixedPair'
 import TermCue from '../components/TermCue'
 import type { Session } from '../lib/storage/db'
 import { readPrefs } from '../lib/storage/prefs'
-import { defaultSpeedUnit, speedFigures, speedGlanceLine } from '../lib/speedCopy'
+import { defaultSpeedUnit, speedFigures, speedGlanceLine, speedSpokenLine } from '../lib/speedCopy'
+import '../styles/court.css'
+
+/**
+ * Seconds before the glance hands back to the viewfinder on its own, with
+ * hands-free on (C3). Long enough to hear the glance and walk back to the
+ * baseline with the next ball; the viewfinder then waits for the player to
+ * stand ready before it counts down, so arriving early costs nothing.
+ */
+export const BACK_TO_CAMERA_S = 15
 
 /**
  * What the serve was, in one number and one line, without leaving the court.
@@ -189,6 +198,33 @@ export default function Glance({
   const rotationLine = rotation ? rotationMoveLine(rotation) : undefined
 
   /*
+   * Court mode (C3): hands-free is on, so the phone is on the fence and the
+   * player is walking back to it. One figure as big as it will go — the speed
+   * if one was read, the score if not — and the fix as one line, readable from
+   * a couple of metres. Everything else on this screen follows underneath for
+   * whoever walks up to the phone.
+   */
+  const prefs = readPrefs()
+  const unit = prefs.speedUnit ?? defaultSpeedUnit()
+  const reading = analysis.speed && 'speed' in analysis.speed ? speedFigures(analysis.speed.speed, unit) : undefined
+  const court = Boolean(prefs.handsFree) && !refusal
+
+  // And then back to the camera, counted down where it can be seen, with any
+  // touch of this screen — a tag, a scroll — keeping it here instead.
+  const [backIn, setBackIn] = useState<number | null>(() => (prefs.handsFree && onRecordAnother ? BACK_TO_CAMERA_S : null))
+  const recordAnotherRef = useRef(onRecordAnother)
+  recordAnotherRef.current = onRecordAnother
+  useEffect(() => {
+    if (backIn === null) return
+    if (backIn <= 0) {
+      recordAnotherRef.current?.()
+      return
+    }
+    const id = setTimeout(() => setBackIn(backIn - 1), 1000)
+    return () => clearTimeout(id)
+  }, [backIn])
+
+  /*
    * The same screen, read aloud (D6.2), for a phone propped on a fence that
    * nobody is looking at. What a sighted glance reads first: the refusal, or
    * the score and the one fix. Only with a voice on this device — see
@@ -196,7 +232,9 @@ export default function Glance({
    */
   const spoken = refusal
     ? refusal.title
-    : `${analysis.overall}${scoreMove ? `, ${scoreMoveWords(scoreMove)}` : ''}. ${first ? `${first.title}. ${first.why}` : 'Nothing stood out on that one. Hit another.'}`
+    : // The speed first, when there is one (C3): the reading a player most
+      // wants, and the one this screen cannot show from the baseline.
+      `${reading ? `${speedSpokenLine(reading, unit)} Score ` : ''}${analysis.overall}${scoreMove ? `, ${scoreMoveWords(scoreMove)}` : ''}. ${first ? `${first.title}. ${first.why}` : 'Nothing stood out on that one. Hit another.'}`
   const [voiced, setVoiced] = useState(() => hasLocalVoice())
   useEffect(() => onVoicesChanged(() => setVoiced(hasLocalVoice())), [])
   useEffect(() => {
@@ -205,8 +243,19 @@ export default function Glance({
     return stopSpeaking
   }, [speak, voiced, spoken])
 
+  // Under the readout in court mode, where a player walking back is looking;
+  // at the foot, by the button it presses, otherwise.
+  const nextRow = backIn !== null && (
+    <p className="court-next" role="timer" aria-live="off">
+      <span>Back to the camera in {backIn}{'\u00a0'}s</span>
+      <button type="button" className="chip chip--button" onClick={() => setBackIn(null)}>
+        Stay here
+      </button>
+    </p>
+  )
+
   return (
-    <div className="screen glance">
+    <div className="screen glance" onPointerDown={backIn !== null ? () => setBackIn(null) : undefined}>
       <header className="glance-top">
         <button className="icon-btn" onClick={onBack} aria-label="Back">
           <Icon name="back" size={20} />
@@ -235,6 +284,20 @@ export default function Glance({
         </section>
       ) : (
         <section className="glance-body">
+          {court && (
+            <div className="court-readout">
+              <p className="court-readout-figure">
+                {reading ? reading.best : analysis.overall}
+                {reading && <span className="court-readout-unit">{reading.unit}</span>}
+                <span className="sr-only">{reading ? ' off the racket' : ' out of 100'}</span>
+              </p>
+              <p className="court-readout-line">
+                {first ? <strong>{first.title}</strong> : 'Nothing stood out. Hit another.'}
+              </p>
+            </div>
+          )}
+          {court && nextRow}
+
           {/* The number the report leads with, at the size the report gives it.
               Somebody glancing at a phone propped on a fence is reading this
               from further away than they read anything else in the app.
@@ -245,9 +308,13 @@ export default function Glance({
               `role="img"` collapses the ring to one node with the sentence a
               sighted glance already reads, rather than a bare "68" landing
               ahead of the headline with nothing to say what it counts. */}
-          <div role="img" aria-label={`Score ${analysis.overall} out of 100`}>
-            <ScoreRing score={analysis.overall} status={analysis.overallStatus} size={132} />
-          </div>
+          {/* In court mode the readout above carries the score when there is no
+              speed, so the ring would only say it twice. */}
+          {!(court && !reading) && (
+            <div role="img" aria-label={`Score ${analysis.overall} out of 100`}>
+              <ScoreRing score={analysis.overall} status={analysis.overallStatus} size={court ? 96 : 132} />
+            </div>
+          )}
 
           {/* Against the last serve, as the report's hero puts it — the same
               chip, held to the same line (L3.1). Without it a player reads 68
@@ -282,7 +349,7 @@ export default function Glance({
 
           {first ? (
             <>
-              <h1 className="t-headline glance-fix">{first.title}</h1>
+              <h1 className={court ? 'sr-only' : 't-headline glance-fix'}>{first.title}</h1>
               <p className="glance-why">
                 <TermCue text={first.why} />
               </p>
@@ -478,6 +545,7 @@ export default function Glance({
       )}
 
       <footer className="glance-actions">
+        {!court && nextRow}
         {onRecordAnother && (
           <button className="btn btn--primary btn--full" onClick={onRecordAnother}>
             <Icon name="camera" size={18} />

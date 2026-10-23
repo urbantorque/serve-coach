@@ -164,4 +164,26 @@ check('the stylesheet is measured too, because nothing else measures it', () => 
   assert(size.gzip < 14, `the stylesheet is ${size.gzip.toFixed(2)} kB gzipped against a 14 kB budget`)
 })
 
+/**
+ * Stylesheets that load with a lazy screen, all of them together, in kB gzip.
+ *
+ * A sheet imported by a lazy chunk is split into its own file by Vite and never
+ * touches `index-*.css`, so the check above cannot see it. Without this line
+ * the court surfaces' styles (C0) would be the first CSS in the app nothing
+ * measures — and moving a rule out of the entry sheet would read as saving
+ * bytes the player still downloads, a moment later.
+ */
+const SPLIT_CSS_GZIP_BUDGET_KB = 6
+
+check('the stylesheets that load with lazy screens are measured too', () => {
+  const split = files.filter((f) => f.endsWith('.css') && f !== cssName)
+  const sizes = split.map((f) => ({ f, ...kB(f) }))
+  const gzip = sizes.reduce((sum, s) => sum + s.gzip, 0)
+  note(`${split.length} split stylesheets, ${gzip.toFixed(2)} kB gzip together${sizes.length ? `: ${sizes.map((s) => `${s.f.split('-')[0]} ${s.gzip.toFixed(2)}`).join(', ')}` : ''}`)
+  assert(
+    gzip < SPLIT_CSS_GZIP_BUDGET_KB,
+    `the split stylesheets are ${gzip.toFixed(2)} kB gzipped against a ${SPLIT_CSS_GZIP_BUDGET_KB} kB budget`,
+  )
+})
+
 report()

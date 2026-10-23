@@ -945,6 +945,10 @@ Everything is in `src/lib`:
 | `framing/judge.ts` | the live framing verdict, before the player has filmed anything |
 | `framing/access.ts` | why a live camera preview failed to start, and what to say about it |
 | `framing/record.ts` | records off the viewfinder's own stream, and picks the container |
+| `framing/handsFree.ts` | hands-free recording as pure rules: when a serve is over, when to stop, and when the next countdown may start by itself |
+| `earcon.ts` | the hands-free tones, made on the device with an oscillator, and a tap felt in the hand where the phone can |
+| `components/SpeedTrips.tsx` | serve speed by trip on Progress, one range bar a trip |
+| `styles/court.css`, `styles/speed.css` | the viewfinder, the glance's readout and every speed drawing — loaded with the screens that use them, on their own budget |
 | `share/reportCard.ts` | renders a report as one shareable image |
 | `analysis/serves.ts` | picks out each serve in a multi-serve clip |
 | `session/plan.ts` | a practice session: which clips are one, which serves a sample reads, and what reading it costs |
@@ -1004,6 +1008,56 @@ Everything is in `src/lib`:
 | `analysis/analyze.ts` | orchestrates the above |
 
 ### Decisions worth knowing about
+
+**The court surfaces are sized for the baseline, not for arm's length (C0–C6).**
+The phone leans on the fence and the player is four to seven metres away, so
+the viewfinder and the glance are sized for that distance. Comfortable reading
+is taken as 15 arcminutes of capital height on a 6.1-inch phone, a CSS pixel
+being about 0.163 mm. At that rule 16 px body text reads to about 0.4 m, the
+court card's 72 px count to about 2 m, and only three digits filling a phone on
+its side, about 220 px, reach six metres. These are planning figures, not
+measurements on a court. From that follow:
+
+- **The framing verdict is a band, not a border.** It was a 3 px border, half a
+  millimetre, which at four metres is under what the eye picks out. It is now an
+  inner band 2.6% of the picture's width and never under 8 px, with the badge
+  shape at about a tenth of the width so colour is never the only signal. The
+  countdown is a third of the picture wide. It had never been styled at all, so
+  it was a bare line of body text.
+- **Pips count a basket's serves** as `shouldStop` counts them, filled against
+  empty, and **short tones** say armed, recording, a serve counted, and stopped.
+  The tones are made with an oscillator on the device and unlocked by the record
+  tap, as speech is on iOS. They are never the only signal. A tap in the hand
+  vibrates where the browser can, which is Chrome on Android.
+- **The next serve can start by itself.** With hands-free on, the glance goes
+  back to the camera after `BACK_TO_CAMERA_S`, shown with a "Stay here" button,
+  and any touch keeps it. The viewfinder opened that way waits for
+  `shouldRearm`: somebody in shot with both hands below the shoulders for
+  `REARM_S`, and a clear verdict. A toss raises a hand, so a serve under way
+  never re-arms. A basket then needs no tap at all.
+- **The glance has a court mode.** With hands-free on, it opens on one figure as
+  big as the box allows: the speed if one was read, otherwise the score. The fix
+  sits under it as one line. The glance read aloud now starts with the speed, in
+  words ("about 130 kilometres an hour"), because voices read "km/h" unevenly.
+- **The viewfinder knows which placement it is judging** ("Your swing" or "A
+  speed", kept in prefs). In the speed placement, `too-far` does not fire,
+  because standing far back is the point of it. Its ready line says the swing
+  reads rougher from there instead. An upright phone is told to turn on its
+  side. This changes wording only: every refusal is the upload path's, and the
+  test holds that the placement never lifts one.
+- **Speed is drawn as ranges.** Progress shows each trip's typical first serve
+  as a bar with a tick at the best figure. These are the same summaries
+  `speedTrend` compares, so the picture cannot show a rise the sentence refuses.
+  The report's band grows out from its best figure. The replay draws the struck
+  ball's samples from contact on, with the dashed line fitted through them and
+  the reading on a plate where the ball left. The reading now keeps its samples
+  (`ServeSpeed.path`, a few hundred bytes), so the figure is seen to come from
+  somewhere. Reports saved before this have no path and draw none.
+- **Their styles load with them.** The viewfinder's rules left `guide.css` for
+  `court.css`, and the speed row's left `report.css` for `speed.css`. Both are
+  imported by the components that use them, so the entry stylesheet fell from
+  13.97 to 13.60 kB gzip. `bundle.test.ts` gives these split sheets their own
+  6 kB budget, because nothing else measured them.
 
 **The report never shows the number it measured.** Everything spatial is a ratio
 of standing height, because that is what survives a change of camera — and

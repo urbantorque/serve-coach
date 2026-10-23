@@ -64,6 +64,18 @@ export function speedFigures(s: Pick<ServeSpeed, 'ms' | 'low' | 'high'>, unit: S
   return { best, low, high, unit: UNIT_LABEL[unit], at: { low: along(low), best: along(best), high: along(high) } }
 }
 
+/** Each unit in words, for a voice: synthetic voices read "km/h" unevenly. */
+const UNIT_SPOKEN: Record<SpeedUnit, string> = { kmh: 'kilometres an hour', mph: 'miles an hour' }
+
+/**
+ * The reading as the glance says it aloud, first (C3): the one figure, in
+ * words. The range stays on the screen; read out, a second and third number
+ * between the speed and the fix are noise to a player at the baseline.
+ */
+export function speedSpokenLine(f: Pick<SpeedFigures, 'best'>, unit: SpeedUnit): string {
+  return `About ${f.best} ${UNIT_SPOKEN[unit]}.`
+}
+
 /** The glance's line for a reading. */
 export function speedGlanceLine(f: SpeedFigures): string {
   return `About ${f.best} ${f.unit} off the racket, likely ${f.low}–${f.high}.`

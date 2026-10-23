@@ -3831,3 +3831,49 @@ exists, a speed is:
   the speed from `UNCALIBRATED` to checked. A machine cannot do this.
 - The Lift programme's list stands: real players, a remote, hosting, egress,
   and the COCO download.
+
+---
+
+## Court programme (C0–C6) — 2026-10-23
+
+From the design blueprint: the court surfaces designed for the distance they
+are read from, in the settled skin, and speed drawn as ranges. Each item was
+proved by machine. None of it has run on a phone: the camera, the tones and
+the vibration were checked in desktop Chrome with a fake camera.
+
+- [x] **C0 Split stylesheets on a budget** · S.
+      - *Done:* 2026-10-23. `bundle.test.ts` measures every stylesheet a lazy
+        chunk splits off, 6 kB gzip together (1.93 now). The viewfinder's rules
+        moved from `guide.css` to `court.css`, and the speed row's from
+        `report.css` to `speed.css`. Entry sheet 13.97 → 13.60 kB.
+- [x] **C1 A verdict readable from the baseline** · S.
+      - *Done:* 2026-10-23. A band at 2.6% of the picture's width replaces the
+        3 px border, the badge is a tenth of the width, and the countdown is a
+        third of it (it had never been styled). Serve pips appear on a basket.
+        Checked in the browser with a fake camera.
+- [x] **C2 Tones and a tap** · S.
+      - *Done:* 2026-10-23. `earcon.ts` plays armed, recording, served and
+        stopped in hands-free mode, and the record tap vibrates where it can.
+        Not on the egress list: an oscillator sends nothing.
+- [x] **C3 The loop with no taps** · M.
+      - *Done:* 2026-10-23. `shouldRearm` is pure and tested on rig traces
+        (standing, bouncing, a serve, walking out). The glance goes back to the
+        camera after `BACK_TO_CAMERA_S` with "Stay here". It has a court mode
+        with one big figure, and it speaks the speed first.
+- [x] **C4 A speed placement for the framing judge** · S.
+      - *Done:* 2026-10-23. "Your swing" or "A speed" on the viewfinder.
+        `too-far` is quiet in the speed placement and an upright phone is told
+        to turn. A test holds that no refusal moves with the placement.
+- [x] **C5 Speed by trip, as ranges** · S.
+      - *Done:* 2026-10-23. `speedByTrip` feeds both the bars on Progress and
+        `speedTrend`, so the picture and the sentence cannot disagree. The
+        report's band grows out from its best figure.
+- [x] **C6 The struck ball on the replay** · S.
+      - *Done:* 2026-10-23. `ServeSpeed.path` keeps the samples (rounded,
+        validated on load, and a damaged path is dropped while the reading is
+        kept). `drawStruckBall` draws them from contact on, with the reading on
+        a plate. The demo's path is drawn by hand, because the rig flies no
+        ball.
+- [ ] **C7 The chain timeline following the scrubber.** Not started: on the
+      report the timeline sits far from the player, so a synced playhead buys
+      little until the two share a screen.

@@ -1745,3 +1745,57 @@ function fittedSize(
   FIT_CACHE.set(key, size)
   return size
 }
+
+/**
+ * The struck ball (C6): the samples a serve's speed was read from, and the
+ * straight line through them, after contact.
+ *
+ * The same amber as the tossed ball, because it is the same object; no new
+ * meaning is claimed. Dashed, because the line between the samples is a fit,
+ * and a fit is not a measurement — the dots are. The path is in the picture as
+ * filmed, frame heights with x multiplied by the aspect — the speed pass reads
+ * the raw frames — so it belongs over the video, levelled clip or not, and
+ * nowhere else: the motion replay draws in the levelled picture and leaves it
+ * out.
+ */
+export function drawStruckBall(
+  ctx: CanvasRenderingContext2D,
+  path: readonly { x: number; y: number }[],
+  aspect: number,
+  rect: DrawRect,
+): void {
+  if (path.length < 2) return
+  const scale = Math.min(rect.dw, rect.dh) / 420
+  const at = (p: { x: number; y: number }) => ({ x: rect.ox + (p.x / aspect) * rect.dw, y: rect.oy + p.y * rect.dh })
+  const pts = path.map(at)
+  // The line through the first and last samples, carried a third further on,
+  // so it reads as the way the ball went rather than a join between dots.
+  const a = pts[0]
+  const b = pts[pts.length - 1]
+  const end = { x: b.x + (b.x - a.x) / 3, y: b.y + (b.y - a.y) / 3 }
+  ctx.save()
+  ctx.lineCap = 'round'
+  ctx.setLineDash([7 * scale, 6 * scale])
+  ctx.beginPath()
+  ctx.moveTo(a.x, a.y)
+  ctx.lineTo(end.x, end.y)
+  ctx.strokeStyle = PALETTE.under
+  ctx.lineWidth = 4.4 * scale
+  ctx.stroke()
+  ctx.strokeStyle = PALETTE.ball
+  ctx.lineWidth = 2 * scale
+  ctx.globalAlpha = 0.6
+  ctx.stroke()
+  ctx.restore()
+  const r = 4 * scale
+  ctx.beginPath()
+  for (const p of pts) {
+    ctx.moveTo(p.x + r, p.y)
+    ctx.arc(p.x, p.y, r, 0, Math.PI * 2)
+  }
+  ctx.fillStyle = PALETTE.ball
+  ctx.fill()
+  ctx.strokeStyle = PALETTE.under
+  ctx.lineWidth = 2 * scale
+  ctx.stroke()
+}

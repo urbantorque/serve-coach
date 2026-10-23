@@ -2,7 +2,7 @@
  * Serve speed over time (N2.8): ranges compared with ranges, and nothing said
  * where they overlap.
  */
-import { MIN_SPEED_SERVES, apart, fastestServe, speedByServeNumber, speedTrend, summarise } from '../speedTrend'
+import { MIN_SPEED_SERVES, apart, fastestServe, speedByServeNumber, speedByTrip, speedTrend, summarise } from '../speedTrend'
 import { assert, check, heading, report } from '../analysis/__tests__/harness'
 import type { ServeTag, Session } from '../storage/db'
 
@@ -60,6 +60,24 @@ check('a trip is held no tighter than one serve: the middle of its serves’ ran
   const s = summarise(trip(0, [30, 40, 50]))!
   assert(s.ms === 40 && Math.abs(s.low - 38) < 1e-9 && Math.abs(s.high - 42) < 1e-9, JSON.stringify(s))
   assert(apart({ low: 43, high: 47 }, s) === 'faster' && apart({ low: 41, high: 47 }, s) === undefined, 'apart is not strict')
+})
+
+heading('Every trip, for the chart (C5)')
+
+check('one bar per trip with enough readings, oldest first, second serves left out', () => {
+  const sessions = [...trip(0, [33, 34]), ...trip(1, [40]), ...trip(2, [36, 37, 38]), ...trip(3, [41, 41])]
+  const tags: ServeTag[] = [{ id: 'd3-0', serveNumber: 2 } as ServeTag]
+  const bars = speedByTrip(sessions, tags)
+  assert(bars.length === 2, `${bars.length} bars: a one-reading trip, or a trip left one first serve, was drawn`)
+  assert(bars[0].at < bars[1].at && bars[0].ms === 33.5 && bars[1].ms === 37, JSON.stringify(bars.map((b) => b.ms)))
+})
+
+check('the trend is read off the same bars the chart draws', () => {
+  const sessions = [...trip(0, [33, 34, 33]), ...trip(1, [36, 36]), ...trip(2, [41, 40])]
+  const bars = speedByTrip(sessions, [])
+  const t = speedTrend(sessions, [])!
+  assert(JSON.stringify(t.now) === JSON.stringify(bars[2]), 'the trend compared a trip the chart does not show')
+  assert(JSON.stringify(t.then) === JSON.stringify(bars[1]), 'the trend skipped the trip before the newest')
 })
 
 heading('First serves against second serves')

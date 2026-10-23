@@ -122,6 +122,35 @@ export function shouldStop(samples: readonly HandSample[], target: number): { st
   return { stop: walkedOff, serves }
 }
 
+/**
+ * How long the player stands in place, hands down, before the next countdown
+ * starts by itself, seconds (C3).
+ *
+ * Long enough that walking into shot and turning round is not it — a player
+ * still walking has a moving body and, often, a ball in a raised hand — and
+ * short enough that standing ready with a ball is. Two seconds is under the
+ * time most players bounce the ball before a serve.
+ */
+export const REARM_S = 2
+
+/**
+ * Whether the next countdown starts without a tap (C3): the viewfinder was
+ * opened from the glance with hands-free on, so the player has just walked
+ * back to the baseline and nobody is going to walk to the phone again.
+ *
+ * Reads the same samples `shouldStop` does. Somebody in shot with both hands
+ * below the shoulders, unbroken, for `REARM_S`, and the framing verdict clear —
+ * a clip the engine would refuse is not worth starting on its own. A toss puts
+ * a hand up, so a serve already under way never re-arms; a player bouncing the
+ * ball keeps both hands low, which is exactly the moment before a serve.
+ */
+export function shouldRearm(samples: readonly HandSample[], clear: boolean, now: number): boolean {
+  if (!clear) return false
+  let since: number | undefined
+  for (const s of samples) since = s.present && s.handsDown ? (since ?? s.t) : undefined
+  return since !== undefined && now - since >= REARM_S
+}
+
 /** What the countdown says at each second left: the last three, then go. */
 export function countdownWord(left: number): string | undefined {
   if (left === COUNTDOWN_S) return `Recording in ${COUNTDOWN_S} seconds`

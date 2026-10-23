@@ -229,9 +229,16 @@ export default function Home({
   // Asked for by the glance screen's "Record another", which is the loop this
   // whole route exists for: record, glance, record. Guarded on zero so the
   // first render of the home screen never opens a camera nobody asked for.
+  // Opened that way, the next serve may start by itself once the player stands
+  // ready (C3); opened by a tap here, it waits for the record button.
+  const [rearm, setRearm] = useState(false)
   useEffect(() => {
     if (openFraming > 0) setChecking(true)
+    setRearm(openFraming > 0)
   }, [openFraming])
+  useEffect(() => {
+    if (!checking) setRearm(false)
+  }, [checking])
   // Whether a live preview is possible at all. Asked once, for the same reason
   // as the pointer above, and a page served over plain http has no camera API to
   // find — so on those the offer is simply not made rather than made and broken.
@@ -812,6 +819,7 @@ export default function Home({
         <Suspense fallback={null}>
           <FramingCheck
             target={checkTarget}
+            rearm={rearm}
             onRecorded={
               onRecorded &&
               ((file) => {

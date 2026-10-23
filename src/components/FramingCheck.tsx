@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useWakeLock } from './useWakeLock'
 import { Cue, Icon } from './primitives'
+import '../styles/court.css'
+import { TICK, earcon, haptic, unlockEarcons } from '../lib/earcon'
+import { SPEED_PLACEMENT } from '../lib/placement'
 import { PREVIEW_BLOCK_CUE, previewBlockFor, previewSupported, type PreviewBlock } from '../lib/framing/access'
 import {
   PREVIEW_WINDOW,
@@ -8,6 +11,7 @@ import {
   previewFrame,
   readFraming,
   type FramingVerdict,
+  type Placement,
 } from '../lib/framing/judge'
 import { MAX_RECORDING_SECONDS, recordClip, recordingOutcome, recordingType } from '../lib/framing/record'
 import { loadEngine, nextVideoTimestamp } from '../lib/pose/poseEngine'
@@ -20,6 +24,7 @@ import {
   SERVE_COUNTS,
   countdownWord,
   handSample,
+  shouldRearm,
   shouldStop,
   speakVerdict,
   spoken,
@@ -115,9 +120,19 @@ interface Props {
    * viewfinder so the player knows what the next serves are counted for.
    */
   target?: string
+  /**
+   * Opened from the glance's "Record another" with hands-free on (C3): the
+   * player has walked back to the baseline, so the next countdown starts by
+   * itself once they stand still in a clear picture. A tap on the button still
+   * works and takes over.
+   */
+  rearm?: boolean
 }
 
-export default function FramingCheck({ onRecorded, target }: Props) {
+/** Hand samples kept for the re-arm check: comfortably more than `REARM_S` of them. */
+const REARM_WINDOW_S = 6
+
+export default function FramingCheck({ onRecorded, target, rearm = false }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   // Mounted only while the viewfinder is open, and that is a phone propped on
   // a fence while its owner walks to the baseline — the screen must not lock.
@@ -165,7 +180,27 @@ export default function FramingCheck({ onRecorded, target }: Props) {
   const [speak, setSpeak] = useState(() => Boolean(readPrefs().speakFraming))
   const [serveCount, setServeCount] = useState<ServeCount>(() => (target ? 6 : (readPrefs().handsFreeServes ?? 1)))
   const [countdown, setCountdown] = useState<number | null>(null)
+  const countdownRef = useRef<number | null>(null)
+  countdownRef.current = countdown
   const countdownTimer = useRef(0)
+  /*
+   * What the framing is judged for (C4): the swing, from four to five metres,
+   * or a speed, from six to seven with the phone on its side. Kept in prefs
+   * beside hands-free, since a player who films for a speed does it every time.
+   */
+  const [placement, setPlacement] = useState<Placement>(() => readPrefs().placement ?? 'form')
+  const placementRef = useRef(placement)
+  placementRef.current = placement
+  /** Serves counted in this recording so far, for the pips (C1). */
+  const [served, setServed] = useState(0)
+  const servedRef = useRef(0)
+  /** Waiting for the player to stand ready before starting on its own (C3). */
+  const [rearming, setRearming] = useState(() => rearm && Boolean(readPrefs().handsFree))
+  const rearmingRef = useRef(rearming)
+  rearmingRef.current = rearming
+  const rearmSamplesRef = useRef<HandSample[]>([])
+  /** The countdown, reachable from the detection loop, which closes over its scope once. */
+  const startCountdownRef = useRef<() => void>(() => {})
   const handsFreeRef = useRef(handsFree)
   const speakRef = useRef(speak)
   const serveCountRef = useRef(serveCount)
@@ -337,7 +372,15 @@ export default function FramingCheck({ onRecorded, target }: Props) {
           const cost = performance.now() - started
           nextAt = performance.now() + Math.max(RECORDING_INTERVAL_MS - cost, (cost * (1 - RECORDING_DUTY)) / RECORDING_DUTY)
           samplesRef.current.push(handSample((started - recordStartRef.current) / 1000, image))
-          if (shouldStop(samplesRef.current, serveCountRef.current).stop && recorderRef.current?.state === 'recording') {
+          const read = shouldStop(samplesRef.current, serveCountRef.current)
+          // The pips, and a tone a player at the baseline can hear (C1, C2). Not
+          // on the serve that ends the recording: the stop has its own tone.
+          if (read.serves > servedRef.current) {
+            servedRef.current = read.serves
+            setServed(read.serves)
+            if (!read.stop) earcon('served')
+          }
+          if (read.stop && recorderRef.current?.state === 'recording') {
             recorderRef.current.stop()
           }
           return
@@ -364,7 +407,25 @@ export default function FramingCheck({ onRecorded, target }: Props) {
         // sentence two or three times a second. `also` is compared too even
         // though nothing here draws it — a caller that starts drawing it should
         // not have to discover that this comparison was quietly deciding not to.
-        const next = judgeFraming(readFraming(ring))
+        const next = judgeFraming({
+          ...readFraming(ring),
+          placement: placementRef.current,
+          aspect: video.videoWidth / video.videoHeight,
+        })
+
+        // The next serve starting by itself (C3): the same hand samples the
+        // recording reads, taken while the player walks back and stands ready.
+        if (rearmingRef.current && handsFreeRef.current && countdownRef.current === null) {
+          const at = started / 1000
+          const samples = rearmSamplesRef.current
+          samples.push(handSample(at, image))
+          while (samples.length && at - samples[0].t > REARM_WINDOW_S) samples.shift()
+          if (shouldRearm(samples, next.grade === 'clear', at)) {
+            rearmingRef.current = false
+            setRearming(false)
+            startCountdownRef.current()
+          }
+        }
         // Said aloud when it changes, for a player already at the baseline (N1.2).
         if (speakRef.current && next.grade !== 'looking' && speakVerdict(next, lastSpokenRef.current, now)) {
           speakLocally(spoken(next.cue))
@@ -414,15 +475,29 @@ export default function FramingCheck({ onRecorded, target }: Props) {
       return
     }
     if (!streamRef.current || !type || !onRecorded) return
-    // This tap is the gesture iOS wants before anything here can speak (L6.10).
+    // This tap is the gesture iOS wants before anything here can speak (L6.10),
+    // or sound a tone (C2). A tap takes over from waiting to start on its own.
     primeSpeech()
+    unlockEarcons()
+    haptic(TICK)
+    setRearming(false)
     if (!handsFree) {
       startRecording()
       return
     }
-    // Hands-free (N1.1): a countdown long enough to walk to the baseline,
-    // spoken whether or not the verdict is, since nobody can see it from there.
+    startCountdown()
+  }
+
+  /**
+   * Hands-free (N1.1): a countdown long enough to walk to the baseline, spoken
+   * whether or not the verdict is, since nobody can see it from there. Started
+   * by the tap above, or by the player standing ready after a glance (C3).
+   */
+  const startCountdown = () => {
+    if (!streamRef.current || !type || !onRecorded || countdownRef.current !== null) return
+    earcon('armed')
     let left = COUNTDOWN_S
+    countdownRef.current = left
     setCountdown(left)
     speakLocally(countdownWord(left)!)
     countdownTimer.current = setInterval(() => {
@@ -438,11 +513,14 @@ export default function FramingCheck({ onRecorded, target }: Props) {
       startRecording()
     }, 1000) as unknown as number
   }
+  startCountdownRef.current = startCountdown
 
   const startRecording = () => {
     const stream = streamRef.current
     if (!stream || !type || !onRecorded || !liveRef.current) return
     samplesRef.current = []
+    servedRef.current = 0
+    setServed(0)
     recordStartRef.current = performance.now()
 
     let capped = 0
@@ -461,6 +539,7 @@ export default function FramingCheck({ onRecorded, target }: Props) {
           // The recorder cannot say, and the two mean opposite things — see
           // `recordingOutcome`, which is where that is reasoned about and tested.
           if (recordingOutcome({ previewLive: liveRef.current, chunks }) !== 'analyse') return
+          if (handsFreeRef.current) earcon('stopped')
           say('Stopped')
           onRecorded(file)
         },
@@ -478,7 +557,8 @@ export default function FramingCheck({ onRecorded, target }: Props) {
     recorderRef.current = recorder
     recordingRef.current = true
     setRecording(true)
-    if (!handsFree) say('Recording')
+    if (handsFree) earcon('recording')
+    else say('Recording')
 
     // The backstop. See MAX_RECORDING_SECONDS: chunks accumulate in memory
     // until something stops the recorder, and the likeliest way for nothing to
@@ -518,6 +598,22 @@ export default function FramingCheck({ onRecorded, target }: Props) {
   return (
     <div className="framer">
       {targetLine}
+      {/* Where the phone goes for a speed (C4), said where the player is about
+          to move it, from the one place that wording lives. */}
+      {placement === 'speed' && !recording && countdown === null && (
+        <p className="framer-target">
+          <Icon name="target" size={15} />
+          <span>
+            For a speed, stand the phone {SPEED_PLACEMENT.distance} back, on its side, {SPEED_PLACEMENT.where}.
+          </span>
+        </p>
+      )}
+      {rearming && handsFree && !recording && countdown === null && (
+        <p className="framer-target" role="status">
+          <Icon name="camera" size={15} />
+          <span>Walk back to your spot and stand still. I start the count by myself.</span>
+        </p>
+      )}
       <div className={`framer-stage framer-stage--${verdict.grade}`}>
         {/* The preview is the instruction's evidence, not the instruction. A
             screen reader gets the verdict from the live region below, which is
@@ -533,8 +629,17 @@ export default function FramingCheck({ onRecorded, target }: Props) {
           <Icon name={BADGE[verdict.grade]} size={15} />
         </span>
         {countdown !== null && (
-          <span className="framer-count" aria-hidden="true">
+          <span key={countdown} className="framer-count" aria-hidden="true">
             {countdown}
+          </span>
+        )}
+        {/* The basket so far, readable from the baseline (C1). Only for a
+            basket: one serve has nothing to count. */}
+        {handsFree && serveCount > 1 && (recording || countdown !== null) && (
+          <span className="framer-pips" role="img" aria-label={`${served} of ${serveCount} serves`}>
+            {Array.from({ length: serveCount }, (_, i) => (
+              <span key={i} className={`framer-pip${i < served ? ' is-on' : ''}`} />
+            ))}
           </span>
         )}
       </div>
@@ -552,6 +657,29 @@ export default function FramingCheck({ onRecorded, target }: Props) {
         <p className={`framer-cue framer-cue--${verdict.grade}`} role="status" aria-live="polite">
           <Cue text={verdict.cue} />
         </p>
+      )}
+
+      {/* What the framing is judged for (C4). Shown with or without a recorder:
+          it changes the verdict, not the recording. */}
+      {!recording && countdown === null && (
+        <div className="framer-options">
+          <div className="seg" role="group" aria-label="Filming for">
+            {(['form', 'speed'] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                className={`seg-item${placement === p ? ' is-on' : ''}`}
+                aria-pressed={placement === p}
+                onClick={() => {
+                  setPlacement(p)
+                  writePrefs({ placement: p })
+                }}
+              >
+                {p === 'form' ? 'Your swing' : 'A speed'}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Only where the browser will record something this app can then read.

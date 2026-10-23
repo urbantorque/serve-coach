@@ -40,6 +40,14 @@ in that folder under the same names.
   radar. Contact and toss heights
   in metres come from the toss's own gravity and are stored, not shown.
 
+- **Built for the court (C0–C6).** The framing verdict is a band readable
+  from the baseline, with serve pips, a countdown a third of the picture wide,
+  and short tones. The next serve can start by itself once the player stands
+  ready. The glance has a court mode that opens on one big figure and speaks the
+  speed first. A speed placement exists for the framing check. Progress shows
+  speed by trip as range bars, and the replay draws the struck ball. None of it
+  has run on a phone yet.
+
 ## What is open
 
 - **The pose worker as the default.** Every pose read in the analysis goes
@@ -74,7 +82,7 @@ Work is on `roadmap/market-ready`, and its ledger is `ROADMAP.md`: the Notch
 programme (N0–N5) and the Lift programme (M0–M5), with one order of play at
 the end of the Notch section. Pick the first open item there.
 
-The suite runs **1,931 checks** (2026-10-22). The last loop tag is
+The suite runs **1,940 checks** (2026-10-23). The last loop tag is
 `loop-green-15`, from the August loop.
 
 Before trusting a size figure, run `npm run build`: `bundle.test.ts` reads

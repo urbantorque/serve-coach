@@ -10,11 +10,13 @@ import { buildServe } from '../../analysis/syntheticServe'
 import {
   COUNTDOWN_S,
   RECORDING_INTERVAL_MS,
+  REARM_S,
   SETTLE_S,
   SPEAK_GAP_MS,
   WALKED_OFF_S,
   countdownWord,
   handSample,
+  shouldRearm,
   shouldStop,
   speakVerdict,
   spoken,
@@ -126,6 +128,46 @@ check('a player who serves and walks off ends a basket short', () => {
 
 check('nobody in shot at all never stops it: that is for the cap', () => {
   assert(stopsAt(gone(0, 30), 1).at === undefined, 'an empty picture stopped the recording')
+})
+
+heading('The next serve starting by itself (C3)')
+
+/** Run the samples as the viewfinder would, returning when re-arm first fires. */
+function rearmsAt(samples: HandSample[], clear = true): number | undefined {
+  for (let k = 1; k <= samples.length; k++) {
+    if (shouldRearm(samples.slice(0, k), clear, samples[k - 1].t)) return samples[k - 1].t
+  }
+  return undefined
+}
+
+check('standing ready re-arms after REARM_S, and not before', () => {
+  const at = rearmsAt([...gone(0, 3), ...standing(3, 5)])
+  note(`back in shot at 3.00 s, re-armed at ${at?.toFixed(2)} s`)
+  assert(at !== undefined, 'standing ready never re-armed')
+  assert(at! - 3 >= REARM_S && at! - 3 <= REARM_S + STEP, `re-armed ${(at! - 3).toFixed(2)} s after stepping in`)
+})
+
+check('bouncing the ball before the serve re-arms: both hands stay low', () => {
+  assert(rearmsAt(bouncing(0, 6)) !== undefined, 'a player bouncing the ball was never re-armed')
+})
+
+check('a serve under way never re-arms, because the toss puts a hand up', () => {
+  const s = serveAt(0)
+  const fired = s.some((x, k) => shouldRearm(s.slice(0, k + 1), true, x.t) && x.handUp)
+  assert(!fired, 'a sample with a hand above the head re-armed')
+  const up = s.findIndex((x) => x.handUp)
+  assert(!shouldRearm(s.slice(0, up + 1), true, s[up].t), 'the toss itself re-armed')
+})
+
+check('nobody in shot, or a verdict that is not clear, never re-arms', () => {
+  assert(rearmsAt(gone(0, 10)) === undefined, 'an empty picture re-armed')
+  assert(rearmsAt(standing(0, 10), false) === undefined, 'a hedged or refused picture re-armed')
+})
+
+check('walking out of shot starts the wait again', () => {
+  const trace = [...standing(0, REARM_S - 0.5), ...gone(REARM_S - 0.5, 1), ...standing(REARM_S + 0.5, REARM_S + 1)]
+  const at = rearmsAt(trace)
+  assert(at !== undefined && at >= REARM_S + 0.5 + REARM_S, `re-armed at ${at?.toFixed(2)} s, before a full wait after coming back`)
 })
 
 heading('The countdown and the spoken verdict')

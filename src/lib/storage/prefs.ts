@@ -79,6 +79,8 @@ export interface Prefs {
   handsFreeServes?: 1 | 6
   /** The viewfinder says its verdict aloud (N1.2). */
   speakFraming?: boolean
+  /** What the viewfinder judges the framing for (C4): the swing, or a speed. Absent is the swing. */
+  placement?: 'form' | 'speed'
   /** How long the player usually has on court, for today's plan (N1.6). */
   courtMinutes?: 30 | 45 | 60
   /** The unit a serve speed is said in, when the player has picked one (N2.7); absent, the locale's. */

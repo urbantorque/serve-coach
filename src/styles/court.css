@@ -1,0 +1,292 @@
+/* ============================================================================
+   The court surfaces — the viewfinder and the glance's readout (C0–C3)
+
+   Loaded with the screens that use them, never from main.tsx: the entry sheet
+   has no room left, and these rules only matter once a camera or a result is
+   on screen. Measured on their own budget in `bundle.test.ts`.
+
+   Read from the baseline. The player props the phone, walks four to seven
+   metres away and looks back at it, so everything here is sized for that
+   distance rather than for arm's length: a verdict band rather than a border,
+   a badge a tenth of the picture wide, a countdown a third of it. Comfortable
+   reading is taken as 15 arcminutes of capital height on a 6.1-inch phone —
+   the arithmetic is in the README's court section.
+
+   Only --fg and --lime carry meaning out here. In sun the screen reflects the
+   sky, and the muted greys drop to about 2.4:1 while those two hold near 4.5.
+   ========================================================================= */
+
+.framer {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* `container-type` so the band, the badge and the countdown are sized by the
+   picture, not the window: the same rules read a portrait sheet at arm's length
+   and a phone on its side on the fence. */
+.framer-stage {
+  position: relative;
+  container-type: inline-size;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--ink);
+  border: 3px solid var(--ink-4);
+  aspect-ratio: 3 / 4;
+}
+
+/* On its side, as the speed placement asks, the picture takes the phone's
+   shape rather than a portrait box with bars down both sides. */
+@media (orientation: landscape) and (max-height: 540px) {
+  .framer-stage {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+/* `contain`, never `cover`.
+   The stream's shape is whatever the device hands back — `getUserMedia` is asked
+   for a width and no aspect ratio — so on a laptop or on many phone stacks it
+   arrives 4:3 or 16:9. `cover` into this 3/4 box shows only 0.75/sourceAspect of
+   the source width: 56% of a 4:3 stream, 42% of a 16:9 one. `framingIssues` and
+   `estimateYaw` read the whole frame, so up to 58% of the width the verdict was
+   taken from would be outside the picture the player is looking at — a player
+   standing near the real left edge would appear comfortably centred while being
+   told to move. The verdict would still be right, which is exactly what makes
+   that dangerous: right verdict, wrong evidence. Letterboxing against the stage
+   background costs a black bar and shows what the model sees. */
+.framer-stage video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* The verdict as a band, not a border (C1).
+   A 3px border was half a millimetre: from four metres, about 0.4 arcminutes,
+   under what the eye picks out — on the one screen whose comment said the whole
+   preview carries the colour. 2.6% of the picture's width is about 9px in a
+   portrait sheet and 22px on a phone on its side: 3.6mm, about three
+   arcminutes at four metres. Never under 8px. */
+.framer-stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 max(8px, 2.6cqw) var(--verdict, transparent);
+  transition: box-shadow var(--base) var(--ease);
+}
+
+.framer-stage--clear { --verdict: var(--great); }
+.framer-stage--hedged { --verdict: var(--fair); }
+.framer-stage--refused { --verdict: var(--work); }
+
+/* The badge repeats the verdict as a shape, for anyone who cannot separate the
+   three band colours. It is the same information, never extra information —
+   and at a tenth of the picture, a shape that survives the distance the colour
+   is read from. */
+.framer-badge {
+  position: absolute;
+  z-index: 1;
+  top: calc(max(8px, 2.6cqw) + 8px);
+  right: calc(max(8px, 2.6cqw) + 8px);
+  display: grid;
+  place-items: center;
+  width: clamp(40px, 11cqw, 76px);
+  height: clamp(40px, 11cqw, 76px);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--scrim) 78%, transparent);
+  color: var(--fg);
+}
+
+.framer-badge svg {
+  width: 56%;
+  height: 56%;
+}
+
+.framer-stage--looking .framer-badge { display: none; }
+.framer-stage--clear .framer-badge { color: var(--great); }
+.framer-stage--hedged .framer-badge { color: var(--fair); }
+.framer-stage--refused .framer-badge { color: var(--work); }
+
+/* The countdown, a third of the picture wide: readable from the baseline, and
+   the voice says each second too. It was a bare span of body text before. */
+.framer-count {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 34cqw;
+  font-weight: var(--wt-title);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--lime);
+  text-shadow: 0 0 6cqw var(--scrim);
+  animation: framer-tick var(--fast) var(--ease-out);
+}
+
+@keyframes framer-tick {
+  from {
+    transform: scale(1.08);
+    opacity: 0.6;
+  }
+}
+
+/* The basket so far: one pip a serve, filled as `shouldStop` counts it. Filled
+   against empty is the difference, so it reads without colour. */
+.framer-pips {
+  position: absolute;
+  z-index: 1;
+  top: calc(max(8px, 2.6cqw) + 8px);
+  left: calc(max(8px, 2.6cqw) + 8px);
+  display: flex;
+  gap: max(5px, 1.4cqw);
+  padding: max(6px, 1.6cqw) max(8px, 2cqw);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--scrim) 78%, transparent);
+}
+
+.framer-pip {
+  width: max(12px, 3.4cqw);
+  height: max(12px, 3.4cqw);
+  border-radius: 50%;
+  border: max(2px, 0.7cqw) solid var(--fg);
+  transition: background-color var(--fast) var(--ease), border-color var(--fast) var(--ease);
+}
+
+.framer-pip.is-on {
+  background: var(--lime);
+  border-color: var(--lime);
+}
+
+.framer-cue {
+  font-size: 16px;
+  line-height: var(--lh-snug);
+  color: var(--fg);
+}
+
+.framer-cue .cue-key {
+  font-weight: var(--wt-key);
+}
+
+.framer-cue--clear .cue-key { color: var(--great); }
+.framer-cue--hedged .cue-key { color: var(--fair); }
+.framer-cue--refused .cue-key { color: var(--work); }
+
+/* What the next serves are for: a drill being checked, the next serve starting
+   by itself, or the placement a speed needs. One line, the icon beside it. */
+.framer-target {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+  line-height: var(--lh-snug);
+  color: var(--fg);
+}
+
+.framer-target svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--lime);
+}
+
+.framer-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Primary while idle, because pressing it is what this screen is for once the
+   framing reads clear. Amber-bordered while running rather than red: a
+   recording in progress is a state, not a fault, and this app spends red on
+   things the camera could not read. */
+.framer-record {
+  margin: 4px 0 2px;
+  background: var(--lime);
+  color: var(--lime-ink);
+  border: 1px solid transparent;
+}
+
+.framer-record--on {
+  background: transparent;
+  color: var(--fg);
+  border-color: var(--fair);
+}
+
+.framer-foot {
+  font-size: 12.5px;
+  line-height: 1.62;
+  color: var(--fg-faint);
+}
+
+/* ============================================================================
+   The glance, read from the walk back (C3)
+
+   One figure as big as the screen allows and one line under it: the speed if
+   there is one, otherwise the score. Sized by its own box, so the same rules
+   fill a phone on its side and sit smaller in a portrait glance.
+   ========================================================================= */
+
+.court-readout {
+  container-type: inline-size;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 18px 12px 20px;
+  border-radius: var(--r-lg);
+  background: var(--ink-1);
+  border: 1px solid var(--hairline);
+  text-align: center;
+}
+
+.court-readout-figure {
+  font-size: clamp(72px, 30cqw, 220px);
+  font-weight: var(--wt-title);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.045em;
+  line-height: 0.86;
+  /* Never a status colour: a speed is not graded, and the score's grade is
+     on the ring below. */
+  color: var(--fg);
+}
+
+.court-readout-unit {
+  margin-left: 0.12em;
+  font-size: 0.24em;
+  font-weight: var(--wt-key);
+  letter-spacing: 0;
+}
+
+.court-readout-line {
+  max-width: 24ch;
+  font-size: clamp(20px, 5.4cqw, 34px);
+  font-weight: var(--wt-key);
+  line-height: 1.2;
+  color: var(--fg);
+}
+
+.court-readout-line strong {
+  color: var(--lime);
+  font-weight: var(--wt-title);
+}
+
+/* The way back to the camera, counted down where a player walking back can
+   see it, with the tap that stops it right beside it. */
+.court-next {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 15px;
+  font-weight: var(--wt-key);
+  color: var(--fg);
+}
+
+/* A tilt correction on the preview would be a lie: the phone really is crooked
+   and the picture is what proves it. So nothing in the picture moves but the
+   countdown, and under reduced motion the global rule in tokens.css cuts that
+   and the band's change of colour to an instant. */

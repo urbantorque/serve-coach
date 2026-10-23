@@ -315,6 +315,14 @@ export interface ServeSpeed {
   depthAngle: number
   /** Read from a short track pinned to the toss (`SHORT_SAMPLES`). */
   pinned?: boolean
+  /**
+   * Where the struck ball was found, the samples the reading was fitted to (C6):
+   * real seconds, and frame heights from the top-left of the picture as filmed,
+   * x multiplied by the aspect as the pose landmarks are. Drawn on the replay so
+   * the speed is seen to come from somewhere. Four decimals: a tenth of a pixel
+   * on a 1080p frame, and a few hundred bytes a report.
+   */
+  path?: { t: number; x: number; y: number }[]
 }
 
 /**
@@ -1162,7 +1170,13 @@ function readingOf(track: StruckTrack, s: SpeedSetting): ServeSpeed | SpeedMiss 
   const high = hi * (1 + scale)
   if (Math.max(v - low, high - v) / v > MAX_SPREAD) return 'unsure'
   const span = track.samples[track.samples.length - 1].t - track.samples[0].t
-  return { ms: v, low, high, samples: track.samples.length, span, depthAngle, ...(track.impacts ? { pinned: true } : {}) }
+  const path = track.samples.map((p) => ({ t: round4(p.t), x: round4(p.x), y: round4(p.y) }))
+  return { ms: v, low, high, samples: track.samples.length, span, depthAngle, ...(track.impacts ? { pinned: true } : {}), path }
+}
+
+/** Four decimal places, for what is stored rather than computed with. */
+function round4(v: number): number {
+  return Math.round(v * 1e4) / 1e4
 }
 
 /** At most `n` of `xs`, evenly spread and keeping both ends. */

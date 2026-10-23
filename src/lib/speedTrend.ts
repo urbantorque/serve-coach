@@ -60,6 +60,19 @@ export function apart(now: Pick<SpeedSummary, 'low' | 'high'>, then: Pick<SpeedS
   return undefined
 }
 
+/**
+ * Each trip's typical first serve, oldest first (C5): the bars on Progress's
+ * speed chart, and the two newest of them are what `speedTrend` compares.
+ * Trips with too few readings are left out rather than drawn from one serve,
+ * and second serves stay out, as they do from the trend.
+ */
+export function speedByTrip(sessions: Session[], tags: readonly ServeTag[]): SpeedSummary[] {
+  const second = new Set(tags.filter((t) => t.serveNumber === 2).map((t) => t.id))
+  return tripsOf(sessions.filter((s) => !second.has(s.id)))
+    .map(summarise)
+    .filter((t): t is SpeedSummary => t !== undefined)
+}
+
 export interface SpeedTrend {
   direction: 'faster' | 'slower'
   now: SpeedSummary
@@ -72,10 +85,7 @@ export interface SpeedTrend {
  * nothing.
  */
 export function speedTrend(sessions: Session[], tags: readonly ServeTag[]): SpeedTrend | undefined {
-  const second = new Set(tags.filter((t) => t.serveNumber === 2).map((t) => t.id))
-  const trips = tripsOf(sessions.filter((s) => !second.has(s.id)))
-    .map(summarise)
-    .filter((t): t is SpeedSummary => t !== undefined)
+  const trips = speedByTrip(sessions, tags)
   if (trips.length < 2) return undefined
   const now = trips[trips.length - 1]
   const then = trips[trips.length - 2]

@@ -419,4 +419,32 @@ check('an empty preview says so and measures nothing', () => {
   assert(!r.yaw_measured && r.samples === 0, 'an empty preview claimed a measurement')
 })
 
+heading('Filming for a speed (C4)')
+
+check('standing far back in the speed placement is not told to move closer', () => {
+  const form = judgeFraming(reading({ issues: ['too-far-away'] }))
+  const speed = judgeFraming(reading({ issues: ['too-far-away'], placement: 'speed', aspect: 16 / 9 }))
+  assert(form.call === 'too-far', `the form placement said ${form.call}`)
+  assert(speed.call === 'ready' && speed.grade === 'clear', `the speed placement said ${speed.call}, ${speed.grade}`)
+  assert(/rougher/.test(speed.cue), 'the speed placement did not say what the distance costs')
+})
+
+check('the speed placement never lifts a refusal', () => {
+  // Wording, not thresholds: whatever the upload path would refuse, the
+  // viewfinder still refuses, wherever the phone was meant to stand.
+  for (const issues of [['nobody-visible'], ['hands-unseen', 'too-far-away'], ['feet-cropped', 'head-cropped']]) {
+    const form = judgeFraming(reading({ issues }))
+    const speed = judgeFraming(reading({ issues, placement: 'speed', aspect: 16 / 9 }))
+    assert(form.grade === 'refused' && speed.grade === 'refused', `${issues.join('+')}: form ${form.grade}, speed ${speed.grade}`)
+    assert(form.call === speed.call, `${issues.join('+')}: the call changed with the placement`)
+  }
+})
+
+check('an upright phone in the speed placement is told to turn it on its side, and only there', () => {
+  const upright = judgeFraming(reading({ placement: 'speed', aspect: 9 / 16 }))
+  assert(upright.call === 'speed-upright' && upright.grade === 'hedged', `upright for a speed: ${upright.call}`)
+  assert(judgeFraming(reading({ aspect: 9 / 16 })).call === 'ready', 'an upright phone filming the form was told to turn it')
+  assert(judgeFraming(reading({ placement: 'speed' })).call === 'ready', 'an unknown shape was guessed upright')
+})
+
 report()

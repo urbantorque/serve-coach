@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import Term from './Term'
 import { SPEED_SCALE, UNIT_LABEL, defaultSpeedUnit, speedFigures, type SpeedUnit } from '../lib/speedCopy'
 import { readPrefs, writePrefs } from '../lib/storage/prefs'
 import type { ServeSpeed } from '../lib/vision/serveSpeed'
+import '../styles/speed.css'
 
 /** The unit speeds are said in: the player's pick, or their locale's. */
 function useSpeedUnit(): [SpeedUnit, (unit: SpeedUnit) => void] {
@@ -53,7 +54,17 @@ export default function SpeedRow({ speed }: { speed: ServeSpeed }) {
       </p>
       {/* The band is the claim; the tick inside it is the best figure. */}
       <div className="speed-scale" aria-hidden="true">
-        <span className="speed-band" style={{ left: `${f.at.low * 100}%`, width: `${(f.at.high - f.at.low) * 100}%` }} />
+        <span
+          className="speed-band"
+          style={
+            {
+              left: `${f.at.low * 100}%`,
+              width: `${(f.at.high - f.at.low) * 100}%`,
+              // Where the best figure sits inside the band: the band grows out from it.
+              '--at': (f.at.best - f.at.low) / Math.max(1e-6, f.at.high - f.at.low),
+            } as CSSProperties
+          }
+        />
         <span className="speed-best" style={{ left: `${f.at.best * 100}%` }} />
       </div>
       <div className="speed-ends" aria-hidden="true">

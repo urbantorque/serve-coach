@@ -878,7 +878,24 @@ function usableSpeed(v: unknown): Session['speed'] {
   if (typeof o.miss === 'string') return MISSES.includes(o.miss) ? (o as Session['speed']) : undefined
   const r = o.speed
   const ok = r && ['ms', 'low', 'high', 'samples', 'span', 'depthAngle'].every((k) => typeof r[k] === 'number' && Number.isFinite(r[k] as number))
-  return ok && (r.low as number) <= (r.ms as number) && (r.ms as number) <= (r.high as number) ? (o as Session['speed']) : undefined
+  if (!ok || !((r.low as number) <= (r.ms as number) && (r.ms as number) <= (r.high as number))) return undefined
+  // The struck ball's path (C6) is a drawing aid: a damaged one is dropped and
+  // the reading kept, since nothing measured depends on it.
+  if (r.path !== undefined && !usablePath(r.path)) {
+    const { path: _dropped, ...rest } = r
+    void _dropped
+    return { speed: rest } as unknown as Session['speed']
+  }
+  return o as Session['speed']
+}
+
+/** A struck-ball path: a short list of finite points, or nothing. */
+function usablePath(v: unknown): boolean {
+  return (
+    Array.isArray(v) &&
+    v.length <= 64 &&
+    v.every((p) => p && typeof p === 'object' && ['t', 'x', 'y'].every((k) => Number.isFinite((p as Record<string, unknown>)[k])))
+  )
 }
 
 /* ------------------------------------------------------------ field repairs */

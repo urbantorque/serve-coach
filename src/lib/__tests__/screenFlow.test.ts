@@ -234,6 +234,8 @@ const HISTORY_CONSUMERS = [
   'fastestServe',
   'speedByServeNumber',
   'speedTrend',
+  // Every trip's typical first serve, the bars of the speed chart (C5).
+  'speedByTrip',
   // A second serve swung slower than the first (L5.8).
   'secondServeSlower',
   'rotationMoveOnTrip',

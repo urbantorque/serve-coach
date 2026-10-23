@@ -1,0 +1,165 @@
+/* ============================================================================
+   Serve speed, wherever it is drawn (N2.7, C5, C6)
+
+   Loaded with the speed row and the speed chart, never from main.tsx: the
+   entry sheet has no room left. A reading, not a grade, so no status colour
+   anywhere in this file. The range is drawn as width — the band — because a
+   range is how sure the reading is, and uncertainty in this app is a shape.
+   ========================================================================= */
+
+/* The serve's speed under the hero (N2.7). */
+.speed {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  max-width: 340px;
+  margin: 4px auto 0;
+  padding: 14px 16px 12px;
+  border-radius: var(--r-md);
+  background: var(--ink-1);
+  border: 1px solid var(--hairline);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+}
+
+.speed-head,
+.speed-ends {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.speed strong {
+  font-size: 34px;
+  font-weight: var(--wt-title);
+  color: var(--fg);
+}
+
+.speed-scale {
+  position: relative;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--ink-3);
+}
+
+.speed-scale span {
+  position: absolute;
+  inset: 0 auto;
+  min-width: 3px;
+  border-radius: var(--r-pill);
+  background: var(--fg-faint);
+}
+
+/* The band grows out from the best figure to its width (C5), so the range
+   reads as spread around the reading rather than a bar filling up to it. The
+   origin is where the best figure sits inside the band; the component passes
+   it as --at. Reduced motion is already an instant, globally. */
+.speed-band {
+  transform-origin: calc(var(--at, 0.5) * 100%) 50%;
+  animation: speed-settle 720ms var(--ease-out) both;
+}
+
+@keyframes speed-settle {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.speed .speed-best {
+  inset: -3px auto;
+  margin-left: -1.5px;
+  background: var(--fg);
+}
+
+.speed-ends {
+  font-size: 11px;
+}
+
+.speed-range {
+  font-size: 13px;
+}
+
+/* ============================================================================
+   Speed by trip, as ranges (C5)
+
+   One bar per trip, the likely range of its typical first serve, with a tick at
+   the best figure. Two trips are said to differ only when their bars do not
+   overlap — the rule `apart` keeps — so the picture and the sentence beside it
+   cannot disagree.
+   ========================================================================= */
+
+.speed-trips {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.speed-trips-grid {
+  stroke: var(--hairline-soft);
+  stroke-width: 1;
+}
+
+.speed-trips-axis {
+  font-size: 11px;
+  fill: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.speed-trips-bar {
+  fill: var(--ink-4);
+}
+
+.speed-trips-best {
+  stroke: var(--fg);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+/* The newest trip: the one light in the room. */
+.speed-trips-bar.is-now {
+  stroke: var(--lime);
+  stroke-width: 1.5;
+}
+
+.speed-trips-best.is-now {
+  stroke: var(--lime);
+}
+
+.speed-trips-axis.is-now {
+  fill: var(--fg);
+  font-weight: var(--wt-key);
+}
+
+/* ============================================================================
+   The struck ball on the replay (C6)
+
+   The reading on a plate where the ball left the racket: text in the DOM over
+   the canvas, so it is crisp, keeps the 11px floor and is read by a screen
+   reader, rather than drawn into pixels nobody can select.
+   ========================================================================= */
+
+.speed-tag {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  gap: 1px;
+  padding: 6px 10px 7px;
+  border-radius: var(--r-xs);
+  background: color-mix(in srgb, var(--ink) 82%, transparent);
+  pointer-events: none;
+  transform: translate(-50%, 12px);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+.speed-tag strong {
+  font-size: 17px;
+  font-weight: var(--wt-title);
+  line-height: 1.1;
+}
+
+.speed-tag span {
+  font-size: 11px;
+  color: var(--fg);
+}

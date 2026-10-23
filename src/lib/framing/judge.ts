@@ -77,7 +77,18 @@ export interface FramingReading {
   yaw_measured: boolean
   /** How many preview frames went into the above. */
   samples: number
+  /**
+   * What the player is filming for (C4). Absent is `form`, the placement the
+   * filming guide draws. `speed` is `SPEED_PLACEMENT`: six to seven metres back
+   * with the phone on its side, so the ball stays in the picture after the hit.
+   */
+  placement?: Placement
+  /** The preview's width over its height, when known: below 1 the phone is upright. */
+  aspect?: number
 }
+
+/** The two places the phone can stand, and what each one is for. */
+export type Placement = 'form' | 'speed'
 
 /**
  * Everything this can say.
@@ -97,6 +108,7 @@ export type FramingCall =
   | 'body-unclear'
   | 'head-cropped'
   | 'feet-cropped'
+  | 'speed-upright'
   | 'too-far'
   | 'turn-off-square'
   | 'off-vertical'
@@ -193,6 +205,17 @@ const RANKING: {
     fires: (r) => r.issues.includes('feet-cropped'),
   },
   {
+    // Filming for a speed with the phone upright (C4). Portrait reads a speed on
+    // about none of the clips the bench has tried: the struck ball is out of the
+    // side of the picture in two or three frames. The clip still analyses, so
+    // hedged, and above `too-far`, because it is the one thing standing between
+    // this placement and the reading it was chosen for.
+    call: 'speed-upright',
+    grade: 'hedged',
+    say: '**Turn the phone on its side** for a speed. Upright, the ball leaves the picture before I can time it.',
+    fires: (r) => r.placement === 'speed' && r.aspect !== undefined && r.aspect < 1,
+  },
+  {
     // Standing small in frame. Below the crops on purpose: every measurement in
     // the report is a ratio of the player's own body, so distance costs
     // sharpness rather than moving the ruler. It refuses only when it takes the
@@ -200,7 +223,12 @@ const RANKING: {
     call: 'too-far',
     grade: 'hedged',
     say: '**Move the phone closer** until your body fills the frame height.',
-    fires: (r) => r.issues.includes('too-far-away'),
+    // Not in the speed placement, which is far on purpose (C4). The cost does
+    // not go away — the report still hedges what distance blurs — so the speed
+    // placement's own ready line says it instead of this one asking the player
+    // to undo the placement they chose. It never refuses either way: a body too
+    // small to find the hands is `hands-unseen`, which stays.
+    fires: (r) => r.issues.includes('too-far-away') && r.placement !== 'speed',
   },
   /*
    * No row for dead side-on (L1.10). There was one — "Move the phone a step
@@ -255,6 +283,9 @@ const RANKING: {
 /** What the good state says. Kept beside the table so the editor sees them together. */
 const READY_CUE = '**Film from here.** The camera can read your whole body and the angle.'
 
+/** The good state in the speed placement (C4), saying what the distance costs. */
+const SPEED_READY_CUE = '**Film from here.** Keep the net side clear for the ball, and expect rougher swing readings from this far.'
+
 /** And what it says before there is anything to judge. */
 const LOOKING_CUE = '**Stand where you will serve** and hold still while I look.'
 
@@ -289,7 +320,7 @@ export function judgeFraming(r: FramingReading): FramingVerdict {
 
   const fired = RANKING.filter((row) => row.fires(r))
   if (!fired.length) {
-    return { call: 'ready', grade: 'clear', cue: cue(READY_CUE), also: [] }
+    return { call: 'ready', grade: 'clear', cue: cue(r.placement === 'speed' ? SPEED_READY_CUE : READY_CUE), also: [] }
   }
 
   const [worst, ...rest] = fired
@@ -307,6 +338,7 @@ export function judgeFraming(r: FramingReading): FramingVerdict {
 export const everyFramingCue = (): string[] => [
   LOOKING_CUE,
   READY_CUE,
+  SPEED_READY_CUE,
   ...RANKING.map((row) => row.say),
 ]
 
