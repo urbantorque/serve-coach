@@ -15,6 +15,7 @@ import FixedPair from '../components/FixedPair'
 import TermCue from '../components/TermCue'
 import type { Session } from '../lib/storage/db'
 import { readPrefs } from '../lib/storage/prefs'
+import { onCourtDefault } from '../lib/framing/handsFree'
 import { defaultSpeedUnit, speedFigures, speedGlanceLine, speedSpokenLine } from '../lib/speedCopy'
 import '../styles/court.css'
 
@@ -207,11 +208,14 @@ export default function Glance({
   const prefs = readPrefs()
   const unit = prefs.speedUnit ?? defaultSpeedUnit()
   const reading = analysis.speed && 'speed' in analysis.speed ? speedFigures(analysis.speed.speed, unit) : undefined
-  const court = Boolean(prefs.handsFree) && !refusal
+  // The viewfinder's own default (Q6): a phone player who never set hands-free
+  // filmed with it on, so this screen has to be read from the fence too.
+  const handsFree = prefs.handsFree ?? onCourtDefault()
+  const court = handsFree && !refusal
 
   // And then back to the camera, counted down where it can be seen, with any
   // touch of this screen — a tag, a scroll — keeping it here instead.
-  const [backIn, setBackIn] = useState<number | null>(() => (prefs.handsFree && onRecordAnother ? BACK_TO_CAMERA_S : null))
+  const [backIn, setBackIn] = useState<number | null>(() => (handsFree && onRecordAnother ? BACK_TO_CAMERA_S : null))
   const recordAnotherRef = useRef(onRecordAnother)
   recordAnotherRef.current = onRecordAnother
   useEffect(() => {
@@ -297,6 +301,14 @@ export default function Glance({
             </div>
           )}
           {court && nextRow}
+          {/* The next serve, under the figure rather than under every tag and
+              chip on the screen (Q8). It is what the walk back is for. */}
+          {court && onRecordAnother && (
+            <button className="btn btn--primary btn--full" onClick={onRecordAnother}>
+              <Icon name="camera" size={18} />
+              Record another
+            </button>
+          )}
 
           {/* The number the report leads with, at the size the report gives it.
               Somebody glancing at a phone propped on a fence is reading this
@@ -394,13 +406,15 @@ export default function Glance({
               )}
             </div>
           )}
-          {stepPair && <FixedPair then={stepPair.then} now={stepPair.now} title="That step, then and now" />}
+          {/* Two figures side by side are a screen to study, not a glance from
+              the fence (Q8): in court mode they wait for "Show me everything". */}
+          {stepPair && !court && <FixedPair then={stepPair.then} now={stepPair.now} title="That step, then and now" />}
 
           {/* The racket against the last serve. Same class, same shape, and the
               neutral icon in both directions on purpose: nothing grades this
               reading, so laying back further is not a tick and less is not a
               warning. */}
-          {rotationLine && (
+          {rotationLine && !court && (
             <p className="glance-move">
               <Icon name="info" size={15} />
               <span>{rotationLine}</span>
@@ -441,12 +455,11 @@ export default function Glance({
         held at arm's length.
 
         ZERO NEW CSS, which is constraint 3 taken literally rather than argued
-        with. `.glance-actions` is this screen's own button layout — a flex
-        column with the gap already chosen — and `t-overline` is the label class
-        the score row uses. Two stacked ghost buttons is not the tightest layout
-        anybody could draw for a two-way choice, and a two-across row would need
-        a class this stylesheet does not have. On a phone held at arm's length,
-        full-width targets are the better trade anyway.
+        with. `.glance-actions` is this screen's own button layout, `t-overline`
+        the label class the score row uses, and the chips are the landing row's
+        own (`.reading-chips`, `.chip--button` with its 44px press). They were
+        two stacked full-width buttons until Q8, which made a two-way tap most
+        of a screen on the one screen that is read between serves.
 
         `aria-pressed` carries the state rather than colour alone — the gap R21
         closed elsewhere in this app, applied here while writing rather than in a
@@ -455,16 +468,20 @@ export default function Glance({
       {onTagServe && (
         <div className="glance-actions">
           <span className="t-overline">Which serve was it?</span>
-          {([1, 2] as const).map((n) => (
-            <button
-              key={n}
-              className="btn btn--ghost btn--full"
-              aria-pressed={serveNumber === n}
-              onClick={() => onTagServe(serveNumber === n ? undefined : n)}
-            >
-              {SERVE_NUMBER_LABEL[n]}
-            </button>
-          ))}
+          {/* One row of chips since Q8, as the landing below has always been:
+              two full-width buttons were most of a screen for a two-way tap. */}
+          <div className="reading-chips">
+            {([1, 2] as const).map((n) => (
+              <button
+                key={n}
+                className="chip chip--button"
+                aria-pressed={serveNumber === n}
+                onClick={() => onTagServe(serveNumber === n ? undefined : n)}
+              >
+                {SERVE_NUMBER_LABEL[n]}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -546,7 +563,7 @@ export default function Glance({
 
       <footer className="glance-actions">
         {!court && nextRow}
-        {onRecordAnother && (
+        {onRecordAnother && !court && (
           <button className="btn btn--primary btn--full" onClick={onRecordAnother}>
             <Icon name="camera" size={18} />
             Record another

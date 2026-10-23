@@ -553,6 +553,47 @@ check('the glance renders', () => {
   assert(out.includes('Show me everything'), 'the glance lost its way out')
 })
 
+/** Render with these prefs in storage, and the window a phone or a desk would have. */
+function withPrefs<T>(prefs: object | undefined, coarse: boolean, run: () => T): T {
+  const g = globalThis as { localStorage?: unknown; window?: unknown }
+  const had = { storage: 'localStorage' in g, window: 'window' in g }
+  const before = { storage: g.localStorage, window: g.window }
+  g.localStorage = { getItem: () => (prefs ? JSON.stringify(prefs) : null), setItem: () => {}, removeItem: () => {} }
+  g.window = { matchMedia: (q: string) => ({ matches: coarse && q === '(pointer: coarse)' }) }
+  try {
+    return run()
+  } finally {
+    if (had.storage) g.localStorage = before.storage
+    else delete g.localStorage
+    if (had.window) g.window = before.window
+    else delete g.window
+  }
+}
+
+check('on court, the next serve sits under the figure, not under every tag (Q8)', () => {
+  const props = { analysis: sampleAnalysis(), onOpenReport: noop, onBack: noop, onRecordAnother: noop, onTagServe: noop, onTagOutcome: noop }
+  const court = withPrefs({ handsFree: true }, false, () => html(createElement(Glance, props)))
+  assert(court.includes('court-readout'), 'hands-free did not open the court glance')
+  assert((court.match(/Record another/g) ?? []).length === 1, 'the next serve is offered twice, or not at all')
+  assert(court.indexOf('Record another') < court.indexOf('Which serve was it?'), 'the next serve is still under the tags')
+  const desk = withPrefs({ handsFree: false }, false, () => html(createElement(Glance, props)))
+  assert(!desk.includes('court-readout'), 'a glance with hands-free off opened in court mode')
+  assert(desk.indexOf('Record another') > desk.indexOf('Where did it land?'), 'the footer lost its order off court')
+})
+
+check("a phone player who never set hands-free gets the court glance, as the viewfinder filmed (Q8)", () => {
+  const props = { analysis: sampleAnalysis(), onOpenReport: noop, onBack: noop, onRecordAnother: noop }
+  assert(withPrefs(undefined, true, () => html(createElement(Glance, props))).includes('court-readout'), 'the phone default stopped at the viewfinder')
+  assert(!withPrefs(undefined, false, () => html(createElement(Glance, props))).includes('court-readout'), 'a desk opened in court mode')
+})
+
+check('which serve it was is one row of chips, like the landing (Q8)', () => {
+  const out = html(createElement(Glance, { analysis: sampleAnalysis(), onOpenReport: noop, onBack: noop, onTagServe: noop }))
+  const tags = out.slice(out.indexOf('Which serve was it?'))
+  assert(/class="reading-chips"/.test(tags), 'the serve tags are not a chip row')
+  assert(!/btn--full[^>]*aria-pressed/.test(tags.slice(0, 600)), 'a serve tag is still a full-width button')
+})
+
 check('the glance sets the score against the last serve, on the line the camera sets', () => {
   // Inside the camera's own move: the dash, and the plain caption.
   const same = html(

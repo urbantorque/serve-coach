@@ -3878,7 +3878,7 @@ the vibration were checked in desktop Chrome with a fake camera.
       report the timeline sits far from the player, so a synced playhead buys
       little until the two share a screen.
 
-## Review fixes (Q1–Q7) — 2026-10-23
+## Review fixes (Q1–Q8) — 2026-10-23
 
 From the graded review of 2026-10-23: three small fixes a first player hits on
 the report and in the filming guide. Each was proved by machine and looked at
@@ -3971,3 +3971,15 @@ on its own branch (Q4).
         `wordsInChrome.test.ts` now holds `.seg-item`, `.framer-cue` and
         `.framer-foot` to the readable-label rule. Measured in the browser with
         touch emulation and a fake camera; not run on a phone in sunlight.
+- [x] **Q8 A glance for the walk back** · S.
+      - *Done:* 2026-10-23. In court mode "Record another" sits under the
+        figure and the fix, not under the serve, landing and set taps; the
+        footer drops its copy there. The racket-rotation line and the step's
+        then-and-now figure wait for "Show me everything" in court mode. The
+        serve-type tag is one row of the landing's chips in both modes, not two
+        full-width buttons. And a gap Q6 left: the glance read hands-free as
+        `Boolean(prefs.handsFree)`, so a phone player on the new default
+        filmed hands-free and got neither court mode nor the walk back to the
+        camera. It reads `prefs.handsFree ?? onCourtDefault()` now. Three
+        checks in `render.test.ts`, and the court glance checked on
+        `?demo=glance` with touch emulation.

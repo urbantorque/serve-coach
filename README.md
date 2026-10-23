@@ -1050,7 +1050,11 @@ measurements on a court. From that follow:
   never re-arms. A basket then needs no tap at all.
 - **The glance has a court mode.** With hands-free on, it opens on one figure as
   big as the box allows: the speed if one was read, otherwise the score. The fix
-  sits under it as one line. The glance read aloud now starts with the speed, in
+  sits under it as one line, and since Q8 "Record another" sits right under
+  that, not at the foot of every tag. The racket-rotation line and the
+  then-and-now figure wait for "Show me everything" in court mode, and the
+  serve-type tag is one row of chips. Hands-free here follows the viewfinder's
+  default (`onCourtDefault`), so a phone player who never set it still gets it. The glance read aloud now starts with the speed, in
   words ("about 130 kilometres an hour"), because voices read "km/h" unevenly.
 - **The viewfinder knows which placement it is judging** ("Your swing" or "A
   speed", kept in prefs). In the speed placement, `too-far` does not fire,
