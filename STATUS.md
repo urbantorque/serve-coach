@@ -48,6 +48,18 @@ in that folder under the same names.
   speed by trip as range bars, and the replay draws the struck ball. None of it
   has run on a phone yet.
 
+- **Review fixes (Q1–Q8).** From the graded review of 2026-10-23:
+  - The report's headline is the fix, with "Rough read" beside the score when
+    the read is soft, and one first priority per page.
+  - The installed app turns with the phone.
+  - The coil is shown, not scored, and the open chest has its own band.
+  - A test holds every graded band to the camera's noise on it. Arm extension
+    is the one known exception.
+  - On a phone the viewfinder starts hands-free with the voice on, offers the
+    camera app where the preview cannot start, and is readable from the
+    baseline.
+  - The court glance puts "Record another" under the figure.
+
 ## What is open
 
 - **The pose worker as the default.** Every pose read in the analysis goes
@@ -82,7 +94,7 @@ Work is on `roadmap/market-ready`, and its ledger is `ROADMAP.md`: the Notch
 programme (N0–N5) and the Lift programme (M0–M5), with one order of play at
 the end of the Notch section. Pick the first open item there.
 
-The suite runs **1,940 checks** (2026-10-23). The last loop tag is
+The suite runs **1,952 checks** (2026-10-23). The last loop tag is
 `loop-green-15`, from the August loop.
 
 Before trusting a size figure, run `npm run build`: `bundle.test.ts` reads
