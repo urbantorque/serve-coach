@@ -3878,7 +3878,7 @@ the vibration were checked in desktop Chrome with a fake camera.
       report the timeline sits far from the player, so a synced playhead buys
       little until the two share a screen.
 
-## Review fixes (Q1–Q5) — 2026-10-23
+## Review fixes (Q1–Q6) — 2026-10-23
 
 From the graded review of 2026-10-23: three small fixes a first player hits on
 the report and in the filming guide. Each was proved by machine and looked at
@@ -3947,3 +3947,16 @@ on its own branch (Q4).
         and is named on at most 2.5% of noisy skilled takes
         (`trackerNoise.test.ts`). A toss that isn't in front is already named
         at contact as `contact_behind`, on a cited band, with its own ladder.
+- [x] **Q6 On court by default, and no dead end without a preview** · S.
+      - *Done:* 2026-10-23. On a touch screen, hands-free and "Read it aloud"
+        start on for a player who has set neither (`onCourtDefault` in
+        `handsFree.ts`); a saved setting wins either way, and nothing is
+        written until the player changes one. Speech is still unlocked by the
+        record tap. Where the preview is unsupported, refused, unknown or has
+        no camera, the viewfinder offers "Film with your camera app": the sheet
+        closes and Home's `capture` input opens. A busy camera or a coach still
+        downloading gets no such offer, because the camera app would not help.
+        Three checks in `handsFree.test.ts`. Checked in the browser with touch
+        emulation: both toggles on and "Start hands-free" with a fake camera,
+        and the button closing the sheet and opening the camera input when
+        the camera is refused. Not run on a phone.

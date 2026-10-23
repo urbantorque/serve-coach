@@ -24,6 +24,7 @@ import {
   SERVE_COUNTS,
   countdownWord,
   handSample,
+  onCourtDefault,
   shouldRearm,
   shouldStop,
   speakVerdict,
@@ -127,12 +128,21 @@ interface Props {
    * works and takes over.
    */
   rearm?: boolean
+  /**
+   * Open the phone's own camera app instead (Q6), offered where the preview
+   * cannot start. The cue said "film with your camera app" with nothing to tap,
+   * so a blocked preview was a dead end on the one screen built for the court.
+   */
+  onCameraApp?: () => void
 }
+
+/** Blocks the camera app gets round. Not a busy camera, and not a coach still downloading. */
+const CAMERA_APP_HELPS = new Set(['unsupported', 'denied', 'missing', 'unknown'])
 
 /** Hand samples kept for the re-arm check: comfortably more than `REARM_S` of them. */
 const REARM_WINDOW_S = 6
 
-export default function FramingCheck({ onRecorded, target, rearm = false }: Props) {
+export default function FramingCheck({ onRecorded, target, rearm = false, onCameraApp }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   // Mounted only while the viewfinder is open, and that is a phone propped on
   // a fence while its owner walks to the baseline — the screen must not lock.
@@ -175,9 +185,13 @@ export default function FramingCheck({ onRecorded, target, rearm = false }: Prop
    * Hands-free and the voice (N1.1, N1.2): kept in prefs, so a player who
    * films from the fence every time sets them once. A drill check defaults to
    * six serves, the basket its bar is out of.
+   *
+   * On by default on a phone (`onCourtDefault`, Q6) until the player sets
+   * either: off, they were four decisions away and most players met the court
+   * without them. A player's own choice, either way, still wins.
    */
-  const [handsFree, setHandsFree] = useState(() => Boolean(readPrefs().handsFree))
-  const [speak, setSpeak] = useState(() => Boolean(readPrefs().speakFraming))
+  const [handsFree, setHandsFree] = useState(() => readPrefs().handsFree ?? onCourtDefault())
+  const [speak, setSpeak] = useState(() => readPrefs().speakFraming ?? onCourtDefault())
   const [serveCount, setServeCount] = useState<ServeCount>(() => (target ? 6 : (readPrefs().handsFreeServes ?? 1)))
   const [countdown, setCountdown] = useState<number | null>(null)
   const countdownRef = useRef<number | null>(null)
@@ -195,7 +209,7 @@ export default function FramingCheck({ onRecorded, target, rearm = false }: Prop
   const [served, setServed] = useState(0)
   const servedRef = useRef(0)
   /** Waiting for the player to stand ready before starting on its own (C3). */
-  const [rearming, setRearming] = useState(() => rearm && Boolean(readPrefs().handsFree))
+  const [rearming, setRearming] = useState(() => rearm && (readPrefs().handsFree ?? onCourtDefault()))
   const rearmingRef = useRef(rearming)
   rearmingRef.current = rearming
   const rearmSamplesRef = useRef<HandSample[]>([])
@@ -587,6 +601,12 @@ export default function FramingCheck({ onRecorded, target, rearm = false }: Prop
         <p className="framer-cue framer-cue--blocked" role="status">
           <Cue text={PREVIEW_BLOCK_CUE[block]} />
         </p>
+        {onCameraApp && CAMERA_APP_HELPS.has(block) && (
+          <button type="button" className="btn btn--full framer-record" onClick={onCameraApp}>
+            <Icon name="camera" size={17} />
+            Film with your camera app
+          </button>
+        )}
         <p className="framer-foot">
           Filming with your own camera app works the same. Either way the framing gets checked
           on the clip; this moves that check earlier.

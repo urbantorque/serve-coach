@@ -16,12 +16,15 @@ import {
   WALKED_OFF_S,
   countdownWord,
   handSample,
+  onCourtDefault,
   shouldRearm,
   shouldStop,
   speakVerdict,
   spoken,
   type HandSample,
 } from '../handsFree'
+// @ts-expect-error - node's fs, and this project carries no @types/node
+import fsUntyped from 'fs'
 import { cueIssues } from '../../analysis/voice'
 import { assert, check, heading, note, report } from '../../analysis/__tests__/harness'
 
@@ -189,6 +192,43 @@ check('a verdict is spoken when it changes, and never twice inside the gap', () 
 check('a spoken cue loses its bold markers and stays a plain sentence', () => {
   const line = spoken('**Film from here.** The camera can read your whole body and the angle.')
   assert(!line.includes('*') && cueIssues(line).length === 0, line)
+})
+
+heading('On court by default (Q6)')
+
+const fs = fsUntyped as { readFileSync: (p: string, e: 'utf8') => string }
+
+check('hands-free and the voice start on with a touch screen, and off without one', () => {
+  const g = globalThis as { window?: unknown }
+  const had = 'window' in g
+  const before = g.window
+  try {
+    g.window = { matchMedia: (q: string) => ({ matches: q === '(pointer: coarse)' }) }
+    assert(onCourtDefault(), 'a phone did not start on court')
+    g.window = { matchMedia: () => ({ matches: false }) }
+    assert(!onCourtDefault(), 'a desktop started hands-free')
+    g.window = {}
+    assert(!onCourtDefault(), 'a browser with no media queries started hands-free')
+  } finally {
+    if (had) g.window = before
+    else delete g.window
+  }
+  assert(!onCourtDefault(), 'no window at all started hands-free')
+})
+
+check("the player's own setting wins over the default, both ways", () => {
+  const src = fs.readFileSync('src/components/FramingCheck.tsx', 'utf8')
+  assert(src.includes('readPrefs().handsFree ?? onCourtDefault()'), 'hands-free does not fall back only when unset')
+  assert(src.includes('readPrefs().speakFraming ?? onCourtDefault()'), 'the voice does not fall back only when unset')
+  assert(!src.includes('Boolean(readPrefs().handsFree)'), 'an unset hands-free still reads as off somewhere')
+})
+
+check('a blocked preview offers the camera app, and home wires it to the camera input', () => {
+  const framer = fs.readFileSync('src/components/FramingCheck.tsx', 'utf8')
+  const home = fs.readFileSync('src/screens/Home.tsx', 'utf8')
+  assert(/onCameraApp && CAMERA_APP_HELPS\.has\(block\)/.test(framer), 'the blocked state has no camera-app button')
+  assert(framer.includes('Film with your camera app'), 'the button does not say what it opens')
+  assert(/onCameraApp=\{\(\) => \{\s*setChecking\(false\)\s*recordRef\.current\?\.click\(\)/.test(home), 'home does not open the camera input from it')
 })
 
 report()

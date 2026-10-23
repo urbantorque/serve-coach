@@ -1034,6 +1034,14 @@ measurements on a court. From that follow:
   The tones are made with an oscillator on the device and unlocked by the record
   tap, as speech is on iOS. They are never the only signal. A tap in the hand
   vibrates where the browser can, which is Chrome on Android.
+- **On court by default (Q6).** On a touch screen, hands-free and "Read it
+  aloud" start on until the player sets either (`onCourtDefault`), and their own
+  setting wins from then on. Off by default, the two that make the viewfinder
+  usable from the baseline were four decisions away. Where the preview cannot
+  start (unsupported, refused, no camera found), the viewfinder offers "Film
+  with your camera app", which closes the sheet and opens the phone's camera
+  through the same input as the blind "Record now". The cue used to say it with
+  nothing to tap.
 - **The next serve can start by itself.** With hands-free on, the glance goes
   back to the camera after `BACK_TO_CAMERA_S`, shown with a "Stay here" button,
   and any touch keeps it. The viewfinder opened that way waits for

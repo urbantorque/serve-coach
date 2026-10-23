@@ -820,6 +820,12 @@ export default function Home({
           <FramingCheck
             target={checkTarget}
             rearm={rearm}
+            // The sheet closes first, so the camera this page held is free for
+            // the camera app; the click stays inside the player's tap.
+            onCameraApp={() => {
+              setChecking(false)
+              recordRef.current?.click()
+            }}
             onRecorded={
               onRecorded &&
               ((file) => {

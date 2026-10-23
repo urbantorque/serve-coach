@@ -43,6 +43,14 @@ export const RECORDING_INTERVAL_MS = 350
  */
 export const RECORDING_DUTY = 0.25
 
+/**
+ * Whether hands-free and the voice start on for a player who has set neither
+ * (Q6): on a phone, yes. A phone in the viewfinder is a phone propped at the
+ * court, and the two together are what make it usable from the baseline.
+ */
+export const onCourtDefault = (): boolean =>
+  typeof window !== 'undefined' && Boolean(window.matchMedia?.('(pointer: coarse)').matches)
+
 /** The serve counts a hands-free recording can be set to stop after. */
 export const SERVE_COUNTS = [1, 6] as const
 export type ServeCount = (typeof SERVE_COUNTS)[number]
