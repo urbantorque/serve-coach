@@ -65,6 +65,25 @@ from. Getting it wrong does not produce a broken layout, it produces an app that
 cannot load its model and so cannot do anything at all — which is why it is one
 setting rather than four.
 
+**Trying it on your phone without a host.** Plain `http://` to this computer's
+address is not a secure context on a phone, so the camera preview, the service
+worker and installing all refuse to start. Serve the build over HTTPS instead:
+
+```bash
+npm run build
+```
+
+```bash
+npm run preview:lan
+```
+
+It prints `https://<this computer>:5280/`, and, the first time, a plain page on
+port 5281 that hands the phone a certificate authority to trust once (Android
+and iPhone steps are on the page). That authority lives in
+`~/.serve-coach/lan-cert`, outside the synced project, and is name-constrained
+to private addresses, so it can never vouch for a website. The certificate for
+this computer is reissued on every run, so a changed address just works.
+
 **Adding it to the home screen is not cosmetic.** On iOS an installed app is
 exempt from Safari's seven-day clearance of site storage; a bookmarked one is
 not. That exemption is the difference between a training history that survives

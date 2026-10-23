@@ -67,6 +67,14 @@ in that folder under the same names.
     gzip and 341.55 of 385 kB raw, so Home has about 16 kB gzip of room.
     `entryGraph.test.ts` fails if the entry reaches the engine again.
 
+- **A phone on the same network, over HTTPS.** `npm run preview:lan` serves
+  the build with a certificate the phone trusts once, from an authority
+  limited to private addresses, so the camera, the service worker and install
+  work off localhost (README, "Trying it on your phone without a host").
+  Proved with `openssl verify` against the LAN address and in Chrome on that
+  address: a secure context, the worker active, the camera open. Not yet
+  installed on a phone.
+
 ## What is open
 
 - **The pose worker as the default.** Every pose read in the analysis goes
@@ -101,7 +109,7 @@ Work is on `roadmap/market-ready`, and its ledger is `ROADMAP.md`: the Notch
 programme (N0–N5) and the Lift programme (M0–M5), with one order of play at
 the end of the Notch section. Pick the first open item there.
 
-The suite runs **1,957 checks** (2026-10-23). The last loop tag is
+The suite runs **1,961 checks** (2026-10-23). The last loop tag is
 `loop-green-15`, from the August loop.
 
 Before trusting a size figure, run `npm run build`: `bundle.test.ts` reads

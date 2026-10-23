@@ -36,6 +36,25 @@
         "--strictPort"
       ],
       "port": 5190
+    },
+    {
+      "name": "serve-coach-lan",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "preview:lan"
+      ],
+      "port": 5280,
+      "url": "https://localhost:5280"
+    },
+    {
+      "name": "serve-coach-isolated",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "set ISOLATE=1&& npx vite --port 5184 --strictPort"
+      ],
+      "port": 5184
     }
   ]
 }

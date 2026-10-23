@@ -10,6 +10,7 @@
     "prebuild": "node scripts/fetch-assets.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
+    "preview:lan": "node scripts/lan-preview.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "node scripts/run-tests.mjs",

@@ -129,8 +129,20 @@ function serveOrtRaw(): Plugin {
   }
 }
 
+/**
+ * HTTPS for a phone on the same network, set only by `npm run preview:lan`
+ * (`scripts/lan-preview.mjs`), which issues the certificate and says how the
+ * phone comes to trust it. Without it a phone gets plain HTTP, and plain HTTP
+ * off localhost has no camera preview, no service worker and no install.
+ */
+const lanTlsDir = process.env.LAN_TLS_DIR
+const lanTls = lanTlsDir
+  ? { key: readFileSync(`${lanTlsDir}/lan-key.pem`), cert: readFileSync(`${lanTlsDir}/lan-cert.pem`) }
+  : undefined
+
 export default defineConfig({
   base,
+  ...(lanTls ? { server: { https: lanTls }, preview: { https: lanTls } } : {}),
   // Every engine file and its size, read off `public/` now (L6.1): the one
   // download bar and the size the home screen states both come from this.
   define: {
