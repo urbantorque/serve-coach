@@ -1267,6 +1267,14 @@ this serve's first fix, the rule Home already applied to "Working on". Before,
 a card naming the second fix (or none) sat under "Work on this next" as a
 second "Practise this". The card is still on Progress when it disagrees.
 
+Since Q9 Home says the week once. "Today on court" sat above "This week" and
+listed the same drills again with their minutes. Now "This week" carries the
+length (30, 45 or 60 minutes), each drill's share of it ("13 min today"), and
+the warm-up, filmed check and free serves as the lines around the list, in the
+order the hit runs (`courtPlan`). The court card and the calendar load late
+(`TodayPlan`), and so does the form card's body-position best (`BodyBest`),
+which made room in the entry chunk for the minutes.
+
 **The fix is the headline (Q1).** The report's `h1` used to be one of four
 stock phrases for the score's band ("Good bones, a few gaps"), and the fix
 started most of a screen further down. The fix is the headline now, under

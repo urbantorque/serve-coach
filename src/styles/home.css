@@ -494,7 +494,22 @@ button.badge[disabled] {
   font-variant-numeric: tabular-nums;
 }
 
-/* Today on court (N1.6). */
+/* Today on court (N1.6), inside This week since Q9: the length, the lines
+   around the drills, and the two court tools under them. */
+.week-length {
+  width: fit-content;
+  margin-bottom: 12px;
+}
+
+.week-list + .today-list {
+  margin-top: 12px;
+}
+
+.today {
+  display: grid;
+  gap: 8px;
+}
+
 .today-list {
   display: grid;
   gap: 8px;

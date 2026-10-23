@@ -518,6 +518,34 @@ check('each week-plan item can be checked straight from home, where the app can 
   assert(!cannot.includes('Check this drill'), 'a check was offered where nothing can record')
 })
 
+check("home says the week once: today's minutes sit on the drills, not in a second list (Q9)", () => {
+  const last = stored(sampleAnalysis(DEMO_DIALS.injury))
+  const out = html(
+    createElement(Home, {
+      sessions: [last, { ...last, id: 'serve-older-0', createdAt: last.createdAt - 2 * 86_400_000 }],
+      offlineReady: true,
+      sessionsLoaded: true,
+      onPick: noop,
+      onOpen: noop,
+      onShowGuide: noop,
+      onShowHistory: noop,
+      onShowSettings: noop,
+      onShowProgress: noop,
+      onGuideThen: noop,
+      onShowExample: noop,
+      needsHandedness: false,
+      onMakeOffline: noop,
+    }),
+  )
+  assert(out.includes('This week'), 'the seeded season has no plan')
+  assert(!out.includes('Today on court'), 'the week is still listed twice')
+  assert(/min today/.test(out), 'the drills do not carry their minutes')
+  assert(out.includes('45 min') && out.includes('Warm up with easy serves'), 'the length or the warm-up went missing')
+  const at = (s: string) => out.indexOf(s)
+  assert(at('Warm up with easy serves') < at('week-list') && at('week-list') < at('Serve freely'), 'the hit is not in the order it runs')
+  assert(!/<strong>[^<]+<\/strong>: \d+ (tosses|serves|reps)/.test(out), 'a drill is named again in the timed lines')
+})
+
 check('home knows a returning player: a compact hero, then This week and the form, before the straps (L4.10)', () => {
   const last = stored(sampleAnalysis(DEMO_DIALS.injury))
   const older = (n: number) => ({ ...stored(sampleAnalysis({ seed: 40 + n })), id: `serve-old${n}-0`, createdAt: last.createdAt - n * 3 * 86_400_000 })
@@ -955,16 +983,16 @@ check('a step passed draws the fault then and now; nothing is drawn without both
   assert(beforeAfter([then, now], flaw!, 10_000) === undefined, 'a pair was drawn with nothing since the change')
 })
 
-check("today's plan lays the week out in minutes, with a court card for the first drill (N1.6, N1.7)", () => {
+check("today's tools: a court card for the first drill, and the week in the calendar (N1.6, N1.7, Q9)", () => {
   const week = {
     from: {},
     items: [{ title: 'Toss', flaw: 'toss_height', drill: { name: 'Toss and point', how: 'Toss and point.', reps: '15 tosses' }, check: 'Twelve of fifteen.' }],
     graduated: [],
   } as unknown as Parameters<typeof TodayPlan>[0]['week']
-  const out = html(createElement(TodayPlan, { week }))
-  assert(out.includes('Today on court') && out.includes('45 min'), 'the plan or its default length is missing')
-  assert(out.includes('Toss and point: 15 tosses'), "the first drill is not in today's plan")
+  const out = html(createElement(TodayPlan, { week, minutes: 45 }))
   assert(out.includes('Open the court card'), 'no way to the court card')
+  assert(out.includes('Add to calendar'), 'no way to the calendar')
+  assert(!out.includes('Toss and point'), 'the tools named the drill again')
 })
 
 check('a basket\'s drill check leads the focus card, above the drill (N4.2)', () => {

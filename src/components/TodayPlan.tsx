@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Icon } from './primitives'
-import { COURT_MINUTES, courtPlan, type CourtMinutes } from '../lib/courtPlan'
+import type { CourtMinutes } from '../lib/courtPlan'
 import { progressionFor } from '../lib/analysis/progressions'
-import { readPrefs, writePrefs } from '../lib/storage/prefs'
+import { readPrefs } from '../lib/storage/prefs'
 import { primeSpeech, speakLocally } from '../lib/speech'
 import { useWakeLock } from './useWakeLock'
 import type { WeekItem, WeekPlan } from '../lib/weekPlan'
@@ -53,45 +53,15 @@ function CourtCard({ item, onClose }: { item: WeekItem; onClose: () => void }) {
 }
 
 /**
- * Today on court (N1.6): the week's drills fitted to the time the player has,
- * with the court card for the first one. Lazily loaded by Home.
+ * Today on court's tools (N1.6): the court card for the first drill, and the
+ * week in the phone's calendar. The plan itself, with each drill's minutes, is
+ * Home's "This week" since Q9; this is the part of it that can load late.
  */
-export default function TodayPlan({ week }: { week: WeekPlan }) {
-  const [minutes, setMinutes] = useState<CourtMinutes>(() => readPrefs().courtMinutes ?? 45)
+export default function TodayPlan({ week, minutes }: { week: WeekPlan; minutes: CourtMinutes }) {
   const [card, setCard] = useState(false)
-  const blocks = courtPlan(week, minutes)
   const first = week.items[0]
   return (
-    <section className="block today" aria-labelledby="today-title">
-      <div className="block-head">
-        <h2 className="block-title" id="today-title">
-          Today on court
-        </h2>
-        <div className="seg" role="group" aria-label="How long you have">
-          {COURT_MINUTES.map((m) => (
-            <button
-              key={m}
-              type="button"
-              className={`seg-item${minutes === m ? ' is-on' : ''}`}
-              aria-pressed={minutes === m}
-              onClick={() => {
-                setMinutes(m)
-                writePrefs({ courtMinutes: m })
-              }}
-            >
-              {m} min
-            </button>
-          ))}
-        </div>
-      </div>
-      <ol className="today-list">
-        {blocks.map((b, i) => (
-          <li key={i}>
-            <span className="tnum today-min">{b.minutes} min</span>
-            <span>{b.line}</span>
-          </li>
-        ))}
-      </ol>
+    <div className="today">
       {first && (
         <button type="button" className="btn btn--ghost btn--full" onClick={() => setCard(true)}>
           <Icon name="target" size={17} />
@@ -112,6 +82,6 @@ export default function TodayPlan({ week }: { week: WeekPlan }) {
         Add to calendar
       </button>
       {card && first && <CourtCard item={first} onClose={() => setCard(false)} />}
-    </section>
+    </div>
   )
 }

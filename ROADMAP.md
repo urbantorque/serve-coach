@@ -3878,7 +3878,7 @@ the vibration were checked in desktop Chrome with a fake camera.
       report the timeline sits far from the player, so a synced playhead buys
       little until the two share a screen.
 
-## Review fixes (Q1–Q8) — 2026-10-23
+## Review fixes (Q1–Q9) — 2026-10-23
 
 From the graded review of 2026-10-23: three small fixes a first player hits on
 the report and in the filming guide. Each was proved by machine and looked at
@@ -3983,3 +3983,14 @@ on its own branch (Q4).
         camera. It reads `prefs.handsFree ?? onCourtDefault()` now. Three
         checks in `render.test.ts`, and the court glance checked on
         `?demo=glance` with touch emulation.
+- [x] **Q9 Home says the week once** · S.
+      - *Done:* 2026-10-23. "Today on court" is gone as its own block. "This
+        week" carries the length (30/45/60), each drill's share ("13 min
+        today", from `courtPlan`, so a fourth fix gets none), and the warm-up,
+        filmed check and free serves as lines before and after the list.
+        `TodayPlan` is now only the court card and the calendar, still lazy.
+        The minutes put the entry chunk 0.19 kB over its 130 kB gzip budget,
+        so the form card's body-position best moved to its own lazy chunk
+        (`BodyBest`): 129.84 kB now. One check in `render.test.ts` holds the
+        week to one list in the order the hit runs; the TodayPlan check now
+        checks the tools only. Seen on `?demo=history` at phone width.

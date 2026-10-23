@@ -11,8 +11,8 @@ import { faultForMetric } from '../lib/analysis/progressions'
 import { buildProgress, currentRubricEra, sixWeekMilestone, streakLine, tripDay } from '../lib/progress'
 import type { Session } from '../lib/storage/db'
 import type { TripRecord } from '../lib/storage/ledger'
-import type { Cadence } from '../lib/storage/prefs'
-import { bodyBestLine, bodyBests } from '../lib/bests'
+import { readPrefs, writePrefs, type Cadence } from '../lib/storage/prefs'
+import { COURT_MINUTES, courtPlan, type CourtMinutes } from '../lib/courtPlan'
 import { clipLabel } from '../lib/clipLabel'
 import type { PracticeSession } from '../lib/session/session'
 
@@ -22,6 +22,7 @@ const FramingCheck = lazy(() => import('../components/FramingCheck'))
 const TermCue = lazy(() => import('../components/TermCue'))
 // Today's plan and its court card (N1.6, N1.7), out of the entry chunk.
 const TodayPlan = lazy(() => import('../components/TodayPlan'))
+const BodyBest = lazy(() => import('../components/BodyBest'))
 
 /** One empty ledger for every render, so a memo keyed on it holds. */
 const NO_TRIPS: TripRecord[] = []
@@ -187,8 +188,6 @@ export default function Home({
   const week = useMemo(() => weekPlan(sessions, ladder, Date.now(), sessionEvidence(practiceSessions)), [sessions, ladder, practiceSessions])
   const progress = useMemo(() => buildProgress(sessions, undefined, ledger), [sessions, ledger])
   const milestone = useMemo(() => (progress ? sixWeekMilestone(progress) : undefined), [progress])
-  // The newest trip's first body-position best, if it set one (L3.8).
-  const bodyBest = useMemo(() => bodyBests(sessions, progress?.serveType)[0], [sessions, progress])
   const streak = useMemo(
     () => streakLine(sessions, Date.now(), { ledger, cadence, practice: practiceSessions }),
     [sessions, ledger, cadence, practiceSessions],
@@ -225,6 +224,11 @@ export default function Home({
   // a device that cannot change its pointer while the page is open.
   const coarse = useMemo(coarsePointer, [])
   const [checking, setChecking] = useState(false)
+  // How long today's hit is (N1.6), for the minutes beside each drill (Q9).
+  const [minutes, setMinutes] = useState<CourtMinutes>(() => readPrefs().courtMinutes ?? 45)
+  const court = week ? courtPlan(week, minutes) : []
+  // Each planned drill's share of today, in the plan's order; a fourth fix gets none.
+  const drillMinutes = court.filter((b) => b.kind === 'drill').map((b) => b.minutes)
 
   // Asked for by the glance screen's "Record another", which is the loop this
   // whole route exists for: record, glance, record. Guarded on zero so the
@@ -441,15 +445,6 @@ export default function Home({
         )}
       </div>
 
-      {/* Numbered, in the report's causal order, with the report's own queue
-          styles: the order is the instruction. The rung and the check are
-          what the report does not say. */}
-      {week && week.items.length > 0 && (
-        <Suspense fallback={null}>
-          <TodayPlan week={week} />
-        </Suspense>
-      )}
-
       {week && (
         <section className="block week" aria-labelledby="week-title">
           <div className="block-head">
@@ -476,6 +471,41 @@ export default function Home({
               <span>{week.recheck.line}</span>
             </p>
           )}
+          {/*
+            One list since Q9. "Today on court" used to sit above this block
+            and name the same drills a second time with their minutes, so a
+            player read the week twice in a row. Now the minutes sit on the
+            drills, and the warm-up, the filmed check and the free serves are
+            the lines around them, in the order the hit runs.
+          */}
+          {week.items.length > 0 && (
+            <div className="seg week-length" role="group" aria-label="How long you have">
+              {COURT_MINUTES.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  className={`seg-item${minutes === m ? ' is-on' : ''}`}
+                  aria-pressed={minutes === m}
+                  onClick={() => {
+                    setMinutes(m)
+                    writePrefs({ courtMinutes: m })
+                  }}
+                >
+                  {m} min
+                </button>
+              ))}
+            </div>
+          )}
+          {week.items.length > 0 && (
+            <ul className="today-list">
+              {court.filter((b) => b.kind === 'warm').map((b) => (
+                <li key={b.kind}>
+                  <span className="tnum today-min">{b.minutes} min</span>
+                  <span>{b.line}</span>
+                </li>
+              ))}
+            </ul>
+          )}
           {week.items.length > 0 && (
           <ol className="week-list">
             {week.items.map((item, i) => (
@@ -488,6 +518,7 @@ export default function Home({
                     <span>
                       <strong>{item.drill.name}</strong>
                       {item.step && `, step ${item.step.at} of ${item.step.of}`}
+                      {drillMinutes[i] !== undefined && ` · ${drillMinutes[i]} min today`}
                     </span>
                   </p>
                   <p className="focus-next-why">
@@ -514,6 +545,24 @@ export default function Home({
               </li>
             ))}
           </ol>
+          )}
+          {week.items.length > 0 && (
+            <ul className="today-list">
+              {court
+                .filter((b) => b.kind === 'check' || b.kind === 'free')
+                .map((b) => (
+                  <li key={b.kind}>
+                    <span className="tnum today-min">{b.minutes} min</span>
+                    <span>{b.line}</span>
+                  </li>
+                ))}
+            </ul>
+          )}
+          {/* The court card and the calendar, lazily: neither is needed to read the plan. */}
+          {week.items.length > 0 && (
+            <Suspense fallback={null}>
+              <TodayPlan week={week} minutes={minutes} />
+            </Suspense>
           )}
         </section>
       )}
@@ -565,7 +614,9 @@ export default function Home({
 
           {/* A body position the newest trip reached for the first time
               (L3.8): a best a player can picture, rather than a score. */}
-          {bodyBest && <span className="progress-foot">{bodyBestLine(bodyBest)}</span>}
+          <Suspense fallback={null}>
+            <BodyBest sessions={sessions} serveType={progress.serveType} />
+          </Suspense>
 
           {/* A fact about attendance, counted the same way `sixWeekMilestone`
               insists a fact has to be: nothing here can be produced by a tap,
