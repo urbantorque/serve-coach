@@ -237,6 +237,28 @@ check('a practice card that repeats the focus does not print the drill twice', (
   assert(out.includes('I did this drill'), 'the log button went with the duplicate')
 })
 
+check('a season card that names a different fault stays off the report: one first priority', () => {
+  const a = sampleAnalysis()
+  const practice: PracticeFocus = {
+    metricId: 'kneeBend',
+    label: 'Knee bend at trophy',
+    fundamentalId: 'loading',
+    fundamentalLabel: 'Loading',
+    drill: { name: 'Some other drill', how: 'Do something else entirely.', reps: '15 serves' },
+    scores: [40, 42, 41],
+    average: 41,
+    timesWeakest: 3,
+    sessionsConsidered: 3,
+    verdict: 'stuck',
+    serveType: 'flat',
+    drilled: 0,
+  }
+  assert(practice.label !== a.focus.title, 'the sample focus is the knee bend, so this checks nothing')
+  const out = html(createElement(Report, { analysis: a, practice, onLogDrill: noop, onBack: noop, onAnalyzeAnother: noop }))
+  assert(out.includes('Work on this next'), 'the fix went too')
+  assert(!out.includes('Practise this'), 'the report handed over a second first priority')
+})
+
 check('the fix is the report\'s headline, and the band is its caption', () => {
   const a = sampleAnalysis()
   const out = html(createElement(Report, { analysis: a, onBack: noop, onAnalyzeAnother: noop }))

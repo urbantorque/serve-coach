@@ -1245,6 +1245,11 @@ Since L1.6:
 - the season's pick ignores readings the card marked approximate, as the plan
   and `pickFocus` do.
 
+Since Q2 the report shows the practice card only when the season agrees with
+this serve's first fix, the rule Home already applied to "Working on". Before,
+a card naming the second fix (or none) sat under "Work on this next" as a
+second "Practise this". The card is still on Progress when it disagrees.
+
 **The fix is the headline (Q1).** The report's `h1` used to be one of four
 stock phrases for the score's band ("Good bones, a few gaps"), and the fix
 started most of a screen further down. The fix is the headline now, under

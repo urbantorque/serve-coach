@@ -1103,22 +1103,25 @@ export default function Report({
 
       {/* The season-long focus, not this serve's own. See `Props.practice` —
           absent for anyone without two comparable sessions yet, exactly the
-          condition the progress sheet's copy of this card already applies. */}
-      {practice && (
-        <PracticeCard
-          focus={practice}
-          onLogDrill={onLogDrill}
-          onUndoDrill={practice.drilled ? onUndoDrill : undefined}
-          // The season and this serve agreeing on the fix (L1.6): the card
-          // keeps its trend and its log and does not print the drill twice.
-          // Any drill already on the plan counts, not just the first (N0.2).
-          sameAsFocus={
-            practice.drill.name === drill.name ||
-            practice.label === plan[0].title ||
-            plan.some((p) => p.drill.name === practice.drill.name)
-          }
-        />
-      )}
+          condition the progress sheet's copy of this card already applies.
+
+          Only when the season agrees with this serve's first fix. A report
+          that heads "Work on this next" with one fault and then a "Practise
+          this" card with another hands the player two first priorities, and
+          the promise of the page is one. The season's card is still on
+          Progress when it disagrees. When it agrees (L1.6) it keeps its trend
+          and its log and does not print the drill twice. */}
+      {practice &&
+        (practice.drill.name === drill.name ||
+          practice.drill.name === plan[0].drill.name ||
+          practice.label === plan[0].title) && (
+          <PracticeCard
+            focus={practice}
+            onLogDrill={onLogDrill}
+            onUndoDrill={practice.drilled ? onUndoDrill : undefined}
+            sameAsFocus
+          />
+        )}
 
       {live && (
         <section className="block" ref={playerRef}>

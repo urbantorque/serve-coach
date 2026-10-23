@@ -3895,5 +3895,11 @@ on its own branch.
         opens on the drill check. A read under `SOFT_READ` says "Rough read"
         beside the score rather than only in the fold, except on a refused clip
         shown anyway, which has its banner. Two checks in `render.test.ts`.
-- [ ] **Q2 One first priority per report** · S.
+- [x] **Q2 One first priority per report** · S.
+      - *Done:* 2026-10-23. The season's practice card shows on the report
+        only when it agrees with `plan[0]` (its drill or its label), and then
+        always as `sameAsFocus`. The demo basket had "Work on this next: tossing
+        arm" over "Practise this: knee bend at trophy"; the card is gone from
+        it and stays on Progress. Matching a later plan item no longer counts
+        on the report (it did since N0.2). One check in `render.test.ts`.
 - [ ] **Q3 The phone may turn, and the guide says when** · S.
