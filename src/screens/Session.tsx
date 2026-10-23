@@ -33,7 +33,7 @@ interface Props {
   history?: SavedReport[]
   ladder?: Partial<Record<string, number>>
   movedAt?: Partial<Record<string, number>>
-  onLadderStep?: (flaw: string, step: number) => void
+  onLadderStep?: (flaw: string, step: number, from?: number) => void
 }
 
 /** The two choices, in the player's words. */

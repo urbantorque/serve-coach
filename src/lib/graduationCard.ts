@@ -92,6 +92,24 @@ export function beforeAfter(
 }
 
 /**
+ * A step passed, drawn (Q10): the newest serve clean on the fault before the
+ * move up, beside the newest that still named it before that. Only serves up to
+ * the move count, so a serve filmed on the new step never stands in for the
+ * evidence that passed the old one.
+ */
+export function stepPassPair(
+  sessions: readonly Session[],
+  flaw: FlawId,
+  passedAt: number,
+): { moment: PhaseId; then: CardPose; now: CardPose } | undefined {
+  const upTo = sessions.filter((s) => s.createdAt <= passedAt)
+  const clean = upTo
+    .filter((s) => judgeServe(s, flaw) === 'clean')
+    .reduce<Session | undefined>((a, s) => (a && a.createdAt >= s.createdAt ? a : s), undefined)
+  return clean ? beforeAfter(upTo, flaw, clean.createdAt) : undefined
+}
+
+/**
  * The card for one graduation, or nothing when the history cannot draw both
  * halves: a serve named for the fault before it graduated, and a clean one
  * since, each with its keyframe pose.
@@ -104,4 +122,26 @@ export function graduationCard(
   const pair = beforeAfter(sessions, g.flaw, g.since)
   if (!pair) return undefined
   return { flaw: g.flaw, name: FAULT_NAME[g.flaw], line: graduationLine(g, next), ...pair }
+}
+
+/** How long a passed step stays on Home (Q10): the trip it happened on, and the next visit or two. */
+export const STEP_PASSED_DAYS = 3
+
+/**
+ * The newest step passed in the last `STEP_PASSED_DAYS` (Q10), on a ladder the
+ * player is still above the first rung of: what Home shows as a moment.
+ */
+export function recentStepPass(
+  passedAt: Partial<Record<string, number>> | undefined,
+  ladder: Partial<Record<string, number>> | undefined,
+  now: number,
+): { flaw: FlawId; rung: number; at: number } | undefined {
+  let best: { flaw: FlawId; rung: number; at: number } | undefined
+  for (const [flaw, at] of Object.entries(passedAt ?? {})) {
+    const rung = ladder?.[flaw]
+    if (at === undefined || rung === undefined || rung < 1) continue
+    if (now - at >= STEP_PASSED_DAYS * 86_400_000 || at > now) continue
+    if (!best || at > best.at) best = { flaw: flaw as FlawId, rung, at }
+  }
+  return best
 }

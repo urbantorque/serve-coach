@@ -3878,7 +3878,7 @@ the vibration were checked in desktop Chrome with a fake camera.
       report the timeline sits far from the player, so a synced playhead buys
       little until the two share a screen.
 
-## Review fixes (Q1–Q9) — 2026-10-23
+## Review fixes (Q1–Q10) — 2026-10-23
 
 From the graded review of 2026-10-23: three small fixes a first player hits on
 the report and in the filming guide. Each was proved by machine and looked at
@@ -3994,3 +3994,17 @@ on its own branch (Q4).
         (`BodyBest`): 129.84 kB now. One check in `render.test.ts` holds the
         week to one list in the order the hit runs; the TodayPlan check now
         checks the tools only. Seen on `?demo=history` at phone width.
+- [x] **Q10 A step passed is a moment on Home** · S.
+      - *Done:* 2026-10-23. `Prefs.ladderPassedAt` is stamped on a move up
+        only: `onLadderStep` now carries the rung it leaves from every caller
+        (report, glance, session dashboard), and `moveLadder` records a pass
+        when the new rung is higher, so a step back never reads as a pass.
+        For `STEP_PASSED_DAYS` (3) Home shows "Step passed" above This week:
+        the step left, the one now on, and `stepPassPair`'s then and now, the
+        newest clean serve up to the move beside the newest named one before
+        it. Nothing is drawn without both halves; on the seeded season, where
+        the tossing arm is named on every serve, the card is the line alone.
+        The card and `recentStepPass` live in the lazy `StepPassed` chunk:
+        put in Home, they took the entry 0.07 kB over its gzip budget. Entry
+        129.96 kB gzip, 385.00 kB raw, so Home has no room left. Two checks
+        in `render.test.ts`; seen on `?demo=history`, and gone at four days.

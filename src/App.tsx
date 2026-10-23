@@ -275,10 +275,17 @@ export default function App() {
   const [checkTarget, setCheckTarget] = useState<{ flaw: FlawId; drill: string }>()
 
   /** The player moving a fault's ladder a rung, from the report. */
-  const moveLadder = useCallback((flaw: string, step: number) => {
+  const moveLadder = useCallback((flaw: string, step: number, from?: number) => {
     setCheckTarget((t) => (t?.flaw === flaw ? undefined : t))
+    const now = Date.now()
+    // A move up is a step passed (Q10), and Home shows it; a step back is not.
+    const passed = from !== undefined && step > from
     setPrefs((p) =>
-      writePrefs({ ladder: { ...p.ladder, [flaw]: step }, ladderMovedAt: { ...p.ladderMovedAt, [flaw]: Date.now() } }),
+      writePrefs({
+        ladder: { ...p.ladder, [flaw]: step },
+        ladderMovedAt: { ...p.ladderMovedAt, [flaw]: now },
+        ...(passed ? { ladderPassedAt: { ...p.ladderPassedAt, [flaw]: now } } : {}),
+      }),
     )
   }, [])
   /**
@@ -668,6 +675,7 @@ export default function App() {
               onCheckDrill={(flaw, drill) => setCheckTarget({ flaw: flaw as FlawId, drill })}
               onOpen={openSaved}
               ladder={prefs.ladder}
+              passedAt={prefs.ladderPassedAt}
               onShowGuide={() => setSheet('guide')}
               onShowHistory={() => setSheet('history')}
               onShowSettings={() => setSheet('settings')}

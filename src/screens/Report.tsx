@@ -203,7 +203,8 @@ interface Props {
   /** Which rung of each fault's ladder the player is on — see `progressions.ts`. */
   ladder?: Partial<Record<string, number>>
   /** Move the player to another rung of a fault's ladder. */
-  onLadderStep?: (flaw: string, step: number) => void
+  /** `from` is the rung being left, so a move up can be told from a step back (Q10). */
+  onLadderStep?: (flaw: string, step: number, from?: number) => void
   /**
    * Whether this session may turn a report into a ground-truth fixture.
    *
@@ -791,7 +792,7 @@ export default function Report({
                   <button
                     className="drill-show"
                     onClick={() => {
-                      onLadderStep(plan[0].flaw!, rung + 1)
+                      onLadderStep(plan[0].flaw!, rung + 1, rung)
                       setMovedTo(rung + 1)
                     }}
                   >
@@ -802,7 +803,7 @@ export default function Report({
                   <button
                     className="drill-show"
                     onClick={() => {
-                      onLadderStep(plan[0].flaw!, rung - 1)
+                      onLadderStep(plan[0].flaw!, rung - 1, rung)
                       setMovedTo(rung - 1)
                     }}
                   >
@@ -902,7 +903,7 @@ export default function Report({
                   <button
                     className="drill-show"
                     onClick={() => {
-                      onLadderStep(plan[0].flaw!, rung + 1)
+                      onLadderStep(plan[0].flaw!, rung + 1, rung)
                       setSelfMoved(rung + 1)
                     }}
                   >
@@ -925,7 +926,7 @@ export default function Report({
                   <button
                     className="drill-show"
                     onClick={() => {
-                      onLadderStep(drilledCheck.flaw, drilledRung + 1)
+                      onLadderStep(drilledCheck.flaw, drilledRung + 1, drilledRung)
                       setMovedTo(drilledRung + 1)
                     }}
                   >

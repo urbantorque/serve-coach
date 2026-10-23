@@ -50,6 +50,11 @@ export interface Prefs {
    */
   ladderMovedAt?: Partial<Record<string, number>>
   /**
+   * When each fault's ladder last moved up (Q10): a step passed, which Home
+   * shows for a few days. A step back moves `ladderMovedAt` and not this.
+   */
+  ladderPassedAt?: Partial<Record<string, number>>
+  /**
    * Read the glance aloud after each serve, with a voice on this device
    * (`lib/speech.ts`). Off until the player turns it on, from the glance.
    */

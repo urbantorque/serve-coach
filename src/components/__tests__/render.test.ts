@@ -47,7 +47,10 @@ import FirstRunDownload from '../FirstRunDownload'
 import HistoryList from '../HistoryList'
 import TodayPlan from '../TodayPlan'
 import FixedPair from '../FixedPair'
-import { beforeAfter } from '../../lib/graduationCard'
+import { STEP_PASSED_DAYS, beforeAfter, recentStepPass, stepPassPair } from '../../lib/graduationCard'
+import { StepPassedCard } from '../StepPassed'
+// @ts-expect-error - node's fs, and this project carries no @types/node
+import fsForSource from 'fs'
 import { CLEAN_SERVE } from '../../lib/analysis/syntheticServe'
 import { Cue } from '../primitives'
 import TermCue from '../TermCue'
@@ -981,6 +984,46 @@ check('a step passed draws the fault then and now; nothing is drawn without both
   const out = html(createElement(FixedPair, { then: pair.then, now: pair.now, title: 'That step, then and now' }))
   assert(out.includes('Then,') && out.includes('Now,') && (out.match(/<canvas/g) ?? []).length === 2, 'the pair did not draw both halves')
   assert(beforeAfter([then, now], flaw!, 10_000) === undefined, 'a pair was drawn with nothing since the change')
+})
+
+check('a step passed is a moment on Home, then and now, for a few days (Q10)', () => {
+  const then = { ...stored(sampleAnalysis(DEMO_DIALS.example)), id: 'serve-then-0', createdAt: 1_000 }
+  const now = { ...stored(sampleAnalysis(CLEAN_SERVE)), id: 'serve-now-0', createdAt: 5_000 }
+  const later = { ...now, id: 'serve-later-0', createdAt: 9_000 }
+  const flaw = then.triage?.primary_flaw?.flaw
+  assert(Boolean(flaw), 'the example serve named nothing, so this checks nothing')
+  if (!flaw) return
+  // The evidence is what came before the move: a serve on the new step never stands in.
+  const pair = stepPassPair([then, now, later], flaw, 6_000)
+  assert(pair?.then.at === 1_000 && pair.now.at === 5_000, 'the pair was not the serves that passed the step')
+  assert(stepPassPair([then, now], flaw, 3_000) === undefined, 'a pair was drawn with no clean serve before the move')
+  // Which step Home shows, and for how long.
+  const day = 86_400_000
+  const at = 100 * day
+  assert(recentStepPass({ [flaw]: at - day }, { [flaw]: 2 }, at)?.rung === 2, 'a step passed yesterday was not shown')
+  assert(recentStepPass({ [flaw]: at - STEP_PASSED_DAYS * day }, { [flaw]: 2 }, at) === undefined, 'an old step stayed up')
+  assert(recentStepPass({ [flaw]: at - day }, { [flaw]: 0 }, at) === undefined, 'the first rung was shown as a step passed')
+  const two = recentStepPass({ toss_height: at - 2 * day, [flaw]: at - day }, { toss_height: 1, [flaw]: 1 }, at)
+  assert(two?.flaw === flaw, 'the older of two passes was shown')
+  // The card itself.
+  const out = html(createElement(StepPassedCard, { sessions: [then, now], flaw, rung: 1, passedAt: 6_000 }))
+  const ladder = progressionFor(flaw)!
+  const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/'/g, '&#x27;').replace(/"/g, '&quot;')
+  assert(out.includes('Step passed') && out.includes(esc(ladder.steps[0].name)) && out.includes(esc(ladder.steps[1].name)), 'the card did not name both steps')
+  assert(out.includes('That step, then and now'), 'the card did not draw the step')
+  assert(html(createElement(StepPassedCard, { sessions: [then, now], flaw, rung: 0, passedAt: 6_000 })) === '', 'a card was drawn for the first rung')
+})
+
+check('only a move up is recorded as a step passed, and every ladder button says where it came from (Q10)', () => {
+  const fs = fsForSource as { readFileSync: (p: string, e: 'utf8') => string }
+  const app = fs.readFileSync('src/App.tsx', 'utf8')
+  assert(/const passed = from !== undefined && step > from/.test(app), 'a step back could be recorded as a pass')
+  assert(app.includes('...(passed ? { ladderPassedAt:'), 'a pass is not stored apart from a move')
+  for (const f of ['src/screens/Report.tsx', 'src/screens/Glance.tsx', 'src/components/SessionDashboard.tsx']) {
+    const calls = fs.readFileSync(f, 'utf8').match(/onLadderStep\([^)]*\)/g) ?? []
+    assert(calls.length > 0, `${f} has no ladder button`)
+    for (const c of calls) assert(c.split(',').length === 3, `${f}: ${c} does not say which rung it leaves`)
+  }
 })
 
 check("today's tools: a court card for the first drill, and the week in the calendar (N1.6, N1.7, Q9)", () => {

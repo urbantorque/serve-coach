@@ -23,6 +23,7 @@ const TermCue = lazy(() => import('../components/TermCue'))
 // Today's plan and its court card (N1.6, N1.7), out of the entry chunk.
 const TodayPlan = lazy(() => import('../components/TodayPlan'))
 const BodyBest = lazy(() => import('../components/BodyBest'))
+const StepPassed = lazy(() => import('../components/StepPassed'))
 
 /** One empty ledger for every render, so a memo keyed on it holds. */
 const NO_TRIPS: TripRecord[] = []
@@ -65,6 +66,8 @@ interface Props {
   onOpen: (session: Session) => void
   /** Which rung of each fault's ladder the player is on — see `Prefs.ladder`. */
   ladder?: Partial<Record<string, number>>
+  /** When each ladder last moved up — see `Prefs.ladderPassedAt` (Q10). */
+  passedAt?: Partial<Record<string, number>>
   onShowGuide: () => void
   onShowHistory: () => void
   /** Hand, backup and the device check — see the settings sheet in `App.tsx`. */
@@ -158,6 +161,7 @@ export default function Home({
   onCheckDrill,
   onOpen,
   ladder,
+  passedAt,
   onShowGuide,
   onShowHistory,
   onShowSettings,
@@ -444,6 +448,13 @@ export default function Home({
           </p>
         )}
       </div>
+
+      {/* A step passed (Q10), above the week it changed: the moment, then what is next. */}
+      {passedAt && Object.keys(passedAt).length > 0 && (
+        <Suspense fallback={null}>
+          <StepPassed sessions={sessions} passedAt={passedAt} ladder={ladder} />
+        </Suspense>
+      )}
 
       {week && (
         <section className="block week" aria-labelledby="week-title">

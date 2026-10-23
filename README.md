@@ -1275,6 +1275,16 @@ order the hit runs (`courtPlan`). The court card and the calendar load late
 (`TodayPlan`), and so does the form card's body-position best (`BodyBest`),
 which made room in the entry chunk for the minutes.
 
+**A step passed is a moment (Q10).** Moving up a rung was one line on the
+glance, gone with the next serve. A move up now stamps `ladderPassedAt`, and
+a step back does not: every ladder button passes the rung it leaves, and
+`moveLadder` records a pass only when the new rung is higher. For
+`STEP_PASSED_DAYS` after, Home opens on "Step passed": the step left, the one
+now on, and the fault's moment then and now (`stepPassPair`) when the history
+has a clean serve before the move and a named one before that. A serve filmed
+on the new step never stands in as the evidence. The card and its choice of
+step load in their own chunk; Home only asks whether any step was ever passed.
+
 **The fix is the headline (Q1).** The report's `h1` used to be one of four
 stock phrases for the score's band ("Good bones, a few gaps"), and the fix
 started most of a screen further down. The fix is the headline now, under

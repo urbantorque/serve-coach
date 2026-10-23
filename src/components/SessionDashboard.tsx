@@ -46,7 +46,7 @@ interface Props {
   /** The drill the player came in with, checked across this practice (N1.5). */
   check?: TripCheck
   /** Move that drill's ladder; absent where prefs cannot be kept. */
-  onLadderStep?: (flaw: string, step: number) => void
+  onLadderStep?: (flaw: string, step: number, from?: number) => void
 }
 
 export default function SessionDashboard({ session, previous, videoUrl, onPickAgain, check, onLadderStep }: Props) {
@@ -123,7 +123,7 @@ export default function SessionDashboard({ session, previous, videoUrl, onPickAg
               <strong>{check.step}</strong> · {tripCheckLine(check, 'practice')}
             </span>
             {canMoveUp(check) && onLadderStep && (
-              <button type="button" className="btn btn--primary glance-check-move" onClick={() => onLadderStep(check.flaw, check.rung + 1)}>
+              <button type="button" className="btn btn--primary glance-check-move" onClick={() => onLadderStep(check.flaw, check.rung + 1, check.rung)}>
                 Move up a step
               </button>
             )}

@@ -124,7 +124,8 @@ interface Props {
   /** Each serve number's best set of ten, said on its chip (N3.2). */
   bestSets?: { 1?: number; 2?: number }
   /** Move the checked fault's ladder to a step. Absent where prefs cannot be kept. */
-  onLadderStep?: (flaw: string, step: number) => void
+  /** `from` is the rung being left, so a move up can be told from a step back (Q10). */
+  onLadderStep?: (flaw: string, step: number, from?: number) => void
   /** The saved serves: for the trip's drill check (N1.3) and a passed step's before and after (N3.3). */
   history?: readonly Session[]
   /** What the trip check needs besides the history: the ladder, when it moved, a chosen drill (N1.4). */
@@ -399,7 +400,7 @@ export default function Glance({
                 <button
                   type="button"
                   className="btn btn--primary glance-check-move"
-                  onClick={() => onLadderStep(tripCheck.flaw, tripCheck.rung + 1)}
+                  onClick={() => onLadderStep(tripCheck.flaw, tripCheck.rung + 1, tripCheck.rung)}
                 >
                   Move up a step
                 </button>
