@@ -34,7 +34,7 @@ import {
   tripsOf,
   thenAndNow,
 } from '../lib/progress'
-import type { ServeTag, Session } from '../lib/storage/db'
+import { tagsById, type ServeTag, type Session } from '../lib/storage/db'
 import type { TripRecord } from '../lib/storage/ledger'
 import type { Cadence } from '../lib/storage/prefs'
 import { partLabel, servePath, type PartState } from '../lib/servePath'
@@ -143,7 +143,7 @@ export default function Progress({
   }, [sessions, ladder])
   const milestone = useMemo(() => (form ? sixWeekMilestone(form) : undefined), [form])
   const streak = useMemo(() => streakLine(sessions, Date.now(), { ledger, cadence, practice: practiceSessions }), [sessions, ledger, cadence, practiceSessions])
-  const tagsById = useMemo(() => new Map(tags.map((t) => [t.id, t])), [tags])
+  const tagMap = useMemo(() => tagsById(tags), [tags])
   const numbers = useMemo(() => byServeNumber(sessions, tags, form?.serveType), [sessions, tags, form])
   const misses = useMemo(() => missesInCommon(sessions, tags, form?.serveType), [sessions, tags, form])
   const setLines = useMemo(() => bestSetLines(sets), [sets])
@@ -203,7 +203,7 @@ export default function Progress({
             Film a serve
           </button>
         </div>
-        {sessions.length > 0 && onOpen && <HistoryList sessions={listed} tags={tagsById} onOpen={onOpen} onDelete={remove} />}
+        {sessions.length > 0 && onOpen && <HistoryList sessions={listed} tags={tagMap} onOpen={onOpen} onDelete={remove} />}
       </div>
     )
   }
@@ -486,7 +486,7 @@ export default function Progress({
             )}
             <HistoryList
               sessions={listed}
-              tags={tagsById}
+              tags={tagMap}
               onOpen={(s) => {
                 commitDelete(pendingDelete)
                 onOpen(s)
