@@ -21,6 +21,7 @@ import { forgetAll } from './lib/analysisCache'
 import type { FlawId } from './lib/analysis/flaws'
 import { faultMoveOnTrip, rotationMoveOnTrip, scoreMoveAgainst, scoringVersionOf, streakLine, typeOf } from './lib/progress'
 import { bestPriorTo } from './lib/bestServe'
+import { selfRead } from './lib/selfRead'
 import { tossMapFor } from './lib/tossMap'
 /*
  * The engine, loaded when there is a serve to read or re-judge and not before.
@@ -550,6 +551,7 @@ export default function App() {
   // — see the single `<Report>` below (W5.3).
   const liveReport = view.kind === 'report' ? view : undefined
   const shownReport = liveReport?.analysis ?? (view.kind === 'saved' && !view.example ? view.session : undefined)
+  const shownSelf = useMemo(() => (shownReport ? selfRead(shownReport, sessions, serveTags) : undefined), [shownReport, sessions, serveTags])
   // A reopened report's kept clip, and its best serve's (D6.4) — read from the
   // device as object URLs, and revoked when the report changes.
   const reopenedId = liveReport ? undefined : shownReport?.id
@@ -767,6 +769,7 @@ export default function App() {
               videoUrl={liveReport?.videoUrl}
               previous={priorTo(shownReport.createdAt, typeOf(shownReport))}
               best={bestPriorTo(sessions, shownReport.createdAt, typeOf(shownReport), scoringVersionOf(shownReport))}
+              self={shownSelf}
               serveNumber={tagsById(serveTags).get(shownReport.id)?.serveNumber}
               serveGuess={guessServeNumber(shownReport as Session, sessions, serveTags)}
               outcome={tagsById(serveTags).get(shownReport.id)?.outcome}

@@ -112,7 +112,7 @@ try {
     steps: async (p) => {
       if (!existsSync(CLIP)) throw new Error('no bench clip')
       await p.locator('input[type=file]').first().setInputFiles(CLIP)
-      await p.waitForTimeout(6000)
+      await p.waitForTimeout(9000)
     },
   })
 
@@ -128,6 +128,7 @@ try {
   await shoot('10-report-live', { url: '/?demo=live', wait: 4500 })
   await shoot('11-report-basket', { url: '/?demo=basket', wait: 5000 })
   await shoot('12-report-reopened', { url: '/?demo=report', wait: 2200 })
+  await shoot('12b-report-own-serve', { url: '/?demo=history', wait: 2200, steps: async (p) => { await p.locator('.serve-card').first().click(); await p.waitForTimeout(2600) } })
   await shoot('13-report-injury', { url: '/?demo=injury', wait: 2200 })
   await shoot('14-report-soft', { url: '/?demo=collapsed', wait: 2200 })
   await shoot('15-report-refused', { url: '/?demo=refused', wait: 2200 })

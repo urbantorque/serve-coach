@@ -364,6 +364,7 @@
 }
 
 .watch-moments {
+  position: relative;
   display: flex;
   gap: 8px;
   overflow-x: auto;

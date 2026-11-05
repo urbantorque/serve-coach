@@ -242,6 +242,9 @@ function placeholderStill(label: string): string {
  *     rather than always finding pictures.
  *   · **A drill logged twice against the weakest measurement**, which is the
  *     branch `practiceHeadline` splits "stuck" on.
+ *   · **Enough side-on flat serves for a baseline**, across more than three trips,
+ *     and **a newest serve with the knees bent further**, so "Against your own
+ *     serve" has something true to say on the report it opens to.
  *
  * WHAT IT IS NOT. Not fixtures, not stored, and not evidence about anything:
  * every serve in here is the synthetic rig with its dials moved, so the numbers
@@ -274,17 +277,17 @@ export function sampleHistory(now = Date.now()): {
    */
   const trips: {
     daysAgo: number
-    serves: { reach: number; kick?: boolean; basket?: boolean; sore?: 'back' | 'wrist' }[]
+    serves: { reach: number; kick?: boolean; basket?: boolean; sore?: 'back' | 'wrist'; knees?: number }[]
   }[] = [
     { daysAgo: 77, serves: [{ reach: 1.11 }, { reach: 1.14, basket: true }, { reach: 1.1 }] },
     { daysAgo: 69, serves: [{ reach: 1.13 }, { reach: 1.15, sore: 'wrist' }] },
     { daysAgo: 61, serves: [{ reach: 1.12 }, { reach: 1.16 }, { reach: 1.13, sore: 'wrist' }] },
     // The recalibration lands here — everything from this trip on is rubric 2.
     { daysAgo: 47, serves: [{ reach: 1.18, basket: true }, { reach: 1.15 }, { reach: 1.17 }] },
-    { daysAgo: 39, serves: [{ reach: 1.2 }, { reach: 1.19, kick: true }, { reach: 1.21, sore: 'back' }] },
-    { daysAgo: 25, serves: [{ reach: 1.24, basket: true }, { reach: 1.22 }] },
-    { daysAgo: 12, serves: [{ reach: 1.27, sore: 'back' }, { reach: 1.25, kick: true }, { reach: 1.26 }] },
-    { daysAgo: 3, serves: [{ reach: 1.31, basket: true }, { reach: 1.29 }, { reach: 1.3, sore: 'back' }] },
+    { daysAgo: 39, serves: [{ reach: 1.2 }, { reach: 1.19, kick: true }, { reach: 1.21, sore: 'back' }, { reach: 1.2 }] },
+    { daysAgo: 25, serves: [{ reach: 1.24, basket: true }, { reach: 1.22 }, { reach: 1.23 }] },
+    { daysAgo: 12, serves: [{ reach: 1.27, sore: 'back' }, { reach: 1.25, kick: true }, { reach: 1.26 }, { reach: 1.26 }] },
+    { daysAgo: 3, serves: [{ reach: 1.31, basket: true }, { reach: 1.29 }, { reach: 1.3, sore: 'back' }, { reach: 1.3, knees: 128 }] },
   ]
 
   const sessions: Session[] = []
@@ -306,7 +309,7 @@ export function sampleHistory(now = Date.now()): {
                 trophyForearmDrop: DEMO_DIALS.injury.trophyForearmDrop,
               }
             : {}
-      const a = sampleAnalysis({ contactReach: serve.reach, ...sore })
+      const a = sampleAnalysis({ contactReach: serve.reach, ...sore, ...(serve.knees ? { trophyKneeAngle: serve.knees } : {}) })
       const { frames: _f, ...rest } = a
       void _f
 

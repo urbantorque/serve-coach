@@ -795,3 +795,45 @@
   font-size: 14px;
   color: var(--fg-muted);
 }
+
+/* ------------------------------------------------ against the player's own serve */
+
+.own-read {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.own-read ul {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.own-row {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 10px;
+  font-size: 16.5px;
+  line-height: 1.34;
+}
+
+.own-row .icon {
+  margin-top: 2px;
+  color: var(--lime);
+}
+
+.own-row--away .icon {
+  color: var(--fair-ink);
+}
+
+.own-row--level .icon {
+  color: var(--fg-faint);
+}
+
+.own-row small {
+  display: block;
+  margin-top: 2px;
+  font-size: 14px;
+  color: var(--fg-muted);
+}

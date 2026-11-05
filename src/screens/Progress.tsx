@@ -49,6 +49,8 @@ import { graduation } from '../lib/graduation'
 import { graduationCard } from '../lib/graduationCard'
 import FixedPair from '../components/FixedPair'
 import HistoryList from '../components/HistoryList'
+import { playerBaseline } from '../lib/baseline'
+import { serveLinks } from '../lib/serveLinks'
 import { FaultGrid, InRateBars, LoadBars, ScoreRibbon } from '../components/ProgressCharts'
 import { weekPlan } from '../lib/weekPlan'
 import type { PracticeSession } from '../lib/session/session'
@@ -157,6 +159,8 @@ export default function Progress({
   const load = useMemo(() => serveLoad(sessions, Date.now(), practiceSessions), [sessions, practiceSessions])
   const faults = useMemo(() => faultTrends(sessions, ladder, form?.serveType), [sessions, ladder, form])
   const longestStreakText = useMemo(() => longestStreakLine(sessions, Date.now(), { ledger, cadence, practice: practiceSessions }), [sessions, ledger, cadence, practiceSessions])
+  const links = useMemo(() => serveLinks(sessions, tags), [sessions, tags])
+  const usualReady = useMemo(() => playerBaseline(sessions, { tags }) !== undefined, [sessions, tags])
   const strain = useMemo(() => recurringStrainOf(sessions), [sessions])
   const strainCleared = useMemo(() => clearedStrainOf(sessions), [sessions])
   const spread = useMemo(() => (form ? buildConsistencyTrend(sessions, form.serveType) : undefined), [sessions, form])
@@ -261,6 +265,10 @@ export default function Progress({
         </div>
       )}
 
+      {!usualReady && (
+        <p className="progress-foot">After a dozen serves over three trips, I can read each new serve against your own usual.</p>
+      )}
+
       {fixedCards.length > 0 && (
         <section className="block" id="progress-fixed">
           <h2 className="block-title">Fixed lately</h2>
@@ -306,6 +314,18 @@ export default function Progress({
           {fastest && <p className="progress-foot">{fastestLine(fastest, unit)}</p>}
           {quicker && <p className="progress-foot">{speedTrendLine(quicker, unit)}</p>}
           {numberSpeeds && <p className="progress-foot">{serveNumberSpeedLine(numberSpeeds, unit)}</p>}
+        </section>
+      )}
+
+      {links.length > 0 && (
+        <section className="block">
+          <h2 className="block-title">What your best serves share</h2>
+          {links.map((l) => (
+            <p key={`${l.kind}${l.metricId}`} className="strain-line strain-line--clear">
+              <Cue text={l.line} />
+            </p>
+          ))}
+          <p className="progress-foot">From your own serves, and past what chance would give. It says what goes together, not what causes what.</p>
         </section>
       )}
 

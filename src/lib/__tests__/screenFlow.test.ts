@@ -242,6 +242,9 @@ const HISTORY_CONSUMERS = [
   // The snapshot on offer, and the week's load (lift).
   'recoveryOffer',
   'serveLoad',
+  // The player's own usual, and what their best serves share (lift).
+  'playerBaseline',
+  'serveLinks',
   // The serve path (L3.5).
   'servePath',
   'strainBehindOf',

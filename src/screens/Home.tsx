@@ -3,7 +3,7 @@ import { Icon, Sheet } from '../components/primitives'
 import { engineMegabytes } from '../lib/engineManifest'
 import { NUDGE_COPY, type StorageNudge } from '../lib/storage/nudge'
 import { sessionEvidence } from '../lib/session/evidence'
-import { buildProgress, currentRubricEra, streakLine, tripDay } from '../lib/progress'
+import { buildProgress, currentRubricEra, streakLine, tripDay, deltaStatus } from '../lib/progress'
 import { momentsFor, weekRecap, type Moment } from '../lib/moments'
 import { programmeFor } from '../lib/programme'
 import { fastestServe } from '../lib/speedTrend'
@@ -273,7 +273,8 @@ export default function Home({
           <span className="momentum-stat">
             <span className="t-figure tnum">{form.latestTrip.overall}</span>
             <span>
-              typical, {tripDay(form.latestTrip.createdAt)} <DeltaChip delta={form.tripDelta} scope="trip" />
+              typical, {tripDay(form.latestTrip.createdAt)}{' '}
+              {form.tripDelta !== undefined && deltaStatus(form.tripDelta, 'trip') !== 'flat' && <DeltaChip delta={form.tripDelta} scope="trip" />}
             </span>
           </span>
           {fastest && (

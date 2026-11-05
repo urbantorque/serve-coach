@@ -5,14 +5,15 @@
  * which on a season of one fault is the same line three times over. A list of
  * serves a player cannot tell apart is a list nobody opens. So each serve gets
  * the most notable true thing about it: its speed record, the best of its trip,
- * a fault it did not show. Only then does it fall back on the fix, and a serve
- * read too poorly says so.
+ * what it did differently from their usual, a fault it did not show. Only then
+ * does it fall back on the fix, and a serve read too poorly says so.
  *
  * Pure, and light: it reads what a stored report already carries.
  */
 import { causalPlan } from './analysis/verdict'
 import type { Session, ServeTag } from './storage/db'
 import { tripsOf } from './progress'
+import { movedTitle, selfRead } from './selfRead'
 import { SOFT_READ } from '../components/statusLabels'
 
 export interface ServeStory {
@@ -50,6 +51,13 @@ export function serveStory(s: Session, history: readonly Session[], tags?: Reado
 
   const tag = tags?.get(s.id)
   if (tag?.serveNumber === 2) return { title: 'Second serve', best: false }
+
+  // Past the player's own noise, so it is the serve and not the camera.
+  if (s.quality.confidence >= SOFT_READ) {
+    const moved = selfRead(s, history as Session[], tags ? [...tags.values()] : [])?.usual[0]
+    const title = moved && movedTitle(moved)
+    if (title) return { title, best: false }
+  }
 
   // A fault named on the serve before and not on this one, on a clear read.
   const last = [...earlier].sort((a, b) => b.createdAt - a.createdAt)[0]

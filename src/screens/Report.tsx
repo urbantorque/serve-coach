@@ -15,9 +15,10 @@ import PosePlayer from '../components/PosePlayer'
 import PracticeCard from '../components/PracticeCard'
 import { DeltaChip } from '../components/Trend'
 import { Cue, Icon, Sheet } from '../components/primitives'
+import type { SelfRead } from '../lib/selfRead'
 import { useCountUp } from '../components/useCountUp'
 import { SPEED_MISS_LINE, defaultSpeedUnit, speedFigures } from '../lib/speedCopy'
-import { SOFT_READ, readQuality } from '../components/statusLabels'
+import { SOFT_READ, readQuality, VERDICT } from '../components/statusLabels'
 import ModelServe from '../components/ModelServe'
 import Term from '../components/Term'
 import { faultMoment, momentChecks } from '../lib/lookFor'
@@ -48,11 +49,10 @@ import {
   scoreMoveCaption,
   scoringVersionOf,
   type BestGap,
-  type BestTrip,
-} from '../lib/progress'
+  type BestTrip, deltaStatus } from '../lib/progress'
 import { shareReportCard } from '../lib/share/reportCard'
 import { swingOf, workParts } from '../lib/figure/swing'
-import { SCORING_VERSION, type Analysis, type PhaseId, type Status } from '../lib/analysis/types'
+import { SCORING_VERSION, type Analysis, type PhaseId } from '../lib/analysis/types'
 import type { Session } from '../lib/storage/db'
 import DrillCard from './report/DrillCard'
 import RevealStage from './report/RevealStage'
@@ -63,12 +63,6 @@ import SideBySide from './report/SideBySide'
  * The band in words, as a caption to the score. Said once, and short: the fix
  * is the headline.
  */
-const VERDICT: Record<Status, string> = {
-  great: 'A seriously good serve',
-  good: 'A solid, repeatable serve',
-  fair: 'Good bones, a few gaps',
-  work: 'Plenty of free speed here',
-}
 
 interface Props {
   analysis: Analysis | Session
@@ -77,6 +71,8 @@ interface Props {
   previous?: Session
   /** The player's best earlier serve of this type, under this rubric. */
   best?: Session
+  /** This serve against the player's own usual and best, past their own noise. */
+  self?: SelfRead
   /** What the player said about this serve, and the taps that change it. */
   serveNumber?: 1 | 2
   outcome?: ServeOutcome
@@ -159,6 +155,7 @@ export default function Report({
   videoUrl,
   previous,
   best,
+  self,
   serveNumber,
   outcome,
   onTagServe,
@@ -443,13 +440,24 @@ export default function Report({
           {previous &&
             (comparable ? (
               <p className="hero-delta">
-                <DeltaChip delta={moved ?? 0} scope="overall" alike={heroAlike} />
-                <span>{scoreMoveCaption({ delta: moved ?? 0, alike: heroAlike })}</span>
+                {deltaStatus(moved ?? 0, 'overall', heroAlike) === 'flat' ? (
+                  <span>About the same as your last serve</span>
+                ) : (
+                  <>
+                    <DeltaChip delta={moved ?? 0} scope="overall" alike={heroAlike} />
+                    <span>{scoreMoveCaption({ delta: moved ?? 0, alike: heroAlike })}</span>
+                  </>
+                )}
               </p>
             ) : (
               <p className="hero-delta">The scoring changed between these two serves, so this one starts a fresh run.</p>
             ))}
           {bestScore && <p className="hero-best">{bestTripLine(bestScore, analysis.createdAt)}</p>}
+          {self?.reward && (
+            <p className="hero-best">
+              <Cue text={self.reward.line} />
+            </p>
+          )}
           <span className="t-overline hero-kicker">Work on this next</span>
           <h1>{first.title}</h1>
           <p className="hero-why">
@@ -543,6 +551,27 @@ export default function Report({
         <p className="against-best">
           <Cue text={againstBest} />
         </p>
+      )}
+
+      {self && self.usual.length + self.best.length > 0 && (
+        <section className="own-read" aria-labelledby="own-title">
+          <h2 className="t-headline" id="own-title">
+            Against your own serve
+          </h2>
+          <ul>
+            {[...self.usual, ...self.best].map((f) => (
+              <li key={f.metricId} className={`own-row own-row--${f.band}`}>
+                <Icon name={f.band === 'towards' ? 'up' : f.band === 'away' ? 'warn' : 'progress'} size={18} />
+                <span>
+                  <Cue text={f.line} />
+                  <small className="tnum">
+                    {f.readout}. Usually: {f.referenceReadout.charAt(0).toLowerCase() + f.referenceReadout.slice(1)}.
+                  </small>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       {swing && focusMoment && focusPhase && (
