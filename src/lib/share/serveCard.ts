@@ -127,7 +127,7 @@ export async function renderReportCard(report: Report, streak?: string, bestScor
   ctx.textAlign = 'left'
 
   /* --- the number -------------------------------------------------------- */
-  const base = H - 372
+  const base = H - 404
   ctx.font = figureType(286)
   ctx.fillStyle = FG
   ctx.fillText(String(report.overall), PAD - 6, base)
@@ -170,7 +170,7 @@ export async function renderReportCard(report: Report, streak?: string, bestScor
   ctx.font = textType(28)
   if (record) {
     ctx.fillStyle = LIME
-    ctx.fillText(record, PAD, H - 86, W - PAD * 2)
+    ctx.fillText(record, PAD, H - 84, W - PAD * 2)
   }
   const soft = report.quality.confidence < SOFT_READ
   const kind = SERVE_TYPES[report.serveType ?? 'flat']?.word ?? 'flat'
