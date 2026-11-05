@@ -61,6 +61,12 @@ const cache = ownCache
 
 fs.mkdirSync(cache, { recursive: true })
 
+/*
+ * `node scripts/run-tests.mjs render bandNoise`: only the files whose path
+ * holds one of these words. For working on one thing; `npm test` runs them all.
+ */
+const only = process.argv.slice(2)
+
 // Full paths, because two directories may hold a `ball.test.ts` each. The
 // bundle name below is derived from the path for the same reason.
 const files = testDirs
@@ -70,6 +76,7 @@ const files = testDirs
       .filter((f) => f.endsWith('.test.ts'))
       .map((f) => path.join(dir, f)),
   )
+  .filter((f) => only.length === 0 || only.some((word) => f.includes(word)))
   .sort()
 
 if (files.length === 0) {
