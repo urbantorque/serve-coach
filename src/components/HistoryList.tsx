@@ -1,9 +1,11 @@
 import { ScoreRing, Icon } from './primitives'
 import { tripsOf } from '../lib/progress'
-import type { Session } from '../lib/storage/db'
+import { serveStory } from '../lib/serveStory'
+import type { ServeTag, Session } from '../lib/storage/db'
 
 interface Props {
   sessions: Session[]
+  tags?: ReadonlyMap<string, ServeTag>
   onOpen: (s: Session) => void
   onDelete: (id: string) => void
 }
@@ -20,10 +22,10 @@ const median = (xs: number[]): number => {
  * The list was one long run of rows, and a basket of twelve read as twelve
  * unrelated reports. A trip is the app's own (`tripsOf`: serves under a day
  * apart), headed by its date, how many serves it held and its typical score,
- * the median the progress screen leads with too. Each row is the same row Home
- * draws.
+ * the median the progress screen leads with too. Each row says what set that
+ * serve apart, as the cards on Today do.
  */
-export default function HistoryList({ sessions, onOpen, onDelete }: Props) {
+export default function HistoryList({ sessions, tags, onOpen, onDelete }: Props) {
   const trips = tripsOf(sessions).reverse()
   return (
     <div className="history">
@@ -44,7 +46,7 @@ export default function HistoryList({ sessions, onOpen, onDelete }: Props) {
                   <button className="recent" onClick={() => onOpen(s)}>
                     <ScoreRing score={s.overall} status={s.overallStatus} size={42} animate={false} />
                     <span className="recent-text">
-                      <strong>{s.focus.title}</strong>
+                      <strong>{serveStory(s, sessions, tags).title}</strong>
                       <span>
                         {new Date(s.createdAt).toLocaleString(undefined, {
                           day: 'numeric',

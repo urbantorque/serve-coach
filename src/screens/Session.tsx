@@ -1,3 +1,5 @@
+import '../styles/blocks.css'
+import '../styles/depth.css'
 import '../styles/analysing.css'
 import '../styles/player.css'
 import { useState } from 'react'

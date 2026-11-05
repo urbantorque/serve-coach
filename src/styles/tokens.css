@@ -105,6 +105,7 @@
   /* What sits over a picture, so words stay readable on any footage. */
   --veil: linear-gradient(180deg, rgba(9, 11, 16, 0) 0%, rgba(9, 11, 16, 0.72) 58%, #090b10 100%);
   --veil-top: linear-gradient(180deg, rgba(9, 11, 16, 0.66), rgba(9, 11, 16, 0));
+  --film-lift: 0 10px 30px -10px var(--lime-glow), inset 0 1px 0 rgba(255, 255, 255, 0.32);
   --glass: rgba(14, 17, 24, 0.72);
   --glass-edge: rgba(255, 255, 255, 0.09);
 

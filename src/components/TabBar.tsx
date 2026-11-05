@@ -1,0 +1,42 @@
+import { Icon } from './primitives'
+
+export type Tab = 'today' | 'progress'
+
+interface Props {
+  on: Tab
+  onTab: (tab: Tab) => void
+  onFilm: () => void
+  /** The engine download's progress, 0 to 1, drawn round the Film button while it runs. */
+  loading?: number
+}
+
+/**
+ * The app's structure: two places, and one action between them.
+ *
+ * Today answers what now, Progress answers whether it is working, and Film is
+ * always under the thumb. There used to be no navigation at all: Progress was a
+ * card two screens down, and filming was two differently named buttons.
+ */
+export default function TabBar({ on, onTab, onFilm, loading }: Props) {
+  const ring = loading !== undefined ? Math.max(0.04, Math.min(1, loading)) : undefined
+  return (
+    <nav className="tabbar" aria-label="Main">
+      <button className={`tab${on === 'today' ? ' is-on' : ''}`} aria-current={on === 'today' ? 'page' : undefined} onClick={() => onTab('today')}>
+        <Icon name="home" size={24} />
+        <span>Today</span>
+      </button>
+      <button className="tab-film" onClick={onFilm} aria-label="Film a serve">
+        {ring !== undefined && (
+          <svg className="tab-film-ring" viewBox="0 0 76 76" aria-hidden="true">
+            <circle cx="38" cy="38" r="35" pathLength={1} strokeDasharray={`${ring} 1`} />
+          </svg>
+        )}
+        <Icon name="camera-solid" size={28} />
+      </button>
+      <button className={`tab${on === 'progress' ? ' is-on' : ''}`} aria-current={on === 'progress' ? 'page' : undefined} onClick={() => onTab('progress')}>
+        <Icon name="progress" size={24} />
+        <span>Progress</span>
+      </button>
+    </nav>
+  )
+}

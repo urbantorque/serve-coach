@@ -2,57 +2,6 @@
    Progress — trend card, charts, deltas
    ========================================================================= */
 
-.progress-card {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-  padding: 18px;
-  text-align: left;
-  border-radius: var(--r-lg);
-  background: var(--ink-1);
-  border: 1px solid var(--hairline-soft);
-  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease);
-}
-
-.progress-card:hover {
-  background: var(--ink-2);
-  border-color: var(--hairline);
-}
-
-.progress-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.progress-jump {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 12px;
-  color: var(--fg-faint);
-}
-
-.progress-figures {
-  display: flex;
-  align-items: baseline;
-  gap: 11px;
-}
-
-.progress-hero {
-  font-size: 46px;
-  font-weight: 680;
-  letter-spacing: -0.04em;
-  line-height: 1;
-}
-
-.progress-unit {
-  font-size: 11.5px;
-  line-height: 1.35;
-  color: var(--fg-faint);
-}
-
 .progress-foot {
   font-size: 11.5px;
   color: var(--fg-faint);
@@ -93,41 +42,6 @@
   border-left-color: var(--great);
 }
 
-.progress-practice {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 4px;
-  padding: 9px 12px;
-  border-radius: var(--r-sm);
-  background: var(--ink-2);
-  border-left: 2px solid var(--fair);
-  font-size: 12.5px;
-  line-height: 1.4;
-  color: var(--fg-muted);
-}
-
-.progress-practice strong {
-  color: var(--fg);
-  font-weight: 620;
-}
-
-.progress-practice .icon {
-  flex: none;
-  color: var(--fair);
-}
-
-.progress-practice--improving { border-left-color: var(--great); }
-.progress-practice--improving .icon { color: var(--great); }
-.progress-practice--slipping { border-left-color: var(--work); }
-.progress-practice--slipping .icon { color: var(--work); }
-
-.spark {
-  width: 100%;
-  height: auto;
-  overflow: visible;
-}
-
 /* --- delta chip ------------------------------------------------------------ */
 
 .delta {
@@ -155,7 +69,6 @@
   font-size: 11px;
 }
 
-
 /* --- score trend ----------------------------------------------------------- */
 
 .chart {
@@ -172,7 +85,6 @@
   cursor: crosshair;
 }
 
-.chart-tick,
 .chart-axis {
   fill: var(--fg-faint);
   font-size: 11px;
@@ -411,25 +323,6 @@
 
 /* --- sheet contents --------------------------------------------------------- */
 
-.progress-sheet {
-  display: flex;
-  flex-direction: column;
-  gap: 26px;
-}
-
-.progress-summary {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-}
-
-.progress-summary .progress-unit {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12.5px;
-}
-
 /* The serve path (L3.5): a part a row, its state as the report's own tags. */
 .path-headline {
   margin: 0 0 10px;
@@ -492,13 +385,6 @@
   color: var(--fg);
 }
 
-.progress-table summary {
-  font-size: 12.5px;
-  color: var(--fg-muted);
-  cursor: pointer;
-  padding: 6px 0;
-}
-
 .dtable {
   width: 100%;
   border-collapse: collapse;
@@ -547,11 +433,6 @@
 }
 
 /* Balances the back arrow so the title sits centred, as on the report. */
-.topbar-spacer {
-  width: 40px;
-  height: 40px;
-  flex: none;
-}
 
 .progress-empty {
   display: flex;
@@ -597,68 +478,6 @@ button.tile {
   button.tile:hover {
     border-color: var(--fg-faint);
   }
-}
-
-.tile--form {
-  border-color: var(--lime-deep);
-}
-
-.tile-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--fg-faint);
-}
-
-.tile-figure {
-  font-size: 34px;
-  font-weight: 680;
-  letter-spacing: -0.035em;
-  line-height: 1.05;
-}
-
-.tile-of {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--fg-faint);
-}
-
-.tile-note {
-  font-size: 11.5px;
-  line-height: 1.35;
-  color: var(--fg-muted);
-}
-
-.tile-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: auto;
-}
-
-.tile-dots {
-  display: flex;
-  gap: 4px;
-  margin-top: auto;
-}
-
-.tile-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: var(--r-pill);
-  background: var(--ink-3);
-}
-
-.tile-dot--work { background: var(--work); }
-.tile-dot--good { background: var(--good); }
-.tile-dot--great { background: var(--great); }
-
-.tile-spark {
-  width: 100%;
-  max-width: 120px;
-  height: 40px;
-  margin: 2px 0;
 }
 
 /* One share button (L4.9): a disclosure whose summary is the button, opening
@@ -938,4 +757,10 @@ button.tile {
 .progress-all .tnum {
   color: var(--fg-muted);
   font-weight: 500;
+}
+
+/* The folds, one list. */
+.progress-more + .progress-more {
+  margin-top: -24px;
+  border-top: 1px solid var(--glass-edge);
 }

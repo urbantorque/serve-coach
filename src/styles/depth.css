@@ -17,12 +17,6 @@
   gap: 10px;
 }
 
-.topbar-title {
-  font-size: 13px;
-  font-weight: 560;
-  color: var(--fg-muted);
-}
-
 .serves {
   display: flex;
   align-items: center;
@@ -137,10 +131,6 @@
   background: var(--lime);
   border-color: var(--lime);
   color: var(--lime-ink);
-}
-
-.serves-cta {
-  width: 100%;
 }
 
 /*
@@ -508,24 +498,6 @@
   gap: 8px;
 }
 
-.note {
-  display: flex;
-  gap: 10px;
-  padding: 12px 14px;
-  border-radius: var(--r-sm);
-  background: var(--fair-dim);
-  border: 1px solid color-mix(in srgb, var(--fair) 20%, transparent);
-  font-size: 12.5px;
-  line-height: var(--lh-snug);
-  color: var(--fair-ink);
-  text-wrap: pretty;
-}
-
-.note .icon {
-  color: var(--fair);
-  margin-top: 1px;
-}
-
 /* ============================================================================
    Best-to-worst gap — the one chart where down is the good direction
    ========================================================================= */
@@ -664,15 +636,6 @@
   color: var(--work-ink);
 }
 
-.injury-text p {
-  margin-top: 6px;
-  max-width: var(--measure);
-  font-size: 14px;
-  line-height: var(--lh-snug);
-  color: var(--work-ink-soft);
-  text-wrap: pretty;
-}
-
 /* ============================================================================
    Refusal — the clip the engine will not put a number on
    ========================================================================= */
@@ -700,23 +663,8 @@
   pointer-events: none;
 }
 
-.focus-kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--lime);
-}
-
 /* The card's only heading since the fix moved up into the hero: a label over
    how to work on it, not a second headline. */
-.focus > .focus-kicker {
-  display: flex;
-  margin: 0 0 14px;
-}
 
 .focus > p {
   max-width: var(--measure);
@@ -737,13 +685,6 @@
 
 /* Quieter than the focus kicker above it, and grey rather than lime: the drill
    is how to do the one thing, not a second one thing. */
-.focus-drill-kicker {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--fg-faint);
-}
 
 .focus-drill h3 {
   font-size: 14.5px;
@@ -760,44 +701,10 @@
 
 /* The dose on the left and "Show me" on the right, one row: the two things a
    player does with a drill, side by side. */
-.focus-drill-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 11px;
-}
 
 /* The same quiet lime text button as "Change" on the level line, with the
    same 44px hit area grown from the middle — see `.levelled-btn::after`. */
 /* The way from a report to its glance, under the verdict it summarises. */
-.drill-show {
-  display: inline-flex;
-  align-items: center;
-  position: relative;
-  gap: 3px;
-  flex: none;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--lime);
-}
-
-.drill-show::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 44px;
-  transform: translateY(-50%);
-}
-
-@media (hover: hover) {
-  .drill-show:hover {
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
-}
 
 /* What the last basket said about the step, under the drill it judged. */
 .drill-check {
@@ -820,11 +727,6 @@
 }
 
 /* "Show me" and "All steps", side by side at the right of the dose. */
-.drill-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 16px;
-}
 
 /*
  * The ladder the drill is one rung of.
@@ -935,9 +837,6 @@
 }
 
 /* The chevron points down when the demonstration is open, as a disclosure. */
-.drill-show[aria-expanded='true'] svg {
-  transform: rotate(90deg);
-}
 
 .fault-demo {
   display: flex;
@@ -980,15 +879,6 @@
 
 /* The dose, as the one lime object inside the drill box — the thing you go and
    do, sized like a count rather than a heading. */
-.focus-reps {
-  display: inline-block;
-  padding: 5px 11px;
-  border-radius: var(--r-pill);
-  background: var(--lime-glow);
-  color: var(--lime);
-  font-size: 11.5px;
-  font-weight: 600;
-}
 
 /*
  * What the report is holding back, as a count.
@@ -997,16 +887,6 @@
  * so that a second fault surfacing on the next clip does not read as the app
  * changing its mind — not to compete with the one thing to work on.
  */
-.focus-suppressed,
-.focus-best {
-  position: relative;
-  margin-top: 10px;
-  max-width: var(--measure);
-  font-size: 12.5px;
-  line-height: var(--lh-snug);
-  color: var(--fg-faint);
-  text-wrap: pretty;
-}
 
 /*
  * The rest of the queue.
@@ -1017,23 +897,6 @@
  * would have to decide which to start with, which is the decision the hierarchy
  * already made for them.
  */
-.focus-next {
-  position: relative;
-  margin-top: 22px;
-  padding-top: 16px;
-  border-top: 1px solid var(--hairline);
-  list-style: none;
-}
-
-.focus-next-kicker {
-  display: block;
-  margin-bottom: 13px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--fg-faint);
-}
 
 .focus-next-item {
   display: flex;
@@ -1106,36 +969,6 @@
 
 /* A later item's drill, folded to its name and dose (L4.2). The summary is the
    same line it always was, made tall enough to tap, with a chevron that turns. */
-.focus-next-how > summary {
-  align-items: center;
-  min-height: 36px;
-  margin-top: 4px;
-  list-style: none;
-  cursor: pointer;
-}
-
-.focus-next-how > summary::-webkit-details-marker {
-  display: none;
-}
-
-.focus-next-how > summary svg:last-child {
-  margin: 0 0 0 auto;
-  transition: transform var(--fast) var(--ease);
-}
-
-.focus-next-how[open] > summary svg:last-child {
-  transform: rotate(90deg);
-}
-
-.focus-next-how-text {
-  margin-top: 4px;
-  padding-left: 20px;
-  max-width: var(--measure);
-  font-size: 12.5px;
-  line-height: var(--lh-snug);
-  color: var(--fg-muted);
-  text-wrap: pretty;
-}
 
 /* Which rung these targets came off, and the way to move it. */
 .levelled {
@@ -1307,14 +1140,6 @@
   border: 1px solid var(--hairline);
 }
 
-.reading-title {
-  font-size: 12px;
-  font-weight: 660;
-  letter-spacing: var(--tr-kicker);
-  text-transform: uppercase;
-  color: var(--fg-muted);
-}
-
 /* Left-aligned, where the hero's copy of these was centred. In a card with a
    heading over it, centred chips read as a caption to nothing. */
 .reading-chips {
@@ -1344,11 +1169,6 @@
 
 /* The rule divides one row from the row above it. Straight under the section's
    own heading, as the first tag row sits, it would only underline the title. */
-.reading-title + .judged {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: 0;
-}
 
 .judged-lead {
   display: block;
@@ -1434,88 +1254,7 @@
    Your frame beside the model's (L4.6)
    ========================================================================= */
 
-.moment-pair {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin: 16px 0 4px;
-}
-
-.moment-pair-title {
-  color: var(--fg-faint);
-}
-
-.moment-pair-stills {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.moment-pair-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-
 /* The same box for both bodies, so the fit makes them the same size. */
-.moment-pair-canvas,
-.moment-pair-wait {
-  display: block;
-  width: 100%;
-  aspect-ratio: 3 / 4;
-  border-radius: var(--r-md);
-  border: 1px solid var(--hairline);
-  background: var(--ink-2);
-}
-
-.moment-pair-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--fg-muted);
-}
-
-.moment-checks {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.moment-checks li {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 12.5px;
-  line-height: var(--lh-snug);
-  color: var(--fg-muted);
-}
-
-.moment-checks li svg {
-  flex: none;
-  margin-top: 2px;
-}
-
-.moment-checks li.is-in svg {
-  color: var(--lime);
-}
-
-.moment-checks li.is-out svg {
-  color: var(--work);
-}
-
-.moment-checks strong {
-  font-weight: 600;
-  color: var(--fg);
-}
 
 /* Then and now one moment at a time (L4.9): the pills choose, and the one pair
    gets the room six used to share. */
-.pair-list--one .pair-label {
-  display: none;
-}

@@ -10,9 +10,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import './styles/tokens.css'
 import './styles/shell.css'
 import './styles/controls.css'
-import './styles/home.css'
-import './styles/blocks.css'
-import './styles/depth.css'
+import './styles/today.css'
 import './styles/states.css'
 
 // A new version is discovered here and taken later, at a moment that costs

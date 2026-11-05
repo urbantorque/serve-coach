@@ -18,7 +18,7 @@ export const GLOSSARY = {
   },
   firingOrder: {
     word: 'Firing order',
-    meaning: 'Which parts of your body start moving first, from the legs up through the hips and shoulders to the racket arm.',
+    meaning: 'Which parts of your body reach their top speed first, from the legs up through the hips and shoulders to the racket arm.',
   },
   likelyRange: {
     word: 'Likely range',

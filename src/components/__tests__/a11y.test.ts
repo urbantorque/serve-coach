@@ -6,6 +6,7 @@
  * progress screen — and every button, link and input in it has to carry a name
  * a screen reader can say: its own text, an aria-label, or a label.
  */
+import { DEFAULTS } from '../../lib/storage/prefs'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server.browser'
 import Home from '../../screens/Home'
@@ -44,16 +45,14 @@ function unnamed(markup: string): string[] {
 const homeProps = {
   offlineReady: true,
   sessionsLoaded: true,
-  onPick: noop,
+  prefs: DEFAULTS,
+  onPrefs: noop,
+  onFilm: noop,
   onOpen: noop,
-  onShowGuide: noop,
   onShowHistory: noop,
   onShowSettings: noop,
   onShowProgress: noop,
-  onGuideThen: noop,
   onShowExample: noop,
-  needsHandedness: false,
-  onMakeOffline: noop,
   onRecorded: noop,
   onCheckDrill: noop,
 }

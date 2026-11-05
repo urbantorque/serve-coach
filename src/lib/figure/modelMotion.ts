@@ -19,10 +19,6 @@ import type { Frame, Phase } from '../analysis/types'
 import type { BallFlight } from '../vision/ballTrack'
 import packed from './modelServe.json'
 
-/** Required by the data's licence (CC BY 4.0), and shown in Settings. */
-export const ATTRIBUTION =
-  'Model serve: motion capture from Durlind, Martinez-Hernandez and Assaf (2025), University of Bath Research Data Archive, doi:10.15125/BATH-01454, CC BY 4.0. Reduced to joint centres and filmed with a virtual camera.'
-
 /** The rate the model is filmed at. */
 export const MODEL_FPS = 60
 

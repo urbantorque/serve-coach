@@ -108,18 +108,6 @@
   transform: scale(0.9);
 }
 
-.icon-btn--solid {
-  background: var(--lime);
-  color: var(--lime-ink);
-  width: 46px;
-  height: 46px;
-}
-
-.icon-btn--solid:hover {
-  background: var(--lime-bright);
-  color: var(--lime-ink);
-}
-
 .icon-btn--quiet {
   width: 36px;
   height: 36px;
@@ -346,4 +334,150 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
   border: 0;
+}
+
+.glass-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: var(--r-pill);
+  background: var(--glass);
+  box-shadow: inset 0 0 0 1px var(--glass-edge);
+  color: var(--fg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: transform var(--fast) var(--ease);
+}
+
+.glass-btn:active {
+  transform: scale(0.94);
+}
+
+.hero-veil {
+  position: absolute;
+  inset: auto 0 0;
+  height: 56%;
+  background: var(--veil);
+  pointer-events: none;
+}
+
+.stage-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--lime);
+}
+
+.seg {
+  display: flex;
+  padding: 3px;
+  border-radius: var(--r-pill);
+  background: var(--ink-2);
+  border: 1px solid var(--hairline);
+}
+
+.seg-item {
+  position: relative;
+  padding: 6px 11px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: var(--wt-label);
+  letter-spacing: 0.005em;
+  /* Muted, not faint (Q7): an unpicked option is still one to read. */
+  color: var(--fg-muted);
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease),
+    transform var(--fast) var(--ease);
+}
+
+/* A 44px press, painted nowhere: side by side the items share no edge to
+   overlap on, so each grows only up and down (see controls.css). */
+.seg-item::after {
+  content: '';
+  position: absolute;
+  inset: 50% 0 auto;
+  height: 44px;
+  transform: translateY(-50%);
+}
+
+.seg-item:active {
+  transform: scale(0.92);
+}
+
+.seg-item.is-on {
+  background: var(--ink-4);
+  color: var(--fg);
+}
+
+.player:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 6px;
+}
+
+.player-track:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 4px;
+  border-radius: var(--r-pill);
+}
+
+.phase-pill {
+  flex: none;
+  padding: 8px 14px;
+  border-radius: var(--r-pill);
+  background: var(--ink-2);
+  border: 1px solid var(--hairline);
+  font-size: 12.5px;
+  font-weight: 560;
+  color: var(--fg-muted);
+  /* Named rather than `all`. The active pill is a heavier weight, and `all`
+     interpolated it — the system UI stacks here are variable fonts, so every
+     phase change re-shaped the text and reflowed the whole pill row for the
+     length of the transition, six times per loop of the serve. Weight now
+     snaps, which is what it looked like it was doing anyway. */
+  transition:
+    background-color var(--fast) var(--ease),
+    border-color var(--fast) var(--ease),
+    color var(--fast) var(--ease),
+    transform var(--fast) var(--ease);
+}
+
+.phase-pill:active {
+  transform: scale(0.94);
+}
+
+.phase-pill.is-active {
+  background: var(--lime);
+  border-color: var(--lime);
+  color: var(--lime-ink);
+  font-weight: 640;
+}
+
+.note {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--r-sm);
+  background: var(--fair-dim);
+  border: 1px solid color-mix(in srgb, var(--fair) 20%, transparent);
+  font-size: 12.5px;
+  line-height: var(--lh-snug);
+  color: var(--fair-ink);
+  text-wrap: pretty;
+}
+
+.note .icon {
+  color: var(--fair);
+  margin-top: 1px;
 }

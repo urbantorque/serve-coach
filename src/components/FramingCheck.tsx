@@ -4,7 +4,7 @@ import { useWakeLock } from './useWakeLock'
 import { Cue, Icon } from './primitives'
 import '../styles/court.css'
 import { TICK, earcon, haptic, unlockEarcons } from '../lib/earcon'
-import { SPEED_PLACEMENT } from '../lib/placement'
+import { PLACEMENT, SPEED_PLACEMENT } from '../lib/placement'
 import { PREVIEW_BLOCK_CUE, previewBlockFor, previewSupported, type PreviewBlock } from '../lib/framing/access'
 import {
   PREVIEW_WINDOW,
@@ -135,6 +135,15 @@ interface Props {
    * so a blocked preview was a dead end on the one screen built for the court.
    */
   onCameraApp?: () => void
+  /** Leave the camera. */
+  onClose?: () => void
+  /** Pick a clip already on the phone instead. */
+  onPick?: () => void
+  /** How to stand the phone. */
+  onHelp?: () => void
+  /** The player has never filmed here, so the three rules that matter are said once. */
+  firstTime?: boolean
+  onSeenRules?: () => void
 }
 
 /** Blocks the camera app gets round. Not a busy camera, and not a coach still downloading. */
@@ -143,7 +152,7 @@ const CAMERA_APP_HELPS = new Set(['unsupported', 'denied', 'missing', 'unknown']
 /** Hand samples kept for the re-arm check: comfortably more than `REARM_S` of them. */
 const REARM_WINDOW_S = 6
 
-export default function FramingCheck({ onRecorded, target, rearm = false, onCameraApp }: Props) {
+export default function FramingCheck({ onRecorded, target, rearm = false, onCameraApp, onClose, onPick, onHelp, firstTime, onSeenRules }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   // Mounted only while the viewfinder is open, and that is a phone propped on
   // a fence while its owner walks to the baseline — the screen must not lock.
@@ -195,6 +204,8 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
   const [speak, setSpeak] = useState(() => readPrefs().speakFraming ?? onCourtDefault())
   const [serveCount, setServeCount] = useState<ServeCount>(() => (target ? 6 : (readPrefs().handsFreeServes ?? 1)))
   const [countdown, setCountdown] = useState<number | null>(null)
+  /** Hands-free, the voice and the serve count, folded: they rarely change. */
+  const [optionsOpen, setOptionsOpen] = useState(false)
   const countdownRef = useRef<number | null>(null)
   countdownRef.current = countdown
   const countdownTimer = useRef(0)
@@ -595,45 +606,62 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
     </p>
   )
 
+  const closeButton = onClose && (
+    <button type="button" className="glass-btn" onClick={onClose} aria-label="Close the camera">
+      <Icon name="close" />
+    </button>
+  )
+  const pickButton = onPick && (
+    <button type="button" className="film-side" onClick={onPick} aria-label="Pick a video from this phone">
+      <Icon name="gallery" size={26} />
+      <span>Videos</span>
+    </button>
+  )
+
   if (block) {
     return (
-      <div className="framer">
-        {targetLine}
-        <p className="framer-cue framer-cue--blocked" role="status">
-          <Cue text={PREVIEW_BLOCK_CUE[block]} />
-        </p>
-        {onCameraApp && CAMERA_APP_HELPS.has(block) && (
-          <button type="button" className="btn btn--full framer-record" onClick={onCameraApp}>
-            <Icon name="camera" size={17} />
-            Film with your camera app
-          </button>
-        )}
-        <p className="framer-foot">
-          Filming with your own camera app works the same. Either way the framing gets checked
-          on the clip; this moves that check earlier.
-        </p>
+      <div className="film film--blocked">
+        <div className="film-top">
+          {closeButton}
+        </div>
+        <div className="film-bottom">
+          {targetLine}
+          <p className="framer-cue framer-cue--blocked" role="status">
+            <Cue text={PREVIEW_BLOCK_CUE[block]} />
+          </p>
+          {onCameraApp && CAMERA_APP_HELPS.has(block) && (
+            <button type="button" className="btn btn--primary btn--big btn--full" onClick={onCameraApp}>
+              <Icon name="camera" size={20} />
+              Film with your camera app
+            </button>
+          )}
+          {onPick && (
+            <button type="button" className="btn btn--ghost btn--full" onClick={onPick}>
+              <Icon name="gallery" size={19} />
+              Pick a video from this phone
+            </button>
+          )}
+          <p className="framer-foot">Your video stays on this phone either way.</p>
+        </div>
       </div>
     )
   }
 
+  const idle = !recording && countdown === null
   return (
-    <div className="framer">
-      {targetLine}
-      {/* Where the phone goes for a speed (C4), said where the player is about
-          to move it, from the one place that wording lives. */}
-      {placement === 'speed' && !recording && countdown === null && (
-        <p className="framer-target">
-          <Icon name="target" size={15} />
-          <span>
-            For a speed, stand the phone {SPEED_PLACEMENT.distance} back, on its side, {SPEED_PLACEMENT.where}.
-          </span>
-        </p>
-      )}
-      {rearming && handsFree && !recording && countdown === null && (
-        <p className="framer-target" role="status">
-          <Icon name="camera" size={15} />
-          <span>Walk back to your spot and stand still. I start the count by myself.</span>
-        </p>
+    <div className="film">
+      {firstTime && (
+        <div className="film-rules" role="dialog" aria-label="Three things before you film">
+          <h2 className="t-headline">Three things first</h2>
+          <ol>
+            <li>Stand the phone side-on to you, about {PLACEMENT.distance} away.</li>
+            <li>Get all of you in the picture, feet included.</li>
+            <li>Start filming a second before your toss.</li>
+          </ol>
+          <button type="button" className="btn btn--primary btn--big btn--full" onClick={onSeenRules}>
+            Got it
+          </button>
+        </div>
       )}
       <div className={`framer-stage framer-stage--${verdict.grade}`}>
         {/* The preview is the instruction's evidence, not the instruction. A
@@ -641,10 +669,8 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
             the same sentence, so the picture is hidden rather than described
             with something no code here can honestly claim to see. */}
         <video ref={videoRef} muted playsInline autoPlay aria-hidden="true" />
-        {/* A different shape for each of the three grades that show a badge at
-            all. Carrying the difference in the border colour alone would leave
-            the verdict invisible to a player who cannot separate amber from red
-            — and this screen exists to be read from across a court, where
+        {/* A different shape for each grade, so the verdict survives being read
+            without colour: this screen is read from across a court, where
             colour is the first thing to go. */}
         <span className="framer-badge">
           <Icon name={BADGE[verdict.grade]} size={15} />
@@ -654,8 +680,7 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
             {countdown}
           </span>
         )}
-        {/* The basket so far, readable from the baseline (C1). Only for a
-            basket: one serve has nothing to count. */}
+        {/* The basket so far, readable from the baseline (C1). */}
         {handsFree && serveCount > 1 && (recording || countdown !== null) && (
           <span className="framer-pips" role="img" aria-label={`${served} of ${serveCount} serves`}>
             {Array.from({ length: serveCount }, (_, i) => (
@@ -665,26 +690,11 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
         )}
       </div>
 
-      {/* The download replaces the verdict rather than sitting under it: until
-          the model is here there is no verdict, and a stale "hold still" over a
-          progress line reads as a check that has already run. */}
-      {warming !== null ? (
-        <p className="framer-cue" role="status" aria-live="polite">
-          Downloading the coach · {Math.round(warming * 100)}%
-        </p>
-      ) : (
-        // `polite` so a verdict that changes while the player is reading the
-        // last one waits its turn instead of cutting it off.
-        <p className={`framer-cue framer-cue--${verdict.grade}`} role="status" aria-live="polite">
-          <Cue text={verdict.cue} />
-        </p>
-      )}
-
-      {/* What the framing is judged for (C4). Shown with or without a recorder:
-          it changes the verdict, not the recording. */}
-      {!recording && countdown === null && (
-        <div className="framer-options">
-          <div className="seg" role="group" aria-label="Filming for">
+      <div className="film-top">
+        {closeButton}
+        {/* What the framing is judged for (C4): it changes the verdict, not the recording. */}
+        {idle && (
+          <div className="seg film-mode" role="group" aria-label="Filming for">
             {(['form', 'speed'] as const).map((p) => (
               <button
                 key={p}
@@ -700,94 +710,129 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
               </button>
             ))}
           </div>
-        </div>
-      )}
+        )}
+        {onHelp && idle && (
+          <button type="button" className="glass-btn" onClick={onHelp} aria-label="How to film it">
+            <Icon name="info" />
+          </button>
+        )}
+      </div>
 
-      {/* Only where the browser will record something this app can then read.
-          See `recordingType` — a control that produces a file the analyser
-          refuses is worse than no control. */}
-      {/* Hands-free and the voice (N1.1, N1.2). Hidden while recording: a
-          setting changed mid-serve would change what the recording does. */}
-      {onRecorded && type && !block && !recording && countdown === null && (
-        <div className="framer-options">
-          <button
-            type="button"
-            className={`chip chip--button chip--toggle${handsFree ? ' is-on' : ''}`}
-            aria-pressed={handsFree}
-            onClick={() => {
-              setHandsFree(!handsFree)
-              writePrefs({ handsFree: !handsFree })
-            }}
-          >
-            Hands-free
-          </button>
-          <button
-            type="button"
-            className={`chip chip--button chip--toggle${speak ? ' is-on' : ''}`}
-            aria-pressed={speak}
-            onClick={() => {
-              if (!speak) primeSpeech()
-              setSpeak(!speak)
-              writePrefs({ speakFraming: !speak })
-            }}
-          >
-            Read it aloud
-          </button>
-          {handsFree && (
-            <div className="seg" role="group" aria-label="Stop after">
-              {SERVE_COUNTS.map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  className={`seg-item${serveCount === n ? ' is-on' : ''}`}
-                  aria-pressed={serveCount === n}
-                  onClick={() => {
-                    setServeCount(n)
-                    if (!target) writePrefs({ handsFreeServes: n })
-                  }}
-                >
-                  {n === 1 ? '1 serve' : `${n} serves`}
-                </button>
-              ))}
-            </div>
+      <div className="film-bottom">
+        {targetLine}
+        {placement === 'speed' && idle && (
+          <p className="framer-target">
+            <Icon name="target" size={15} />
+            <span>
+              For a speed, stand the phone {SPEED_PLACEMENT.distance} back, on its side, {SPEED_PLACEMENT.where}.
+            </span>
+          </p>
+        )}
+        {rearming && handsFree && idle && (
+          <p className="framer-target" role="status">
+            <Icon name="camera" size={15} />
+            <span>Walk back to your spot and stand still. I start the count by myself.</span>
+          </p>
+        )}
+        {/* The download replaces the verdict: until the model is here there is no
+            verdict, and a stale one over a progress line reads as a check that ran. */}
+        {warming !== null ? (
+          <p className="framer-cue" role="status" aria-live="polite">
+            Downloading the coach, {Math.round(warming * 100)}%. This happens once.
+          </p>
+        ) : (
+          // `polite`, so a new verdict waits for the player to finish the last one.
+          <p className={`framer-cue framer-cue--${verdict.grade}`} role="status" aria-live="polite">
+            <Cue text={verdict.cue} />
+          </p>
+        )}
+
+        {optionsOpen && idle && onRecorded && type && (
+          <div className="film-options">
+            <button
+              type="button"
+              className={`chip chip--button chip--toggle${handsFree ? ' is-on' : ''}`}
+              aria-pressed={handsFree}
+              onClick={() => {
+                setHandsFree(!handsFree)
+                writePrefs({ handsFree: !handsFree })
+              }}
+            >
+              Hands-free
+            </button>
+            <button
+              type="button"
+              className={`chip chip--button chip--toggle${speak ? ' is-on' : ''}`}
+              aria-pressed={speak}
+              onClick={() => {
+                if (!speak) primeSpeech()
+                setSpeak(!speak)
+                writePrefs({ speakFraming: !speak })
+              }}
+            >
+              Read it aloud
+            </button>
+            {handsFree && (
+              <div className="seg" role="group" aria-label="Stop after">
+                {SERVE_COUNTS.map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    className={`seg-item${serveCount === n ? ' is-on' : ''}`}
+                    aria-pressed={serveCount === n}
+                    onClick={() => {
+                      setServeCount(n)
+                      if (!target) writePrefs({ handsFreeServes: n })
+                    }}
+                  >
+                    {n === 1 ? '1 serve' : `${n} serves`}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="film-actions">
+          {idle ? pickButton : <span className="film-side" />}
+          {onRecorded && type ? (
+            <button
+              type="button"
+              className={`film-record${recording ? ' is-recording' : ''}${countdown !== null ? ' is-counting' : ''}`}
+              onClick={toggleRecording}
+              aria-label={recording ? 'Stop and read this serve' : countdown !== null ? 'Cancel the countdown' : handsFree ? 'Start hands-free' : 'Record the serve'}
+            >
+              <span />
+            </button>
+          ) : (
+            <span className="film-record film-record--none" />
+          )}
+          {idle && onRecorded && type ? (
+            <button
+              type="button"
+              className="film-side"
+              onClick={() => setOptionsOpen((v) => !v)}
+              aria-expanded={optionsOpen}
+              aria-label="Filming options"
+            >
+              <Icon name="settings" size={26} />
+              <span>{handsFree ? 'Hands-free' : 'Options'}</span>
+            </button>
+          ) : (
+            <span className="film-side" />
           )}
         </div>
-      )}
 
-      {onRecorded && type && !block && (
-        <button
-          type="button"
-          className={`btn btn--full framer-record${recording ? ' framer-record--on' : ''}`}
-          onClick={toggleRecording}
-        >
-          <Icon name={recording ? 'check' : 'camera'} size={17} />
-          {recording
-            ? 'Stop and analyse'
-            : countdown !== null
-              ? 'Cancel'
-              : handsFree
-                ? 'Start hands-free'
-                : 'Record the serve here'}
-        </button>
-      )}
-
-      <p className="framer-foot">
-        {warming !== null
-          ? 'This is the same download an analysis needs, so it only happens once.'
-          : recording && handsFree
-            ? `Recording. Serve, and I stop by myself once ${serveCount === 1 ? 'the serve is' : `${serveCount} serves are`} over. The clip is read on this device and never uploaded.`
-            : recording
-              ? 'Recording. Serve, then stop — the clip is read on this device and never uploaded.'
-            : /*
-               * The old line ended "and nothing here is recorded", which stopped
-               * being true the moment this button existed. Left alone it would
-               * have been the one false sentence on the most privacy-sensitive
-               * screen in the app, sitting under a live camera.
-               */
-              type && onRecorded
-              ? 'This reads the camera angle, the tilt and how much of you fits the shot — nothing about the serve itself. Nothing is recorded until you press record, and a recording is read on this device and never uploaded.'
-              : 'This reads the camera angle, the tilt and how much of you fits the shot — nothing about the serve itself. Your video never leaves the device, and nothing here is recorded.'}
-      </p>
+        <p className="framer-foot">
+          {warming !== null
+            ? 'The same download an analysis needs, so it only happens once.'
+            : recording && handsFree
+              ? `Recording. Serve, and I stop by myself once ${serveCount === 1 ? 'the serve is' : `${serveCount} serves are`} over.`
+              : recording
+                ? 'Recording. Serve, then stop.'
+                : 'Nothing is recorded until you press record, and a clip stays on this phone.'}
+        </p>
+      </div>
     </div>
   )
 }

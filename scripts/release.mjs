@@ -106,10 +106,10 @@ try {
 
   await ctx.setOffline(true)
   await page.reload()
-  const home = await page.waitForSelector('text=Analyse a serve', { timeout: 15000 }).then(() => true, () => false)
+  const home = await page.waitForSelector('text=Film my serve', { timeout: 15000 }).then(() => true, () => false)
   let example = false
   if (home) {
-    await page.click('text=See an example report').catch(() => undefined)
+    await page.click('text=See a sample report first').catch(() => undefined)
     example = await page.waitForSelector('text=This is an example', { timeout: 20000 }).then(() => true, () => false)
   }
   gate('offline', home && example, `home ${home ? 'opened' : 'did not open'}, example ${example ? 'opened' : 'did not open'} with the network off`)

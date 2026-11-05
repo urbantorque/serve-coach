@@ -3,6 +3,7 @@
  * own words, never the advice for a video the decoder refused, and the home
  * screen promises offline use only once the coach is on the phone.
  */
+import { DEFAULTS } from '../storage/prefs'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server.browser'
 import { DownloadStalled, EngineLoadError, engineFailureOf } from '../engineDownload'
@@ -43,7 +44,7 @@ check('each failure carries its own advice, and none of it is about the video fi
   assert(/57 MB/.test(offline.hints.join(' ')), 'the offline advice does not say how big the download is')
 })
 
-check('the home screen promises offline use only once the coach is downloaded', () => {
+check('the first run says the download only while there is one to make', () => {
   const noop = () => {}
   const foot = (offlineReady: boolean | undefined) => {
     const html = renderToStaticMarkup(
@@ -51,23 +52,20 @@ check('the home screen promises offline use only once the coach is downloaded', 
         sessions: [],
         offlineReady,
         sessionsLoaded: true,
-        onPick: noop,
+        prefs: DEFAULTS,
+        onPrefs: noop,
+        onFilm: noop,
         onOpen: noop,
-        onShowGuide: noop,
         onShowHistory: noop,
         onShowSettings: noop,
         onShowProgress: noop,
-        onGuideThen: noop,
         onShowExample: noop,
-        needsHandedness: false,
-        onMakeOffline: noop,
       }),
     )
-    return html.slice(html.indexOf('home-foot'))
+    return html.slice(html.indexOf('first-foot'))
   }
-  assert(foot(true).includes('with or without a signal'), 'a downloaded coach lost its offline line')
-  assert(!foot(false).includes('with or without a signal'), 'promised offline use with nothing downloaded')
-  assert(foot(false).includes('works without a signal once it is downloaded'), 'the not-yet line is missing')
+  assert(!foot(true).includes('downloads the coach'), 'a downloaded coach was offered again')
+  assert(foot(false).includes('downloads the coach once'), 'the download is not said before it happens')
   assert(!foot(undefined).includes('signal'), 'said something about the signal before the cache had answered')
 })
 

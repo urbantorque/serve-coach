@@ -11,6 +11,7 @@
  * are the real risks a copy on the same site cannot cover: iOS not installed, and
  * a browser that refused to keep anything with no file in a long while.
  */
+import { DEFAULTS } from '../storage/prefs'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server.browser'
 import {
@@ -126,16 +127,14 @@ check('the home screen says each one, with the action that answers it', () => {
         sessions: [],
         offlineReady: true,
         sessionsLoaded: true,
-        onPick: noop,
+        prefs: DEFAULTS,
+        onPrefs: noop,
+        onFilm: noop,
         onOpen: noop,
-        onShowGuide: noop,
         onShowHistory: noop,
         onShowSettings: noop,
         onShowProgress: noop,
-        onGuideThen: noop,
         onShowExample: noop,
-        needsHandedness: false,
-        onMakeOffline: noop,
         nudge,
         onExportBackup: noop,
         onQuietMove: noop,

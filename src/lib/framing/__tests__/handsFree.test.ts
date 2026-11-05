@@ -223,12 +223,12 @@ check("the player's own setting wins over the default, both ways", () => {
   assert(!src.includes('Boolean(readPrefs().handsFree)'), 'an unset hands-free still reads as off somewhere')
 })
 
-check('a blocked preview offers the camera app, and home wires it to the camera input', () => {
+check('a blocked preview offers the camera app, and the app wires it to the camera input', () => {
   const framer = fs.readFileSync('src/components/FramingCheck.tsx', 'utf8')
-  const home = fs.readFileSync('src/screens/Home.tsx', 'utf8')
+  const app = fs.readFileSync('src/App.tsx', 'utf8')
   assert(/onCameraApp && CAMERA_APP_HELPS\.has\(block\)/.test(framer), 'the blocked state has no camera-app button')
   assert(framer.includes('Film with your camera app'), 'the button does not say what it opens')
-  assert(/onCameraApp=\{\(\) => \{\s*setChecking\(false\)\s*recordRef\.current\?\.click\(\)/.test(home), 'home does not open the camera input from it')
+  assert(/onCameraApp=\{\(\) => \{\s*setFilm\(null\)\s*cameraAppRef\.current\?\.click\(\)/.test(app), 'the app does not open the camera input from it')
 })
 
 report()

@@ -174,12 +174,16 @@ check('the stylesheet is measured too, because nothing else measures it', () => 
  * bytes the player still downloads, a moment later.
  */
 /*
- * Raised from 6 to 16 on purpose (lift, 2026-11-05). Most of the app's styles
- * used to load on first open for screens nobody had reached. They now load with
- * their screens, so this budget grew exactly as the entry sheet's use of its own
- * shrank: the first open pays less, and the total is watched here.
+ * Raised from 6 to 16, then to 20, on purpose (lift, 2026-11-05 and 2026-11-06).
+ * Most of the app's styles used to load on first open for screens nobody had
+ * reached. They now load with their screens, so this budget grew exactly as the
+ * entry sheet's use of its own shrank: the first open pays less, and the total
+ * is watched here. The second step is the new surfaces themselves (the serve
+ * cards, the programme, the sheets behind Today), after a sweep took 12 kB of
+ * rules left behind by the old screens out of the source. Everything here is
+ * cached by the worker after one visit, so it costs a phone on a court nothing.
  */
-const SPLIT_CSS_GZIP_BUDGET_KB = 16
+const SPLIT_CSS_GZIP_BUDGET_KB = 20
 
 check('the stylesheets that load with lazy screens are measured too', () => {
   const split = files.filter((f) => f.endsWith('.css') && f !== cssName)

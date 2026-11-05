@@ -28,6 +28,7 @@
  * `normalise` first, because that is the shape a reopened report actually
  * arrives in and it is not the same object.
  */
+import { DEFAULTS } from '../../lib/storage/prefs'
 import { createElement } from 'react'
 // `server.browser`, not `server`. The Node entry pulls in `stream` through a
 // dynamic `require`, which esbuild cannot bundle into the ESM the runner
@@ -35,7 +36,8 @@ import { createElement } from 'react'
 // out, and `renderToStaticMarkup` is not the streaming half.
 import { renderToStaticMarkup } from 'react-dom/server.browser'
 import ConsistencyPanel from '../ConsistencyPanel'
-import { ScoreTrend, TrendTable } from '../Trend'
+import { TrendTable } from '../Trend'
+import { ScoreRibbon } from '../ProgressCharts'
 import type { TripPoint } from '../../lib/progress'
 import Glance from '../../screens/Glance'
 import Home from '../../screens/Home'
@@ -45,9 +47,7 @@ import DrillCard from '../../screens/report/DrillCard'
 import PracticeCard from '../PracticeCard'
 import Analyzing from '../../screens/Analyzing'
 import FilmingGuide from '../FilmingGuide'
-import FirstRunDownload from '../FirstRunDownload'
 import HistoryList from '../HistoryList'
-import TodayPlan from '../TodayPlan'
 import FixedPair from '../FixedPair'
 import { STEP_PASSED_DAYS, beforeAfter, recentStepPass, stepPassPair } from '../../lib/graduationCard'
 import { StepPassedCard } from '../StepPassed'
@@ -58,10 +58,12 @@ import { Cue } from '../primitives'
 import TermCue from '../TermCue'
 import { termSpans } from '../../lib/glossary'
 import ModelServe from '../ModelServe'
+import { ProgrammeBody, SessionBody } from '../ProgrammeSheets'
+import { programmeFor } from '../../lib/programme'
 import { modelMotion } from '../../lib/figure/modelMotion'
 import { PHASE_COPY } from '../../lib/analysis/phases'
 import { DEMO_DIALS, sampleAnalysis, sampleBasket } from '../../dev/sampleAnalysis'
-import { findPracticeFocus, type PracticeFocus } from '../../lib/practice'
+import type { PracticeFocus } from '../../lib/practice'
 import { progressionFor, stepCheckLine } from '../../lib/analysis/progressions'
 import { causalPlan } from '../../lib/analysis/verdict'
 import { buildConsistency } from '../../lib/analysis/consistency'
@@ -299,10 +301,10 @@ check('the basket line beside the chips defers to the first fix', () => {
   assert(out.includes('once your first fix holds'), 'the basket line does not say where it sits in the order')
 })
 
-check('home does not name a second thing to work on beside this week\'s plan', () => {
+check('today names one goal and one thing to do next (lift)', () => {
   // Two trips on the injury demo: the plan leads on the grip and the fold, and
   // the season's weakest reading is the tossing arm, which no fault in the
-  // plan reads: two answers, one screen.
+  // plan reads. Today must still say one thing.
   const DAY = 86_400_000
   const now = Date.now()
   const sessions = [0, 2].map((d) => ({
@@ -315,22 +317,19 @@ check('home does not name a second thing to work on beside this week\'s plan', (
       sessions,
       offlineReady: true,
       sessionsLoaded: true,
-      onPick: noop,
+      prefs: DEFAULTS,
+      onPrefs: noop,
+      onFilm: noop,
       onOpen: noop,
-      onShowGuide: noop,
       onShowHistory: noop,
       onShowSettings: noop,
       onShowProgress: noop,
-      onGuideThen: noop,
       onShowExample: noop,
-      needsHandedness: false,
-      onMakeOffline: noop,
     }),
   )
-  assert(out.includes('This week'), 'the seeded season has no plan to compare against')
-  const season = findPracticeFocus(sessions)
-  assert(season !== undefined, 'the seeded season has no practice focus, so this checks nothing')
-  assert(!out.includes('Working on'), 'home named a working-on that is not in this week\'s plan')
+  assert(out.includes('Your goal'), 'the seeded season has no goal')
+  assert((out.match(/class="btn btn--primary[^"]*"/g) ?? []).length === 1, 'today has more than one main action')
+  assert(!out.includes('Practise this') && !out.includes('Working on'), 'today named a second thing to work on')
 })
 
 check('the refusal screen renders instead of a score', () => {
@@ -498,84 +497,42 @@ check('a live report draws the best serve under the video, and says so (L4.8)', 
   assert(!alone.includes('The dashed body is'), 'a dashed body was promised with no serve to draw')
 })
 
-check('each week-plan item can be checked straight from home, where the app can record (N1.4)', () => {
+check("today's session is timed, in the order the hit runs, and ends on a filmed check (N1.4, Q9, lift)", () => {
   const last = stored(sampleAnalysis(DEMO_DIALS.injury))
-  const base = {
-    sessions: [last, { ...last, id: 'serve-older-0', createdAt: last.createdAt - 2 * 86_400_000 }],
-    offlineReady: true,
-    sessionsLoaded: true,
-    onPick: noop,
-    onOpen: noop,
-    onShowGuide: noop,
-    onShowHistory: noop,
-    onShowSettings: noop,
-    onShowProgress: noop,
-    onGuideThen: noop,
-    onShowExample: noop,
-    needsHandedness: false,
-    onMakeOffline: noop,
-  }
-  const can = html(createElement(Home, { ...base, onRecorded: noop, onCheckDrill: noop }))
-  assert(can.includes('This week'), 'the seeded season has no plan')
-  assert(can.includes('Check this drill'), 'no week-plan item offered a check')
-  const cannot = html(createElement(Home, { ...base, onCheckDrill: noop }))
-  assert(!cannot.includes('Check this drill'), 'a check was offered where nothing can record')
-})
-
-check("home says the week once: today's minutes sit on the drills, not in a second list (Q9)", () => {
-  const last = stored(sampleAnalysis(DEMO_DIALS.injury))
-  const out = html(
-    createElement(Home, {
-      sessions: [last, { ...last, id: 'serve-older-0', createdAt: last.createdAt - 2 * 86_400_000 }],
-      offlineReady: true,
-      sessionsLoaded: true,
-      onPick: noop,
-      onOpen: noop,
-      onShowGuide: noop,
-      onShowHistory: noop,
-      onShowSettings: noop,
-      onShowProgress: noop,
-      onGuideThen: noop,
-      onShowExample: noop,
-      needsHandedness: false,
-      onMakeOffline: noop,
-    }),
-  )
-  assert(out.includes('This week'), 'the seeded season has no plan')
-  assert(!out.includes('Today on court'), 'the week is still listed twice')
-  assert(/min today/.test(out), 'the drills do not carry their minutes')
+  const sessions = [last, { ...last, id: 'serve-older-0', createdAt: last.createdAt - 2 * 86_400_000 }]
+  const programme = programmeFor(sessions, DEFAULTS)!
+  const out = html(createElement(SessionBody, { programme, onFilmCheck: noop }))
   assert(out.includes('45 min') && out.includes('Warm up with easy serves'), 'the length or the warm-up went missing')
   const at = (s: string) => out.indexOf(s)
-  assert(at('Warm up with easy serves') < at('week-list') && at('week-list') < at('Serve freely'), 'the hit is not in the order it runs')
-  assert(!/<strong>[^<]+<\/strong>: \d+ (tosses|serves|reps)/.test(out), 'a drill is named again in the timed lines')
+  assert(at('Warm up with easy serves') < at('session-block--drill') && at('session-block--drill') < at('Serve freely'), 'the hit is not in the order it runs')
+  assert(out.includes('Film a check'), 'no way to film the check')
+  assert(out.includes('Open the court card') && out.includes('Add to calendar'), 'the tools went')
 })
 
-check('home knows a returning player: a compact hero, then This week and the form, before the straps (L4.10)', () => {
+check('today knows a returning player, and a new one gets one thing to do (L4.10, lift)', () => {
   const last = stored(sampleAnalysis(DEMO_DIALS.injury))
   const older = (n: number) => ({ ...stored(sampleAnalysis({ seed: 40 + n })), id: `serve-old${n}-0`, createdAt: last.createdAt - n * 3 * 86_400_000 })
   const props = (sessions: Session[]) => ({
     sessions,
     offlineReady: true,
     sessionsLoaded: true,
-    onPick: noop,
+    prefs: DEFAULTS,
+    onPrefs: noop,
+    onFilm: noop,
     onOpen: noop,
-    onShowGuide: noop,
     onShowHistory: noop,
     onShowSettings: noop,
     onShowProgress: noop,
-    onGuideThen: noop,
     onShowExample: noop,
-    needsHandedness: false,
-    onMakeOffline: noop,
   })
   const known = html(createElement(Home, props([last, older(1), older(2), older(3)])))
-  assert(known.includes('home-hero--compact') && !known.includes('World-class eyes'), 'a returning player got the full pitch')
+  assert(!known.includes('Film one serve') && !known.includes('Film my serve'), 'a returning player got the pitch')
   const at = (s: string) => known.indexOf(s)
-  assert(at('This week') > at('Your next serve'), 'This week is above the hero')
-  assert(at('Your form') > at('This week'), 'the form is above This week')
-  assert(at('How to film it') > at('Your form'), 'the help straps come before the form')
+  assert(at('Your goal') > 0 && at('Your goal') < at('class="momentum"'), 'the goal does not lead')
+  assert(at('class="momentum"') < at('Your last serves'), 'the momentum is under the serves')
   const fresh = html(createElement(Home, props([])))
-  assert(fresh.includes('World-class eyes') && !fresh.includes('home-hero--compact'), 'a new player lost the pitch')
+  assert(fresh.includes('Film one serve') && fresh.includes('Film my serve'), 'a new player lost the promise')
+  assert((fresh.match(/<button/g) ?? []).length === 2, 'a new player has more than two things to press')
 })
 
 check('the glance renders', () => {
@@ -694,9 +651,9 @@ check('the trip chart draws each trip with the range its serves ran over (L3.2)'
     high,
   })
   const trips = [tripAt(0, 62, 55, 70, 5), tripAt(1, 71, 71, 71, 1), tripAt(2, 74, 66, 80, 6)]
-  const chart = html(createElement(ScoreTrend, { points: trips }))
-  // A range bar for each trip with a spread, and none for the trip of one.
-  assert((chart.match(/opacity="0.35"/g) ?? []).length === 2, 'the range bars were not one per spread trip')
+  const chart = html(createElement(ScoreRibbon, { points: trips }))
+  // A range for each trip with a spread, and none for the trip of one.
+  assert((chart.match(/class="ribbon-range"/g) ?? []).length === 2, 'the ranges were not one per spread trip')
   assert(chart.includes('across 3 trips, most recent 74'), 'the chart did not name what it plots')
   const table = html(createElement(TrendTable, { points: trips }))
   assert(table.includes('6, 66–80') && table.includes('>1<'), 'the table lost the serves or the range')
@@ -720,20 +677,18 @@ check('the home screen renders with no history at all', () => {
       sessions: [],
       offlineReady: false,
       sessionsLoaded: true,
-      onPick: noop,
+      prefs: DEFAULTS,
+      onPrefs: noop,
+      onFilm: noop,
       onOpen: noop,
-      onShowGuide: noop,
       onShowHistory: noop,
       onShowSettings: noop,
       onShowProgress: noop,
-      onGuideThen: noop,
       onShowExample: noop,
-      needsHandedness: false,
-      onMakeOffline: noop,
     }),
   )
-  assert(out.includes('Analyse a serve'), 'the first-run home screen lost its one button')
-  assert(out.includes('See an example report'), 'a first-time player lost the example report')
+  assert(out.includes('Film my serve'), 'the first-run screen lost its one button')
+  assert(out.includes('See a sample report first'), 'a first-time player lost the example report')
 })
 
 check('before storage answers, a returning player is not invited to see an example', () => {
@@ -742,20 +697,18 @@ check('before storage answers, a returning player is not invited to see an examp
       sessions: [],
       offlineReady: undefined,
       sessionsLoaded: false,
-      onPick: noop,
+      prefs: DEFAULTS,
+      onPrefs: noop,
+      onFilm: noop,
       onOpen: noop,
-      onShowGuide: noop,
       onShowHistory: noop,
       onShowSettings: noop,
       onShowProgress: noop,
-      onGuideThen: noop,
       onShowExample: noop,
-      needsHandedness: false,
-      onMakeOffline: noop,
     }),
   )
-  assert(!out.includes('See an example report'), 'the first-run strap flashed before the history loaded')
-  assert(!out.includes('Download now'), 'the offline badge offered a download before the cache was asked')
+  assert(!out.includes('See a sample report'), 'the first run flashed before the history loaded')
+  assert(!out.includes(' MB'), 'a download was mentioned before the cache was asked')
 })
 
 check('the home screen renders with a history behind it', () => {
@@ -768,23 +721,20 @@ check('the home screen renders with a history behind it', () => {
       sessions: history,
       offlineReady: true,
       sessionsLoaded: true,
-      onPick: noop,
+      prefs: DEFAULTS,
+      onPrefs: noop,
+      onFilm: noop,
       onOpen: noop,
-      onShowGuide: noop,
       onShowHistory: noop,
       onShowSettings: noop,
       onShowProgress: noop,
-      onGuideThen: noop,
       onShowExample: noop,
-      needsHandedness: false,
-      onMakeOffline: noop,
     }),
   )
-  assert(out.includes('best '), 'the form card never reached the page')
+  assert(out.includes('class="momentum"'), 'the momentum never reached the page')
 })
 
-check("the home screen carries this week's plan, in the report's order, on the player's own rung", () => {
-  // D4.4. A report with two fixes in it: the grip, and the spine.
+check("today's goal is the report's first fix, on the player's own rung, and the road is its ladder (D4.4, lift)", () => {
   const last = stored(sampleAnalysis(DEMO_DIALS.injury))
   const plan = causalPlan(last.triage, last.diagnosis)
   assert(plan.length >= 2, `the fixture report ranked ${plan.length} fix(es); the check needs two`)
@@ -794,39 +744,35 @@ check("the home screen carries this week's plan, in the report's order, on the p
         sessions,
         offlineReady: true,
         sessionsLoaded: true,
-        onPick: noop,
+        prefs: { ...DEFAULTS, ladder },
+        onPrefs: noop,
+        onFilm: noop,
         onOpen: noop,
-        ladder,
-        onShowGuide: noop,
         onShowHistory: noop,
         onShowSettings: noop,
         onShowProgress: noop,
-        onGuideThen: noop,
         onShowExample: noop,
-        needsHandedness: false,
-        onMakeOffline: noop,
       }),
     )
   const escaped = (s: string) => s.replace(/&/g, '&amp;').replace(/'/g, '&#x27;').replace(/"/g, '&quot;')
   const out = home([last])
-  assert(out.includes('This week'), 'no plan on the home screen')
-  const at = plan.map((p) => out.indexOf(escaped(p.title)))
-  assert(at.every((i) => i >= 0), `a fix the report ranked is missing: ${plan.map((p) => p.title).join(' / ')}`)
-  assert(at.every((i, k) => k === 0 || i > at[k - 1]), 'the plan is not in the order the report ranked it')
-  // Each fix says how its step is passed: a basket to film, or the player's own bar (L4.2).
-  for (const p of plan) {
-    const own = progressionFor(p.flaw!, p.axis)!
-    const step = own.steps.find((s) => s.name === p.drill.name)!
-    assert(out.includes(escaped(stepCheckLine(own, step))), `"${p.title}" does not say how its step is passed`)
-  }
+  assert(out.includes('Your goal'), 'no goal on today')
+  const own = progressionFor(plan[0].flaw!, plan[0].axis)!
+  assert(out.includes(escaped(plan[0].drill.name)), 'today does not name the first fix')
 
   // The rung the player moved to, not the report's.
-  const ladder = progressionFor(plan[0].flaw!, plan[0].axis)!
   const moved = home([last], { [plan[0].flaw!]: 1 })
   assert(
-    moved.includes(escaped(ladder.steps[1].name)) && moved.includes(`step 2 of ${ladder.steps.length}`),
-    'the plan ignored the rung the player had moved to',
+    moved.includes(escaped(own.steps[1].name)) && moved.includes(`step 2 of ${own.steps.length}`),
+    'today ignored the rung the player had moved to',
   )
+
+  // The road: every step of the ladder still to pass, and a way to change goal.
+  const programme = programmeFor([last], DEFAULTS)!
+  const road = html(createElement(ProgrammeBody, { programme, sessions: [last], prefs: DEFAULTS, onChoose: noop }))
+  for (const w of programme.weeks) assert(road.includes(w.label), `${w.label} is not on the road`)
+  assert(road.includes(escaped(programme.current.check)), 'the road does not say how this step is passed')
+  assert(road.includes('Rather work on something else?'), 'no way to change the goal')
 
   // A refused clip filmed since does not blank it.
   const refused: Session = {
@@ -835,7 +781,7 @@ check("the home screen carries this week's plan, in the report's order, on the p
     createdAt: last.createdAt + 1,
     triage: { ...last.triage!, status: 'rejected', reason: 'too_blurry' },
   }
-  assert(home([refused, last]).includes(escaped(plan[0].title)), 'a refused clip blanked the plan')
+  assert(home([refused, last]).includes(escaped(plan[0].drill.name)), 'a refused clip blanked the plan')
 })
 
 check('progress keeps first and second serves apart, and counts the weeks (D5.3, D5.4)', () => {
@@ -924,16 +870,14 @@ check('home points a player with reports at reading a whole practice, until they
   const base = {
     offlineReady: true,
     sessionsLoaded: true,
-    onPick: noop,
+    prefs: DEFAULTS,
+    onPrefs: noop,
+    onFilm: noop,
     onOpen: noop,
-    onShowGuide: noop,
     onShowHistory: noop,
     onShowSettings: noop,
     onShowProgress: noop,
-    onGuideThen: noop,
     onShowExample: noop,
-    needsHandedness: false,
-    onMakeOffline: noop,
   }
   assert(html(createElement(Home, { ...base, sessions: [last] })).includes('Read a whole practice'), 'no way into sessions was offered')
   assert(!html(createElement(Home, { ...base, sessions: [] })).includes('Read a whole practice'), 'a new player was offered sessions before a serve')
@@ -941,12 +885,26 @@ check('home points a player with reports at reading a whole practice, until they
   assert(!withSession.includes('Read a whole practice'), 'a player with a session was still told how to make one')
 })
 
-check('the first-run sheet offers the download with its size, only while it is needed (N3.7)', () => {
-  const needed = html(createElement(FirstRunDownload, { ready: false, busy: false, onDownload: noop }))
-  assert(/one-time \d+ MB download/.test(needed) && needed.includes('Download now'), 'the download was not offered with its size')
-  assert(html(createElement(FirstRunDownload, { ready: true, busy: false, onDownload: noop })) === '', 'offered a download already stored')
-  assert(html(createElement(FirstRunDownload, { ready: undefined, busy: false, onDownload: noop })) === '', 'offered a download before the cache answered')
-  assert(html(createElement(FirstRunDownload, { ready: false, busy: true, onDownload: noop })).includes('Downloading'), 'a running download was offered again')
+check('the first run says the download with its size, only while it is needed (N3.7, lift)', () => {
+  const first = (offlineReady?: boolean) =>
+    html(
+      createElement(Home, {
+        sessions: [],
+        offlineReady,
+        sessionsLoaded: true,
+        prefs: DEFAULTS,
+        onPrefs: noop,
+        onFilm: noop,
+        onOpen: noop,
+        onShowHistory: noop,
+        onShowSettings: noop,
+        onShowProgress: noop,
+        onShowExample: noop,
+      }),
+    )
+  assert(/downloads the coach once, \d+ MB/.test(first(false)), 'the download was not said with its size')
+  assert(!first(true).includes('downloads the coach'), 'said a download already stored')
+  assert(!first(undefined).includes('downloads the coach'), 'said a download before the cache answered')
 })
 
 check('the history groups serves by trip, newest first, each with its typical score (N3.5)', () => {
@@ -1025,18 +983,6 @@ check('only a move up is recorded as a step passed, and every ladder button says
     assert(calls.length > 0, `${f} has no ladder button`)
     for (const c of calls) assert(c.split(',').length === 3, `${f}: ${c} does not say which rung it leaves`)
   }
-})
-
-check("today's tools: a court card for the first drill, and the week in the calendar (N1.6, N1.7, Q9)", () => {
-  const week = {
-    from: {},
-    items: [{ title: 'Toss', flaw: 'toss_height', drill: { name: 'Toss and point', how: 'Toss and point.', reps: '15 tosses' }, check: 'Twelve of fifteen.' }],
-    graduated: [],
-  } as unknown as Parameters<typeof TodayPlan>[0]['week']
-  const out = html(createElement(TodayPlan, { week, minutes: 45 }))
-  assert(out.includes('Open the court card'), 'no way to the court card')
-  assert(out.includes('Add to calendar'), 'no way to the calendar')
-  assert(!out.includes('Toss and point'), 'the tools named the drill again')
 })
 
 check('a basket\'s drill check leads the focus card, above the drill (N4.2)', () => {

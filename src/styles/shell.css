@@ -20,7 +20,10 @@
   flex-direction: column;
   gap: 34px;
   padding: calc(18px + var(--safe-top)) 0 calc(48px + var(--safe-bottom));
-  animation: rise var(--slow) var(--ease-out) both;
+  /* Backwards, not both: an animation still in effect on transform holds every
+     fixed child inside the screen, so a sheet or a bar lands at the foot of the
+     page rather than the foot of the phone. */
+  animation: rise var(--slow) var(--ease-out) backwards;
 }
 
 @keyframes rise {

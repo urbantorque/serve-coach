@@ -2,12 +2,26 @@ import { useCallback, useEffect, useState } from 'react'
 import { isCachedOffline, loadEngine } from '../lib/pose/poseEngine'
 import { isRefineModelCached, loadRefineEngine } from '../lib/pose/refineEngine'
 import { isObjectModelCached, loadObjectEngine } from '../lib/vision/objectEngine'
-import type { OfflineWarmup } from '../screens/Home'
 import { DownloadStalled, downloadEngines } from '../lib/engineDownload'
 import { ENGINE_MANIFEST } from '../lib/engineManifest'
 import { pruneEngineCaches } from '../lib/engineCache'
 
 const BASE = import.meta.env?.BASE_URL || '/'
+
+/**
+ * The state of a warm-up. `unkept` is the case worth having a name for: the
+ * engine downloaded and this session can analyse with it, but it is not in the
+ * cache, so a reload starts from nothing.
+ */
+export type OfflineWarmup = {
+  stage: 'downloading' | 'starting' | 'failed' | 'unkept'
+  ratio?: number
+  /** Whole megabytes in so far, and in all, on the one bar across every file (L6.1). */
+  loadedMb?: number
+  totalMb?: number
+  /** Failed because nothing arrived for a while, rather than refused. */
+  stalled?: boolean
+}
 
 /**
  * Whether the *whole* offline footprint is in the cache — the pose model and

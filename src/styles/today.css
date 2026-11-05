@@ -1,0 +1,315 @@
+/* ============================================================================
+   The bar, Today and the first run
+   ========================================================================= */
+
+/* Room for the bar under every screen that shows it. */
+.today,
+.progress-screen {
+  padding-bottom: calc(112px + var(--safe-bottom));
+  gap: 24px;
+}
+
+.tabbar {
+  position: fixed;
+  z-index: 15;
+  left: 50%;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  width: min(100%, var(--shell));
+  padding: 0 24px calc(8px + var(--safe-bottom));
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, transparent, var(--ink) 42%);
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-height: 54px;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg-faint);
+  transition: color var(--fast) var(--ease);
+}
+
+.tab.is-on {
+  color: var(--fg);
+}
+
+.tab-film {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 70px;
+  height: 70px;
+  margin-bottom: 4px;
+  border-radius: var(--r-pill);
+  background: var(--lime);
+  color: var(--lime-ink);
+  box-shadow: var(--film-lift);
+  transition: transform var(--fast) var(--ease);
+}
+
+.tab-film:active {
+  transform: scale(0.94);
+}
+
+.tab-film-ring {
+  position: absolute;
+  inset: -3px;
+  width: 76px;
+  height: 76px;
+  transform: rotate(-90deg);
+}
+
+.tab-film-ring circle {
+  fill: none;
+  stroke: var(--fg);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+/* --------------------------------------------------------------- the first run */
+
+.first-run {
+  gap: 18px;
+  min-height: 100dvh;
+  padding-bottom: calc(22px + var(--safe-bottom));
+}
+
+.first-stage {
+  position: relative;
+  flex: 1;
+  min-height: 300px;
+  margin: calc(-18px - var(--safe-top)) -20px 0;
+  overflow: hidden;
+  background: var(--stage);
+}
+
+.first-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: -36px;
+  position: relative;
+}
+
+.first-copy p {
+  font-size: 17px;
+  line-height: 1.42;
+  color: var(--fg-muted);
+}
+
+.first-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.first-foot {
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--fg-faint);
+  text-align: center;
+}
+
+/* ------------------------------------------------------------------- today */
+
+.today-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.today-head {
+  margin-bottom: 10px;
+}
+
+.moment {
+  display: flex;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: var(--r-lg);
+  background: var(--moment);
+  color: var(--moment-ink);
+  box-shadow: var(--shadow-md);
+}
+
+.moment .icon {
+  margin-top: 2px;
+}
+
+.moment h2 {
+  font-size: 19px;
+  font-stretch: 106%;
+  font-weight: 700;
+  line-height: 1.18;
+}
+
+.moment p {
+  margin-top: 2px;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.next-up {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border-radius: var(--r-xl);
+  background: var(--stage);
+  box-shadow: var(--panel-edge), var(--shadow-lg);
+}
+
+.next-goal {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  text-align: left;
+}
+
+.next-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--lime);
+}
+
+.next-title {
+  color: var(--fg);
+}
+
+.next-road {
+  display: flex;
+  gap: 4px;
+  margin-top: 3px;
+}
+
+.next-tick {
+  flex: 1;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--ink-4);
+}
+
+.next-tick--done {
+  background: var(--lime);
+}
+
+.next-tick--current {
+  background: var(--lime);
+  opacity: 0.55;
+}
+
+.next-pace {
+  font-size: 14px;
+  line-height: 1.32;
+  color: var(--fg-muted);
+}
+
+.next-today {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-edge);
+}
+
+.next-today strong {
+  font-size: 20px;
+  font-stretch: 106%;
+  font-weight: 680;
+  line-height: 1.16;
+}
+
+.next-meta {
+  font-size: 14.5px;
+  color: var(--fg-muted);
+}
+
+.momentum {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+}
+
+.momentum-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  font-size: 13.5px;
+  line-height: 1.25;
+  color: var(--fg-muted);
+}
+
+.momentum-stat .t-figure {
+  font-size: 46px;
+  color: var(--fg);
+}
+
+.today-streak {
+  margin-top: -14px;
+  font-size: 14.5px;
+  color: var(--fg-muted);
+}
+
+.recap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: var(--r-lg);
+  background: var(--panel);
+  box-shadow: var(--panel-edge);
+  font-size: 15px;
+  line-height: 1.38;
+  color: var(--fg-muted);
+}
+
+.recap h2 {
+  color: var(--fg);
+}
+
+.serve-cards-wait {
+  height: 232px;
+}
+
+.today-nudge {
+  font-size: 14.5px;
+  line-height: 1.38;
+  color: var(--fg-muted);
+}
+
+.recovery {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: var(--r-lg);
+  background: var(--panel-raised);
+  box-shadow: var(--panel-edge), var(--shadow-md);
+  font-size: 15.5px;
+  line-height: 1.38;
+}
+
+.today-tip {
+  font-size: 14.5px;
+  line-height: 1.4;
+  color: var(--fg-muted);
+}
+
+.today-tip strong {
+  color: var(--fg);
+  font-weight: 620;
+}

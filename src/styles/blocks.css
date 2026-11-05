@@ -8,26 +8,38 @@
   gap: 14px;
 }
 
-.block-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-}
-
 .block-title {
-  font-size: 12px;
-  font-weight: 660;
-  letter-spacing: var(--tr-kicker);
-  text-transform: uppercase;
-  color: var(--fg-muted);
+  font-size: 20px;
+  font-stretch: 106%;
+  font-weight: 680;
+  letter-spacing: -0.008em;
+  line-height: 1.2;
+  color: var(--fg);
 }
 
-.block-aside {
-  font-size: 12px;
+summary.block-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  list-style: none;
+  cursor: pointer;
+  font-size: 17px;
+}
+
+summary.block-title::-webkit-details-marker {
+  display: none;
+}
+
+summary.block-title svg {
   color: var(--fg-faint);
+  transition: transform var(--fast) var(--ease);
 }
 
-.recents,
+details[open] > summary.block-title svg {
+  transform: rotate(90deg);
+}
+
 .history {
   display: flex;
   flex-direction: column;
@@ -105,22 +117,6 @@
 /* A practice session on the home screen: a mark the size of a report's ring, so
    the two kinds of row line up. Paused ones carry the accent, as the next
    thing to do. */
-.session-mark {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: var(--ink-2);
-  border: 1px solid var(--hairline);
-  color: var(--fg-muted);
-}
-
-.session-mark.is-paused {
-  border-color: var(--lime);
-  color: var(--lime);
-}
 
 /* Then and now at the fault's moment (N3.3). */
 .fixed-pair {
@@ -160,24 +156,6 @@
 }
 
 /* Faults serve by serve, and in-rate by serve number (N4.3). */
-.fault-strip {
-  display: block;
-  width: 100%;
-  max-width: 340px;
-  height: auto;
-  margin: 4px 0 10px;
-}
-
-.fault-dot {
-  fill: none;
-  stroke: var(--fg-faint);
-  stroke-width: 1.5;
-}
-
-.fault-dot.is-named {
-  fill: var(--fair);
-  stroke: var(--fair);
-}
 
 .progress-more > summary {
   cursor: pointer;

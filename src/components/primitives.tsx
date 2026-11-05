@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import type { Status } from '../lib/analysis/types'
 import { GLYPHS, type IconName } from './icons'
 import { useCountUp } from './useCountUp'
@@ -124,6 +125,8 @@ interface SheetProps {
   onClose: () => void
   title: string
   children: ReactNode
+  /** Fills the screen, with no heading of its own: the camera. */
+  full?: boolean
 }
 
 /** How long a closing sheet stays on screen; matches `.is-leaving` in `states.css`. */
@@ -148,7 +151,7 @@ const FOCUSABLE = [
  * overlay and start operating controls they cannot see — the attribute has to
  * be backed by the behaviour, not just declared.
  */
-export function Sheet({ open, onClose, title, children }: SheetProps) {
+export function Sheet({ open, onClose, title, children, full }: SheetProps) {
   const panel = useRef<HTMLDivElement>(null)
   // The phone's back gesture closes the sheet rather than the app.
   useBackLayer(open, onClose)
@@ -234,14 +237,14 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
 
   if (!open && !leaving) return null
 
-  return (
+  const sheet = (
     <div
       className={open ? 'sheet-backdrop' : 'sheet-backdrop is-leaving'}
       onClick={open ? onClose : undefined}
       aria-hidden={open ? undefined : true}
     >
       <div
-        className="sheet"
+        className={full ? 'sheet sheet--full' : 'sheet'}
         ref={panel}
         tabIndex={-1}
         role="dialog"
@@ -249,17 +252,23 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
         aria-label={title}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sheet-grip" />
-        <header className="sheet-head">
-          <h2>{title}</h2>
-          <button className="icon-btn" onClick={onClose} aria-label="Close">
-            <Icon name="close" />
-          </button>
-        </header>
+        {!full && (
+          <>
+            <div className="sheet-grip" />
+            <header className="sheet-head">
+              <h2>{title}</h2>
+              <button className="icon-btn" onClick={onClose} aria-label="Close">
+                <Icon name="close" />
+              </button>
+            </header>
+          </>
+        )}
         <div className="sheet-body">{children}</div>
       </div>
     </div>
   )
+  // Onto the page itself, so no screen's own stacking can hold it under the bar.
+  return typeof document === 'undefined' || !document.body ? sheet : createPortal(sheet, document.body)
 }
 
 /* ---------------------------------------------------------------------- Icons */

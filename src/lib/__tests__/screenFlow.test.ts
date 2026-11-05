@@ -239,7 +239,8 @@ const HISTORY_CONSUMERS = [
   // A second serve swung slower than the first (L5.8).
   'secondServeSlower',
   'rotationMoveOnTrip',
-  // The week's load (lift).
+  // The snapshot on offer, and the week's load (lift).
+  'recoveryOffer',
   'serveLoad',
   // The serve path (L3.5).
   'servePath',

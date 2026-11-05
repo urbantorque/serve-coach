@@ -2,167 +2,11 @@
    Home
    ========================================================================= */
 
-.home-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  font-size: 15px;
-  font-weight: 640;
-  letter-spacing: -0.015em;
-}
-
-.brand-dot {
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  background: var(--lime);
-  box-shadow: 0 0 14px var(--lime-glow);
-}
-
-.home-hero h1 {
-  font-size: clamp(34px, 9vw, 46px);
-  line-height: 1.04;
-  letter-spacing: -0.038em;
-  font-weight: 660;
-  margin-bottom: 16px;
-  background: linear-gradient(168deg, var(--fg) 30%, #97a6b4);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-/* A returning player's hero (L4.10): one line, so the plan and the form reach
-   the first screen. Same face and gradient as the full one, at heading size. */
-.home-hero--compact h1 {
-  font-size: 26px;
-  line-height: 1.15;
-  margin-bottom: 0;
-}
-
-.home-hero p {
-  font-size: 16px;
-  line-height: 1.6;
-  color: var(--fg-muted);
-  max-width: 42ch;
-}
-
-.home-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 11px;
-}
-
-/* The primary action doubles as a drop target: a dashed hairline reads as
-   "things can land here" the same way it already does on the quiet strap
-   below, so the affordance borrows a pattern the player has seen once
-   already rather than inventing a new one. */
-.dropzone {
-  display: flex;
-  flex-direction: column;
-  gap: 13px;
-  padding: 14px;
-  border-radius: var(--r-lg);
-  border: 1.5px dashed var(--hairline);
-  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
-}
-
-.dropzone.is-dragging {
-  border-color: var(--lime);
-  background: var(--lime-glow);
-}
-
-.dropzone-hint {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--fg-faint);
-}
-
-.dropzone-hint .icon {
-  flex: none;
-}
-
-.dropzone.is-dragging .dropzone-hint {
-  color: var(--lime);
-}
-
-.strap {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  padding: 15px 17px;
-  text-align: left;
-  border-radius: var(--r-md);
-  background: var(--ink-1);
-  border: 1px solid var(--hairline-soft);
-  color: var(--fg-muted);
-  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease),
-    transform var(--fast) var(--ease);
-}
-
-.strap:hover {
-  background: var(--ink-2);
-  border-color: var(--hairline);
-}
-
-.strap:active {
-  transform: scale(0.985);
-}
-
-.strap > span {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-.strap strong {
-  color: var(--fg);
-  font-size: 14.5px;
-  font-weight: 600;
-}
-
-/* Sits under the filming guide on an empty home screen. Quieter than it, so the
-   pair reads as "here is how to do it" then "or just look at one". */
-.strap--quiet {
-  margin-top: 10px;
-  background: transparent;
-  border-style: dashed;
-}
-
-.strap--quiet:hover {
-  background: var(--ink-1);
-}
-
-/* The first-run guide ends in the file picker, so the button needs air after
-   the guide's own closing note. */
 .sheet-body > .btn--full {
   margin-top: 18px;
 }
 
 /* --- mixed serve types in the trend -------------------------------------- */
-
-.progress-aside {
-  margin-top: 12px;
-  padding: 11px 13px;
-  border-radius: var(--r-sm);
-  background: var(--ink-3);
-  border-left: 2px solid var(--hairline);
-  font-size: 12.5px;
-  line-height: 1.58;
-  color: var(--fg-muted);
-}
 
 /* --- keeping your history ------------------------------------------------- */
 
@@ -352,49 +196,6 @@
   color: var(--fg-faint);
 }
 
-.home-foot {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
-  padding-top: 26px;
-  border-top: 1px solid var(--hairline-soft);
-}
-
-.home-foot p {
-  font-size: 12.5px;
-  line-height: 1.62;
-  color: var(--fg-faint);
-  max-width: 46ch;
-}
-
-/* A metered connection, said before the download (L6.1): the caution colour
-   the warning chips use, at the footer's own size. */
-.home-foot p.home-foot-warn {
-  color: var(--fair-ink);
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 6px 12px;
-  border-radius: var(--r-pill);
-  background: var(--ink-2);
-  border: 1px solid var(--hairline);
-  font-size: 12px;
-  font-weight: 560;
-  color: var(--fg-muted);
-}
-
-.badge--on {
-  color: var(--great);
-  background: var(--great-dim);
-  border-color: color-mix(in srgb, var(--great) 26%, transparent);
-}
-
-/* The same badge, when tapping it does something. Sized to the 44px target
-   rather than the 6px padding a static label can get away with. */
 button.badge {
   min-height: 44px;
   padding: 6px 16px;
@@ -416,27 +217,6 @@ button.badge:active {
 button.badge[disabled] {
   color: var(--fg-muted);
   cursor: default;
-}
-
-.home-top-actions {
-  display: inline-flex;
-  gap: 4px;
-}
-
-/* The way back to the report the plan came from, as quiet as the Details link
-   on the form card, with a tap target taller than its text. */
-.week-open {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  min-height: 32px;
-  font-size: 12px;
-  color: var(--fg-faint);
-  transition: color var(--fast) var(--ease);
-}
-
-.week-open:hover {
-  color: var(--fg-muted);
 }
 
 /* A fault fixed lately, or a retired one's re-check (L3.4): a sentence
@@ -464,10 +244,6 @@ button.badge[disabled] {
   color: var(--great);
 }
 
-.week-note--recheck svg {
-  color: var(--fg-faint);
-}
-
 /* This week's plan. The rows are the report's queue rows (`.focus-next-*`),
    so the two read as one pattern; only the box around them is new. */
 .week-list {
@@ -478,61 +254,7 @@ button.badge[disabled] {
 }
 
 /* The history's one line (L6.5): the caution card, with its actions under it. */
-.home-nudge {
-  flex-direction: column;
-  align-items: flex-start;
-}
 
-.home-nudge-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-/* The download's megabyte count ticks every second (L6.1): even-width digits, so the badge does not jitter. */
-.home-foot .badge {
-  font-variant-numeric: tabular-nums;
-}
-
-/* Today on court (N1.6), inside This week since Q9: the length, the lines
-   around the drills, and the two court tools under them. */
-.week-length {
-  width: fit-content;
-  margin-bottom: 12px;
-}
-
-.week-list + .today-list {
-  margin-top: 12px;
-}
-
-.today {
-  display: grid;
-  gap: 8px;
-}
-
-.today-list {
-  display: grid;
-  gap: 8px;
-  margin: 0 0 12px;
-  padding: 0;
-  list-style: none;
-  font-size: 14px;
-  line-height: var(--lh-snug);
-  color: var(--fg-muted);
-}
-
-.today-list li {
-  display: grid;
-  grid-template-columns: 4.2em 1fr;
-  gap: 10px;
-}
-
-.today-min {
-  color: var(--fg);
-  font-weight: 600;
-}
-
-/* The court card (N1.7): readable from the baseline, on the phone left on the fence. */
 .court-card {
   position: fixed;
   inset: 0;

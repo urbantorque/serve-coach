@@ -97,14 +97,14 @@ const tap = (page, text) => page.getByText(text, { exact: false }).first().click
 try {
   // ------------------------------------------------------------- first run
   await shoot('01-first-run-home', { prefs: null })
-  await shoot('02-first-run-guide', { prefs: null, steps: async (p) => { await tap(p, 'Analyse a serve'); await p.waitForTimeout(500) } })
-  await shoot('03-film-guide', { steps: async (p) => { await tap(p, 'How to film it'); await p.waitForTimeout(500) } })
-  await shoot('04-example-report', { prefs: null, wait: 900, steps: async (p) => { await tap(p, 'See an example report'); await p.waitForTimeout(1800) } })
+  await shoot('02-first-run-guide', { prefs: null, steps: async (p) => { await tap(p, 'Film my serve'); await p.waitForTimeout(2600) } })
+  await shoot('03-film-guide', { url: '/?open=guide', wait: 900 })
+  await shoot('04-example-report', { prefs: null, wait: 900, steps: async (p) => { await tap(p, 'See a sample report'); await p.waitForTimeout(1800) } })
   await shoot('05-empty-progress', { prefs: null, url: '/?open=progress', wait: 900 })
-  await shoot('06-empty-history', { prefs: null, steps: async (p) => { await p.getByLabel('Your serves').click(); await p.waitForTimeout(500) } })
+  await shoot('06-empty-history', { url: '/?open=progress', prefs: null, wait: 900 })
 
   // --------------------------------------------------------------- filming
-  await shoot('07-viewfinder', { steps: async (p) => { await tap(p, 'Record now'); await p.waitForTimeout(2600) } })
+  await shoot('07-viewfinder', { steps: async (p) => { await p.getByLabel('Film a serve').click(); await p.waitForTimeout(2800) } })
 
   // --------------------------------------------------------------- waiting
   await shoot('08-waiting', {
@@ -136,9 +136,9 @@ try {
 
   // ---------------------------------------------------------- with history
   await shoot('18-home-history', { url: '/?demo=history', wait: 2200 })
-  await shoot('19-history-sheet', { url: '/?demo=history', wait: 2200, steps: async (p) => { await p.getByLabel('Your serves').click(); await p.waitForTimeout(500) } })
+  await shoot('19-history-sheet', { url: '/?demo=history', wait: 2200, steps: async (p) => { await p.getByText('All your serves').click(); await p.waitForTimeout(1200) } })
   await shoot('20-settings', { url: '/?demo=history', wait: 2200, steps: async (p) => { await p.getByLabel('Settings and backups').click(); await p.waitForTimeout(500) } })
-  await shoot('21-progress', { url: '/?demo=history', wait: 2200, steps: async (p) => { await tap(p, 'Your form'); await p.waitForTimeout(1200) } })
+  await shoot('21-progress', { url: '/?demo=history', wait: 2200, steps: async (p) => { await p.getByRole('button', { name: 'Progress' }).click(); await p.waitForTimeout(1600) } })
 
   // -------------------------------------------------------------- practice
   await shoot('22-session-done', { url: '/?demo=session', wait: 5000 })

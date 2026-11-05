@@ -89,6 +89,12 @@ export function aboutSpeed(s: Ranged, unit: SpeedUnit): string {
   return `about ${f.best} ${f.unit}, likely ${f.low}–${f.high}`
 }
 
+/** A reading as a short label: "81 mph". */
+export function aboutSpeedShort(s: Ranged, unit: SpeedUnit = defaultSpeedUnit()): string {
+  const f = speedFigures(s, unit)
+  return `${f.best} ${f.unit}`
+}
+
 /** The fastest serve on record, on Progress (N2.8). */
 export function fastestLine(s: Ranged & { isNew: boolean }, unit: SpeedUnit): string {
   return `${s.isNew ? 'New fastest serve' : 'Fastest serve'}: ${aboutSpeed(s, unit)}.`

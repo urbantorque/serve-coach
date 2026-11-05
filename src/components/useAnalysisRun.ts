@@ -13,8 +13,7 @@ import { forgetAll, recall, remember } from '../lib/analysisCache'
 import type { ServePairFrames } from '../lib/analysis/consistency'
 import { SCORING_VERSION, hintsOf, type Analysis, type NotAServeError } from '../lib/analysis/types'
 import { Cancelled, looksLikeNonVideo } from '../lib/pose/errors'
-import { requestPersistence } from '../lib/storage/backup'
-import { writePrefs, type Prefs } from '../lib/storage/prefs'
+import { type Prefs } from '../lib/storage/prefs'
 import { clipIdOf, fileKeyOf, sessionKeyFor } from '../lib/storage/sessionKey'
 import { getPracticeSession, safely, savePracticeSession, type Session } from '../lib/storage/db'
 import { drilledFault } from '../lib/weekPlan'
@@ -35,7 +34,6 @@ export interface AnalysisRunDeps {
   view: View
   setView: Dispatch<SetStateAction<View>>
   prefs: Prefs
-  setPrefs: Dispatch<SetStateAction<Prefs>>
   sessions: Session[]
   refreshSessions: () => void
   trySave: (analysis: Analysis) => Promise<void>
@@ -47,7 +45,7 @@ export interface AnalysisRunDeps {
 }
 
 export function useAnalysisRun(deps: AnalysisRunDeps) {
-  const { view, setView, prefs, setPrefs, sessions, refreshSessions, trySave, setPair, recheckOffline, historyRef, setKeepFailedFor, setInterrupted } = deps
+  const { view, setView, prefs, sessions, refreshSessions, trySave, setPair, recheckOffline, historyRef, setKeepFailedFor, setInterrupted } = deps
   const [progress, setProgress] = useState<AnalyzeProgress>({ step: 'engine', ratio: 0 })
   /**
    * The basket sweep filling in, or nothing when a single serve is being read.
@@ -270,14 +268,8 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
         }
         recheckOffline()
 
-        // Ask the browser not to evict the history, once, at the first moment
-        // there is a history to lose. Asking on first load would be asking
-        // before the player has done anything — which is exactly when engagement
-        // heuristics say no, and the answer sticks.
-        if (!prefs.askedToPersist) {
-          setPrefs(writePrefs({ askedToPersist: true }))
-          void requestPersistence()
-        }
+        // The history looks after itself from here: see `storage/protect.ts`.
+        void import('../lib/storage/protect').then((m) => m.protectAfterSave())
 
         return analysis
       } catch (err) {
@@ -324,13 +316,11 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
       prefs.handedness,
       prefs.serveType,
       prefs.tier,
-      prefs.askedToPersist,
       prefs.keepClips,
       recheckOffline,
       setInterrupted,
       setKeepFailedFor,
       setPair,
-      setPrefs,
       setView,
     ],
   )
@@ -626,6 +616,7 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
           current: () => sessionAbortRef.current === controller,
         })
         refreshSessions()
+        void import('../lib/storage/protect').then((m) => m.protectAfterSave({ practiceServes: start.chosen?.length ?? start.found?.length ?? 0 }))
       } catch (err) {
         if (sessionAbortRef.current !== controller) return
         sessionFailed(err)

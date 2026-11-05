@@ -130,7 +130,7 @@ export function ScoreRibbon({ points }: { points: TripPoint[] }) {
       </svg>
       <figcaption>
         <strong>{shortDate(shown.createdAt)}</strong>: typical {shown.overall}
-        {shown.serves > 1 ? `, ${shown.serves} serves from ${shown.low} to ${shown.high}` : ', one serve'}
+        {shown.serves < 2 ? ', one serve' : shown.low === shown.high ? `, ${shown.serves} serves, all ${shown.overall}` : `, ${shown.serves} serves from ${shown.low} to ${shown.high}`}
         {breaks.length > 0 && <span className="ribbon-note">The gap is where the scoring changed.</span>}
       </figcaption>
     </figure>

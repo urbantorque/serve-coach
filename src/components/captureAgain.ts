@@ -1,4 +1,4 @@
-import type { Dispatch, RefObject, SetStateAction } from 'react'
+import type { RefObject } from 'react'
 
 /**
  * "Go again", straight to the capture it needs (N0.4): the viewfinder for a
@@ -10,17 +10,15 @@ import type { Dispatch, RefObject, SetStateAction } from 'react'
  */
 export function captureAgainWith(deps: {
   goHome: () => void
-  setFramingNonce: Dispatch<SetStateAction<number>>
-  setFirstRunIntent: (intent: 'pick') => void
+  openFilm: () => void
   pickRef: RefObject<HTMLInputElement | null>
 }) {
   return (how: 'pick' | 'framing') => {
     deps.goHome()
     if (how === 'framing') {
-      deps.setFramingNonce((n) => n + 1)
+      deps.openFilm()
       return
     }
-    deps.setFirstRunIntent('pick')
     setTimeout(() => deps.pickRef.current?.click(), 0)
   }
 }

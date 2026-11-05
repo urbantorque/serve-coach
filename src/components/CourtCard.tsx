@@ -1,13 +1,9 @@
 import { useState } from 'react'
 import { Icon } from './primitives'
-import type { CourtMinutes } from '../lib/courtPlan'
 import { progressionFor } from '../lib/analysis/progressions'
-import { readPrefs } from '../lib/storage/prefs'
 import { primeSpeech, speakLocally } from '../lib/speech'
 import { useWakeLock } from './useWakeLock'
-import type { WeekItem, WeekPlan } from '../lib/weekPlan'
-import { weekCalendar } from '../lib/calendar'
-import { shareBlob } from '../lib/share/reportCard'
+import type { WeekItem } from '../lib/weekPlan'
 
 /**
  * The drill in large type, for a phone on the fence (N1.7).
@@ -48,40 +44,6 @@ export function CourtCard({ item, onClose }: { item: Pick<WeekItem, 'drill' | 'f
           Start the count again
         </button>
       )}
-    </div>
-  )
-}
-
-/**
- * Today on court's tools (N1.6): the court card for the first drill, and the
- * week in the phone's calendar. The plan itself, with each drill's minutes, is
- * Home's "This week" since Q9; this is the part of it that can load late.
- */
-export default function TodayPlan({ week, minutes }: { week: WeekPlan; minutes: CourtMinutes }) {
-  const [card, setCard] = useState(false)
-  const first = week.items[0]
-  return (
-    <div className="today">
-      {first && (
-        <button type="button" className="btn btn--ghost btn--full" onClick={() => setCard(true)}>
-          <Icon name="target" size={17} />
-          Open the court card
-        </button>
-      )}
-      {/* The next sessions in the phone's own calendar (M3.1): reminders
-          without a server. Shared or downloaded; the app sends nothing. */}
-      <button
-        type="button"
-        className="btn btn--ghost btn--full"
-        onClick={() => {
-          const ics = weekCalendar(week, { now: new Date(), cadence: readPrefs().cadence, minutes })
-          void shareBlob(new Blob([ics], { type: 'text/calendar' }), 'serve-practice.ics', 'Serve practice', 'text/calendar')
-        }}
-      >
-        <Icon name="calendar" size={17} />
-        Add to calendar
-      </button>
-      {card && first && <CourtCard item={first} onClose={() => setCard(false)} />}
     </div>
   )
 }

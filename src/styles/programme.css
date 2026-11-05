@@ -1,0 +1,161 @@
+/* Today's session, and the road to the goal. */
+
+.session-today,
+.programme {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.session-blocks {
+  display: flex;
+  flex-direction: column;
+}
+
+.session-block {
+  display: grid;
+  grid-template-columns: 46px 1fr;
+  align-items: baseline;
+  gap: 10px;
+  padding: 11px 0;
+  font-size: 16px;
+  line-height: 1.34;
+  color: var(--fg-muted);
+}
+
+.session-block + .session-block {
+  border-top: 1px solid var(--hairline-soft);
+}
+
+.session-block--drill {
+  color: var(--fg);
+}
+
+.session-block-min {
+  font-size: 28px;
+  font-stretch: var(--wd-number);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--fg-muted);
+}
+
+.session-block--drill .session-block-min {
+  color: var(--lime);
+}
+
+.programme-why,
+.programme-pace,
+.programme-note {
+  font-size: 15.5px;
+  line-height: 1.4;
+  color: var(--fg-muted);
+}
+
+.programme-why {
+  font-size: 17px;
+  color: var(--fg);
+}
+
+.programme-weeks {
+  display: flex;
+  flex-direction: column;
+  margin-top: 4px;
+}
+
+.programme-week {
+  position: relative;
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  gap: 10px;
+  padding-bottom: 16px;
+}
+
+.programme-week::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 24px;
+  bottom: 0;
+  width: 2px;
+  background: var(--ink-4);
+}
+
+.programme-week:last-child::before {
+  display: none;
+}
+
+.programme-week-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-pill);
+  box-shadow: inset 0 0 0 2px var(--ink-4);
+}
+
+.programme-week--done .programme-week-mark {
+  background: var(--lime);
+  box-shadow: none;
+  color: var(--lime-ink);
+}
+
+.programme-week--current .programme-week-mark {
+  box-shadow: inset 0 0 0 2px var(--lime);
+}
+
+.programme-week-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 14.5px;
+  line-height: 1.38;
+  color: var(--fg-muted);
+}
+
+.programme-week-text strong {
+  font-size: 16.5px;
+  font-weight: 620;
+  color: var(--fg);
+}
+
+.programme-week--upcoming .programme-week-text strong {
+  color: var(--fg-muted);
+}
+
+.programme-week-label {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.programme-goals {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.programme-goal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--panel);
+  box-shadow: var(--panel-edge);
+  text-align: left;
+  color: var(--fg-faint);
+}
+
+.programme-goal strong {
+  display: block;
+  font-size: 15.5px;
+  font-weight: 620;
+  color: var(--fg);
+}
+
+.programme-goal span span {
+  font-size: 14px;
+  color: var(--fg-muted);
+}

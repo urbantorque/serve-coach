@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import '../styles/blocks.css'
+import '../styles/depth.css'
 import '../styles/fundamentals.css'
 import '../styles/player.css'
 import '../styles/report.css'
@@ -35,7 +37,8 @@ import { unseenLines } from '../lib/analysis/angleReach'
 import { consistencyHeadline, type ServePairFrames } from '../lib/analysis/consistency'
 import { readAlike } from '../lib/analysis/realChange'
 import { scoreBreakdown } from '../lib/analysis/breakdown'
-import { causalPlan, injuryNotes, refusalFor, suppressedNote, tierLabel } from '../lib/analysis/verdict'
+import { causalPlan, injuryNotes, legLeadLine, refusalFor, suppressedNote, tierLabel } from '../lib/analysis/verdict'
+import { guessLine, type ServeGuess } from '../lib/serveGuess'
 import type { InjuryFlag } from '../lib/analysis/triage'
 import type { PracticeFocus } from '../lib/practice'
 import { readPrefs, type ServeType } from '../lib/storage/prefs'
@@ -79,6 +82,8 @@ interface Props {
   outcome?: ServeOutcome
   onTagServe?: (n: 1 | 2 | undefined) => void
   onTagOutcome?: (o: ServeOutcome | undefined) => void
+  /** Which serve this looks like, from the player's own record. Never stored as a tag. */
+  serveGuess?: ServeGuess
   /** Show this clip as the glance: the one-screen read for the court. */
   onGlance?: () => void
   /** Every toss in this basket, when two or more were read. */
@@ -158,6 +163,7 @@ export default function Report({
   outcome,
   onTagServe,
   onTagOutcome,
+  serveGuess,
   onGlance,
   tossMap,
   kept,
@@ -661,7 +667,7 @@ export default function Report({
                 {([1, 2] as const).map((n) => (
                   <button
                     key={n}
-                    className={`serve-tag${serveNumber === n ? ' is-on' : ''}`}
+                    className={`serve-tag${serveNumber === n ? ' is-on' : ''}${serveNumber === undefined && serveGuess?.serveNumber === n ? ' is-guess' : ''}`}
                     aria-pressed={serveNumber === n}
                     onClick={() => onTagServe(serveNumber === n ? undefined : n)}
                   >
@@ -671,6 +677,7 @@ export default function Report({
               </div>
             </div>
           )}
+          {serveNumber === undefined && serveGuess && <p className="serve-tags-guess">{guessLine(serveGuess)}</p>}
           {onTagOutcome && (
             <div className="serve-tags-row">
               <span className="serve-tags-lead">Where it landed</span>
@@ -853,6 +860,15 @@ export default function Report({
               ))}
             </div>
           </section>
+
+          {!analysis.diagnosis?.firingOrder && analysis.diagnosis?.legLead && (
+            <section className="block">
+              <h2 className="block-title">
+                <Term id="firingOrder">Your legs and your arm</Term>
+              </h2>
+              <p className="reading-unseen">{legLeadLine(analysis.diagnosis.legLead)}</p>
+            </section>
+          )}
 
           {analysis.diagnosis?.firingOrder && (
             <section className="block">

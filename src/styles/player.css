@@ -187,151 +187,6 @@
    of writing them as multipliers costs width, and this row was already the
    widest thing under the video — the transport controls stay on the first line,
    the toggles drop to the second. */
-.player-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-}
-
-.seg {
-  display: flex;
-  padding: 3px;
-  border-radius: var(--r-pill);
-  background: var(--ink-2);
-  border: 1px solid var(--hairline);
-}
-
-.seg-item {
-  position: relative;
-  padding: 6px 11px;
-  border-radius: var(--r-pill);
-  font-size: 12px;
-  font-weight: var(--wt-label);
-  letter-spacing: 0.005em;
-  /* Muted, not faint (Q7): an unpicked option is still one to read. */
-  color: var(--fg-muted);
-  transition: background var(--fast) var(--ease), color var(--fast) var(--ease),
-    transform var(--fast) var(--ease);
-}
-
-/* A 44px press, painted nowhere: side by side the items share no edge to
-   overlap on, so each grows only up and down (see controls.css). */
-.seg-item::after {
-  content: '';
-  position: absolute;
-  inset: 50% 0 auto;
-  height: 44px;
-  transform: translateY(-50%);
-}
-
-.seg-item:active {
-  transform: scale(0.92);
-}
-
-.seg-item.is-on {
-  background: var(--ink-4);
-  color: var(--fg);
-}
-
-.player-controls .chip--toggle {
-  margin-left: auto;
-  cursor: pointer;
-}
-
-.player:focus-visible {
-  outline: 2px solid var(--lime);
-  outline-offset: 6px;
-}
-
-.player-track:focus-visible {
-  outline: 2px solid var(--lime);
-  outline-offset: 4px;
-  border-radius: var(--r-pill);
-}
-
-.stepper {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px;
-  border-radius: var(--r-pill);
-  background: var(--ink-2);
-  border: 1px solid var(--hairline);
-}
-
-.stepper .icon-btn {
-  width: 30px;
-  height: 30px;
-}
-
-.stepper .icon-btn:disabled {
-  opacity: 0.35;
-}
-
-.stepper .icon-btn:disabled:hover {
-  background: none;
-  color: var(--fg-faint);
-}
-
-.stepper-read {
-  min-width: 3.4rem;
-  text-align: center;
-  font-size: 11.5px;
-  font-weight: 560;
-  color: var(--fg-faint);
-}
-
-.phase-pills {
-  display: flex;
-  gap: 7px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  padding-bottom: 2px;
-}
-
-.phase-pills::-webkit-scrollbar {
-  display: none;
-}
-
-.phase-pill {
-  flex: none;
-  padding: 8px 14px;
-  border-radius: var(--r-pill);
-  background: var(--ink-2);
-  border: 1px solid var(--hairline);
-  font-size: 12.5px;
-  font-weight: 560;
-  color: var(--fg-muted);
-  /* Named rather than `all`. The active pill is a heavier weight, and `all`
-     interpolated it — the system UI stacks here are variable fonts, so every
-     phase change re-shaped the text and reflowed the whole pill row for the
-     length of the transition, six times per loop of the serve. Weight now
-     snaps, which is what it looked like it was doing anyway. */
-  transition:
-    background-color var(--fast) var(--ease),
-    border-color var(--fast) var(--ease),
-    color var(--fast) var(--ease),
-    transform var(--fast) var(--ease);
-}
-
-.phase-pill:active {
-  transform: scale(0.94);
-}
-
-.phase-pill.is-active {
-  background: var(--lime);
-  border-color: var(--lime);
-  color: var(--lime-ink);
-  font-weight: 640;
-}
-
-.player-caption {
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--fg-muted);
-  min-height: 2.6em;
-}
 
 /* ============================================================================
    Keyframe filmstrip
@@ -364,25 +219,11 @@
   }
 }
 
-.strip-item {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  text-align: left;
-  color: inherit;
-}
-
-.strip-item--live {
-  cursor: pointer;
-}
-
 /* The drawn keyframe takes the same box as the photograph it stands in for, so
    a report whose stills have been pruned has the same layout as one that still
    has them — the strip does not reflow as a history ages. Listed alongside the
    two it replaces rather than given its own rule, because "same box" is the
    whole requirement and a second rule would be a second chance to drift. */
-.strip-item img,
 .strip-pose,
 .strip-placeholder {
   width: 100%;
@@ -392,28 +233,6 @@
   background: var(--ink-2);
   border: 1px solid var(--hairline);
   transition: border-color var(--fast) var(--ease);
-}
-
-.strip-item--live:hover img,
-.strip-item--live:focus-visible img {
-  border-color: var(--lime);
-}
-
-.strip-caption {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.strip-item strong {
-  font-size: 13px;
-  font-weight: 620;
-}
-
-.strip-item span {
-  font-size: 11.5px;
-  line-height: 1.45;
-  color: var(--fg-faint);
 }
 
 /* --- a kept clip (D6.4) ----------------------------------------------------- */
@@ -484,30 +303,8 @@
 
 /* What to look for at each moment, with its tick or cross (L4.6). The mark
    leads the line so it can be scanned down the strip. */
-.strip-look {
-  display: inline;
-}
-
-.strip-mark {
-  display: inline-grid;
-  place-items: center;
-  width: 15px;
-  height: 15px;
-  margin-right: 5px;
-  border-radius: var(--r-pill);
-  vertical-align: -3px;
-}
 
 /* Past `.strip-item span`, which would otherwise grey the mark out. */
-.strip-item .strip-mark--tick {
-  background: var(--lime-glow);
-  color: var(--lime);
-}
-
-.strip-item .strip-mark--cross {
-  background: var(--work-dim);
-  color: var(--work);
-}
 
 /* ============================================================================
    Watching a serve: one play button, a speed in words, the moments by name

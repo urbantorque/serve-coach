@@ -3,6 +3,7 @@
  * up on it, an analysis the page did not live to finish said once on the next
  * load, and a screen that could not be kept on said while it matters.
  */
+import { DEFAULTS } from '../storage/prefs'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server.browser'
 import { timeoutWhileVisible, type VisibilityLike } from '../pose/visibleWait'
@@ -158,16 +159,14 @@ check('the analysing screen and the home screen say it', () => {
         sessions: [],
         offlineReady: true,
         sessionsLoaded: true,
-        onPick: noop,
+        prefs: DEFAULTS,
+        onPrefs: noop,
+        onFilm: noop,
         onOpen: noop,
-        onShowGuide: noop,
         onShowHistory: noop,
         onShowSettings: noop,
         onShowProgress: noop,
-        onGuideThen: noop,
         onShowExample: noop,
-        needsHandedness: false,
-        onMakeOffline: noop,
         interrupted,
       }),
     )

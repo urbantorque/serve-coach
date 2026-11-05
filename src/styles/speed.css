@@ -22,57 +22,21 @@
   color: var(--fg-muted);
 }
 
-.speed-head,
-.speed-ends {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
 .speed strong {
   font-size: 34px;
   font-weight: var(--wt-title);
   color: var(--fg);
 }
 
-.speed-scale {
-  position: relative;
-  height: 8px;
-  border-radius: var(--r-pill);
-  background: var(--ink-3);
-}
-
-.speed-scale span {
-  position: absolute;
-  inset: 0 auto;
-  min-width: 3px;
-  border-radius: var(--r-pill);
-  background: var(--fg-faint);
-}
-
 /* The band grows out from the best figure to its width (C5), so the range
    reads as spread around the reading rather than a bar filling up to it. The
    origin is where the best figure sits inside the band; the component passes
    it as --at. Reduced motion is already an instant, globally. */
-.speed-band {
-  transform-origin: calc(var(--at, 0.5) * 100%) 50%;
-  animation: speed-settle 720ms var(--ease-out) both;
-}
 
 @keyframes speed-settle {
   from {
     transform: scaleX(0);
   }
-}
-
-.speed .speed-best {
-  inset: -3px auto;
-  margin-left: -1.5px;
-  background: var(--fg);
-}
-
-.speed-ends {
-  font-size: 11px;
 }
 
 .speed-range {

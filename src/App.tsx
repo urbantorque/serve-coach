@@ -1,6 +1,7 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import HandednessPicker from './components/HandednessPicker'
 import { Icon, Sheet } from './components/primitives'
+import AppSheets, { type AppSheet } from './components/AppSheets'
+import TabBar from './components/TabBar'
 import { useBackLayer } from './components/useBackLayer'
 import { useWakeLock, wakeLockLine } from './components/useWakeLock'
 import { useHistory } from './components/useHistory'
@@ -8,12 +9,12 @@ import { useOfflineWarmup } from './components/useOfflineWarmup'
 import { useAnalysisRun } from './components/useAnalysisRun'
 import { useSets } from './components/useSets'
 import { useHistoryLookups } from './components/useHistoryLookups'
-import { usePendingDelete } from './components/usePendingDelete'
 import { loadAnalysis, loadAnalyzing, loadReport, loadSessionScreen, loadGlance } from './appLoaders'
 import { meteredConnection } from './lib/engineDownload'
 import { interruptedLine, takeInterrupted } from './lib/interrupted'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
 import { captureAgainWith } from './components/captureAgain'
+import { previewSupported } from './lib/framing/access'
 import { withTransition } from './components/viewTransition'
 import { leaveForHome } from './components/runDecisions'
 import { forgetAll } from './lib/analysisCache'
@@ -39,7 +40,8 @@ import { readPrefs, writePrefs, type Prefs } from './lib/storage/prefs'
 import { clipIdOf } from './lib/storage/sessionKey'
 import type { PracticeSession, SessionStage } from './lib/session/session'
 import { clipFor } from './lib/storage/clipStore'
-import { defaultSpeedUnit } from './lib/speedCopy'
+import { guessServeNumber } from './lib/serveGuess'
+import type { ProtectionStatus, RecoveryOffer } from './lib/storage/protect'
 import Home from './screens/Home'
 
 /*
@@ -50,10 +52,6 @@ import Home from './screens/Home'
  * this costs nothing but a microtask.
  */
 const Progress = lazy(() => import('./screens/Progress'))
-// Sheet contents, out of the entry chunk (its budget is the reason).
-const HistoryEmpty = lazy(() => import('./components/HistoryEmpty'))
-const HistoryList = lazy(() => import('./components/HistoryList'))
-const FirstRunDownload = lazy(() => import('./components/FirstRunDownload'))
 /*
  * The report too, which is the larger half: the player, the fundamentals, the
  * comparison panel and the share-card renderer. Nothing on the first screen
@@ -79,18 +77,8 @@ const SessionScreen = lazy(loadSessionScreen)
  * kilobytes of its budget.
  */
 const Glance = lazy(loadGlance)
-const FilmingGuide = lazy(() => import('./components/FilmingGuide'))
-/*
- * The settings and the device check: sheets opened on demand, and the backup
- * code and the device probes behind them. Out of the entry, which had come
- * within half a kilobyte of its budget (L3.4).
- */
-const StoragePanel = lazy(() => import('./components/StoragePanel'))
-const KeepClipsPanel = lazy(() => import('./components/KeepClipsPanel'))
-const CadencePicker = lazy(() => import('./components/CadencePicker'))
-const SpeedUnitPicker = lazy(() => import('./components/SpeedUnitPicker'))
-const DeviceCheck = lazy(() => import('./components/DeviceCheck'))
-const CorpusIngest = lazy(() => import('./components/CorpusIngest'))
+/** The camera, a full-screen sheet: the viewfinder and its pose loop load with the tap. */
+const FramingCheck = lazy(() => import('./components/FramingCheck'))
 
 
 /**
@@ -102,58 +90,13 @@ const CorpusIngest = lazy(() => import('./components/CorpusIngest'))
 const INTERRUPTED_AT_LOAD = takeInterrupted()
 
 /**
- * The screen, and the fellow-travellers that are stages of the same machine
- * without being part of this type: `sweep` (the basket comparison filling
- * in), `pair` (the best-vs-worst stills) and the refs below (`urlRef`,
- * `lastFileRef`, `serveTimesRef`, `abortRef`). The progress screen's
- * paired report used to be a third; it moved into `screens/Progress.tsx` with
- * the screen. R7 asked whether that machine should be made
- * explicit — a reducer, a single tagged state. It stays implicit: every one of
- * them is scoped to exactly the screens that read it (`sweep` only
- * `analyzing`, `pair` only `report`), so a single combined state
- * would carry fields most screens never touch rather than removing anything —
- * and every transition below was walked by hand for a screen it could strand
- * and none was found. What follows is that walk, written down rather than
- * repeated: not runtime-enforced, but this is every legal move, and a change
- * that adds one belongs here too.
+ * The screen. The legal moves between these are data in `lib/screenFlow.ts`, and
+ * a test walks them: nothing is stranded, nothing is unreachable, and no screen
+ * here is missing there.
  *
- * THE TABLE ITSELF NOW LIVES IN `lib/screenFlow.ts`, as data, and a test walks
- * it: nothing is stranded, nothing is unreachable, and no screen exists here
- * that is missing there. It is not a reducer and `App.tsx` does not import it —
- * R7's argument against routing transitions through one still stands. What
- * changed is only that the table is checkable, because this one was written by
- * hand and was wrong in two places, in opposite directions:
- *
- *   · It claimed `analyzing` → `saved`. Nothing does that; `saved` is only ever
- *     reached from `home`.
- *   · It omitted `home` → `error` and `report` → `error`. `run` refuses an
- *     oversized file and a non-video by declared type *before* it sets
- *     `analyzing`, and returns — so the error screen is reachable without the
- *     analysing screen ever being shown.
- *
- * Neither was a bug in the app. Both were a map disagreeing with the ground,
- * which is what a table nothing executes eventually becomes.
- *
- * What is worth keeping here is the reasoning the table cannot carry:
- *
- * `report` ⇄ `report` is re-scoring, re-diagnosing, switching serves, flipping
- *   handedness, or a cache hit — all same-kind. Re-scoring, re-diagnosing and a
- *   cache hit reuse the existing `videoUrl` outright — no seek, no decoder
- *   rebuild, arithmetic or a map lookup on data already in memory. A correction
- *   `recall` has not seen before still goes through `run`, which revokes the
- *   old object URL and mints a new one from the same `File` — a fresh decoder,
- *   because there is no cheaper way to read a clip again.
- * `glance` → `report` does no re-analysis — the same object, a fuller screen.
- * Only `home` and `report` ever call `run` — `openClip` and a correction.
- *
- * `sweep` lives only while `view.kind === 'analyzing'` and a comparison is
- * running; it is always cleared (`undefined` or a fresh one) at every entrance
- * to `analyzing`, and `compareServes`'s `finally` clears it again unless a
- * newer sweep has already taken its place — the `abortRef.current === controller`
- * check that guards every async continuation in this file.
- * `pair` lives only while `view.kind === 'report'`; `run` clears it at every
- * entry, because it does not ride on the analysis the way the report itself
- * does — see the field's own comment.
+ * `report` to `report` is re-scoring, re-diagnosing, switching serves or flipping
+ * handedness. `glance` to `report` does no re-analysis. Only `home` and `report`
+ * ever call `run`.
  */
 export type View =
   | { kind: 'home' }
@@ -187,7 +130,7 @@ export type View =
   | { kind: 'saved'; session: Session; example?: boolean }
   | { kind: 'error'; title: string; hints: string[]; capture?: FailedCapture; fileName?: string }
   /** Every serve so far — see `screens/Progress.tsx`. A screen, not a sheet. */
-  | { kind: 'progress' }
+  | { kind: 'progress'; serves?: boolean }
   /**
    * A practice session: a clip past `SESSION_SECONDS`, read a serve at a time
    * (L2.4). `canRead` is whether the file is open here; a session reopened
@@ -245,23 +188,12 @@ export default function App() {
     seed: seedHistory,
     seeded: historySeeded,
   } = useHistory()
-  const [sheet, setSheet] = useState<
-    'guide' | 'guide-first' | 'history' | 'settings' | 'check' | 'corpus' | null
-  >(null)
-  /** Bumped to ask the home screen to open its viewfinder. See Home's `openFraming`. */
-  const [framingNonce, setFramingNonce] = useState(0)
+  const [sheet, setSheet] = useState<AppSheet>(null)
   /**
-   * Where the first-run guide continues to, once it closes.
-   *
-   * The guide is one sheet shared by three different reasons to open it —
-   * pick a video, record one, or just check the framing — and until this
-   * existed it only ever remembered one of them: `finishFirstRunGuide` always
-   * opened the file picker, whatever the player had actually tapped. A first
-   * run through "Record now" got a generic file browser instead of the
-   * camera, and "Check your framing first" had no route through the guide at
-   * all — seeing R15 in `NEXT.md` for how that surfaced.
+   * The camera, when it is open. `rearm` is the glance's "Record another": the
+   * next serve may start by itself once the player stands ready (C3).
    */
-  const [firstRunIntent, setFirstRunIntent] = useState<'pick' | 'record' | 'check'>('pick')
+  const [film, setFilm] = useState<{ rearm: boolean } | null>(null)
   // The offline badge and the download behind it — see `useOfflineWarmup` (W5.2).
   const { offlineReady, warming, makeOffline, recheck: recheckOffline } = useOfflineWarmup()
   // Read once: a connection that turns metered mid-visit is rare, and the line
@@ -302,7 +234,12 @@ export default function App() {
    */
   const [saveWarning, setSaveWarning] = useState<string>()
 
+  /** What the automatic copy of the history covers, and any restore it can offer. */
+  const [protection, setProtection] = useState<ProtectionStatus>()
+  const [recovery, setRecovery] = useState<RecoveryOffer>()
+
   const firstRunPickRef = useRef<HTMLInputElement>(null)
+  const cameraAppRef = useRef<HTMLInputElement>(null)
 
   /**
    * Show a report built from a simulated serve.
@@ -319,28 +256,22 @@ export default function App() {
   }, [])
 
   /**
-   * Open the guide, remembering which of the three reasons for opening it
-   * this is — see `firstRunIntent`.
+   * Film: the camera where the page can have one, the phone's own camera app
+   * where it cannot, and the file picker on a machine with neither.
    */
-  const onGuideThen = useCallback((intent: typeof firstRunIntent) => {
-    setFirstRunIntent(intent)
-    setSheet('guide-first')
-  }, [])
+  const startFilming = useCallback(() => {
+    // The coach comes down when it is first wanted, unless the connection costs
+    // money, where Settings offers it with its size.
+    if (offlineReady === false && !metered && !warming) void makeOffline()
+    if (previewSupported()) setFilm({ rearm: false })
+    else firstRunPickRef.current?.click()
+  }, [offlineReady, metered, warming, makeOffline])
 
-  /** Mark the guide as seen and continue to whichever intent opened it. */
-  const finishFirstRunGuide = useCallback(() => {
-    setPrefs(writePrefs({ seenFilmingGuide: true }))
-    setSheet(null)
-    if (firstRunIntent === 'check') {
-      setFramingNonce((n) => n + 1)
-      return
-    }
-    // After the sheet unmounts, or the click lands on an element being
-    // removed. `firstRunPickRef`'s own `capture` attribute already tracks
-    // `firstRunIntent` — see where it is rendered — so the same input opens
-    // a file browser for "pick" and the camera app for "record".
-    setTimeout(() => firstRunPickRef.current?.click(), 60)
-  }, [firstRunIntent])
+  /** The clip the viewfinder's Videos button picked: the picker opens inside the tap. */
+  const pickFromFilm = useCallback(() => {
+    firstRunPickRef.current?.click()
+    setFilm(null)
+  }, [])
 
   /**
    * Reload the history, without its keyframe images.
@@ -478,7 +409,6 @@ export default function App() {
     view,
     setView,
     prefs,
-    setPrefs,
     sessions,
     refreshSessions,
     trySave,
@@ -488,6 +418,20 @@ export default function App() {
     setKeepFailedFor,
     setInterrupted,
   })
+
+  useEffect(() => {
+    if (!sessionsLoaded) return
+    let live = true
+    void import('./lib/storage/protect').then(async (m) => {
+      const [status, offer] = await Promise.all([m.protectionStatus(), m.recoveryOffer(sessions.length)])
+      if (!live) return
+      setProtection(status)
+      setRecovery(offer)
+    })
+    return () => {
+      live = false
+    }
+  }, [sessionsLoaded, sessions.length])
 
   useEffect(() => {
     // `?check` opens the device report. Deliberately NOT dev-only, unlike
@@ -533,7 +477,7 @@ export default function App() {
   // The clip goes with the report (L6.10), before home shows: `leaveForHome`.
   const goHome = () => leaveForHome({ releaseVideo, showHome: () => setView({ kind: 'home' }), refresh: refreshSessions })
 
-  const captureAgain = captureAgainWith({ goHome, setFramingNonce, setFirstRunIntent, pickRef: firstRunPickRef })
+  const captureAgain = captureAgainWith({ goHome, openFilm: () => setFilm({ rearm: false }), pickRef: firstRunPickRef })
 
   /** Off the session screen: the reading stops with its place kept, and the video goes. */
   const leaveSession = () => {
@@ -582,12 +526,6 @@ export default function App() {
     goHome()
   })
 
-  // An undoable delete — see `usePendingDelete` (L6.11).
-  const { pendingDelete, commitDelete, remove, undoDelete } = usePendingDelete({ refreshSessions })
-  const closeHistory = () => {
-    commitDelete(pendingDelete)
-    setSheet(null)
-  }
 
   /*
    * The session before this one, to set it against (L2.8): finished, the same
@@ -650,9 +588,12 @@ export default function App() {
             <Home
               sessions={sessions}
               ledger={tripLedger}
-              cadence={prefs.cadence}
+              tags={serveTags}
+              practiceSessions={practiceSessions}
+              prefs={prefs}
+              onPrefs={(patch) => setPrefs(writePrefs(patch))}
+              sessionsLoaded={sessionsLoaded}
               offlineReady={offlineReady}
-              metered={metered}
               interrupted={interrupted ? interruptedLine() : undefined}
               nudge={storageNudge({
                 ios: isIOS(),
@@ -662,33 +603,41 @@ export default function App() {
                 lastExportedAt: prefs.lastExportedAt,
                 quietedAt: prefs.moveQuietedAt,
                 now: Date.now(),
+                snapshotAt: protection?.lastSnapshotAt,
+                persisted: protection?.persisted,
               })}
+              recovery={recovery?.line}
+              onRestore={() =>
+                void import('./lib/storage/protect').then(async (m) => {
+                  await m.restoreFromSnapshot()
+                  setRecovery(undefined)
+                  refreshSessions()
+                })
+              }
+              onStartFresh={() =>
+                void import('./lib/storage/protect').then(async (m) => {
+                  await m.forgetSnapshots()
+                  setRecovery(undefined)
+                })
+              }
               onExportBackup={() =>
                 void downloadBackup()
                   .then(() => setPrefs(readPrefs()))
                   .catch(() => {})
               }
               onQuietMove={() => setPrefs(writePrefs({ moveQuietedAt: Date.now() }))}
-              sessionsLoaded={sessionsLoaded}
-              onPick={(f) => void openClip(f)}
-              onRecorded={(f) => void openClip(f, true)}
-              openFraming={framingNonce}
-              checkTarget={checkTarget?.drill}
-              onCheckDrill={(flaw, drill) => setCheckTarget({ flaw: flaw as FlawId, drill })}
               onOpen={openSaved}
-              ladder={prefs.ladder}
-              passedAt={prefs.ladderPassedAt}
-              onShowGuide={() => setSheet('guide')}
-              onShowHistory={() => setSheet('history')}
+              onOpenPracticeSession={openPracticeSession}
+              onFilm={startFilming}
+              onCheckDrill={(flaw, drill) => {
+                setCheckTarget({ flaw: flaw as FlawId, drill })
+                setFilm({ rearm: false })
+              }}
+              onLadderStep={moveLadder}
               onShowSettings={() => setSheet('settings')}
               onShowProgress={() => setView({ kind: 'progress' })}
-              needsHandedness={!prefs.handedness}
-              onGuideThen={onGuideThen}
+              onShowHistory={() => setView({ kind: 'progress', serves: true })}
               onShowExample={() => void showExample()}
-              practiceSessions={practiceSessions}
-              onOpenPracticeSession={openPracticeSession}
-              onMakeOffline={() => void makeOffline()}
-              warming={warming}
             />
           )}
 
@@ -714,10 +663,7 @@ export default function App() {
               canRead={view.canRead}
               onStart={(mode, withSpeed) => void startSession(mode, withSpeed)}
               onStop={() => stopSession('player')}
-              onPickAgain={() => {
-                setFirstRunIntent('pick')
-                setTimeout(() => firstRunPickRef.current?.click(), 0)
-              }}
+              onPickAgain={() => setTimeout(() => firstRunPickRef.current?.click(), 0)}
               onLeave={leaveSession}
               history={sessions}
               ladder={prefs.ladder}
@@ -760,7 +706,7 @@ export default function App() {
               // way, which a second recording would otherwise leak.
               onRecordAnother={() => {
                 goHome()
-                setFramingNonce((n) => n + 1)
+                setFilm({ rearm: true })
               }}
               onOpenReport={() =>
                 withTransition(() =>
@@ -822,6 +768,7 @@ export default function App() {
               previous={priorTo(shownReport.createdAt, typeOf(shownReport))}
               best={bestPriorTo(sessions, shownReport.createdAt, typeOf(shownReport), scoringVersionOf(shownReport))}
               serveNumber={tagsById(serveTags).get(shownReport.id)?.serveNumber}
+              serveGuess={guessServeNumber(shownReport as Session, sessions, serveTags)}
               outcome={tagsById(serveTags).get(shownReport.id)?.outcome}
               onTagServe={(n) => void applyServeTag(shownReport.id, { serveNumber: n })}
               onTagOutcome={(o) => void applyServeTag(shownReport.id, { outcome: o })}
@@ -948,7 +895,10 @@ export default function App() {
               onLogDrill={logDrill}
               onUndoDrill={undoDrill}
               seeded={historySeeded}
-              onBack={goHome}
+              onBack={startFilming}
+              onOpen={openSaved}
+              showServes={view.serves}
+              refreshSessions={refreshSessions}
             />
           )}
 
@@ -1005,91 +955,54 @@ export default function App() {
         </Suspense>
       </main>
 
-      <Sheet
-        open={sheet === 'guide'}
-        onClose={() => {
-          // Reading the rules here is the same fact as reading them inside
-          // the first-run guide — a stranger who opens this one first must
-          // not be shown the identical four rules again the moment they tap
-          // into an analysis. Handedness is untouched: this sheet never asks
-          // for it, so `needsHandedness` still gates the interstitial on it.
-          setPrefs(writePrefs({ seenFilmingGuide: true }))
-          setSheet(null)
-        }}
-        title="How to film your serve"
-      >
-        <Suspense fallback={null}>
-          <FilmingGuide racket={prefs.handedness ?? 'right'} />
-        </Suspense>
-      </Sheet>
-
-      {/* The same guide, shown once before the very first clip, with the hand
-          on the end of it so reading it is on the way to the task rather than a
-          detour away from it.
-
-          The hand and nothing else. A rating used to be asked for here too, and
-          it is the one question this screen cannot help with: it comes before
-          the player has filmed anything, so there is no estimate to show them
-          and no report to check the answer against — and "work it out for me"
-          was both the default and the right answer, which makes it a question
-          standing between somebody and their first clip for no gain. The engine
-          estimates a rung from the serve itself, and the report says which one
-          it used and offers to change it, where the targets it moves are on
-          screen to be judged against. */}
-      <Sheet
-        open={sheet === 'guide-first'}
-        onClose={() => {
-          setPrefs(writePrefs({ seenFilmingGuide: true }))
-          setSheet(null)
-        }}
-        title={prefs.seenFilmingGuide ? 'One more thing' : 'First, how to film it'}
-      >
-        {/* Skipped for a stranger who already read the rules through the
-            read-only "How to film it" strap — showing the same four rules
-            twice was R17's fix. Handedness still has to be asked either way,
-            which is why this sheet opens at all: `needsHandedness` in
-            `Home.tsx` gates on the hand, not on the rules. */}
-        {!prefs.seenFilmingGuide && (
-          <Suspense fallback={null}>
-            <FilmingGuide racket={prefs.handedness ?? 'right'} />
-          </Suspense>
-        )}
-        {/* The hand is the one thing that has to be right before the first clip:
-            every swing measurement is read off the racket arm, and the detector
-            cross-checks a stated hand rather than being overridden by it. */}
-        <HandednessPicker
-          value={prefs.handedness}
-          onChange={(handedness) => setPrefs(writePrefs({ handedness }))}
+      {(view.kind === 'home' || view.kind === 'progress') && sessions.length > 0 && (
+        <TabBar
+          on={view.kind === 'home' ? 'today' : 'progress'}
+          onTab={(tab) => setView({ kind: tab === 'today' ? 'home' : 'progress' })}
+          onFilm={startFilming}
+          loading={warming?.stage === 'downloading' ? warming.ratio : undefined}
         />
+      )}
+
+      <AppSheets
+        sheet={sheet}
+        onSheet={setSheet}
+        prefs={prefs}
+        onPrefs={setPrefs}
+        serves={sessions.length}
+        onImported={refreshSessions}
+        offline={{ ready: offlineReady, warming, metered, onDownload: () => void makeOffline() }}
+        protection={protection?.line}
+      />
+
+      {/* Mounted only while it is open, which is what guarantees the camera is
+          released: the viewfinder stops its own tracks on unmount. */}
+      <Sheet open={film !== null} onClose={() => setFilm(null)} title="Film a serve" full>
         <Suspense fallback={null}>
-          <FirstRunDownload ready={offlineReady} busy={warming !== undefined && warming.stage !== 'failed'} onDownload={() => void makeOffline()} />
+          <FramingCheck
+            target={checkTarget?.drill}
+            rearm={film?.rearm}
+            onClose={() => setFilm(null)}
+            onPick={pickFromFilm}
+            onHelp={() => setSheet('guide')}
+            firstTime={!prefs.seenFilmingGuide}
+            onSeenRules={() => setPrefs(writePrefs({ seenFilmingGuide: true }))}
+            onCameraApp={() => {
+              setFilm(null)
+              cameraAppRef.current?.click()
+            }}
+            onRecorded={(file) => {
+              setFilm(null)
+              void openClip(file, true)
+            }}
+          />
         </Suspense>
-        <button
-          className="btn btn--primary btn--full"
-          onClick={finishFirstRunGuide}
-          disabled={!prefs.handedness}
-        >
-          <Icon name="film" size={18} />
-          {!prefs.handedness
-            ? 'Pick a hand to continue'
-            : firstRunIntent === 'record'
-              ? 'Got it — open my camera'
-              : firstRunIntent === 'check'
-                ? 'Got it — check my framing'
-                : 'Got it — choose my video'}
-        </button>
       </Sheet>
 
-      {/* Shared by "pick" and "record" — `capture` is the only difference
-          between a generic file browser and the phone's camera app, and
-          setting it from `firstRunIntent` here means `finishFirstRunGuide`
-          only has to click one ref rather than choose between two. Absent
-          entirely for "check", which never reaches this input at all. */}
       <input
         ref={firstRunPickRef}
         type="file"
         accept="video/*"
-        capture={firstRunIntent === 'record' ? 'environment' : undefined}
         hidden
         onChange={(e) => {
           const file = e.target.files?.[0]
@@ -1097,95 +1010,18 @@ export default function App() {
           if (file) void openClip(file)
         }}
       />
-
-      <Sheet open={sheet === 'history'} onClose={closeHistory} title="Your serves">
-        {pendingDelete && (
-          <p className="storage-note undo-row" role="status">
-            <Icon name="trash" size={15} />
-            <span>Serve deleted.</span>
-            <button className="levelled-btn" onClick={undoDelete}>
-              Undo
-            </button>
-          </p>
-        )}
-        <Suspense fallback={null}>
-        {sessions.filter((s) => s.id !== pendingDelete).length === 0 ? (
-          <HistoryEmpty
-            onAnalyse={() => {
-              setSheet(null)
-              if (prefs.handedness) captureAgain('pick')
-              else onGuideThen('pick')
-            }}
-            onExample={() => {
-              setSheet(null)
-              void showExample()
-            }}
-          />
-        ) : (
-          <HistoryList
-            sessions={sessions.filter((s) => s.id !== pendingDelete)}
-            onOpen={(s) => {
-              setSheet(null)
-              openSaved(s)
-            }}
-            onDelete={remove}
-          />
-        )}
-        </Suspense>
-        {/* Follows the setting (L6.7). Passive on purpose, as `jsxCopy.test.ts`
-            ruled when it was plain text: the promise is that nobody does the
-            keeping — no server, no account. */}
-        <p className="sheet-note">
-          {prefs.keepClips
-            ? 'Reports, and the videos you chose to keep, stay on this device only.'
-            : 'Reports are kept on this device only. The video itself is never saved.'}
-        </p>
-        <button className="btn btn--ghost btn--full history-backup" onClick={() => setSheet('settings')}>
-          <Icon name="upload" size={17} />
-          Back up or restore
-        </button>
-      </Sheet>
-
-      {/*
-       * The choices that used to be trapped elsewhere. Handedness could only be
-       * changed by re-running a report, the backup sat at the foot of the
-       * history list, and the device check — a diagnostic for a court trip,
-       * not for playing — sat in that same list as though it were a feature.
-       */}
-      <Sheet open={sheet === 'settings'} onClose={() => setSheet(null)} title="Settings">
-        <HandednessPicker
-          value={prefs.handedness}
-          onChange={(handedness) => setPrefs(writePrefs({ handedness }))}
-        />
-        <Suspense fallback={null}>
-          <CadencePicker value={prefs.cadence} onChange={(cadence) => setPrefs(writePrefs({ cadence }))} />
-          <SpeedUnitPicker value={prefs.speedUnit ?? defaultSpeedUnit()} onChange={(speedUnit) => setPrefs(writePrefs({ speedUnit }))} />
-          <StoragePanel count={sessions.length} onImported={refreshSessions} />
-          <KeepClipsPanel keep={Boolean(prefs.keepClips)} onChange={(keepClips) => setPrefs(writePrefs({ keepClips }))} />
-        </Suspense>
-        <h3 className="t-overline settings-head">This phone</h3>
-        <button className="btn btn--ghost btn--full" onClick={() => setSheet('check')}>
-          <Icon name="info" size={17} />
-          What this phone can do
-        </button>
-      </Sheet>
-
-      <Sheet open={sheet === 'check'} onClose={() => setSheet(null)} title="What this phone can do">
-        <Suspense fallback={null}>
-          <DeviceCheck />
-        </Suspense>
-      </Sheet>
-
-      {/* Dev only. The import is dynamic so neither the ingest nor the pipeline
-          it drives reaches the production bundle. */}
-      {import.meta.env.DEV && sheet === 'corpus' && (
-        <Sheet open onClose={() => setSheet(null)} title="Build a corpus">
-          <Suspense fallback={null}>
-            <CorpusIngest />
-          </Suspense>
-        </Sheet>
-      )}
-
+      <input
+        ref={cameraAppRef}
+        type="file"
+        accept="video/*"
+        capture="environment"
+        hidden
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          e.target.value = ''
+          if (file) void openClip(file)
+        }}
+      />
     </div>
   )
 }

@@ -34,7 +34,7 @@ async function shoot(name, viewport, steps) {
   await ctx.addInitScript(() => localStorage.setItem('serve-coach-prefs', JSON.stringify({ handedness: 'right', seenFilmingGuide: true, serveType: 'flat', askedToPersist: false })))
   const page = await ctx.newPage()
   await page.goto(base + '/')
-  await page.waitForSelector('text=Analyse a serve')
+  await page.waitForSelector('text=Film my serve')
   await steps(page)
   await page.waitForTimeout(600)
   await page.screenshot({ path: join(out, name) })
@@ -46,11 +46,11 @@ const phone = { width: 360, height: 780 }
 try {
   await shoot('home.png', phone, async () => {})
   await shoot('report.png', phone, async (p) => {
-    await p.click('text=See an example report')
+    await p.click('text=See a sample report first')
     await p.waitForSelector('text=This is an example')
   })
   await shoot('guide.png', phone, async (p) => {
-    await p.click('text=How to film it')
+    await p.goto(base + '/?open=guide')
     await p.waitForSelector('text=Fit the whole body in')
   })
   await shoot('wide.png', { width: 780, height: 360 }, async () => {})

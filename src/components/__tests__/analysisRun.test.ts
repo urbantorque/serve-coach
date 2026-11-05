@@ -57,7 +57,6 @@ const deps = (view: View): AnalysisRunDeps => ({
   view,
   setView: noop,
   prefs: { ...DEFAULTS },
-  setPrefs: noop,
   sessions: [],
   refreshSessions: noop,
   trySave: async () => {},

@@ -92,6 +92,8 @@ interface Props {
   onBack: () => void
   /** Open a report from the list of every serve. */
   onOpen?: (s: Session) => void
+  /** Open straight on the list, from "All your serves" on Today. */
+  showServes?: boolean
   /** Reload after a serve is deleted. */
   refreshSessions?: () => void
 }
@@ -118,6 +120,7 @@ export default function Progress({
   onUndoDrill,
   onBack,
   onOpen,
+  showServes = false,
   refreshSessions,
 }: Props) {
   const form = useMemo(() => buildProgress(sessions, undefined, ledger), [sessions, ledger])
@@ -140,6 +143,7 @@ export default function Progress({
   }, [sessions, ladder])
   const milestone = useMemo(() => (form ? sixWeekMilestone(form) : undefined), [form])
   const streak = useMemo(() => streakLine(sessions, Date.now(), { ledger, cadence, practice: practiceSessions }), [sessions, ledger, cadence, practiceSessions])
+  const tagsById = useMemo(() => new Map(tags.map((t) => [t.id, t])), [tags])
   const numbers = useMemo(() => byServeNumber(sessions, tags, form?.serveType), [sessions, tags, form])
   const misses = useMemo(() => missesInCommon(sessions, tags, form?.serveType), [sessions, tags, form])
   const setLines = useMemo(() => bestSetLines(sets), [sets])
@@ -184,7 +188,7 @@ export default function Progress({
     },
   })
   const listed = sessions.filter((s) => s.id !== pendingDelete)
-  const [servesOpen, setServesOpen] = useState(false)
+  const [servesOpen, setServesOpen] = useState(showServes)
 
   if (!form || form.points.length < 2) {
     return (
@@ -199,7 +203,7 @@ export default function Progress({
             Film a serve
           </button>
         </div>
-        {sessions.length > 0 && onOpen && <HistoryList sessions={listed} onOpen={onOpen} onDelete={remove} />}
+        {sessions.length > 0 && onOpen && <HistoryList sessions={listed} tags={tagsById} onOpen={onOpen} onDelete={remove} />}
       </div>
     )
   }
@@ -318,25 +322,6 @@ export default function Progress({
         </Suspense>
       )}
 
-      {path && (
-        <details className="block progress-more" id="progress-path">
-          <summary className="block-title">
-            Your serve path
-            <Icon name="chevron" size={16} />
-          </summary>
-          <p className="path-headline">{path.headline}</p>
-          <ol className="path">
-            {path.parts.map((part) => (
-              <li key={part.group} className={`path-part path-part--${part.state}`}>
-                <span className="path-name">{part.name.charAt(0).toUpperCase() + part.name.slice(1)}</span>
-                <em className={`tag tag--${PART_TAG[part.state]}`}>{partLabel(part)}</em>
-                {part.slipped && <span className="path-slipped">{part.slipped}</span>}
-              </li>
-            ))}
-          </ol>
-        </details>
-      )}
-
       {(numbers.length > 0 || inRates.length > 0 || slowSecond || misses.length > 0) && (
         <section className="block">
           <h2 className="block-title">First and second serves</h2>
@@ -375,6 +360,25 @@ export default function Progress({
           <LoadBars load={load} />
           {load.line && <p className="progress-foot">{load.line}</p>}
         </section>
+      )}
+
+      {path && (
+        <details className="block progress-more" id="progress-path">
+          <summary className="block-title">
+            Your serve path
+            <Icon name="chevron" size={16} />
+          </summary>
+          <p className="path-headline">{path.headline}</p>
+          <ol className="path">
+            {path.parts.map((part) => (
+              <li key={part.group} className={`path-part path-part--${part.state}`}>
+                <span className="path-name">{part.name.charAt(0).toUpperCase() + part.name.slice(1)}</span>
+                <em className={`tag tag--${PART_TAG[part.state]}`}>{partLabel(part)}</em>
+                {part.slipped && <span className="path-slipped">{part.slipped}</span>}
+              </li>
+            ))}
+          </ol>
+        </details>
       )}
 
       {(bests.length > 0 || streak || longestStreakText || setLines.length > 0) && (
@@ -482,6 +486,7 @@ export default function Progress({
             )}
             <HistoryList
               sessions={listed}
+              tags={tagsById}
               onOpen={(s) => {
                 commitDelete(pendingDelete)
                 onOpen(s)
