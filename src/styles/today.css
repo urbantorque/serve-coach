@@ -112,9 +112,9 @@
 }
 
 .first-foot {
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.4;
-  color: var(--fg-faint);
+  color: var(--fg-muted);
   text-align: center;
 }
 

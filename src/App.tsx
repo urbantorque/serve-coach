@@ -156,15 +156,13 @@ export type View =
  * `?fixture`, in the production bundle, for the reason `?check` is: five threads
  * in `NEXT.md` are blocked on somebody filming a real serve, that somebody is
  * standing on a court holding a phone, and a path that only runs in a dev build
- * cannot be run there. A dev build keeps it without the query string, since that
- * is where the labelling actually gets finished.
+ * cannot be run there.
  *
  * Read once, at module scope, because the query string cannot change without a
  * navigation and a second reader is how a screen and its router come to disagree
  * about which mode the app is in.
  */
-const FIXTURE_EXPORT =
-  import.meta.env.DEV || new URLSearchParams(location.search).has('fixture')
+const FIXTURE_EXPORT = new URLSearchParams(location.search).has('fixture')
 
 export default function App() {
   const [view, setView] = useState<View>({ kind: 'home' })

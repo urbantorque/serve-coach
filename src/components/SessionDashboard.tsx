@@ -105,7 +105,7 @@ export default function SessionDashboard({ session, previous, videoUrl, onPickAg
             {before && stats.overall && before.overall && <span className="tnum">{sinceLine(stats.overall.median, before.overall.median)}</span>}
           </p>
         </div>
-        <p className="session-lede">{headlineOf(stats)}</p>
+        <p className="session-lede">{headlineOf(stats, true)}</p>
         {session.unsure && session.unsure.length > 0 && <p className="session-meta">{unsureLine(session.unsure.length)}</p>}
         {(speeds || session.withSpeed) && (          <p className="session-meta" id="session-speed">
             {speeds ? sessionSpeedLine(speeds, readPrefs().speedUnit ?? defaultSpeedUnit()) : NO_SESSION_SPEED}

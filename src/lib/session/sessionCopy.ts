@@ -5,6 +5,7 @@
  * Every line goes through `cue`, and every claim comes from `sessionStats`:
  * this file decides wording, never whether something is true.
  */
+import { ROW_WORDS } from '../baseline'
 import { readoutOf } from '../analysis/anatomy'
 import { METRICS } from '../analysis/coaching'
 import type { FlawId } from '../analysis/flaws'
@@ -23,6 +24,8 @@ const labelOf = (id: string) => {
 
 /** One change from start to end, in words: the card's own readouts where it has them. */
 export function driftLine(d: Drift): string {
+  const words = ROW_WORDS[d.id]?.[d.gap > 0 ? 'more' : 'less']
+  if (words) return cue(`As the session went on you started to ${words}.`)
   const from = readoutOf(d.id, d.early)
   const to = readoutOf(d.id, d.late)
   const label = labelOf(d.id)
@@ -31,10 +34,10 @@ export function driftLine(d: Drift): string {
 }
 
 /** The one line at the top: how many were read, and the thing most worth knowing. */
-export function headlineOf(stats: SessionStats): string {
+export function headlineOf(stats: SessionStats, counted = false): string {
   if (stats.read === 0) return cue('I could not read any of these serves clearly enough to measure.')
   const count = stats.read === 1 ? 'One serve read.' : `${stats.read} serves read.`
-  if (stats.drifts.length) return cue(`${count} ${driftLine(stats.drifts[0])}`)
+  if (stats.drifts.length) return counted ? driftLine(stats.drifts[0]) : cue(`${count} ${driftLine(stats.drifts[0])}`)
   const top = stats.faults.find((f) => f.verdict)
   if (top) return cue(`${count} ${flawTitle(top.flaw)} on ${top.named} of them.`)
   // Under the verdict's own minimum, "most of them" is a claim about too few.

@@ -138,9 +138,9 @@ export function ScoreRibbon({ points }: { points: TripPoint[] }) {
 }
 
 /**
- * Each fault, serve by serve, oldest on the left: a square where it was named, a
- * dim one where the serve came back clean, so a fault going away looks like a
- * row going dark. The words beside it say the same thing.
+ * Each fault, serve by serve, oldest on the left: a dim square where it was named
+ * and a lime one where the serve came back clean, so a fault going away looks like
+ * a row lighting up. The words beside it say the same thing.
  */
 export function FaultGrid({ faults }: { faults: readonly FaultTrend[] }) {
   const rows = faults.filter((f) => f.sequence.length > 0).slice(0, 4)

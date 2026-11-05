@@ -114,8 +114,11 @@ export function serveNumberSpeedLine(s: { first: Ranged; second: Ranged; directi
 
 /** A practice session's speeds, on its dashboard (N2.8). */
 export function sessionSpeedLine(s: { read: number; fastest: Ranged; typical?: Ranged }, unit: SpeedUnit): string {
-  const fastest = `Fastest serve ${aboutSpeed(s.fastest, unit)}.`
-  return s.typical ? `${fastest} Typical serve ${aboutSpeed(s.typical, unit)}, over ${s.read} serves.` : fastest
+  const top = aboutSpeed(s.fastest, unit)
+  const usual = s.typical && aboutSpeed(s.typical, unit)
+  // Two readings that round the same are one reading.
+  if (usual === top) return `Your serves ${top}, over ${s.read} serves.`
+  return usual ? `Fastest serve ${top}. Typical serve ${usual}, over ${s.read} serves.` : `Fastest serve ${top}.`
 }
 
 /** A session read for speeds where no serve gave one. */

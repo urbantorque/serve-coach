@@ -696,11 +696,11 @@ button.tile {
 .fault-cell {
   height: 20px;
   border-radius: 5px;
-  background: var(--ink-3);
+  background: var(--lime);
 }
 
 .fault-cell.is-named {
-  background: var(--work);
+  background: var(--ink-4);
 }
 
 .then-now {
@@ -763,4 +763,8 @@ button.tile {
 .progress-more + .progress-more {
   margin-top: -24px;
   border-top: 1px solid var(--glass-edge);
+}
+
+.progress-deeper {
+  margin-bottom: -18px;
 }

@@ -386,7 +386,7 @@ export default function Report({
               I measured this clip and I do not trust what came out. Numbers off footage this hard to read look exactly
               like real ones.
             </p>
-            <button className="link-btn" onClick={() => setOverrode(true)}>
+            <button className="link-btn link-btn--quiet" onClick={() => setOverrode(true)}>
               Show me the numbers anyway
             </button>
           </div>

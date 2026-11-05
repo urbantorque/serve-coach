@@ -306,6 +306,7 @@ export default function Glance({
                 )}
                 <p className="court-readout-figure" role="img" aria-label={`Score ${analysis.overall} out of 100`}>
                   {analysis.overall}
+                  <span className="court-readout-unit">score</span>
                 </p>
               </div>
               {reading && (

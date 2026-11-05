@@ -381,6 +381,10 @@
   color: var(--lime);
 }
 
+.link-btn.link-btn--quiet {
+  color: var(--fg-muted);
+}
+
 .seg {
   display: flex;
   padding: 3px;

@@ -34,6 +34,7 @@ import zlibUntyped from 'zlib'
 import { assert, check, heading, note, report } from '../analysis/__tests__/harness'
 
 const fs = fsUntyped as {
+  statSync: (p: string) => { size: number }
   existsSync: (p: string) => boolean
   readdirSync: (p: string) => string[]
   readFileSync: (p: string) => { length: number }
@@ -153,6 +154,20 @@ check('the demo and fixture routes stay off the critical path', () => {
     )
   }
   note(`${split.length} dev routes in their own chunks`)
+})
+
+/*
+ * The one file every screen waits on before its words settle, so it has a
+ * budget of its own. Archivo, cut to Latin, with its weight and width axes.
+ */
+const FONT_BUDGET_KB = 90
+
+check('the typeface is measured too, and there is one', () => {
+  const fonts = files.filter((f) => f.endsWith('.woff2'))
+  assert(fonts.length === 1, `${fonts.length} font files: one family, one file`)
+  const size = fs.statSync(path.join(dist, fonts[0])).size / 1024
+  note(`${fonts[0]} ${size.toFixed(1)} kB`)
+  assert(size < FONT_BUDGET_KB, `the typeface is ${size.toFixed(1)} kB against a ${FONT_BUDGET_KB} kB budget`)
 })
 
 check('the stylesheet is measured too, because nothing else measures it', () => {

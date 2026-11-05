@@ -359,8 +359,9 @@ function ProgressBody({
 
       {faults.length > 0 && (
         <section className="block">
-          <h2 className="block-title">Your faults, serve by serve</h2>
+          <h2 className="block-title">Serve by serve</h2>
           <FaultGrid faults={faults} />
+          <p className="progress-foot">Each square is a serve, oldest first. Lime means it was not there.</p>
         </section>
       )}
 
@@ -410,6 +411,7 @@ function ProgressBody({
         </section>
       )}
 
+      <h2 className="block-title progress-deeper">Go deeper</h2>
       {path && (
         <details className="block progress-more" id="progress-path">
           <summary className="block-title">

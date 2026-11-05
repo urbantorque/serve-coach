@@ -648,6 +648,9 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
   }
 
   const idle = !recording && countdown === null
+  // Nobody in the picture yet is an invitation, not a fault: no red edge for it.
+  const tone = verdict.call === 'no-player' ? 'looking' : verdict.grade
+
   return (
     <div className="film">
       {firstTime && (
@@ -663,7 +666,7 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
           </button>
         </div>
       )}
-      <div className={`framer-stage framer-stage--${verdict.grade}`}>
+      <div className={`framer-stage framer-stage--${tone}`}>
         {/* The preview is the instruction's evidence, not the instruction. A
             screen reader gets the verdict from the live region below, which is
             the same sentence, so the picture is hidden rather than described
@@ -706,7 +709,7 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
                   writePrefs({ placement: p })
                 }}
               >
-                {p === 'form' ? 'Your swing' : 'A speed'}
+                {p === 'form' ? 'Swing' : 'Speed'}
               </button>
             ))}
           </div>
@@ -742,7 +745,7 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
           </p>
         ) : (
           // `polite`, so a new verdict waits for the player to finish the last one.
-          <p className={`framer-cue framer-cue--${verdict.grade}`} role="status" aria-live="polite">
+          <p className={`framer-cue framer-cue--${tone}`} role="status" aria-live="polite">
             <Cue text={verdict.cue} />
           </p>
         )}
@@ -815,7 +818,7 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
               aria-expanded={optionsOpen}
               aria-label="Filming options"
             >
-              <Icon name="settings" size={26} />
+              <Icon name={handsFree ? 'repeat' : 'settings'} size={26} />
               <span>{handsFree ? 'Hands-free' : 'Options'}</span>
             </button>
           ) : (
