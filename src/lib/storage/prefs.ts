@@ -90,6 +90,13 @@ export interface Prefs {
   courtMinutes?: 30 | 45 | 60
   /** The unit a serve speed is said in, when the player has picked one (N2.7); absent, the locale's. */
   speedUnit?: 'kmh' | 'mph'
+  /**
+   * The goal the player picked for their programme, and when (`programme.ts`).
+   * Absent means the plan's first fault, chosen for them. Nothing else about a
+   * programme is stored: its weeks are worked out from the history and the
+   * ladders every time, so they cannot drift from either.
+   */
+  goal?: { kind: 'fault'; flaw: string; startedAt: number } | { kind: 'speed'; startedAt: number }
 }
 
 const KEY = 'serve-coach-prefs'

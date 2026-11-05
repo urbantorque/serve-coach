@@ -19,6 +19,7 @@
 import { progressionFor, stepCheckLine } from './analysis/progressions'
 import { MAX_PLAN, causalPlan } from './analysis/verdict'
 import { cue } from './analysis/voice'
+import type { BodyAxis } from './analysis/axes'
 import type { FlawId } from './analysis/flaws'
 import type { Drill } from './analysis/types'
 import type { Session } from './storage/db'
@@ -40,6 +41,8 @@ export interface WeekItem {
   drill: Drill
   /** Where that rung sits, when the fix has a ladder. */
   step?: { at: number; of: number }
+  /** Which way the toss wandered, when the report knew: it picks that ladder's first rung. */
+  axis?: BodyAxis
   /** What to film to know whether it worked. */
   check: string
   /** Carried from an earlier plan: the newest report did not name it, and it has not graduated. */
@@ -175,6 +178,7 @@ function itemFor(entry: Entry, rungs?: Partial<Record<string, number>>): WeekIte
     flaw: entry.flaw,
     drill: ladder.steps[rung],
     step: { at: rung + 1, of: ladder.steps.length },
+    ...(entry.axis ? { axis: entry.axis } : {}),
     // The step's own check (L4.2): a filmed basket, or the bar the player
     // checks themselves on a step the app has nothing to read in.
     check: cue(stepCheckLine(ladder, ladder.steps[rung])),
