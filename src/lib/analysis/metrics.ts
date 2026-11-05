@@ -16,6 +16,7 @@ import {
   chainScore,
   clamp,
   jointAngle,
+  median,
   midpoint,
   scoreAgainst,
   sided,
@@ -292,6 +293,81 @@ function straightestArm(frames: Frame[], contactT: number, R: ReturnType<typeof 
   return best
 }
 
+/** How far around the knees' deepest moment the hips' lowest is followed, in seconds. */
+const LOAD_PATH_REACH = 0.16
+
+/** Each pass re-centres on the last one's bottom; a parabola seen off-centre leans. */
+const LOAD_PATH_PASSES = 3
+
+/**
+ * Hips that sank less than this, in body heights, did not load.
+ *
+ * Rigid legs (170° on the rig) read up to 0.011 on noise, and no leg bent to
+ * 150° reads under 0.011. The forty Bath serves read 0.05–0.11.
+ */
+const LOAD_MIN_SINK = 0.012
+
+/**
+ * When the load bottomed out: the moment the hips were lowest in the picture,
+ * near the deepest knee bend. Between samples, in seconds.
+ *
+ * `keys.trophy` is the deepest knee bend, the right pose to read a knee from and
+ * a poor clock. A knee angle is built on depth and its trough is flat, so the
+ * moment moved 52 ms between takes of the rig, and that was nearly all of load
+ * ratio's noise, 4.59 points against a 20-point band. It also ran early by
+ * however coarse the samples were: on the forty Bath serves a mean 17 ms at 30
+ * fps, 9 ms at 120, and 41 ms at the worst.
+ *
+ * The hips go down with the knees and are read straight off the picture, so
+ * there is no depth in them. Along a curve through the samples, the rig's noise
+ * is 1.67 points and the worst real serve's 0.49 (2.55 before), and the moment
+ * lands a mean 4–12 ms after the knees' trough in the capture by placement, the
+ * same at 30, 60 and 120 fps, and 26 ms at the worst (`npm run bench:mocap`). A
+ * curve through the knee angles themselves, or through the leg landmarks, gets
+ * the rig only to 4.1 points at ±200 ms, and ran 17 ms early doing it.
+ *
+ * Legs that barely bent show the hips nothing to bottom out on, and the knees
+ * only noise: whether their trough clears `MIN_KNEE_TROUGH` is decided take by
+ * take, and where it lands moved 50–120 ms. So those takes are all timed from
+ * the arms, the clock rigid legs already had: the rig held at 165° reads 1.3–1.4
+ * points, from 5.3–6.6. Between that and a full load, at 150–160°, takes flip
+ * between the hips and the arms and read 2.6–5.0, from 5.3–7.1.
+ *
+ * Kept out of `Skeleton.times`, which `buildPhases` reads: the trophy's picture
+ * and the pose drawn on it stay on the sampled frame.
+ */
+export function loadBottom(frames: Frame[], skel: Skeleton): number {
+  const { ready, toss, trophy } = skel.keys
+  const knees = frames[clamp(trophy, 0, frames.length - 1)].t
+  // No load to bottom out. The arms found this trophy.
+  if (skel.derivation.trophyFromArms) return knees
+  const earliest = Math.max(frames[clamp(toss, 0, frames.length - 1)].t, knees - LOAD_PATH_REACH)
+  const latest = Math.min(skel.times.contact, knees + LOAD_PATH_REACH)
+  const step = LOAD_PATH_REACH * 0.75
+  let at = knees
+  let low = Number.NEGATIVE_INFINITY
+  for (let pass = 0; pass < LOAD_PATH_PASSES; pass++) {
+    const hips = pathsThrough(frames, [LM.leftHip, LM.rightHip], at, LOAD_PATH_REACH, 'image')
+    if (!hips) return knees
+    // One parabola, so three of its points are all of it. Image y grows
+    // downwards, so the lowest hips are the top of this curve. One that does
+    // not turn says which way to look, and the next pass looks there.
+    const heightAt = (t: number) => {
+      const [left, right] = hips(t)
+      return (left.y + right.y) / 2
+    }
+    const [before, here, after] = [heightAt(at - step), heightAt(at), heightAt(at + step)]
+    const bend = before - 2 * here + after
+    const shift = bend < 0 ? clamp((step * (before - after)) / (2 * bend), -step, step) : after > before ? step : -step
+    at = clamp(at + shift, earliest, latest)
+    low = heightAt(at)
+  }
+  const stance = median(
+    frames.slice(ready, toss + 1).map((f) => midpoint(f.image[LM.leftHip], f.image[LM.rightHip]).y),
+  )
+  if ((low - stance) / skel.bodyHeight >= LOAD_MIN_SINK) return at
+  return skel.armsTrophy > toss ? frames[skel.armsTrophy].t : knees
+}
 
 /* ========================================================================== */
 
@@ -605,7 +681,7 @@ export function measure(
   values.totalTime = (skel.times.contact - at(keys.ready).t) * 1000
   {
     const total = Math.max(1e-3, skel.times.contact - at(keys.ready).t)
-    values.loadRatio = ((skel.times.contact - fTrophy.t) / total) * 100
+    values.loadRatio = ((skel.times.contact - loadBottom(frames, skel)) / total) * 100
   }
   values.syncAtRelease = (fToss.image[R.shoulder].y - fToss.image[R.wrist].y) / bodyHeight
 

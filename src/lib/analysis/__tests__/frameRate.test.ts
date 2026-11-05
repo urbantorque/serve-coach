@@ -94,6 +94,12 @@ check('a sample missing a landmark is left out, and too few samples draw no curv
   assert(pathsThrough(pathFrames([0.1, 0.1, 0.1, 0.1, 0.1], (t) => t), [0], 0.1, 0.2) === undefined, 'one moment drew a curve')
 })
 
+check('a curve can follow the picture as well as the skeleton', () => {
+  const frames = pathFrames([0, 0.02, 0.04, 0.06, 0.08], (t) => t).map((f) => ({ ...f, image: [point(5, 7 * f.t)] }))
+  near(pathsThrough(frames, [0], 0.04, 0.2, 'image')!(0.03)[0].y, 0.21, 1e-9, 'y in the picture')
+  near(pathsThrough(frames, [0], 0.04, 0.2)!(0.03)[0].y, -0.06, 1e-9, 'y in the skeleton')
+})
+
 heading('The contact readings, at the app’s rate and the suite’s')
 
 const stature = (f: Frame) => (Math.max(f.image[LM.leftAnkle].y, f.image[LM.rightAnkle].y) - f.image[LM.nose].y) / 0.93
@@ -188,6 +194,23 @@ check('KNOWN: contact ahead still moves with the frame rate, because the contact
    */
   note(`contact ahead moved ${appRate.contactAhead.toFixed(2)} deviations between 50 and 32 fps`)
   assert(appRate.contactAhead > 1, 'contact ahead now holds across frame rates: retire this check (L2.6)')
+})
+
+check('the two readings taken off curves stay steady at the app’s own rate', () => {
+  // `CARD_NOISE_SD` is measured at 50 fps and the app reads at 32, with a third
+  // fewer samples under each curve. Off single samples these were 10.93° and
+  // 5.05 points.
+  const worst = (id: string) =>
+    Math.max(
+      ...at32.map((takes) => {
+        const xs = takes.map((t) => t?.[id]).filter((v): v is number => v !== undefined)
+        return Math.sqrt(xs.reduce((sum, x) => sum + (x - mean(xs)) ** 2, 0) / (xs.length - 1))
+      }),
+    )
+  const [arm, load] = [worst('armExtension'), worst('loadRatio')]
+  note(`at 32 fps: arm extension ${arm.toFixed(2)}°, load ratio ${load.toFixed(2)} points`)
+  assert(arm <= 9.5, `arm extension moves ${arm.toFixed(2)}° between takes at the app's rate`)
+  assert(load <= 2.5, `load ratio moves ${load.toFixed(2)} points between takes at the app's rate`)
 })
 
 heading('A lighter read for sessions')

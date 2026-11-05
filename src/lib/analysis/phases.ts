@@ -104,6 +104,13 @@ export interface Skeleton {
    */
   times: { toss: number; drop: number; contact: number }
   /**
+   * The sample the arms alone would call the trophy, whichever cue found
+   * `keys.trophy`: the toss, where they find nothing. On legs that barely bend,
+   * noise decides take by take whether the knees show a trough, and `loadBottom`
+   * times the load from here on all of them.
+   */
+  armsTrophy: number
+  /**
    * How the things everything else is built on were actually arrived at, and —
    * for the drop — whether the event was ever there to arrive at.
    *
@@ -417,19 +424,26 @@ const MIN_KNEE_TROUGH = 8
  */
 function findTrophy(
   kneeAngles: number[],
-  racketPosture: number[],
-  toss: number,
+  armsTrophy: number,
   from: number,
   beforeContact: number,
-  /** The earliest the racket drop can be: `DROP_LOOKBACK` before contact, never before the toss. */
-  dropFrom: number,
 ): { index: number; fromArms: boolean } {
   const window = kneeAngles.slice(from, beforeContact + 1)
   const trough = window.length ? Math.max(...window) - Math.min(...window) : 0
   if (trough >= MIN_KNEE_TROUGH) {
     return { index: argMinIn(kneeAngles, from, beforeContact), fromArms: false }
   }
+  return { index: armsTrophy, fromArms: true }
+}
 
+/** The trophy as the arms show it: the racket hand's peak over its shoulder before the drop. */
+function trophyOfArms(
+  racketPosture: number[],
+  toss: number,
+  beforeContact: number,
+  /** The earliest the racket drop can be: `DROP_LOOKBACK` before contact, never before the toss. */
+  dropFrom: number,
+): number {
   // Bounded above by where the racket bottoms out, so the search cannot run past
   // the drop and up the far side into contact, which is the highest the hand
   // gets in the whole motion.
@@ -446,8 +460,8 @@ function findTrophy(
   // Lowest at the very start of that stretch means the hand only rose through
   // it: there is no drop to bound the trophy by, and the trophy is put on the
   // toss, where a serve with neither a load nor a drop has always had it.
-  if (provisionalDrop <= Math.max(toss, dropFrom)) return { index: toss, fromArms: true }
-  return { index: argMaxIn(racketPosture, toss, provisionalDrop), fromArms: true }
+  if (provisionalDrop <= Math.max(toss, dropFrom)) return toss
+  return argMaxIn(racketPosture, toss, provisionalDrop)
 }
 
 /**
@@ -668,14 +682,8 @@ export function detectServe(
     Math.max(2, Math.round(clock.rate / 12)),
   )
   const trophyFrom = clock.at(toss, -0.2)
-  const found = findTrophy(
-    kneeAngles,
-    racketPosture,
-    toss,
-    trophyFrom,
-    beforeContact,
-    Math.max(toss, clock.at(contact, -DROP_LOOKBACK)),
-  )
+  const armsTrophy = trophyOfArms(racketPosture, toss, beforeContact, Math.max(toss, clock.at(contact, -DROP_LOOKBACK)))
+  const found = findTrophy(kneeAngles, armsTrophy, trophyFrom, beforeContact)
   const trophy = found.index
 
   // Racket drop: hand at its lowest relative to the shoulder — behind the back.
@@ -826,6 +834,7 @@ export function detectServe(
     toss: tossSide,
     keys,
     times,
+    armsTrophy,
     bodyHeight,
     groundY,
     shoulderWidth: Math.max(shoulderWidth, bodyHeight * 0.04),

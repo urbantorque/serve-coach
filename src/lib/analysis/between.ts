@@ -42,8 +42,9 @@ export function poseAt(frames: Frame[], t: number): Frame {
 const PATH_MIN_SAMPLES = 4
 
 /**
- * Where some world landmarks were at any moment of a stretch of clip, read off
- * a smooth curve through the samples rather than off any one of them.
+ * Where some landmarks were at any moment of a stretch of clip, read off a
+ * smooth curve through the samples rather than off any one of them. In the world
+ * skeleton unless `space` says the picture.
  *
  * `poseAt` takes a moment from its two neighbours, so it keeps their noise.
  * This takes every sample within `reach` seconds of `centre` and fits one
@@ -64,12 +65,13 @@ export function pathsThrough(
   landmarks: readonly number[],
   centre: number,
   reach: number,
+  space: 'world' | 'image' = 'world',
 ): ((t: number) => Landmark[]) | undefined {
   const near = frames.filter(
     (f) =>
       Math.abs(f.t - centre) < reach &&
       landmarks.every((lm) => {
-        const p = f.world[lm]
+        const p = f[space][lm]
         return p !== undefined && Number.isFinite(p.x + p.y + p.z)
       }),
   )
@@ -96,7 +98,7 @@ export function pathsThrough(
     return landmarks.map((lm) => {
       const point = { x: 0, y: 0, z: 0, visibility: 1 }
       near.forEach((sample, i) => {
-        const p = sample.world[lm]
+        const p = sample[space][lm]
         point.x += shares[i] * p.x
         point.y += shares[i] * p.y
         point.z += shares[i] * p.z

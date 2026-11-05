@@ -130,6 +130,29 @@ check('a real serve filmed six times is called steady, from the side and from be
   }
 })
 
+check('legs that barely bend are called steady too, and hold their timing', () => {
+  // Noise decides take by take whether these knees show a trough, and off the
+  // knees the moment moved load ratio 4.5 points at 170° and 6.5 at 165°. Against
+  // the table's 1.67 that calls a still serve wandering, and these legs are not
+  // in the table, which is one clean rig serve and the Bath serves. So they are
+  // held here.
+  for (const trophyKneeAngle of [165, 170, 174]) {
+    const takes = SEEDS.map((seed, i) =>
+      take(buildServe({ ...DEPTH_AWARE, seed, trophyKneeAngle } as Partial<ServeDials>, FPS), i),
+    ).filter((a): a is Analysis => a !== undefined)
+    const load = takes
+      .map((a) => a.fundamentals.flatMap((f) => f.metrics).find((m) => m.id === 'loadRatio')?.value)
+      .filter((v): v is number => Number.isFinite(v))
+    note(`${trophyKneeAngle}°: load ratio ${sd(load).toFixed(2)} points over ${load.length} takes`)
+    assert(sd(load) <= 2, `legs held at ${trophyKneeAngle}° moved load ratio ${sd(load).toFixed(2)} points between takes`)
+    for (let start = 0; start + 6 <= takes.length; start += 6) {
+      const basket = buildConsistency(takes.slice(start, start + 6), 6)!
+      const headline = consistencyHeadline(basket)
+      assert(!headline.includes('changes most'), `${trophyKneeAngle}°, takes ${start + 1}–${start + 6}: "${headline}"`)
+    }
+  }
+})
+
 check('a basket that really varies is still found', () => {
   // The same rig serve with the hand met at a different height each time,
   // under the suite's camera noise. Reaching lower also bends the arm, so arm

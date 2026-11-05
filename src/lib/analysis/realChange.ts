@@ -53,15 +53,19 @@ export type ChangeScope = 'overall' | 'trip' | FundamentalId
  *
  * Contact was 21 while arm extension was the straightest single sample. Read
  * off curves through the samples it re-derived at 14 (11 at 24 takes, 13 at 60).
+ *
+ * When load ratio stopped taking its moment from the knees, the overall fell
+ * from 6 to 5 (4 at both), the trip from 11 to 8 (7 at both) and rhythm from 36
+ * to 34 (31 at 24 takes, 33 at 60).
  */
 export const REAL_CHANGE: Record<ChangeScope, number> = {
-  overall: 6,
+  overall: 5,
   toss: 7,
   loading: 10,
   swing: 6,
   contact: 14,
-  rhythm: 36,
-  trip: 11,
+  rhythm: 34,
+  trip: 8,
 }
 
 /**
@@ -77,7 +81,8 @@ export const REAL_CHANGE: Record<ChangeScope, number> = {
  * Measured where the ensembles produce such pairs — the overall, and the swing
  * whose rows the collapse takes. The overall's rose from 14 to 15 when loading
  * lost the trunk turn, for the trip's reason, and to 16 when arm extension moved
- * to curves (the wobbly toss, 14 to 15 at 24 takes). A change between the two
+ * to curves (the wobbly toss, 14 to 15 at 24 takes). It fell to 12 when load
+ * ratio stopped taking its moment from the knees. A change between the two
  * floors is reported as soft: shown, and not called a change. Past this one it
  * is a change whatever the rows were. Absent for an area the ensembles never
  * read differently (the ball and the camera's side are what change its rows in
@@ -85,12 +90,12 @@ export const REAL_CHANGE: Record<ChangeScope, number> = {
  * however large.
  */
 export const READ_DIFFERENTLY: Partial<Record<ChangeScope, number>> = {
-  overall: 16,
+  overall: 12,
   swing: 42,
 }
 
 /** One basket's best-to-worst gap against another's, for `gapDeltaLine`, on six serves each. */
-export const GAP_CHANGE = 13
+export const GAP_CHANGE = 11
 
 /**
  * The smallest best-to-worst gap that is two different serves, by how many
@@ -99,7 +104,7 @@ export const GAP_CHANGE = 13
  * basket. Measured on baskets whose best and worst were read alike, which
  * `buildGap` insists on.
  */
-const BEST_WORST: Record<number, number> = { 2: 6, 3: 7, 4: 7, 5: 7, 6: 8 }
+const BEST_WORST: Record<number, number> = { 2: 5, 3: 6, 4: 7, 5: 7, 6: 8 }
 
 /** `BEST_WORST` for any basket size: the two ends hold the table's edges. */
 export function bestWorstGap(serves: number): number {
@@ -135,7 +140,7 @@ export const ROW_CHANGE: Record<string, readonly [number, number, number]> = {
   contactHeight: [5, 4, 3],
   armExtension: [24, 18, 15],
   contactAhead: [17, 13, 11],
-  loadRatio: [36, 28, 21],
+  loadRatio: [32, 27, 24],
 }
 
 /**

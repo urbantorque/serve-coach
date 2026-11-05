@@ -22,7 +22,7 @@ import fixture from './fixtures/bath-serves.json'
 import { runEngine } from '../../../dev/mocap/engine'
 import { METRICS } from '../coaching'
 import { jointAngle, sided } from '../geometry'
-import { ARM_EXTENSION_WINDOW, measure } from '../metrics'
+import { ARM_EXTENSION_WINDOW, loadBottom, measure } from '../metrics'
 import {
   GUIDE_PHONE,
   filmMocap,
@@ -36,6 +36,7 @@ import {
   type PackedMocapServe,
 } from '../mocapServe'
 import { detectServe } from '../phases'
+import { buildServe } from '../syntheticServe'
 import { assert, check, heading, near, note, report, within } from './harness'
 
 const fromBase64 = (text: string) => Uint8Array.from(atob(text), (c) => c.charCodeAt(0))
@@ -245,6 +246,60 @@ check('a clip that stops inside the window reads the samples it has', () => {
       .map((f) => jointAngle(f.world[R.shoulder], f.world[R.elbow], f.world[R.wrist]))
     near(arm.value, Math.max(...sampled), 1e-9, `${serve.id}: the reading off the samples`)
   }
+})
+
+heading('Real serve motion: when the load bottoms out')
+
+check('the hips bottom out where the knees do in the capture, from every placement and rate', () => {
+  // On the forty, a mean 4–12 ms after the knees by placement, the same at
+  // every rate, and 26 ms at the worst (`npm run bench:mocap`). The sampled
+  // deepest knee bend ran a mean 17 ms early at 30 fps, 9 ms at 120, and 41 ms
+  // at the worst.
+  for (const phone of ARM_PHONES) {
+    for (const fps of [30, 32, 60, 120]) {
+      const off = readAll({ ...phone, fps }).map(
+        ({ run, truth, lead }) => (loadBottom(run.frames, run.skel) - lead - truth.kneeBottom) * 1000,
+      )
+      if (fps === 32) note(`bearing ${phone.bearing}, hips minus knees: ${fmt(off)} ms`)
+      for (const v of off) within(v, -25, 25, `the bottom of the load from bearing ${phone.bearing} at ${fps} fps (ms)`)
+    }
+  }
+})
+
+check('load ratio reads the same at every frame rate', () => {
+  const ratios = (fps: number) =>
+    readAll({ fps }).map(({ run }) => run.fundamentals.flatMap((f) => f.metrics).find((m) => m.id === 'loadRatio')!.value)
+  const [low, mid, high] = [ratios(30), ratios(60), ratios(120)]
+  note(`30 fps ${fmt(low)}, 120 fps ${fmt(high)}`)
+  low.forEach((v, i) => {
+    within(v - high[i], -1.5, 1.5, `serve ${i + 1} at 30 against 120 fps (points)`)
+    within(mid[i] - high[i], -1.5, 1.5, `serve ${i + 1} at 60 against 120 fps (points)`)
+  })
+})
+
+check('legs that did not load are timed from the arms, whatever the knees say', () => {
+  // The rig's rigid legs barely sink, and their trophy comes from the arms. Noise
+  // can dig these knees a trough anywhere, and the moment does not follow it.
+  const frames = buildServe({ trophyKneeAngle: 174 }, 50)
+  const skel = detectServe(frames, 50)
+  const arms = frames[skel.armsTrophy].t
+  assert(skel.derivation.trophyFromArms, 'the rig stopped finding this trophy from the arms')
+  assert(skel.keys.trophy === skel.armsTrophy, 'the trophy found from the arms is not the arms\' trophy')
+  assert(loadBottom(frames, skel) === arms, 'a trophy found from the arms was moved')
+  const fromKnees = {
+    ...skel,
+    keys: { ...skel.keys, trophy: skel.keys.trophy + 6 },
+    derivation: { ...skel.derivation, trophyFromArms: false },
+  }
+  assert(loadBottom(frames, fromKnees) === arms, 'a knee trough on legs that never sank set the moment')
+})
+
+check('legs that loaded on the rig bottom out with the knees', () => {
+  const frames = buildServe({}, 120)
+  const skel = detectServe(frames, 120)
+  const at = loadBottom(frames, skel)
+  note(`hips ${(at * 1000).toFixed(0)} ms, knees ${(frames[skel.keys.trophy].t * 1000).toFixed(0)} ms`)
+  within(at - frames[skel.keys.trophy].t, -0.05, 0.05, 'the rig: hips against knees (s)')
 })
 
 heading('Real serve motion: KNOWN disagreements (ANALYSIS-REVIEW.md §9)')

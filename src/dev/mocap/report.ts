@@ -18,7 +18,7 @@
  * And one reading against the capture, arm extension, which is the only card
  * row with the same quantity to set it against in 3D.
  */
-import { ARM_EXTENSION_WINDOW } from '../../lib/analysis/metrics'
+import { ARM_EXTENSION_WINDOW, loadBottom } from '../../lib/analysis/metrics'
 import {
   filmMocap,
   mocapTruth,
@@ -78,6 +78,8 @@ export function benchMocap(serves: MocapServe[], placements = PLACEMENTS, rates 
           // the tossing hand at its highest — so it has one column.
           toss: { phone: [] },
           trophy: { phone: [] },
+          // The hips' lowest, which times the load ratio, against the same knee trough.
+          load: { phone: [] },
           drop: { phone: [], event: [] },
         },
         yaw: [],
@@ -104,6 +106,7 @@ export function benchMocap(serves: MocapServe[], placements = PLACEMENTS, rates 
         row.timing.contact.event!.push(ms(skel.times.contact - lead, truth.racketTop))
         row.timing.toss.phone.push(ms(at('toss'), truth.tossTop))
         row.timing.trophy.phone.push(ms(at('trophy'), truth.kneeBottom))
+        row.timing.load.phone.push(ms(loadBottom(result.run.frames, skel) - lead, truth.kneeBottom))
         row.timing.drop.phone.push(ms(skel.times.drop - lead, truth.dropPosture))
         row.timing.drop.event!.push(ms(skel.times.drop - lead, truth.racketBottom))
         row.yaw.push(resilience.spatial.court_yaw_deg)
