@@ -274,6 +274,13 @@ const downgradeTrack = (s: Session): Session => {
 }
 
 /**
+ * A report at its smallest that still reads and still draws: no photographs,
+ * and its swing traded for the six keyframes inside it. What a safety copy
+ * keeps (`protect.ts`).
+ */
+export const compactSession = (s: Session): Session => downgradeTrack(stripStills(s))
+
+/**
  * How hard to work to make room.
  *
  * `routine` runs after every save and must be nearly free. The other two are
@@ -1254,6 +1261,23 @@ export const listSessions = (): Promise<Session[]> => readAll((s) => s)
  * report. That report is fetched on demand by `getSession`.
  */
 export const listSummaries = (): Promise<Session[]> => readAll(stripStills)
+
+/**
+ * Every row in the store, readable or not. Set against what `listSummaries`
+ * could read, this is how a damaged history shows itself. Rejects when the
+ * store will not open at all.
+ */
+export const countRows = (): Promise<number> => tx<number>('readonly', (s) => s.count())
+
+/** Reports filed after a moment, off the index, so a save never reads a row back to ask. */
+export const countFiledSince = (at: number): Promise<number> =>
+  tx<number>('readonly', (s) => s.index('createdAt').count(IDBKeyRange.lowerBound(at, true)))
+
+/** When the oldest report on file was filed, off the index. */
+export async function firstFiledAt(): Promise<number | undefined> {
+  const cursor = await tx<IDBCursor | null>('readonly', (s) => s.index('createdAt').openKeyCursor())
+  return cursor ? Number(cursor.key) : undefined
+}
 
 /** One stored report in full, images included. */
 export async function getSession(id: string): Promise<Session | undefined> {

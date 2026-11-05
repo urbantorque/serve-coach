@@ -233,7 +233,7 @@ export interface BackupStore {
   recordTrips?(sessions: readonly Session[]): Promise<void>
 }
 
-const REAL_STORE: BackupStore = {
+export const REAL_STORE: BackupStore = {
   listSessions,
   saveSession,
   listPracticeLogs,

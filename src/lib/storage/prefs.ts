@@ -38,6 +38,8 @@ export interface Prefs {
   seenFilmingGuide: boolean
   /** Whether persistent storage has been requested from the browser. */
   askedToPersist: boolean
+  /** When it last was, so a refusal can be asked about again in time (`protect.ts`). */
+  persistAskedAt?: number
   /**
    * Which rung of each fault's ladder the player is on, zero-based — see
    * `analysis/progressions.ts`. Absent for a fault means the rung the report's
