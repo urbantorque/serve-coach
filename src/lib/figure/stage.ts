@@ -14,6 +14,10 @@ import { nearSide, statureOf, type Placed, type Pt, type Shapes } from './shape'
 export interface Placement {
   /** Canvas position of a point in the frame's own units. */
   place: (p: { x: number; y: number }) => Pt
+  /** The same placement as numbers: `x * scale + ox`, `y * scale + oy`. */
+  scale: number
+  ox: number
+  oy: number
   /** The body's height on this canvas, held for the whole swing. */
   stature: number
   /** The lowest the feet get, on this canvas. */
@@ -23,6 +27,12 @@ export interface Placement {
 export interface PlaceOptions {
   /** How much of the canvas the body's whole motion may fill, 0 to 1. */
   fill?: number
+  /**
+   * The body's height as a share of the canvas, in place of `fill`: two swings
+   * placed with the same share stand at the same size, whatever each one's
+   * arms and racket went on to do.
+   */
+  height?: number
   /** Where the body's centre sits across the canvas, 0 to 1. */
   across?: number
   /** Where the feet sit down the canvas, 0 to 1. */
@@ -57,7 +67,11 @@ function reach(frames: readonly Frame[]) {
 export function placeSwing(frames: readonly Frame[], w: number, h: number, o: PlaceOptions = {}): Placement {
   const { x0, x1, y0, y1 } = reach(frames)
   const fill = o.fill ?? 0.84
-  const scale = Math.min((w * fill) / Math.max(1e-6, x1 - x0), (h * fill) / Math.max(1e-6, y1 - y0))
+  let tall = 0
+  if (o.height) for (const f of frames) tall = Math.max(tall, statureOf(f.image))
+  const scale = o.height && tall > 0
+    ? (h * o.height) / tall
+    : Math.min((w * fill) / Math.max(1e-6, x1 - x0), (h * fill) / Math.max(1e-6, y1 - y0))
   const across = o.across ?? 0.5
   const feet = o.feet ?? 0.9
   const ox = w * across - ((x0 + x1) / 2) * scale
@@ -70,7 +84,7 @@ export function placeSwing(frames: readonly Frame[], w: number, h: number, o: Pl
     stature = Math.max(stature, statureOf(placed))
     for (const k of FEET) floor = Math.max(floor, placed[k].y)
   }
-  return { place, stature, floor }
+  return { place, scale, ox, oy, stature, floor }
 }
 
 export interface PoseOptions extends Pick<AthleteOptions, 'material' | 'work' | 'rim' | 'ground' | 'still'> {
@@ -154,5 +168,46 @@ export function paintExposure(ctx: CanvasRenderingContext2D, frames: readonly Fr
       ground: 1,
       still: true,
     })
+  }
+}
+
+export interface Crop {
+  x: number
+  y: number
+  w: number
+  h: number
+}
+
+/**
+ * The part of the frame to show: the player, large, the way a sports
+ * photograph is cropped. In the frame's own units, where height is 1. Fitted to
+ * the whole swing, so nothing jumps as it plays. Clamped to the frame, because
+ * a crop past the edge would be asking the video for pixels it does not have.
+ */
+export function cropOn(frames: readonly Frame[], stageAspect: number, frameAspect: number): Crop {
+  let x0 = Infinity
+  let x1 = -Infinity
+  let y0 = Infinity
+  let y1 = -Infinity
+  for (const f of frames) {
+    for (const p of f.image) {
+      if (p.x < x0) x0 = p.x
+      if (p.x > x1) x1 = p.x
+      if (p.y < y0) y0 = p.y
+      if (p.y > y1) y1 = p.y
+    }
+  }
+  const tall = Math.min(1, (y1 - y0) / 0.68)
+  const wide = Math.min(frameAspect, Math.max((x1 - x0) / 0.8, tall * stageAspect))
+  const h = Math.min(1, wide / stageAspect)
+  const w = h * stageAspect
+  const cx = (x0 + x1) / 2
+  // A little more room above than below: the toss and the racket live up there.
+  const cy = (y0 + y1) / 2 - h * 0.05
+  return {
+    x: Math.max(0, Math.min(frameAspect - w, cx - w / 2)),
+    y: Math.max(0, Math.min(1 - h, cy - h / 2)),
+    w,
+    h,
   }
 }

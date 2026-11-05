@@ -1,18 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { drawSkeleton, fitContain } from '../lib/pose/skeleton'
+import { drawPairedGhost } from '../lib/pose/skeleton'
+import { paintRibbon } from '../lib/figure/athlete'
+import { paintPose, placeSwing } from '../lib/figure/stage'
+import { smoothedRacket } from '../lib/analysis/racket'
 import { SkeletonSmoother } from '../lib/pose/smoothing'
 import { phaseSamples, trackFrameAt, type Replay, type SwingTrack } from '../lib/storage/poseTrack'
 import { pairedLookup, type TrackPair } from '../lib/trackPair'
-import type { Frame, Phase, PhaseId } from '../lib/analysis/types'
+import type { Frame, Phase, PhaseId, Fundamental } from '../lib/analysis/types'
 import { Icon } from './primitives'
-import { usePillInView } from './usePillInView'
-
-/** The same three speeds the live player offers, named the same way. */
-const SPEEDS = [
-  { rate: 1, label: 'Full' },
-  { rate: 0.5, label: 'Half' },
-  { rate: 0.25, label: 'Quarter' },
-] as const
+import PlayerControls, { type WatchRate } from './PlayerControls'
+import { LOOK_FOR, momentMark } from '../lib/lookFor'
 
 interface Props {
   /** The stored swing. */
@@ -38,6 +35,10 @@ interface Props {
    * is not told why, because the report is complete without it.
    */
   paired?: TrackPair
+  /** The player's height in the picture, for placing the racket. */
+  bodyHeight?: number
+  /** The report's rows, so each moment can say how it went. */
+  fundamentals?: readonly Fundamental[]
 }
 
 /**
@@ -68,14 +69,14 @@ interface Props {
  * video underneath it is the raw recording; here there is no video, and levelled
  * image space is the only space in the room. A stored track is already in it.
  */
-export default function TrackPlayer({ track, replay, phases, racket, paired }: Props) {
+export default function TrackPlayer({ track, replay, phases, racket, paired, bodyHeight, fundamentals }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
   const rafRef = useRef(0)
 
   const [playing, setPlaying] = useState(false)
-  const [speed, setSpeed] = useState<(typeof SPEEDS)[number]['rate']>(0.5)
+  const [speed, setSpeed] = useState<WatchRate>(0.5)
   const [cursor, setCursor] = useState(0)
 
   /**
@@ -189,8 +190,6 @@ export default function TrackPlayer({ track, replay, phases, racket, paired }: P
     }
     return best
   }, [marked, marks, cursor])
-  const pillsRef = useRef<HTMLDivElement>(null)
-  usePillInView(pillsRef, activePhase)
 
   /* ------------------------------------------------------------- drawing --- */
 
@@ -227,23 +226,27 @@ export default function TrackPlayer({ track, replay, phases, racket, paired }: P
      */
     const shownAt = replay.samples[cursor]?.at ?? 0
     const renderFrame: Frame = { ...f, image: smootherRef.current!.frame(f.image, shownAt) }
-    drawSkeleton(ctx, {
-      frame: renderFrame,
-      aspect: track.aspect,
-      /*
-       * `fitContain` against the track's own aspect, the same as the stills: the
-       * body keeps the proportions it was filmed at, because every angle this
-       * app measures would change if a portrait serve were stretched to fill a
-       * landscape box.
-       */
-      rect: fitContain(canvas.width, canvas.height, track.aspect),
-      racket,
-      // From the first sample, which is the swing's start — the track spans
-      // `ready` to `finish` and nothing before it exists to trail from.
-      trail: { frames, from: 0, to: cursor },
-      paired: pairedAt?.(shownAt),
+    // One scale both ways, fitted to the body's whole swing, so the figure keeps
+    // the proportions it was filmed at and holds its size as it moves.
+    const at = placeSwing(frames, canvas.width, canvas.height, { fill: 0.86, feet: 0.93 })
+    const earlier = pairedAt?.(shownAt)
+    if (earlier) {
+      drawPairedGhost(
+        ctx,
+        earlier,
+        { ox: at.ox, oy: at.oy, dw: at.scale * track.aspect, dh: at.scale },
+        track.aspect,
+        Math.min(canvas.width, canvas.height) / 420,
+      )
+    }
+    // The racket's path so far, from the first sample, which is the swing's start.
+    const path = frames.slice(0, cursor + 1).flatMap((_, i) => {
+      const head = bodyHeight ? smoothedRacket(frames, i, racket, bodyHeight)?.head : undefined
+      return head ? [at.place(head)] : []
     })
-  }, [cursor, frames, racket, track.aspect, replay, pairedAt])
+    paintRibbon(ctx, path, at.stature * 0.022)
+    paintPose(ctx, renderFrame, at, { racket, swing: frames, index: cursor, bodyHeight, ground: 1 })
+  }, [cursor, frames, racket, track.aspect, replay, pairedAt, bodyHeight])
 
   const drawRef = useRef(draw)
   drawRef.current = draw
@@ -478,7 +481,7 @@ export default function TrackPlayer({ track, replay, phases, racket, paired }: P
       <div
         className="player-stage player-stage--pose"
         ref={stageRef}
-        style={{ aspectRatio: `${track.aspect}` }}
+        style={{ aspectRatio: '1' }}
       >
         <canvas ref={canvasRef} />
         <button
@@ -529,72 +532,19 @@ export default function TrackPlayer({ track, replay, phases, racket, paired }: P
         ))}
       </div>
 
-      <div className="player-controls">
-        <button
-          className="icon-btn icon-btn--solid"
-          onClick={toggle}
-          aria-label={playing ? 'Pause' : 'Play'}
-        >
-          <Icon name={playing ? 'pause' : 'play'} />
-        </button>
-
-        <div className="stepper">
-          <button
-            className="icon-btn icon-btn--quiet"
-            onClick={() => step(-1)}
-            disabled={cursor <= 0}
-            aria-label="Previous frame"
-          >
-            <Icon name="back" size={18} />
-          </button>
-          <span className="stepper-read tnum" aria-hidden="true">
-            {cursor + 1}/{replay.samples.length}
-          </span>
-          <button
-            className="icon-btn icon-btn--quiet"
-            onClick={() => step(1)}
-            disabled={cursor >= replay.samples.length - 1}
-            aria-label="Next frame"
-          >
-            <Icon name="chevron" size={18} />
-          </button>
-        </div>
-
-        <div className="seg">
-          {SPEEDS.map((s) => (
-            <button
-              key={s.rate}
-              className={`seg-item${speed === s.rate ? ' is-on' : ''}`}
-              onClick={() => setSpeed(s.rate)}
-              aria-pressed={speed === s.rate}
-              aria-label={`${s.label} speed`}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {marked.length > 0 && (
-        <div className="phase-pills" ref={pillsRef}>
-          {marked.map((p) => (
-            <button
-              key={p.id}
-              className={`phase-pill${activePhase === p.id ? ' is-active' : ''}`}
-              onClick={() => parkAt(marks.get(p.id) as number)}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Silent while it runs, for the reason the live player's caption is:
-          six captions crossed about once a second forever queue faster than a
-          screen reader drains them. */}
-      <p className="player-caption" aria-live={playing ? 'off' : 'polite'}>
-        {active?.caption}
-      </p>
+      <PlayerControls
+        playing={playing}
+        onToggle={toggle}
+        rate={speed}
+        onRate={setSpeed}
+        onStep={step}
+        canBack={cursor > 0}
+        canForward={cursor < replay.samples.length - 1}
+        moments={marked.map((p) => ({ id: p.id, label: p.label, mark: fundamentals && momentMark(fundamentals, p.id) }))}
+        active={activePhase}
+        onMoment={(id) => parkAt(marks.get(id) as number)}
+        caption={active ? LOOK_FOR[active.id] : undefined}
+      />
     </div>
   )
 }

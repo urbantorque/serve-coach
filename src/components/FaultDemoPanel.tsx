@@ -42,7 +42,7 @@ export default function FaultDemoPanel({ flaw, racket }: Props) {
           fault={{ part: demo.part }}
           fitBall={demo.part === 'ball'}
           groupLabel="A model serve with this fault, beside the same serve fixed."
-          canvasLabel="Two stick figures serving side by side: on the left with this fault, on the right without it."
+          canvasLabel="Two figures serving side by side: on the left with this fault, on the right without it."
         />
       ) : (
         <div className="fault-demo-wait" aria-busy="true" />

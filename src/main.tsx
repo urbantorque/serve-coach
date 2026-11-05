@@ -12,7 +12,7 @@ import './styles/shell.css'
 import './styles/controls.css'
 import './styles/home.css'
 import './styles/blocks.css'
-import './styles/report.css'
+import './styles/depth.css'
 import './styles/states.css'
 
 // A new version is discovered here and taken later, at a moment that costs

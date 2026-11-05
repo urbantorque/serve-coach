@@ -13,14 +13,8 @@ import type { ServeSpeed } from '../lib/vision/serveSpeed'
 import { SkeletonSmoother } from '../lib/pose/smoothing'
 import { pairedLookup, type TrackPair } from '../lib/trackPair'
 import { Icon } from './primitives'
-import { usePillInView } from './usePillInView'
-
-/** Playback speeds, named rather than written as multipliers. */
-const SPEEDS = [
-  { rate: 1, label: 'Full' },
-  { rate: 0.5, label: 'Half' },
-  { rate: 0.25, label: 'Quarter' },
-] as const
+import PlayerControls, { type WatchRate } from './PlayerControls'
+import { LOOK_FOR, momentMark } from '../lib/lookFor'
 
 interface Props {
   videoUrl: string
@@ -51,10 +45,8 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired }: Props) 
   const rafRef = useRef(0)
 
   const [playing, setPlaying] = useState(false)
-  const [speed, setSpeed] = useState<(typeof SPEEDS)[number]['rate']>(0.5)
+  const [speed, setSpeed] = useState<WatchRate>(0.5)
   const [activePhase, setActivePhase] = useState<PhaseId>('ready')
-  const pillsRef = useRef<HTMLDivElement>(null)
-  usePillInView(pillsRef, activePhase)
   const [skeletonOn, setSkeletonOn] = useState(true)
   const [cursor, setCursor] = useState(0)
 
@@ -772,76 +764,31 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired }: Props) 
         ))}
       </div>
 
-      <div className="player-controls">
-        <button className="icon-btn icon-btn--solid" onClick={toggle} aria-label={playing ? 'Pause' : 'Play'}>
-          <Icon name={playing ? 'pause' : 'play'} />
-        </button>
-
-        <div className="stepper">
+      <PlayerControls
+        playing={playing}
+        onToggle={toggle}
+        rate={speed}
+        onRate={setSpeed}
+        onStep={step}
+        canBack={cursor > 0}
+        canForward={cursor < frames.length - 1}
+        moments={phases.map((p) => ({ id: p.id, label: p.label, mark: momentMark(analysis.fundamentals, p.id) }))}
+        active={activePhase}
+        onMoment={(id) => {
+          const p = phases.find((q) => q.id === id)
+          if (p) seekTo(p.t)
+        }}
+        caption={LOOK_FOR[activePhase]}
+        extra={
           <button
-            className="icon-btn icon-btn--quiet"
-            onClick={() => step(-1)}
-            disabled={cursor <= 0}
-            aria-label="Previous frame"
+            className={`watch-lines${skeletonOn ? ' is-on' : ''}`}
+            onClick={() => setSkeletonOn((v) => !v)}
+            aria-pressed={skeletonOn}
           >
-            <Icon name="back" size={18} />
+            Body lines
           </button>
-          <span className="stepper-read tnum" aria-hidden="true">
-            {cursor + 1}/{frames.length}
-          </span>
-          <button
-            className="icon-btn icon-btn--quiet"
-            onClick={() => step(1)}
-            disabled={cursor >= frames.length - 1}
-            aria-label="Next frame"
-          >
-            <Icon name="chevron" size={18} />
-          </button>
-        </div>
-
-        <div className="seg">
-          {SPEEDS.map((s) => (
-            <button
-              key={s.rate}
-              className={`seg-item${speed === s.rate ? ' is-on' : ''}`}
-              onClick={() => setSpeed(s.rate)}
-              aria-pressed={speed === s.rate}
-              aria-label={`${s.label} speed`}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
-        <button
-          className={`chip chip--toggle${skeletonOn ? ' is-on' : ''}`}
-          onClick={() => setSkeletonOn((v) => !v)}
-          aria-pressed={skeletonOn}
-        >
-          Skeleton
-        </button>
-      </div>
-
-      <div className="phase-pills" ref={pillsRef}>
-        {phases.map((p) => (
-          <button
-            key={p.id}
-            className={`phase-pill${activePhase === p.id ? ' is-active' : ''}`}
-            onClick={() => seekTo(p.t)}
-          >
-            {p.label}
-          </button>
-        ))}
-      </div>
-      {/* Announced when the player is parked on a phase, silent while it runs.
-          The clip loops forever at half speed, so six phase captions crossed
-          about once a second with no end — polite announcements queue faster
-          than they drain, and a screen reader ended up talking over everything
-          else on the report, including the hunt for the pause button that would
-          have stopped it. Paused, stepped or seeked, the caption is exactly the
-          thing worth reading aloud. */}
-      <p className="player-caption" aria-live={playing ? 'off' : 'polite'}>
-        {phases.find((p) => p.id === activePhase)?.caption}
-      </p>
+        }
+      />
     </div>
   )
 }

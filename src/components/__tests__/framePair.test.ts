@@ -68,7 +68,7 @@ heading('The stylesheet cannot make the claim on its own')
  * fail it — nor to quietly pass it.
  */
 const CSS = fs
-  .readFileSync(path.join(process.cwd(), 'src', 'styles', 'report.css'), 'utf8')
+  .readFileSync(path.join(process.cwd(), 'src', 'styles', 'depth.css'), 'utf8')
   .replace(/\s+/g, ' ')
 
 check('no rule colours a pair caption by position alone', () => {

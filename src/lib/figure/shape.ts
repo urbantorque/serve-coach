@@ -154,12 +154,12 @@ function trunkOf(p: Placed, u: number, facing: number): { solid: Solid; top: Pt 
   const sections: [number, number, number, number, number][] = [
     [-0.12, 5.0, 0, 0.92, -0.2],
     [0.03, 6.6, 0, 1.0, -0.9],
-    [0.2, 6.2, 0, 0.94, -0.7],
-    [0.42, 5.3, 0.4, 0.5, 0.2],
-    [0.64, 6.2, 0.85, 0, 1.0],
-    [0.84, 6.9, 1.0, 0, 1.0],
-    [1.0, 5.8, 1.0, 0, 0.1],
-    [1.1, 3.4, 0.46, 0, 0],
+    [0.2, 6.2, 0, 0.92, -0.7],
+    [0.42, 5.3, 0.3, 0.42, 0.2],
+    [0.64, 6.2, 0.62, 0, 1.0],
+    [0.84, 6.9, 0.76, 0, 1.0],
+    [1.0, 5.8, 0.82, 0, 0.1],
+    [1.1, 3.4, 0.34, 0, 0],
   ]
   const right: Pt[] = []
   const left: Pt[] = []
@@ -168,7 +168,7 @@ function trunkOf(p: Placed, u: number, facing: number): { solid: Solid; top: Pt 
   for (const [t, depth, fromTop, fromBase, fwd] of sections) {
     const spread = fromTop * spanTop + fromBase * spanBase
     const d = depth * u
-    const w = (d ** 3 + (spread > 0 ? spread + 2.6 * u : 0) ** 3) ** (1 / 3)
+    const w = (d ** 3 + (spread > 0 ? spread + 1.4 * u : 0) ** 3) ** (1 / 3)
     const centre = add(mix(base, top, t), mul(n, fwd * u * front))
     right.push(add(centre, mul(n, w)))
     left.push(add(centre, mul(n, -w)))
@@ -280,7 +280,9 @@ export function shapesOf(p: Placed, opts: { stature?: number; near?: Side; racke
       { id: 'head', solids: [] },
       { id: 'nearArm', solids: arm(p, near, u, opts.racket === near) },
     ],
-    head: { centre, rx: 4.7 * u, ry: 5.9 * u, angle: Math.atan2(faceDir.y, faceDir.x) },
+    // Its long axis runs up the neck, whichever way the face is turned: a face
+    // turned to the lens has no direction across the picture to lie along.
+    head: { centre, rx: 4.6 * u, ry: 5.8 * u, angle: Math.atan2(centre.y - top.y, centre.x - top.x) - Math.PI / 2 },
     floor: {
       centre: mix(mix(p[LM.leftHeel], p[LM.rightHeel], 0.5), mix(p[LM.leftToe], p[LM.rightToe], 0.5), 0.5),
       rx: 24 * u,

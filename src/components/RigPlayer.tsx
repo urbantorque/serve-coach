@@ -4,15 +4,7 @@ import type { DemoPart } from '../lib/faultDemoDials'
 import type { PhaseId } from '../lib/analysis/types'
 import { drawSkeleton, type DrawRect } from '../lib/pose/skeleton'
 import { ballOn, highlightOf } from '../lib/demoDraw'
-import { Icon } from './primitives'
-import { usePillInView } from './usePillInView'
-
-/** The same three speeds the report's players offer, named the same way. */
-const SPEEDS = [
-  { rate: 1, label: 'Full' },
-  { rate: 0.5, label: 'Half' },
-  { rate: 0.25, label: 'Quarter' },
-] as const
+import PlayerControls, { type WatchRate } from './PlayerControls'
 
 /** Room round each body, as a share of the box every body fits in. */
 const PAD_X = 1.35
@@ -156,7 +148,7 @@ export default function RigPlayer({
   const [tau, setTau] = useState(still ? parkedAt : span.lo)
   const tauRef = useRef(tau)
   const [playing, setPlaying] = useState(!still)
-  const [speed, setSpeed] = useState<(typeof SPEEDS)[number]['rate']>(0.5)
+  const [speed, setSpeed] = useState<WatchRate>(0.5)
 
   /** One scale for every body, so a difference in height is a difference in the serve. */
   const layout = useMemo(() => {
@@ -199,6 +191,7 @@ export default function RigPlayer({
         aspect: 1,
         rect,
         racket,
+        figure: { ground: 1 },
         trail: { frames: serve.frames, from: Math.max(0, i - TRAIL), to: i },
         ball: balls[k],
         ...(fault && k === 0 && shown[1]
@@ -266,12 +259,10 @@ export default function RigPlayer({
     return () => document.removeEventListener('visibilitychange', onVisibility)
   }, [])
 
-  const pillsRef = useRef<HTMLDivElement>(null)
   const active = marks.reduce<(typeof marks)[number] | undefined>(
     (best, m) => (!best || Math.abs(m.tau - tau) < Math.abs(best.tau - tau) ? m : best),
     undefined,
   )
-  usePillInView(pillsRef, active?.id, Boolean(still))
 
   return (
     <div className="player" role="group" aria-label={groupLabel}>
@@ -290,49 +281,22 @@ export default function RigPlayer({
         </div>
       )}
 
-      <div className="player-controls">
-        <button
-          className="icon-btn icon-btn--solid"
-          onClick={() => setPlaying((p) => !p)}
-          aria-label={playing ? 'Pause' : 'Play'}
-        >
-          <Icon name={playing ? 'pause' : 'play'} />
-        </button>
-        {speeds && (
-          <div className="seg">
-            {SPEEDS.map((s) => (
-              <button
-                key={s.rate}
-                className={`seg-item${speed === s.rate ? ' is-on' : ''}`}
-                onClick={() => setSpeed(s.rate)}
-                aria-pressed={speed === s.rate}
-                aria-label={`${s.label} speed`}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="phase-pills" ref={pillsRef}>
-        {marks.map((m) => (
-          <button
-            key={m.id}
-            className={`phase-pill${active?.id === m.id ? ' is-active' : ''}`}
-            onClick={() => {
-              setPlaying(false)
-              moveTo(m.tau)
-            }}
-          >
-            {m.label}
-          </button>
-        ))}
-      </div>
-
-      <p className="player-caption" aria-live={playing ? 'off' : 'polite'}>
-        {active?.caption}
-      </p>
+      <PlayerControls
+        playing={playing}
+        onToggle={() => setPlaying((p) => !p)}
+        rate={speed}
+        onRate={setSpeed}
+        moments={marks.map((m) => ({ id: m.id, label: m.label }))}
+        active={active?.id}
+        onMoment={(id) => {
+          const m = marks.find((q) => q.id === id)
+          if (!m) return
+          setPlaying(false)
+          moveTo(m.tau)
+        }}
+        caption={active?.caption}
+        speeds={speeds}
+      />
     </div>
   )
 }

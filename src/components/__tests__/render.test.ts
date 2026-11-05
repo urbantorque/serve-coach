@@ -41,6 +41,8 @@ import Glance from '../../screens/Glance'
 import Home from '../../screens/Home'
 import Progress from '../../screens/Progress'
 import Report from '../../screens/Report'
+import DrillCard from '../../screens/report/DrillCard'
+import PracticeCard from '../PracticeCard'
 import Analyzing from '../../screens/Analyzing'
 import FilmingGuide from '../FilmingGuide'
 import FirstRunDownload from '../FirstRunDownload'
@@ -56,7 +58,7 @@ import { Cue } from '../primitives'
 import TermCue from '../TermCue'
 import { termSpans } from '../../lib/glossary'
 import ModelServe from '../ModelServe'
-import { faultDemo, modelServe } from '../../lib/faultDemo'
+import { modelMotion } from '../../lib/figure/modelMotion'
 import { PHASE_COPY } from '../../lib/analysis/phases'
 import { DEMO_DIALS, sampleAnalysis, sampleBasket } from '../../dev/sampleAnalysis'
 import { findPracticeFocus, type PracticeFocus } from '../../lib/practice'
@@ -119,7 +121,7 @@ check('any report can be tagged, and shows what was tagged (D5.1)', () => {
       onAnalyzeAnother: noop,
     }),
   )
-  assert(out.includes('Tag this serve'), 'a reopened report offered no way to tag it')
+  assert(out.includes('What you said about this serve'), 'a reopened report offered no way to tag it')
   for (const label of ['First serve', 'Second serve', 'In', 'Long', 'Net', 'Wide']) {
     assert(out.includes(`>${label}</button>`), `no "${label}" control`)
   }
@@ -127,7 +129,7 @@ check('any report can be tagged, and shows what was tagged (D5.1)', () => {
   assert(/aria-pressed="true"[^>]*>Net</.test(out), 'the net tag was not shown as chosen')
   assert(!/aria-pressed="true"[^>]*>In</.test(out), 'an outcome nobody chose was shown as chosen')
   const bare = html(createElement(Report, { analysis: stored(sampleAnalysis()), onBack: noop, onAnalyzeAnother: noop }))
-  assert(!bare.includes('Tag this serve'), 'tag controls rendered with nothing to save them')
+  assert(!bare.includes('What you said about this serve'), 'tag controls rendered with nothing to save them')
 })
 
 check('a live report offers its glance, whatever the clip came from (D6.1)', () => {
@@ -232,7 +234,16 @@ check('a practice card that repeats the focus does not print the drill twice', (
     fix: a.focus.why,
     drilled: 0,
   }
-  const out = html(createElement(Report, { analysis: a, practice, onLogDrill: noop, onBack: noop, onAnalyzeAnother: noop }))
+  // The lesson carries the drill and the season's log (lift): the report's first
+  // screen names the drill, and the how is one tap down.
+  const out = html(
+    createElement(DrillCard, {
+      item: a.focus,
+      racket: 'right',
+      rung: -1,
+      season: createElement(PracticeCard, { focus: practice, onLogDrill: noop, sameAsFocus: true }),
+    }),
+  )
   const escaped = (s: string) => s.replace(/&/g, '&amp;').replace(/'/g, '&#x27;').replace(/"/g, '&quot;')
   const times = out.split(escaped(a.focus.drill.how)).length - 1
   assert(times === 1, `the drill's instruction is on the page ${times} times`)
@@ -278,7 +289,7 @@ check('a soft read says so beside the score, and a clear one does not', () => {
   const softOut = html(createElement(Report, { analysis: soft, onBack: noop, onAnalyzeAnother: noop }))
   const clearOut = html(createElement(Report, { analysis: clear, onBack: noop, onAnalyzeAnother: noop }))
   assert(softOut.includes('Rough read'), 'a soft read looked as sure as any other')
-  assert(softOut.indexOf('Rough read') < softOut.indexOf('How to fix it'), 'the rough-read line is not up by the score')
+  assert(softOut.indexOf('Rough read') < softOut.indexOf('What to do now'), 'the rough-read line is not up by the score')
   assert(!clearOut.includes('Rough read'), 'a clear read was called rough')
 })
 
@@ -381,7 +392,7 @@ check('a steady fault in a basket is called off target, not praised (L1.8)', () 
   assert(out.includes('steady, but outside the target'), 'a steady fault was shown without saying it is off target')
 })
 
-check('the report reads hero, fix, plan, the serve, then one fold for the rest (L4.1)', () => {
+check('the report answers on its first screen, then the plan, the serve, and one fold for the rest (lift)', () => {
   const out = html(
     createElement(Report, {
       analysis: { ...sampleAnalysis(DEMO_DIALS.example), consistency: buildConsistency(sampleBasket(), 5) },
@@ -398,63 +409,53 @@ check('the report reads hero, fix, plan, the serve, then one fold for the rest (
   }
   const order = [
     ['the score', 'class="hero"'],
-    ['the fix', 'class="focus"'],
-    ['the plan', 'focus-next'],
-    // Out of the fold since N1.9.
-    ['tagging', 'Tag this serve'],
-    ['the six moments', 'Six moments in your serve'],
-    ['the fold', 'More about this clip'],
+    ['the fix', '<h1>'],
+    ['what to do now', 'What to do now'],
+    ['the rest of the plan', 'Then, in this order'],
+    ['the serve', 'side by side'],
+    ['the tags', 'What you said about this serve'],
+    ['the fold', 'Everything I measured'],
     ['the basket', 'best serve against your worst'],
     ['how it was read', 'How I read this clip'],
     ['the areas', 'Every area I scored'],
   ] as const
   for (let i = 1; i < order.length; i++) {
-    assert(
-      at(order[i - 1][1]) < at(order[i][1]),
-      `${order[i - 1][0]} comes after ${order[i][0]}`,
-    )
+    assert(at(order[i - 1][1]) < at(order[i][1]), `${order[i - 1][0]} comes after ${order[i][0]}`)
   }
-  // Everything after the six moments sits inside the one fold.
   const fold = out.slice(at('<details class="report-more"'), out.indexOf('</details>', at('<details class="report-more"')))
-  for (const [what, marker] of order.slice(6)) assert(fold.includes(marker), `${what} is outside the fold`)
+  for (const [what, marker] of order.slice(7)) assert(fold.includes(marker), `${what} is outside the fold`)
   assert(!/<details class="report-more"[^>]*open/.test(out), 'the fold starts open')
+  // One way forward at the end, and sharing is one button at the top.
+  assert((out.match(/class="report-bar"/g) ?? []).length === 1, 'the report does not end on one action')
+  assert(!out.includes('Send to my coach') && !out.includes('Save or share this report'), 'the three stacked exits came back')
 })
 
-check('the feel shows without a tap, the step says how it is passed, and later fixes open to their how (L4.2)', () => {
+check('a fix opens to a lesson: the feel, how the step is passed, the ladder folded (L4.2, lift)', () => {
   const analysis = sampleAnalysis(DEMO_DIALS.injury)
-  const out = html(createElement(Report, { analysis, onBack: noop, onAnalyzeAnother: noop, onLadderStep: noop }))
   const escaped = (s: string) => s.replace(/&/g, '&amp;').replace(/'/g, '&#x27;').replace(/"/g, '&quot;')
   const plan = causalPlan(analysis.triage, analysis.diagnosis)
   assert(plan.length >= 2, `the fixture ranked ${plan.length} fix(es); the check needs two`)
   const ladder = progressionFor(plan[0].flaw!, plan[0].axis)!
-  const step = ladder.steps.find((s) => s.name === plan[0].drill.name)!
-  // The ladder itself starts folded; the feel does not.
-  assert(!out.includes('class="drill-ladder"'), 'the ladder started open')
-  assert(out.includes(escaped(ladder.cue)), 'the feel is folded away')
-  assert(out.includes(escaped(stepCheckLine(ladder, step))), 'the step does not say how it is passed')
+  const rung = ladder.steps.findIndex((s) => s.name === plan[0].drill.name)
+  const step = ladder.steps[rung]
+  const lesson = html(createElement(DrillCard, { item: plan[0], racket: 'right', rung, onLadderStep: noop }))
+  // The ladder starts folded; the feel does not.
+  assert(/<details class="drill-ladder">/.test(lesson), 'the ladder started open')
+  assert(lesson.includes(escaped(ladder.cue)), 'the feel is folded away')
+  assert(lesson.includes(escaped(stepCheckLine(ladder, step))), 'the step does not say how it is passed')
   assert(
-    out.includes('I can do this') === (step.check.by === 'self'),
+    lesson.includes('I can do this') === (step.check.by === 'self'),
     `a ${step.check.by}-checked step ${step.check.by === 'self' ? 'has no' : 'has a'} self-pass button`,
   )
-  // Every later fix is a closed disclosure holding its how.
-  const folds = out.split('<details class="focus-next-how"').slice(1)
-  assert(folds.length === plan.length - 1, `${folds.length} folded fixes for ${plan.length - 1} later fixes`)
-  plan.slice(1).forEach((item, i) => {
-    const fold = folds[i].slice(0, folds[i].indexOf('</details>'))
-    assert(!fold.startsWith(' open'), `fix ${i + 2} started open`)
-    assert(fold.includes(escaped(item.drill.how)), `fix ${i + 2} does not open to its how`)
-  })
+  // On the report, every later fix is a row that opens its own lesson.
+  const out = html(createElement(Report, { analysis, onBack: noop, onAnalyzeAnother: noop, onLadderStep: noop }))
+  const rows = out.split('class="plan-item"').length - 1
+  assert(rows === plan.length - 1, `${rows} rows for ${plan.length - 1} later fixes`)
 })
 
-check('a model serve to watch: the clean serve looped with its moments and checkpoints, in three places (L4.3)', () => {
-  const serve = modelServe('right')
-  assert(serve !== undefined, 'the clean serve could not be built')
-  // The same serve every fault demonstration draws its fix from.
-  const fix = faultDemo('low_contact', 'right')!.fix
-  assert(
-    fix.frames.length === serve!.frames.length && fix.frames[0].image[16].x === serve!.frames[0].image[16].x,
-    'the model is not the fix the demonstrations draw',
-  )
+check('a model serve to watch: a real serve looped with its moments and checkpoints, in three places (L4.3, lift)', () => {
+  const serve = modelMotion('right')
+  assert(serve !== undefined, 'the real serve could not be built')
   const player = html(createElement(ModelServe, { racket: 'right', serve }))
   // Six moment pills, in the serve's order, each a button.
   const at = Object.values(PHASE_COPY).map((p) => player.indexOf(`>${p.label}</button>`))
@@ -463,9 +464,9 @@ check('a model serve to watch: the clean serve looped with its moments and check
   // A checkpoint under them, and a way to stop the loop.
   assert(Object.values(PHASE_COPY).some((p) => player.includes(p.caption)), 'no checkpoint caption')
   assert(player.includes('aria-label="Pause"') || player.includes('aria-label="Play"'), 'a loop with no pause')
-  assert(player.includes('Half speed'), 'the full player lost its speeds')
+  assert(player.includes('Speed: Slow'), 'the full player lost its speeds')
   const quiet = html(createElement(ModelServe, { racket: 'right', serve, quiet: true }))
-  assert(!quiet.includes('Half speed') && quiet.includes('model-serve--quiet'), 'the quiet player is not quiet')
+  assert(!quiet.includes('Speed: Slow') && quiet.includes('model-serve--quiet'), 'the quiet player is not quiet')
 
   // In the guide, one tap down and closed.
   const guide = html(createElement(FilmingGuide, { racket: 'left' }))
@@ -482,9 +483,9 @@ check('a model serve to watch: the clean serve looped with its moments and check
   assert(example.includes('A model serve to watch'), 'the example has no model serve')
   assert(!own.includes('A model serve to watch'), "a player's own report carries the model serve")
   assert(
-    example.indexOf('A model serve to watch') > example.indexOf('Six moments in your serve') &&
-      example.indexOf('A model serve to watch') < example.indexOf('More about this clip'),
-    'the model serve is not between the six moments and the fold',
+    example.indexOf('A model serve to watch') > example.indexOf('Watch your serve') &&
+      example.indexOf('A model serve to watch') < example.indexOf('Everything I measured'),
+    'the model serve is not between the serve and the fold',
   )
 })
 
@@ -1042,10 +1043,10 @@ check('a basket\'s drill check leads the focus card, above the drill (N4.2)', ()
   const base = sampleAnalysis()
   const flaw = causalPlan(base.triage, base.diagnosis)[0].flaw!
   const analysis = { ...base, drillCheck: { flaw, read: 6, clean: 5, need: progressionFor(flaw)!.pass, outcome: 'passed' as const } }
-  const out = html(createElement(Report, { analysis, onBack: noop, onAnalyzeAnother: noop, onLadderStep: noop }))
+  const out = html(createElement(DrillCard, { item: causalPlan(base.triage, base.diagnosis)[0], racket: 'right', check: analysis.drillCheck, rung: 0, onLadderStep: noop }))
   const said = out.indexOf('passed this step')
   assert(said > 0, 'the passed check was not said')
-  assert(said < out.indexOf('class="focus-drill"'), 'the check still follows the drill')
+  assert(said < out.indexOf('class="drill-how"'), 'the check still follows the drill')
 })
 
 check('a first read says so, with the full read a tap away; a full read says nothing (M1.3)', () => {
@@ -1055,11 +1056,11 @@ check('a first read says so, with the full read a tap away; a full read says not
   assert(!full.includes('A first read.'), 'a full read was called a first read')
 })
 
-check('tagging sits above the fold, under the focus (N1.9)', () => {
+check('tagging is one short row above the fold, under the fix (N1.9, lift)', () => {
   const out = html(createElement(Report, { analysis: sampleAnalysis(), onBack: noop, onAnalyzeAnother: noop, onTagServe: noop, onTagOutcome: noop }))
-  const tag = out.indexOf('Tag this serve')
+  const tag = out.indexOf('What you said about this serve')
   assert(tag > 0, 'no tag row on a live report')
-  assert(tag < out.indexOf('More about this clip'), 'tagging is still inside the fold')
+  assert(tag < out.indexOf('Everything I measured'), 'tagging is still inside the fold')
   assert(tag > out.indexOf('Work on this next'), 'tagging jumped above the fix')
 })
 

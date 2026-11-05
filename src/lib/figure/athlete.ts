@@ -382,6 +382,15 @@ export function paintAthlete(ctx: CanvasRenderingContext2D, placed: Placed, o: A
     part.solids.forEach(painted)
   }
   if (rim > 0 && o.still) paintRims(ctx, shapes, rim)
+  // The part to work on stays visible even when the body stands in front of it.
+  if (o.work?.length) {
+    ctx.save()
+    ctx.globalAlpha *= 0.55
+    for (const part of shapes.parts) {
+      for (const s of part.solids) if (o.work.some((w) => s.id.includes(w))) paintSolid(ctx, s, tone, true)
+    }
+    ctx.restore()
+  }
   return shapes
 }
 
@@ -459,6 +468,37 @@ export function paintRibbon(ctx: CanvasRenderingContext2D, path: readonly Pt[], 
     ctx.lineTo(d.x, d.y)
     ctx.closePath()
     ctx.fill()
+  }
+  ctx.restore()
+}
+
+/**
+ * The part to work on, laid over a photograph: the same solids, in the
+ * accent for work, translucent so the player's own arm shows through.
+ */
+export function paintWorkOn(
+  ctx: CanvasRenderingContext2D,
+  placed: Placed,
+  o: { racket: Side; work: string[]; stature?: number; near?: Side; alpha: number },
+) {
+  const shapes = shapesOf(placed, { stature: o.stature, near: o.near, racket: o.racket })
+  ctx.save()
+  ctx.globalAlpha = o.alpha
+  ctx.lineJoin = 'round'
+  for (const part of shapes.parts) {
+    for (const s of part.solids) {
+      if (!o.work.some((w) => s.id.includes(w))) continue
+      const path = smoothClosed(s.outline)
+      const [a, b] = s.across
+      const g = ctx.createLinearGradient(a.x, a.y, b.x, b.y)
+      g.addColorStop(0, withAlpha(WORK, 0.34))
+      g.addColorStop(1, withAlpha(WORK, 0.66))
+      ctx.fillStyle = g
+      ctx.fill(path)
+      ctx.strokeStyle = withAlpha('#ffd9d3', 0.9)
+      ctx.lineWidth = Math.max(1, shapes.u * 0.34)
+      ctx.stroke(path)
+    }
   }
   ctx.restore()
 }

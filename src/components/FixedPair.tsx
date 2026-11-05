@@ -12,7 +12,7 @@ function Half({ pose, label }: { pose: CardPose; label: string }) {
     canvas.width = Math.round((canvas.clientWidth || 140) * dpr)
     canvas.height = Math.round((canvas.clientHeight || 180) * dpr)
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    drawSkeleton(ctx, { frame: pose.frame, aspect: pose.aspect, rect: fitBody(pose.frame, pose.aspect, canvas.width, canvas.height), racket: pose.racket })
+    drawSkeleton(ctx, { frame: pose.frame, aspect: pose.aspect, rect: fitBody(pose.frame, pose.aspect, canvas.width, canvas.height), figure: { still: true, ground: 1 }, racket: pose.racket })
   }, [pose])
   return (
     <figure className="fixed-pair-half">

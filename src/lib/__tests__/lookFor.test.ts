@@ -9,9 +9,10 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server.browser'
 import { LOOK_FOR, faultMoment, momentChecks, momentMark } from '../lookFor'
-import { modelServe } from '../faultDemo'
+import { modelMotion } from '../figure/modelMotion'
+import { swingOf } from '../figure/swing'
 import { modelFrameAt } from '../demoDraw'
-import MomentPair from '../../components/MomentPair'
+import SideBySide from '../../screens/report/SideBySide'
 import Report from '../../screens/Report'
 import { DEMO_DIALS, sampleAnalysis } from '../../dev/sampleAnalysis'
 import { causalPlan } from '../analysis/verdict'
@@ -19,7 +20,6 @@ import { faultForMetric } from '../analysis/progressions'
 import { SOFT_MEASUREMENT } from '../analysis/confidence'
 import { LM } from '../analysis/geometry'
 import { cueIssues } from '../analysis/voice'
-import { filmstripPoses } from '../storage/poseTrack'
 import type { Analysis, PhaseId } from '../analysis/types'
 import { assert, check, heading, note, report } from '../analysis/__tests__/harness'
 
@@ -88,51 +88,36 @@ heading('The model beside you, on your side')
 
 check('a left-hander sees the model swing with the left arm, a right-hander with the right', () => {
   for (const racket of ['right', 'left'] as const) {
-    const frame = modelFrameAt(modelServe(racket)!, 'contact')!
+    const frame = modelFrameAt(modelMotion(racket)!, 'contact')!
     const up = frame.image[LM.rightWrist].y < frame.image[LM.leftWrist].y ? 'right' : 'left'
     assert(up === racket, `${racket}-hander: the model hits with the ${up} hand`)
     assert(frame.racket !== undefined, `${racket}: the model holds no racket`)
   }
 })
 
-check('the pair renders the player beside the model, with its checks', () => {
+check('the pair renders the player beside something to compare, with its checks', () => {
   const a = sampleAnalysis(DEMO_DIALS.example)
   const checks = momentChecks(a.fundamentals, 'drop')
   const html = renderToStaticMarkup(
-    createElement(MomentPair, {
-      poses: filmstripPoses(a),
-      index: a.phases.findIndex((p) => p.id === 'drop'),
-      phase: 'drop',
-      label: 'Racket drop',
-      racket: 'left',
-      checks,
-      model: modelServe('left')!,
-    }),
+    createElement(SideBySide, { swing: swingOf(a)!, moment: 'drop', label: 'Racket drop', work: [], racket: 'left', checks }),
   )
-  assert(html.includes('Your racket drop beside the model’s'), 'the pair has no title')
+  assert(html.includes('Your racket drop, side by side'), 'the pair has no title')
   assert(html.includes('aria-label="Your racket drop, as the tracked body"'), 'the player half is missing')
-  assert(html.includes('aria-label="The model serve&#x27;s racket drop"'), 'the model half is missing')
   for (const c of checks) assert(html.includes(c.label), `${c.label} is not listed`)
-  // And nothing at all where the report keeps no poses.
-  const bare = renderToStaticMarkup(
-    createElement(MomentPair, { poses: undefined, index: 0, phase: 'drop', label: 'Racket drop', racket: 'right', checks }),
-  )
-  assert(bare === '', 'a pair with no player half was drawn')
 })
 
-check('the report sets the pair in the top fix, and every moment says what to look for', () => {
+check('the report shows the pair at the top fault, and the moments say how they went', () => {
   const a = sampleAnalysis(DEMO_DIALS.example)
   const html = renderToStaticMarkup(createElement(Report, { analysis: a, onBack: () => {}, onAnalyzeAnother: () => {} }))
-  const focus = html.slice(html.indexOf('class="focus"'), html.indexOf('class="focus-drill"'))
   const top = causalPlan(a.triage, a.diagnosis)[0]
   const moment = faultMoment(a.fundamentals, top.flaw)!
   const label = a.phases.find((p) => p.id === moment)!.label.toLowerCase()
-  assert(focus.includes(`Your ${label} beside the model’s`), `the pair at the ${label} is not in the top fix`)
-  const escaped = (s: string) => s.replace(/'/g, '&#x27;')
-  for (const phase of PHASES) assert(html.includes(escaped(LOOK_FOR[phase])), `${phase} does not say what to look for`)
-  const marks = (html.match(/strip-mark--(tick|cross)/g) ?? []).length
+  assert(html.includes(`Your ${label}, side by side`), `the pair at the ${label} is not on the report`)
+  // The moment the player is parked on says what to look for; the rest are a tap away.
+  assert(html.includes(LOOK_FOR.ready.replace(/'/g, '&#x27;')), 'the moment on screen does not say what to look for')
+  const marks = (html.match(/watch-mark--(tick|cross)/g) ?? []).length
   const expected = PHASES.filter((p) => momentMark(a.fundamentals, p) !== undefined).length
-  assert(marks === expected, `${marks} marks on the strip, ${expected} moments with a reading`)
+  assert(marks === expected, `${marks} marks on the moments, ${expected} moments with a reading`)
 })
 
 report()

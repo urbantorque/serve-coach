@@ -113,9 +113,9 @@ check('the labels that carry meaning are 12px and in the readable grey, not the 
   const where: Record<string, string> = {
     '.t-overline': 'tokens.css',
     '.block-title': 'blocks.css',
-    '.reading-title': 'report.css',
-    '.judged-lead': 'report.css',
-    '.focus-kicker': 'report.css',
+    '.judged-lead': 'depth.css',
+    '.now-label': 'report.css',
+    '.serve-tags-lead': 'report.css',
     '.drill-kicker': 'fundamentals.css',
     // The court's own (Q7): what a player reads and touches from the baseline.
     '.seg-item': 'player.css',

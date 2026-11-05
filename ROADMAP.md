@@ -4040,3 +4040,58 @@ on its own branch (Q4).
         naming the chain (proved by putting carryForward's old import back).
         A real bench clip (`Saque_con_pelota.webm`) still analyses end to end
         in the browser, the engine loading with the analysis.
+
+## Whole-app lift (H1 onward) — 2026-11-05
+
+From the owner's brief to take the app from a capable prototype to something a
+club player would show their friends. The reasoning, the graded audit and what
+was chosen against are in `docs/lift/LIFT-PLAN.md`; the visual rules are in
+`DESIGN.md`. Every item ran the whole chain before its commit. Where a test
+changed, the promise changed, and the item says so.
+
+- [x] **H1 One icon set** · S.
+      - *Done:* 2026-11-05. 30 Phosphor glyphs (MIT) at one weight, lifted into
+        `components/icons.ts` by `scripts/icons.mjs`, because the package's React
+        components carry six weights an icon and the package itself is 9,000
+        files. `Icon` is typed to the set, which caught two loose strings.
+- [x] **H2 A typeface, and styles that load with their screen** · S.
+      - *Done:* 2026-11-05. Archivo under the OFL, subset to Latin at 78 kB,
+        precached with the shell, preloaded from `index.html`. Numerals at width
+        62, headlines at 112, from one file. Overlines are sentence case now.
+        Surfaces are named: floor, panel, stage, moment. Screen styles moved out
+        of the entry: first-open stylesheet 13.6 to 9.0 kB gzip with all of that
+        added. `SPLIT_CSS_GZIP_BUDGET_KB` went from 6 to 16 on purpose and says
+        why. Measured by `bundle.test.ts`.
+- [x] **H3 The figure, and a real model serve** · M.
+      - *Done:* 2026-11-05. `lib/figure/shape.ts` gives the landmarks mass and
+        `athlete.ts` lights it: one gradient across each limb, one rim of light
+        round the silhouette, a shadow on the court. A still gets the soft rim
+        through a second canvas; playback lays the silhouette down twice behind
+        the body instead, because the soft rim cost 15.7 ms a frame at 720x960 on
+        this machine. `shape.test.ts` holds, on every frame of a Bath serve and
+        of the rig, that each limb contains the joints it was measured from and
+        that no joint moves. `paintExposure` lays a whole swing down as one
+        picture with the racket head's real path. The model serve is Bath 39
+        (`modelMotion.ts`), landed in, engine score 84, no fault named, 101 frames
+        at 60 Hz in 20 kB, with its CC BY attribution. The rig's clean serve stays
+        as the fix in fault demonstrations, where two bodies must differ by one
+        dial. `/figurelab.html` is the dev page for judging it by eye.
+- [x] **H4 The report, rebuilt** · L.
+      - *Done:* 2026-11-05. The first screen answers how did I do, what do I fix
+        and what do I do now, on the player's own footage cropped like a
+        photograph, with the part to work on drawn on it; a stored report uses
+        the tracked figure. It plays through once when fresh, skippable, at rest
+        under reduced motion and on reopening. The drill, its feel, its ladder,
+        the fault demonstration and the season's log moved into a lesson sheet.
+        The six stills became six named moments on the player, each ticked or
+        crossed. Side by side sets the fault's moment beside a model serve, the
+        player's best or their last, at one body size. Tags are one short row.
+        Three exits became one action and one Share button. Playback says Slow,
+        Very slow or Real speed, with no frame counter and no "Skeleton". Saved
+        report 4.9 to 2.5 screens, 381 to 210 words, 40 to 34 controls of which
+        13 are playback.
+      - *Promises changed, with their tests:* the feel is one tap down in the
+        lesson (L4.2); tagging lost its heading and its panel (N1.9); the speed
+        unit moved to Settings (N2.7), since speeds now show on several screens;
+        the model is no longer the fix a demonstration draws (L4.3); a score
+        counts up and the serve plays through in place of a ring filling (N4.6).

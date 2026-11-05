@@ -1,12 +1,11 @@
 /**
- * The serve speed on the report and the glance (N2.7): a reading under the
- * hero, a miss only inside the fold, and nothing at all when there is neither.
+ * The serve speed on the report and the glance (N2.7): a reading in the hero,
+ * a miss only inside the fold, and nothing at all when there is neither.
  */
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server.browser'
 import Report from '../../screens/Report'
 import Glance from '../../screens/Glance'
-import SpeedRow from '../SpeedRow'
 import Progress from '../../screens/Progress'
 import { normalise, type Session } from '../../lib/storage/db'
 import { DEMO_DIALS, sampleAnalysis } from '../../dev/sampleAnalysis'
@@ -23,7 +22,7 @@ const aboveFold = (html: string) => html.slice(0, html.indexOf('report-more'))
 
 heading('The serve speed, on the report')
 
-check('a reading sits under the hero: the figure, its likely range and the unit switch', () => {
+check('a reading sits in the hero: the figure and its likely range (lift: the unit moved to Settings)', () => {
   const html = render(reading)
   const top = aboveFold(html)
   assert(top.includes('aria-label="Serve speed"'), 'no speed row above the fold')
@@ -32,7 +31,6 @@ check('a reading sits under the hero: the figure, its likely range and the unit 
   assert(kmh || mph, 'the figure or its range is missing')
   note(kmh ? 'rendered in km/h' : 'rendered in mph')
   assert(/class="term-word"[^>]*>Likely</.test(top), '"Likely" is not defined on a tap')
-  assert(/aria-label="Speed unit"/.test(top) && (top.match(/aria-pressed="true"/g) ?? []).length >= 1, 'the unit switch is missing or shows no state')
   assert(html.indexOf('aria-label="Serve speed"') > html.indexOf('class="hero"'), 'the speed row is above the score')
 })
 
@@ -48,9 +46,11 @@ check('no speed and no miss show nothing at all', () => {
   assert(!html.includes('Serve speed'), 'a speed heading with nothing under it')
 })
 
-check('the row never wears a score colour', () => {
-  const html = renderToStaticMarkup(createElement(SpeedRow, { speed: reading.speed }))
-  assert(!/great|good|fair|work/.test(html), 'the speed row carries a status class')
+check('the reading never wears a score colour', () => {
+  const html = render(reading)
+  const start = html.indexOf('class="hero-speed"')
+  const section = html.slice(start, html.indexOf('</section>', start))
+  assert(!/great|good|fair|work/.test(section), 'the speed reading carries a status class')
 })
 
 heading('The serve speed, on the glance')

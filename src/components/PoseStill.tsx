@@ -75,6 +75,7 @@ export default function PoseStill({
        */
       rect: fitBody(frame, poses.aspect, canvas.width, canvas.height),
       racket,
+      figure: { still: true, ground: 1 },
     })
   }, [frame, poses, racket])
 

@@ -39,6 +39,7 @@ import { readPrefs, writePrefs, type Prefs } from './lib/storage/prefs'
 import { clipIdOf } from './lib/storage/sessionKey'
 import type { PracticeSession, SessionStage } from './lib/session/session'
 import { clipFor } from './lib/storage/clipStore'
+import { defaultSpeedUnit } from './lib/speedCopy'
 import Home from './screens/Home'
 
 /*
@@ -87,6 +88,7 @@ const FilmingGuide = lazy(() => import('./components/FilmingGuide'))
 const StoragePanel = lazy(() => import('./components/StoragePanel'))
 const KeepClipsPanel = lazy(() => import('./components/KeepClipsPanel'))
 const CadencePicker = lazy(() => import('./components/CadencePicker'))
+const SpeedUnitPicker = lazy(() => import('./components/SpeedUnitPicker'))
 const DeviceCheck = lazy(() => import('./components/DeviceCheck'))
 const CorpusIngest = lazy(() => import('./components/CorpusIngest'))
 
@@ -849,6 +851,10 @@ export default function App() {
               onUndoDrill={practice?.drilled ? undoDrill : undefined}
               ladder={prefs.ladder}
               onLadderStep={moveLadder}
+              onFilmCheck={(flaw, drill) => {
+                setCheckTarget({ flaw: flaw as FlawId, drill })
+                captureAgain('framing')
+              }}
               // From a reopened report too (N1.8): the glance reads the report,
               // never the clip.
               onGlance={() =>
@@ -1153,6 +1159,7 @@ export default function App() {
         />
         <Suspense fallback={null}>
           <CadencePicker value={prefs.cadence} onChange={(cadence) => setPrefs(writePrefs({ cadence }))} />
+          <SpeedUnitPicker value={prefs.speedUnit ?? defaultSpeedUnit()} onChange={(speedUnit) => setPrefs(writePrefs({ speedUnit }))} />
           <StoragePanel count={sessions.length} onImported={refreshSessions} />
           <KeepClipsPanel keep={Boolean(prefs.keepClips)} onChange={(keepClips) => setPrefs(writePrefs({ keepClips }))} />
         </Suspense>

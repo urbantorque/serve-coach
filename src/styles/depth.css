@@ -1,0 +1,1521 @@
+/* ============================================================================
+   Report — header and hero
+   ========================================================================= */
+
+/*
+ * A name for the longest screen in the app, not a second layout.
+ *
+ * Everything the report needs — the column, the rhythm between rungs, the safe
+ * areas — comes from `.screen`, and giving this its own spacing is exactly how
+ * the ladder ends up with two sources of gap that disagree. It carries a
+ * positioning context and nothing else.
+ */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.topbar-title {
+  font-size: 13px;
+  font-weight: 560;
+  color: var(--fg-muted);
+}
+
+.serves {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--ink-2);
+  border: 1px solid var(--hairline);
+}
+
+.serves-lead {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1;
+  min-width: 12rem;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--fg-muted);
+}
+
+.serves-lead .icon {
+  color: var(--lime);
+  flex: none;
+}
+
+.serves-lead strong {
+  color: var(--fg);
+  font-weight: 640;
+}
+
+/* The basket's verdict, on its own line under the picker.
+   `flex-basis: 100%` rather than a wrapper, because `.serves` is already the
+   row that holds the lead and the chips and a third item beside them would sit
+   wherever the wrap put it. Full brightness, unlike the lead above it: this is
+   a finding about the player, and the count of serves is a label. */
+.serves-spread {
+  flex-basis: 100%;
+  margin: 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--hairline);
+  font-size: 13px;
+  line-height: var(--lh-snug);
+  color: var(--fg);
+  text-wrap: pretty;
+}
+
+.serves-pick {
+  display: flex;
+  gap: 5px;
+}
+
+/*
+ * A button is `display: block` by default, so a fixed height does not centre
+ * anything inside it. At 30px tall with a 19.5px line box the numeral sat about
+ * five pixels high in its own chip, and the serve-type variant below — which
+ * adds 8px of vertical padding without clearing this height — had 12px of
+ * content box for that same 19.5px line and overflowed its border by 7px.
+ * Centring is what a flex box does; nothing here needs a height to do it.
+ */
+.serve-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-sm);
+  background: var(--ink-3);
+  border: 1px solid var(--hairline);
+  font-size: 12.5px;
+  font-weight: 620;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+  transition: all var(--fast) var(--ease);
+}
+
+/*
+ * Full height, but sideways only as far as the gutter.
+ *
+ * `.serves-pick` sets a 5px gap between 30px chips, so a centred 44px-wide
+ * target would reach 7px past each edge and overlap its neighbour by 9px. These
+ * are the numbered serves in a basket: tapping the wrong one does not merely
+ * miss, it re-reads the clip against a different serve. So the width grows by
+ * exactly the gutter — adjacent targets meet and never overlap — and the height,
+ * where there is nothing to collide with, takes the full 44. 30x30 to 35x44.
+ */
+.serve-chip::after {
+  content: '';
+  position: absolute;
+  left: -2.5px;
+  right: -2.5px;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
+}
+
+/* The serve-type row is wide chips in an 8px-gapped wrapping row, so these keep
+   their own width and take the height only. */
+.judged-options .serve-chip::after {
+  left: 0;
+  right: 0;
+}
+
+.serve-chip:hover {
+  border-color: var(--ink-4);
+  color: var(--fg);
+}
+
+.serve-chip.is-on {
+  background: var(--lime);
+  border-color: var(--lime);
+  color: var(--lime-ink);
+}
+
+.serves-cta {
+  width: 100%;
+}
+
+/*
+ * The sweep button, on its own now that it has left the picker panel.
+ *
+ * It used to sit inside `.serves` under the chips, which put a scored panel of
+ * spread charts one tap above the one instruction on the page. The button
+ * stays next to the panel it opens instead, so tapping it still makes the
+ * thing appear directly underneath — only the chips stay up by the score.
+ */
+.serves-compare {
+  display: flex;
+}
+
+/* ============================================================================
+   Consistency across the serves in one clip
+   ========================================================================= */
+
+.consistency {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  border-radius: var(--r-lg);
+  background: var(--ink-2);
+  border: 1px solid var(--hairline);
+}
+
+/*
+ * Rung four, and it has to look like rung four.
+ *
+ * The head keeps the shape the ring gave it — a gauge in a left slot, the
+ * sentence beside it — but the gauge is the number set large rather than a
+ * second 72px ring. The report already spends its one ring on the serve score,
+ * and repeating that shape halfway down the page made a panel of context
+ * compete with the one instruction above it. The tier rides on the ink.
+ */
+.consistency-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 16px;
+  row-gap: 4px;
+}
+
+/* Across the top rather than over the number, so the sentence beside it keeps
+   the full width of the card. In a 360px column a label stacked above the score
+   sets the left track to its own width and squeezes the headline into three. */
+.consistency-kicker {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  margin-bottom: 3px;
+}
+
+.consistency-score {
+  grid-column: 1;
+  grid-row: 2 / span 2;
+  align-self: center;
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  font-size: 30px;
+  font-weight: 660;
+  letter-spacing: -0.024em;
+  line-height: 1;
+  color: var(--fg-muted);
+}
+
+.consistency--great .consistency-score { color: var(--great); }
+.consistency--good  .consistency-score { color: var(--good); }
+.consistency--fair  .consistency-score { color: var(--fair); }
+.consistency--work  .consistency-score { color: var(--work); }
+
+.consistency-out-of {
+  font-size: 13px;
+  font-weight: var(--wt-label);
+  letter-spacing: 0;
+  color: var(--fg-faint);
+}
+
+.consistency-head h2 {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: end;
+  font-size: 17px;
+  font-weight: 640;
+  letter-spacing: -0.022em;
+}
+
+.consistency-head p {
+  grid-column: 2;
+  grid-row: 3;
+  align-self: start;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--fg-muted);
+}
+
+.consistency-scores {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+/* The same kicker the block headings use, so a label inside a card and a label
+   over a section are not two different sizes of the same idea. */
+.consistency-label {
+  font-size: 11.5px;
+  font-weight: 660;
+  letter-spacing: var(--tr-kicker);
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+.consistency-chips {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.cchip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 46px;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  background: var(--ink-1);
+  border: 1px solid var(--hairline);
+}
+
+.cchip em {
+  font-style: normal;
+  font-size: 16px;
+  font-weight: 660;
+  letter-spacing: -0.02em;
+}
+
+.cchip > span {
+  font-size: 11px;
+  color: var(--fg-faint);
+}
+
+/* The best serve against the worst one. Sits between the chips it names and the
+   spread rows it is drawn from, so the reading order is: here are your serves,
+   here are the two worth comparing, here is every element's travel. */
+.best-worst {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.best-worst-lead {
+  margin: 0;
+  font-size: 13px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
+.best-worst-lead strong {
+  color: var(--fg);
+  font-weight: 640;
+}
+
+.best-worst-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.best-worst-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.best-worst-metric {
+  font-size: 11px;
+  color: var(--fg-faint);
+}
+
+/* Wraps rather than sitting in two columns: the readouts are sentences of
+   unpredictable length ("Racket jammed on the back"), and a two-column grid put
+   one of them on three lines beside a one-line neighbour. */
+.best-worst-pair {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 13px;
+  line-height: var(--lh-snug);
+}
+
+/* The better serve carries the accent and the worse one is plain, rather than
+   the pair being scored green against red. Both are the same player on the same
+   day, and one of them is the thing to repeat. */
+.best-worst-good {
+  color: var(--good);
+}
+
+.best-worst-bad {
+  color: var(--fg-muted);
+}
+
+/* The two serves as pictures, position by position. */
+.pair-frames {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pair-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pair-label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 11px;
+  color: var(--fg-faint);
+}
+
+/* Two columns at every width, never wrapping to one.
+   A pair that stacks is not a pair — the whole argument is that the eye can
+   cross from one trophy position to the other without scrolling, and on a phone
+   two 3:4 stills at half width each are still taller than they are wide. */
+.pair-shots {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pair-shots figure {
+  margin: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pair-shots img,
+.pair-missing {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: var(--r-sm);
+  background: var(--ink-2);
+  border: 1px solid var(--hairline);
+}
+
+.pair-shots figcaption {
+  font-size: 11px;
+  color: var(--fg-muted);
+}
+
+/* The better serve's number carries the accent, matching the readout above it,
+   so the two halves of this block agree about which serve is the good one.
+
+   Gated on the modifier rather than on position. This used to select
+   `figure:first-child` unconditionally, which is true by construction for the
+   basket comparison and merely lucky, about half the time, for "Then, and now"
+   — that one orders by date and can regress, so a player whose serve had gone
+   backwards was shown their older, worse serve tinted as the good one. The
+   claim now comes from the caller, through `pairRankModifier`; a caller with no
+   claim to make emits no modifier and neither caption is accented. */
+.pair-shots--better-left figure:first-child figcaption,
+.pair-shots--better-right figure:last-child figcaption {
+  color: var(--good);
+}
+
+.pair-absent {
+  margin: 0;
+  font-size: 12px;
+  line-height: var(--lh-snug);
+  color: var(--fg-faint);
+  text-wrap: pretty;
+}
+
+.best-worst-none {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+.spreads {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.spread-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.spread-label {
+  font-size: 13.5px;
+  font-weight: 560;
+}
+
+.spread-score {
+  font-size: 16px;
+  font-weight: 660;
+  letter-spacing: -0.02em;
+}
+
+.spread-score--great { color: var(--great); }
+.spread-score--good  { color: var(--good); }
+.spread-score--fair  { color: var(--fair); }
+.spread-score--work  { color: var(--work); }
+
+/* The measured range, drawn over the target band on the metric's own axis. */
+.spread-fill {
+  position: absolute;
+  height: 9px;
+  border-radius: var(--r-pill);
+  min-width: 4px;
+  border: 2px solid var(--ink-2);
+  box-sizing: content-box;
+  margin-left: -2px;
+}
+
+.spread-fill--great { background: var(--great); }
+.spread-fill--good  { background: var(--good); }
+.spread-fill--fair  { background: var(--fair); }
+.spread-fill--work  { background: var(--work); }
+
+.spread-detail {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: var(--wt-label);
+  line-height: var(--lh-tight);
+  color: var(--fg-muted);
+}
+
+.spread-sep {
+  padding: 0 7px;
+  font-weight: var(--wt-body);
+  color: var(--fg-faint);
+}
+
+.consistency-foot {
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--fg-faint);
+}
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.note {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--r-sm);
+  background: var(--fair-dim);
+  border: 1px solid color-mix(in srgb, var(--fair) 20%, transparent);
+  font-size: 12.5px;
+  line-height: var(--lh-snug);
+  color: var(--fair-ink);
+  text-wrap: pretty;
+}
+
+.note .icon {
+  color: var(--fair);
+  margin-top: 1px;
+}
+
+/* ============================================================================
+   Best-to-worst gap — the one chart where down is the good direction
+   ========================================================================= */
+
+.gaps {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.gap {
+  display: grid;
+  grid-template-columns: 62px 1fr 28px;
+  align-items: center;
+  gap: 10px;
+}
+
+.gap-date {
+  font-size: 11px;
+  color: var(--fg-faint);
+}
+
+/*
+ * Deliberately not the delta bars.
+ *
+ * These two sit one under the other in the same sheet and were built to the
+ * same label / track / value grid, but they mean opposite things: a delta bar
+ * runs out from a centre axis and up is good, while a gap bar runs from the left
+ * edge and *short* is good. Sharing the great/good/fair/work fills on top of
+ * that made them read as one chart with an inconsistent scale.
+ *
+ * So the colour coding goes. A single flat rule per row, with only the most
+ * recent basket picked out — the eye compares lengths, which is the one
+ * comparison this chart is for, and there is no second scale to misread.
+ */
+.gap-track {
+  position: relative;
+  height: 4px;
+  background: var(--ink-3);
+}
+
+.gap-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--fg-faint);
+}
+
+.gap:first-child .gap-fill {
+  background: var(--lime);
+  height: 8px;
+  top: -2px;
+}
+
+.gap:first-child .gap-value {
+  color: var(--fg);
+}
+
+.gap-value {
+  font-size: 12.5px;
+  font-weight: 620;
+  text-align: right;
+  color: var(--fg-muted);
+}
+
+.gaps-note {
+  margin-top: 3px;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--fg-faint);
+}
+
+/* ============================================================================
+   Injury risk — outranks the score, the refusal and everything else
+   ========================================================================= */
+
+/*
+ * Deliberately the loudest block in the app, and deliberately not a card.
+ *
+ * Everything else on this page is judged against the tier ladder and is
+ * therefore a matter of degree. These are read against absolute limits — a
+ * wrist has the same range at every rating — so they are the one thing here
+ * that is not a score. The square left edge and the flat fill are what stop it
+ * reading as another rounded panel of advice to scroll past.
+ */
+.injuries {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/*
+ * The base is the loud one, and every severity gets it.
+ *
+ * Styling only the high case and letting the rest fall through to a quiet
+ * default gets this exactly backwards: `medium` is the ordinary verdict — the
+ * flags escalate to high only well past the limit — so the common warning would
+ * have been the whispered one. High adds a filled edge on top rather than being
+ * the only case that shouts.
+ */
+.injury {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 18px 18px 19px;
+  background: color-mix(in srgb, var(--work) 16%, var(--ink-1));
+  border: 1px solid color-mix(in srgb, var(--work) 45%, transparent);
+  border-left: 5px solid var(--work);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+}
+
+.injury--high {
+  background: color-mix(in srgb, var(--work) 26%, var(--ink-1));
+  border-color: var(--work);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--work) 30%, transparent);
+}
+
+/* The word doing the work a warning glyph used to. It takes the block's own
+   colour rather than the faint grey every other kicker sits in — a triangle is
+   one more small shape on a page that already has several, but a red rule and a
+   red word read at arm's length. */
+.injury-label {
+  color: var(--work);
+}
+
+/*
+ * Set to carry against the score ring and the focus card further down the page.
+ * At the body size of a caveat it lost to both, which made "first in the
+ * document" and "first thing you see" two different orderings.
+ */
+.injury-title {
+  display: block;
+  font-size: 17px;
+  font-weight: var(--wt-title);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tr-title);
+  color: var(--work-ink);
+}
+
+.injury-text p {
+  margin-top: 6px;
+  max-width: var(--measure);
+  font-size: 14px;
+  line-height: var(--lh-snug);
+  color: var(--work-ink-soft);
+  text-wrap: pretty;
+}
+
+/* ============================================================================
+   Refusal — the clip the engine will not put a number on
+   ========================================================================= */
+
+.focus {
+  position: relative;
+  padding: 22px;
+  border-radius: var(--r-lg);
+  background:
+    linear-gradient(158deg, color-mix(in srgb, var(--lime) 11%, transparent), color-mix(in srgb, var(--lime) 2%, transparent) 55%),
+    var(--ink-2);
+  border: 1px solid color-mix(in srgb, var(--lime) 24%, transparent);
+  overflow: hidden;
+}
+
+.focus::after {
+  content: '';
+  position: absolute;
+  top: -70px;
+  right: -70px;
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--lime-glow), transparent 68%);
+  pointer-events: none;
+}
+
+.focus-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lime);
+}
+
+/* The card's only heading since the fix moved up into the hero: a label over
+   how to work on it, not a second headline. */
+.focus > .focus-kicker {
+  display: flex;
+  margin: 0 0 14px;
+}
+
+.focus > p {
+  max-width: var(--measure);
+  font-size: 15px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+.focus-drill {
+  position: relative;
+  margin-top: 20px;
+  padding: 16px 17px 17px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--ink) 55%, transparent);
+  border: 1px solid var(--hairline);
+}
+
+/* Quieter than the focus kicker above it, and grey rather than lime: the drill
+   is how to do the one thing, not a second one thing. */
+.focus-drill-kicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+.focus-drill h3 {
+  font-size: 14.5px;
+  font-weight: var(--wt-key);
+  letter-spacing: var(--tr-title);
+  margin: 7px 0 6px;
+}
+
+.focus-drill p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--fg-muted);
+}
+
+/* The dose on the left and "Show me" on the right, one row: the two things a
+   player does with a drill, side by side. */
+.focus-drill-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 11px;
+}
+
+/* The same quiet lime text button as "Change" on the level line, with the
+   same 44px hit area grown from the middle — see `.levelled-btn::after`. */
+/* The way from a report to its glance, under the verdict it summarises. */
+.drill-show {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  gap: 3px;
+  flex: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--lime);
+}
+
+.drill-show::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
+}
+
+@media (hover: hover) {
+  .drill-show:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+/* What the last basket said about the step, under the drill it judged. */
+.drill-check {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline);
+}
+
+.focus-drill .drill-check p {
+  flex: 1 1 200px;
+  min-width: 0;
+  font-size: 13px;
+  line-height: var(--lh-snug);
+  color: var(--fg);
+}
+
+/* "Show me" and "All steps", side by side at the right of the dose. */
+.drill-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/*
+ * The ladder the drill is one rung of.
+ *
+ * A numbered list inside the drill box rather than a second box, because it is
+ * the same drill's plan rather than a second thing to do. The current rung is
+ * the one lime mark, matching the dose pill above it, and the rest stay quiet.
+ */
+.drill-ladder {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hairline);
+}
+
+.focus-drill .drill-feel,
+.focus-drill .drill-note {
+  font-size: 13px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
+/* The feel sits under the drill's how, outside the folded ladder (L4.2). */
+.focus-drill > .drill-feel {
+  margin-top: 8px;
+}
+
+.drill-feel strong,
+.drill-note strong {
+  color: var(--fg);
+  font-weight: var(--wt-key);
+}
+
+.drill-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 2px 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: rung;
+}
+
+.drill-steps li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 9px 11px 10px 36px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--hairline-soft);
+  counter-increment: rung;
+}
+
+.drill-steps li::before {
+  content: counter(rung);
+  position: absolute;
+  left: 12px;
+  top: 9px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fg-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.drill-steps li.is-now {
+  border-color: var(--lime-deep);
+  background: var(--lime-glow);
+}
+
+.drill-steps li.is-now::before {
+  color: var(--lime);
+}
+
+.drill-step-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: var(--wt-key);
+  color: var(--fg);
+}
+
+.drill-step-now {
+  padding: 1px 7px;
+  border-radius: var(--r-pill);
+  background: var(--lime-glow);
+  color: var(--lime);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.drill-step-how {
+  font-size: 12.5px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
+.drill-step-reps {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--fg-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The chevron points down when the demonstration is open, as a disclosure. */
+.drill-show[aria-expanded='true'] svg {
+  transform: rotate(90deg);
+}
+
+.fault-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+/* Which half is which, under the picture rather than painted into it, so the
+   words stay text a screen reader and the copy lint can both read. */
+.fault-demo-labels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-top: -4px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+/* What to look at in the demonstration (L4.5): the one part the two bodies
+   differ in, named in the voice of an instruction, above the small print. */
+.fault-demo-watch {
+  font-size: 13.5px;
+  font-weight: var(--wt-key);
+  color: var(--fg);
+}
+
+/* Holds the player's place while the rig is loading, so the box below the
+   drill does not jump when the picture arrives. Square, as the rig draws. */
+.fault-demo-wait {
+  aspect-ratio: 1;
+  max-height: 68svh;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--hairline);
+  background: var(--ink-2);
+}
+
+/* The dose, as the one lime object inside the drill box — the thing you go and
+   do, sized like a count rather than a heading. */
+.focus-reps {
+  display: inline-block;
+  padding: 5px 11px;
+  border-radius: var(--r-pill);
+  background: var(--lime-glow);
+  color: var(--lime);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+/*
+ * What the report is holding back, as a count.
+ *
+ * Set below the instruction and above the drill, quieter than both. It exists
+ * so that a second fault surfacing on the next clip does not read as the app
+ * changing its mind — not to compete with the one thing to work on.
+ */
+.focus-suppressed,
+.focus-best {
+  position: relative;
+  margin-top: 10px;
+  max-width: var(--measure);
+  font-size: 12.5px;
+  line-height: var(--lh-snug);
+  color: var(--fg-faint);
+  text-wrap: pretty;
+}
+
+/*
+ * The rest of the queue.
+ *
+ * Everything here is one step down from the item above it — no panel of its own,
+ * no lime, a smaller title — because the ranking is the content. Four boxes of
+ * equal weight would be the dashboard this section exists instead of: the player
+ * would have to decide which to start with, which is the decision the hierarchy
+ * already made for them.
+ */
+.focus-next {
+  position: relative;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--hairline);
+  list-style: none;
+}
+
+.focus-next-kicker {
+  display: block;
+  margin-bottom: 13px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+.focus-next-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--hairline-soft);
+}
+
+.focus-next-item:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+/* The position in the queue, carried by a numeral rather than by a bullet: the
+   order is the instruction, so it has to survive being skim-read. */
+.focus-next-rank {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--hairline);
+  color: var(--fg-muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.focus-next-body {
+  min-width: 0;
+}
+
+.focus-next-title {
+  font-size: 13.5px;
+  font-weight: var(--wt-key);
+  letter-spacing: var(--tr-title);
+  line-height: var(--lh-snug);
+}
+
+.focus-next-why {
+  margin-top: 4px;
+  max-width: var(--measure);
+  font-size: 12.5px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+.focus-next-drill {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
+.focus-next-drill svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--fg-faint);
+}
+
+.focus-next-drill strong {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+/* A later item's drill, folded to its name and dose (L4.2). The summary is the
+   same line it always was, made tall enough to tap, with a chevron that turns. */
+.focus-next-how > summary {
+  align-items: center;
+  min-height: 36px;
+  margin-top: 4px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.focus-next-how > summary::-webkit-details-marker {
+  display: none;
+}
+
+.focus-next-how > summary svg:last-child {
+  margin: 0 0 0 auto;
+  transition: transform var(--fast) var(--ease);
+}
+
+.focus-next-how[open] > summary svg:last-child {
+  transform: rotate(90deg);
+}
+
+.focus-next-how-text {
+  margin-top: 4px;
+  padding-left: 20px;
+  max-width: var(--measure);
+  font-size: 12.5px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+/* Which rung these targets came off, and the way to move it. */
+.levelled {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px solid var(--hairline);
+}
+
+.levelled-text {
+  font-size: 12px;
+  line-height: var(--lh-snug);
+  color: var(--fg-faint);
+}
+
+.levelled-btn {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  gap: 3px;
+  flex: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--lime);
+}
+
+/*
+ * The smallest target in the app was 57 x 18, and it is the only way to correct
+ * the rung every target band in the report is measured against. A clip the
+ * engine reads as a beginner hands the player targets they already clear, and
+ * the control that fixes that was an 18px-tall word hard against the right edge.
+ *
+ * Height only: `.levelled` is `justify-content: space-between`, so this button
+ * has the right edge to itself and needs no sideways growth. The 13px of
+ * overhang each way lands inside `.levelled`'s own padding above and `.focus`'s
+ * below, so it collides with nothing. `position: relative` on the button is
+ * load-bearing — `.levelled` already sets it, and without it the pseudo-element
+ * would resolve against the whole row.
+ */
+.levelled-btn::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
+}
+
+/*
+ * Why a saved report will not move when the level does.
+ *
+ * `--fg-muted` rather than the `--fg-faint` its neighbour uses: this is the one
+ * line that explains why the control above it appears to have done nothing, so
+ * it is the wrong place to be the least legible text on the panel.
+ */
+.levelled-note {
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
+/* ============================================================================
+   Level picker — which rung to be marked against
+   ========================================================================= */
+
+/*
+ * A follow-on, not a peer.
+ *
+ * This sits directly under `.hand-pick` in the first-run sheet and directly
+ * under `.focus-drill` on the report, and both of those are bordered boxes on a
+ * panel. Given the same chrome it read as a second question of equal standing —
+ * which is wrong twice over: the hand has to be right before the first clip, and
+ * this one has a perfectly good answer of "don't ask me". So it carries a rule
+ * and no box.
+ */
+.level-pick {
+  position: relative;
+  margin-top: 18px;
+  padding: 15px 0 0;
+  border: 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.level-pick legend {
+  padding: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+.level-pick-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.level-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 11px 13px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--hairline);
+  background: var(--ink-2);
+  text-align: left;
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+
+.level-option strong {
+  font-size: 13.5px;
+  font-weight: 620;
+  color: var(--fg-muted);
+}
+
+.level-option span {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--fg-faint);
+}
+
+.level-option.is-on {
+  border-color: var(--lime);
+  background: color-mix(in srgb, var(--lime) 12%, var(--ink-2));
+}
+
+.level-option.is-on strong {
+  color: var(--fg);
+}
+
+.level-pick-note {
+  margin-top: 11px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--fg-faint);
+}
+
+/* ============================================================================
+   How I read this clip — the assumptions, under the fix rather than above it
+   ========================================================================= */
+
+/*
+ * A panel of corrections, built like `.serves` rather than like `.focus`.
+ *
+ * Every line in here is something the player can tell the app it got wrong — a
+ * kick serve marked against flat bands is penalised for contacting the ball
+ * over the head, which is the entire point of a kick — so it has to be visible
+ * and tappable. None of it is the thing to do next, though, and while it sat
+ * stacked between the score and the fix it pushed the one instruction on the
+ * page off the first screen. Same ink, same hairline, no elevation: context,
+ * not an answer.
+ */
+.reading {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 17px 16px 18px;
+  border-radius: var(--r-md);
+  background: var(--ink-2);
+  border: 1px solid var(--hairline);
+}
+
+.reading-title {
+  font-size: 12px;
+  font-weight: 660;
+  letter-spacing: var(--tr-kicker);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+/* Left-aligned, where the hero's copy of these was centred. In a card with a
+   heading over it, centred chips read as a caption to nothing. */
+.reading-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+/* What the camera angle could not see (D3.9): a quiet note under the chips,
+   in the same ink as the serve-type note below it. */
+.reading-unseen {
+  margin-top: 11px;
+  max-width: var(--measure);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--fg-muted);
+  text-wrap: pretty;
+}
+
+/* --- which serve ---------------------------------------------------------- */
+
+.judged {
+  margin-top: 4px;
+  padding-top: 15px;
+  border-top: 1px solid var(--hairline-soft);
+}
+
+/* The rule divides one row from the row above it. Straight under the section's
+   own heading, as the first tag row sits, it would only underline the title. */
+.reading-title + .judged {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.judged-lead {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.judged-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* Sized by its padding, not by the 30px square the numbered chips want. Leaving
+   the base height in place was what squeezed the label out of the box. */
+.judged-options .serve-chip {
+  width: auto;
+  height: auto;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.judged-note {
+  margin-top: 11px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--fg-faint);
+}
+
+/* ============================================================================
+   Example banner — the sample report says what it is, above the fold
+   Assembled from existing tokens: the storage note's surface, and the lime
+   accent as the rule because this is an affordance (film your own), not a
+   warning — the score colours stay reserved for scores.
+   ========================================================================= */
+
+.toss-map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+
+.toss-map-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Where to aim (L4.7): the target's own vocabulary — a faint zone with a
+   dashed edge, never a solid shape that could read as a measurement. */
+.toss-map-target {
+  fill: var(--hairline-soft);
+  stroke: var(--fg-faint);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+
+.toss-map-aim {
+  font-size: 12.5px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
+/* The firing-order timeline (D3.8): labels in the muted ink, never the marks'. */
+.firing-label {
+  fill: var(--fg-muted);
+  font-size: 11px;
+  font-family: var(--font);
+}
+
+.firing-note {
+  font-size: 12px;
+}
+
+/* ============================================================================
+   Your frame beside the model's (L4.6)
+   ========================================================================= */
+
+.moment-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 16px 0 4px;
+}
+
+.moment-pair-title {
+  color: var(--fg-faint);
+}
+
+.moment-pair-stills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.moment-pair-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* The same box for both bodies, so the fit makes them the same size. */
+.moment-pair-canvas,
+.moment-pair-wait {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--r-md);
+  border: 1px solid var(--hairline);
+  background: var(--ink-2);
+}
+
+.moment-pair-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.moment-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.moment-checks li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12.5px;
+  line-height: var(--lh-snug);
+  color: var(--fg-muted);
+}
+
+.moment-checks li svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.moment-checks li.is-in svg {
+  color: var(--lime);
+}
+
+.moment-checks li.is-out svg {
+  color: var(--work);
+}
+
+.moment-checks strong {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+/* Then and now one moment at a time (L4.9): the pills choose, and the one pair
+   gets the room six used to share. */
+.pair-list--one .pair-label {
+  display: none;
+}

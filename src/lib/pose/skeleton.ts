@@ -3,6 +3,8 @@ import { SOFT_MEASUREMENT } from '../analysis/softness'
 import { LM, jointAngle, type Side, sided } from '../analysis/geometry'
 import { racketToDraw, smoothedRacket, type RacketEstimate } from '../analysis/racket'
 import { boundsOf, figureOf, type Figure } from '../analysis/targetShape'
+import { paintAthlete, type Material } from '../figure/athlete'
+import { nearSide } from '../figure/shape'
 import type { Frame, Metric, PhaseId } from '../analysis/types'
 
 export type Limb = ReturnType<typeof sided>
@@ -550,7 +552,27 @@ export function fitBody(frame: Frame, aspect: number, w: number, h: number, fill
   return { ox: w / 2 - ((x0 + x1) / 2) * d, oy: h / 2 - ((y0 + y1) / 2) * d, dw: d * aspect, dh: d }
 }
 
+/** The figure's solids a fault's bones lie in, for painting them. */
+function solidsOf(bones: readonly (readonly [number, number])[]): string[] {
+  const names: [string, number, number][] = (['left', 'right'] as const).flatMap((side) => {
+    const l = sided(side)
+    return [
+      [`${side}-upper`, l.shoulder, l.elbow],
+      [`${side}-fore`, l.elbow, l.wrist],
+      [`${side}-thigh`, l.hip, l.knee],
+      [`${side}-shin`, l.knee, l.ankle],
+    ] as [string, number, number][]
+  })
+  return bones.flatMap(([a, b]) => names.filter(([, p, q]) => (p === a && q === b) || (p === b && q === a)).map(([id]) => id))
+}
+
 export interface SkeletonOptions {
+  /**
+   * Draw the lit athletic figure in place of the lines. For anywhere the body
+   * stands on its own; over a video the lines stay, because a solid figure
+   * would hide the player it is drawn on.
+   */
+  figure?: { material?: Material; still?: boolean; ground?: number; stature?: number; floorY?: number }
   frame: Frame
   /** Video width ÷ height. Image landmark x is pre-multiplied by this. */
   aspect: number
@@ -919,42 +941,6 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
     ctx.globalAlpha = alpha
   }
 
-  // The trunk's area first, faint, so the figure has a body between its lines.
-  {
-    const corners = [LM.leftShoulder, LM.rightShoulder, LM.rightHip, LM.leftHip].map(at)
-    ctx.beginPath()
-    ctx.moveTo(corners[0].x, corners[0].y)
-    for (const c of corners.slice(1)) ctx.lineTo(c.x, c.y)
-    ctx.closePath()
-    ctx.fillStyle = PALETTE.torso
-    ctx.fill()
-  }
-
-  limbs(BONES, PALETTE.neutral)
-
-  const armBones = (side: Limb, w: readonly [number, number, number]): Bone[] => [
-    [side.shoulder, side.elbow, w[0], w[1]],
-    [side.elbow, side.wrist, w[1], w[2]],
-  ]
-  limbs(armBones(tossArm, ARM_WEIGHT.toss), PALETTE.toss)
-
-  // The racket arm last and in the accent: it is drawn over the tossing arm on
-  // purpose, because when the two cross it is the hitting arm you are watching.
-  limbs(armBones(arm, ARM_WEIGHT.racket), PALETTE.active)
-
-  // The bones the fault is in, over everything else on the body (L4.4), each
-  // at the weight that bone already has.
-  if (o.work?.length) {
-    const weighted = [...BONES, ...armBones(arm, ARM_WEIGHT.racket), ...armBones(tossArm, ARM_WEIGHT.toss)]
-    limbs(
-      o.work.map(([a, b]): Bone => {
-        const known = weighted.find(([p, q]) => (p === a && q === b) || (p === b && q === a))
-        return known ? [a, b, known[a === known[0] ? 2 : 3], known[a === known[0] ? 3 : 2]] : [a, b, 5, 4]
-      }),
-      PALETTE.work,
-    )
-  }
-
   // The racket, where the hand can be seen well enough to point it. Drawn under
   // the joint dots so the hand still reads as the anchor, and skipped silently
   // when the knuckles are lost — a racket swinging off at a guessed angle is
@@ -970,8 +956,62 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
           sequence ? smoothedRacket(sequence.frames, sequence.index, o.racket, bodyHeight) : undefined,
         )
       : undefined)
+
+  if (o.figure) {
+    const placed = f.image.map((p) => ({ x: ox + (p.x / aspect) * dw, y: oy + p.y * dh }))
+    paintAthlete(ctx, placed, {
+      material: o.figure.material,
+      racket: o.racket,
+      gear: est
+        ? { grip: { x: ox + (est.grip.x / aspect) * dw, y: oy + est.grip.y * dh }, head: { x: ox + (est.head.x / aspect) * dw, y: oy + est.head.y * dh } }
+        : undefined,
+      stature: o.figure.stature,
+      near: nearSide(placed, f.world?.length ? f.world : undefined),
+      work: o.work?.length ? solidsOf(o.work) : undefined,
+      ground: o.figure.ground,
+      floorY: o.figure.floorY,
+      still: o.figure.still,
+    })
+  }
+
+  // The trunk's area first, faint, so the figure has a body between its lines.
+  if (!o.figure) {
+    const corners = [LM.leftShoulder, LM.rightShoulder, LM.rightHip, LM.leftHip].map(at)
+    ctx.beginPath()
+    ctx.moveTo(corners[0].x, corners[0].y)
+    for (const c of corners.slice(1)) ctx.lineTo(c.x, c.y)
+    ctx.closePath()
+    ctx.fillStyle = PALETTE.torso
+    ctx.fill()
+  }
+
+  if (!o.figure) limbs(BONES, PALETTE.neutral)
+
+  const armBones = (side: Limb, w: readonly [number, number, number]): Bone[] => [
+    [side.shoulder, side.elbow, w[0], w[1]],
+    [side.elbow, side.wrist, w[1], w[2]],
+  ]
+  if (!o.figure) limbs(armBones(tossArm, ARM_WEIGHT.toss), PALETTE.toss)
+
+  // The racket arm last and in the accent: it is drawn over the tossing arm on
+  // purpose, because when the two cross it is the hitting arm you are watching.
+  if (!o.figure) limbs(armBones(arm, ARM_WEIGHT.racket), PALETTE.active)
+
+  // The bones the fault is in, over everything else on the body (L4.4), each
+  // at the weight that bone already has.
+  if (o.work?.length && !o.figure) {
+    const weighted = [...BONES, ...armBones(arm, ARM_WEIGHT.racket), ...armBones(tossArm, ARM_WEIGHT.toss)]
+    limbs(
+      o.work.map(([a, b]): Bone => {
+        const known = weighted.find(([p, q]) => (p === a && q === b) || (p === b && q === a))
+        return known ? [a, b, known[a === known[0] ? 2 : 3], known[a === known[0] ? 3 : 2]] : [a, b, 5, 4]
+      }),
+      PALETTE.work,
+    )
+  }
+
   {
-    if (est) {
+    if (est && !o.figure) {
       const grip = { x: ox + (est.grip.x / aspect) * dw, y: oy + est.grip.y * dh }
       const head = { x: ox + (est.head.x / aspect) * dw, y: oy + est.head.y * dh }
       const dx = head.x - grip.x
@@ -1270,7 +1310,7 @@ function roundRectPath(
  * at all — it is the player's own body on another day. Drawing a leader from one
  * to the other would invent a direction the app has not earned.
  */
-function drawPairedGhost(
+export function drawPairedGhost(
   ctx: CanvasRenderingContext2D,
   image: readonly ({ x: number; y: number } | null)[],
   rect: DrawRect,

@@ -27,7 +27,7 @@ function stills(analysis: Reportable): CoachStill[] {
     if (!ctx) return
     ctx.fillStyle = '#0f1218'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
-    drawSkeleton(ctx, { frame, aspect: poses.aspect, rect: fitBody(frame, poses.aspect, canvas.width, canvas.height), racket: analysis.handedness })
+    drawSkeleton(ctx, { frame, aspect: poses.aspect, rect: fitBody(frame, poses.aspect, canvas.width, canvas.height), racket: analysis.handedness, figure: { still: true, ground: 1 } })
     out.push({ label: phase.label, src: canvas.toDataURL('image/png') })
   })
   return out

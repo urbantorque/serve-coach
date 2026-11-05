@@ -10,7 +10,8 @@ import { detectServe } from '../phases'
 import { drawSkeleton, fitContain } from '../../pose/skeleton'
 import { buildServe, rigStrikeFlight } from '../syntheticServe'
 import { ballMarkerAt } from '../../vision/ballTrack'
-import { faultDemo, modelServe } from '../../faultDemo'
+import { faultDemo } from '../../faultDemo'
+import { modelMotion } from '../../figure/modelMotion'
 import { highlightOf } from '../../demoDraw'
 import type { Frame } from '../types'
 import { assert, check, heading, note, report } from './harness'
@@ -248,7 +249,7 @@ check('the model ball leaves the tossing hand and meets the middle of the string
 
 check('every model serve carries its ball, on the player own side', () => {
   for (const racket of ['right', 'left'] as const) {
-    const m = modelServe(racket)!
+    const m = modelMotion(racket)!
     const contact = m.frames.find((f) => Math.abs(f.t - m.contactT) < 1e-9)!
     const end = m.ball!.samples[m.ball!.samples.length - 1]
     assert(dist(end, contact.racket!.head) < 1e-9, `${racket}: the ball misses the mirrored strings`)
