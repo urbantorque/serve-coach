@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import '../styles/fundamentals.css'
+import '../styles/player.css'
 import ConsistencyPanel from '../components/ConsistencyPanel'
 import TossMap from '../components/TossMap'
 import FiringTimeline from '../components/FiringTimeline'

@@ -173,7 +173,13 @@ check('the stylesheet is measured too, because nothing else measures it', () => 
  * measures — and moving a rule out of the entry sheet would read as saving
  * bytes the player still downloads, a moment later.
  */
-const SPLIT_CSS_GZIP_BUDGET_KB = 6
+/*
+ * Raised from 6 to 16 on purpose (lift, 2026-11-05). Most of the app's styles
+ * used to load on first open for screens nobody had reached. They now load with
+ * their screens, so this budget grew exactly as the entry sheet's use of its own
+ * shrank: the first open pays less, and the total is watched here.
+ */
+const SPLIT_CSS_GZIP_BUDGET_KB = 16
 
 check('the stylesheets that load with lazy screens are measured too', () => {
   const split = files.filter((f) => f.endsWith('.css') && f !== cssName)

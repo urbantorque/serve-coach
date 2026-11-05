@@ -1,4 +1,6 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
+import '../styles/analysing.css'
+import '../styles/player.css'
 import { Icon } from '../components/primitives'
 import type { AnalyzeProgress, Step } from '../lib/analysis/analyze'
 import { MIN_COMPARABLE_SERVES } from '../lib/analysis/consistency'

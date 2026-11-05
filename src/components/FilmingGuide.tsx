@@ -1,3 +1,5 @@
+import '../styles/guide.css'
+import '../styles/player.css'
 import { useState } from 'react'
 import { PLACEMENT, SPEED_PLACEMENT } from '../lib/placement'
 import ModelServe from './ModelServe'

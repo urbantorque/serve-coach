@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import '../styles/progress.css'
 import FramePair, { type PairPosition } from '../components/FramePair'
 import PracticeCard from '../components/PracticeCard'
 import ProgressShare from '../components/ProgressShare'

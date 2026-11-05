@@ -1,3 +1,5 @@
+import '../styles/analysing.css'
+import '../styles/player.css'
 import { useState } from 'react'
 import { Icon } from '../components/primitives'
 import { sessionDrillCheck } from '../lib/session/evidence'

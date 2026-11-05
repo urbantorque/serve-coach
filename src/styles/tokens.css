@@ -3,7 +3,24 @@
    Dark by default: you use this at dusk on a court, or indoors reviewing video.
    One accent (tennis lime) carries every affordance; status colours are
    reserved exclusively for score feedback so they always mean something.
+
+   `DESIGN.md` is the source of truth for how these are used.
    ========================================================================= */
+
+/*
+ * One self-hosted family, Archivo (SIL OFL, `src/assets/fonts/OFL.txt`), with a
+ * width axis, so numerals can run tall and condensed like a scoreboard while
+ * headlines stand wide, from one file. Precached with the shell, and it never
+ * touches the network again.
+ */
+@font-face {
+  font-family: 'Archivo';
+  src: url('../assets/fonts/archivo.woff2') format('woff2');
+  font-weight: 300 900;
+  font-stretch: 62% 125%;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   /* --- surface ramp, cool near-black -------------------------------------- */
@@ -69,6 +86,28 @@
   /* The darkest layer: behind a sheet, over a video frame. Below --ink. */
   --scrim: #040609;
 
+  /*
+   * Three surfaces, each with one job. The floor is the page. A panel is raised
+   * and holds one thing: lit from above, with a highlight along its top edge
+   * instead of a border all the way round. The stage is where the player's own
+   * picture goes, and is the only surface with a light of its own.
+   */
+  --panel: linear-gradient(180deg, #151a25, #0f131b);
+  --panel-raised: linear-gradient(180deg, #1c2230, #131822);
+  --panel-edge: inset 0 1px 0 rgba(255, 255, 255, 0.055);
+  --stage:
+    radial-gradient(90% 62% at 34% 26%, rgba(126, 146, 178, 0.3), transparent 72%),
+    radial-gradient(70% 34% at 60% 100%, rgba(205, 249, 74, 0.07), transparent 76%),
+    #090b10;
+  /* Lime as a whole surface: a moment, not a chip. */
+  --moment: linear-gradient(160deg, #dcff66, #b8e62e);
+  --moment-ink: #141c04;
+  /* What sits over a picture, so words stay readable on any footage. */
+  --veil: linear-gradient(180deg, rgba(9, 11, 16, 0) 0%, rgba(9, 11, 16, 0.72) 58%, #090b10 100%);
+  --veil-top: linear-gradient(180deg, rgba(9, 11, 16, 0.66), rgba(9, 11, 16, 0));
+  --glass: rgba(14, 17, 24, 0.72);
+  --glass-edge: rgba(255, 255, 255, 0.09);
+
   /* --- geometry ----------------------------------------------------------- */
   --r-xs: 8px;
   --r-sm: 12px;
@@ -90,9 +129,14 @@
   --slow: 480ms;
 
   /* --- type --------------------------------------------------------------- */
-  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI',
-    Inter, Roboto, Helvetica, Arial, sans-serif;
+  --font: 'Archivo', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text',
+    'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Segoe UI Mono', Menlo, monospace;
+
+  /* Width, named for the job. */
+  --wd-number: 62%;
+  --wd-text: 100%;
+  --wd-head: 112%;
 
   /*
    * One weight ramp for the whole app, so a heading and an instruction never
@@ -276,26 +320,62 @@ ol {
    the hand-set values they resemble: the near-matches are near, not exact, and
    adopting them would move pixels on screens nobody asked to change. */
 
+/* The one big number on a screen: tall, condensed, a scoreboard's. */
+.t-score {
+  font-size: clamp(104px, 33vw, 136px);
+  font-stretch: var(--wd-number);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 0.82;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A number beside it, or leading a row. */
+.t-figure {
+  font-size: 40px;
+  font-stretch: var(--wd-number);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 0.92;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A screen's headline: wide, and in sentence case. */
+.t-display {
+  font-size: clamp(27px, 8vw, 33px);
+  font-stretch: var(--wd-head);
+  font-weight: 700;
+  letter-spacing: -0.012em;
+  line-height: 1.06;
+  text-wrap: balance;
+}
+
 .t-headline {
-  font-size: clamp(20px, 5.4vw, 24px);
-  font-weight: var(--wt-title);
-  letter-spacing: var(--tr-title);
+  font-size: clamp(21px, 5.8vw, 24px);
+  font-stretch: 106%;
+  font-weight: 680;
+  letter-spacing: -0.008em;
   line-height: var(--lh-tight);
+  text-wrap: balance;
 }
 
 .t-subhead {
   font-size: 17px;
   font-weight: var(--wt-key);
-  letter-spacing: var(--tr-title);
+  letter-spacing: -0.004em;
   line-height: var(--lh-tight);
 }
 
+/*
+ * A signpost. It used to be twelve-pixel capitals, spaced apart, on every
+ * block of every screen: a template's rhythm, and the hardest type on the page
+ * to read. A label is sentence case at a size a player can read.
+ */
 .t-overline {
-  font-size: 12px;
-  font-weight: var(--wt-key);
-  letter-spacing: var(--tr-kicker);
-  line-height: 1.2;
-  text-transform: uppercase;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.25;
   color: var(--fg-muted);
 }
 
