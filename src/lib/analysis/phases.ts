@@ -874,7 +874,7 @@ function assertPlausible(
   const filming = [
     `Film from the side or from behind, ${PLACEMENT.distance} back.`,
     'Keep the whole body in frame from feet to racket.',
-    'Hold the phone steady — prop it on the fence if you can.',
+    'Hold the phone steady. Prop it on the fence if you can.',
   ]
 
   // Nothing between the start of the motion and contact leaves every window the
@@ -963,7 +963,7 @@ function assertPlausible(
     }
 
     throw new NotAServeError('That does not look like a serve.', [
-      'The clip needs a full service motion — toss, load, swing and contact.',
+      'The clip needs a full service motion: toss, load, swing and contact.',
       ...filming,
     ])
   }

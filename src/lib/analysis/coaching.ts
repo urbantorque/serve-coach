@@ -358,7 +358,7 @@ export const METRICS: Record<string, MetricCopy> = {
     decimals: 0,
     insight: {
       low: 'Your knees **barely bend** before the swing, so there is little spring to push up from.',
-      ok: 'An **athletic load** — deep enough to store power, shallow enough to launch.',
+      ok: 'An **athletic load**: deep enough to store power, shallow enough to launch.',
       high: 'You **sink deep** into the load.',
     },
     fix: {

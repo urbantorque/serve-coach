@@ -317,8 +317,7 @@ export default function ConsistencyPanel({ consistency: c, onDismiss, pair, crea
       </ul>
 
       <p className="consistency-foot">
-        A low score means that part of the serve changes every time. Worst first — the top row is
-        the one to start on.
+        A low score means that part of the serve changes every time. Worst first, so the top row is the one to start on.
       </p>
 
       {/* Everything above survives a reopened report with no clip behind it —

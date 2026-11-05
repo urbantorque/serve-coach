@@ -57,7 +57,7 @@ const REFUSALS: Record<RejectReason, { title: string; hints: string[] }> = {
   body_not_visible: {
     title: 'I could not see enough of you',
     hints: [
-      'Keep your whole body in frame — feet on the ground, racket at the top — for the entire serve.',
+      'Keep your whole body in frame for the entire serve, from your feet to the racket at the top.',
       'Move the camera back a few steps instead of zooming in.',
     ],
   },

@@ -187,7 +187,7 @@ export function describeDecodeFailure(video: HTMLVideoElement): UnreadableVideoE
     return new UnreadableVideoError('This browser cannot play that video.', [
       'It is most likely HEVC (High Efficiency), which iPhones record by default and this browser cannot decode.',
       'On iPhone: Settings › Camera › Formats › Most Compatible. Clips filmed after that will work.',
-      'For a clip you have already filmed, share it to yourself via WhatsApp or email — that converts it to H.264 on the way.',
+      'For a clip you have already filmed, send it to yourself by WhatsApp or email, which converts it to H.264 on the way.',
       'Safari on iPhone or Mac can play HEVC directly, if you have one to hand.',
     ])
   }
@@ -201,7 +201,7 @@ export function describeDecodeFailure(video: HTMLVideoElement): UnreadableVideoE
 
   if (code === MediaError.MEDIA_ERR_DECODE) {
     return new UnreadableVideoError('That video stopped part way through decoding.', [
-      'The file may be incomplete — a clip still uploading from iCloud or Google Photos often is.',
+      'The file may be incomplete. A clip still uploading from iCloud or Google Photos often is.',
       'Wait for it to finish downloading to the device, then try again.',
     ])
   }

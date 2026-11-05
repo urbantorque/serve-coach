@@ -308,7 +308,7 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { high: 'Struck as it starts to fall' },
   },
   kneeBend: {
-    stamp: '5fb1b2e6',
+    stamp: '921ad28a',
     insight: {
       low: ['Legs straight', 'Legs barely bent'],
       ok: ['Athletic load'],

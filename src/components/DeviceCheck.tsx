@@ -69,7 +69,7 @@ export default function DeviceCheck() {
             ? 'This phone can record a serve and read it back.'
             : recording.deadEnd
               ? 'This browser only records files it cannot open, so there is no record button. Film with your camera app.'
-              : 'This browser will not record. Film with your camera app and pick the video — that path is unaffected.'}
+              : 'This browser will not record. Film with your camera app and pick the video, which is unaffected.'}
         </span>
       </p>
 

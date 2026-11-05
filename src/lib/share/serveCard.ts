@@ -151,7 +151,7 @@ export async function renderReportCard(report: Report, streak?: string, bestScor
     ctx.fillText(String(fig.best), W - PAD - unitW, base - 12)
     ctx.font = textType(30)
     ctx.fillStyle = MUTED
-    ctx.fillText(`likely ${fig.low} to ${fig.high}, no radar`, W - PAD, base + 56)
+    ctx.fillText(`likely ${fig.low}–${fig.high}, no radar`, W - PAD, base + 56)
     ctx.textAlign = 'left'
   }
 

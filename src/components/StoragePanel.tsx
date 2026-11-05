@@ -79,7 +79,7 @@ export default function StoragePanel({ count, onImported }: Props) {
           // room and import the same file again, which only re-adds what still
           // is not on the device.
           (r.failed
-            ? ` ${r.failed} could not be saved — your device is out of storage. Free up space and import this file again.`
+            ? ` ${r.failed} could not be saved, because your phone is out of storage. Free up space and import this file again.`
             : '') +
           // Said rather than left to be found (L3.3): the restore counted these
           // in, and the store then had to make room.
@@ -106,8 +106,7 @@ export default function StoragePanel({ count, onImported }: Props) {
         <p className="storage-warn">
           <Icon name="warn" size={15} />
           <span>
-            Safari clears saved data after a week away. Add Serve Coach to your home screen —
-            Share, then <strong>Add to Home Screen</strong>.
+            Safari clears saved data after a week away. Add Serve Coach to your home screen: tap Share, then <strong>Add to Home Screen</strong>.
           </span>
         </p>
       )}
@@ -178,8 +177,7 @@ export default function StoragePanel({ count, onImported }: Props) {
       {outcome && <p className="storage-outcome">{outcome}</p>}
 
       <p className="sheet-note">
-        To move it to a new phone, send the file to yourself — email, AirDrop, a cloud drive.
-        Then tap Import from a file there.
+        To move it to a new phone, send the file to yourself by email or AirDrop. Then tap Import from a file there.
       </p>
     </section>
   )

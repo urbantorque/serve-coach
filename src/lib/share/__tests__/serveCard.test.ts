@@ -75,7 +75,7 @@ await check('the number, the words for it, the date and the one thing being work
 await check('a speed says about, its range, and that no radar checked it', async () => {
   const all = (await draw(fast)).texts.join(' | ')
   assert(all.includes('about'), 'the speed claimed to be exact')
-  assert(/likely \d+ to \d+, no radar/.test(all), 'no range, or no word on the radar')
+  assert(/likely \d+–\d+, no radar/.test(all), 'no range, or no word on the radar')
   const none = (await draw(base)).texts.join(' | ')
   assert(!none.includes('radar'), 'a serve with no speed talked about one')
 })

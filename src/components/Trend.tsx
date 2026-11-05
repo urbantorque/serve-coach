@@ -171,8 +171,7 @@ export function TrendTable({ points }: { points: TripPoint[] }) {
       </table>
       {broken && (
         <p className="sheet-note">
-          The scoring changed partway through. Serves marked the old way sit on a different scale —
-          that step is the scoring, not your serve.
+          The scoring changed partway through. Serves marked the old way sit on a different scale, so that step is the scoring, not your serve.
         </p>
       )}
     </>
@@ -223,7 +222,7 @@ export function GapTrend({ points }: { points: ConsistencyPoint[] }) {
       <li className="gaps-note">
         Longer is steadier: the bar grows as your best and worst serve in one clip close up. The
         number is the points between them
-        {points.length > shown.length ? ` — showing your last ${shown.length}` : ''}.
+        {points.length > shown.length ? `, showing your last ${shown.length}` : ''}.
       </li>
     </ul>
   )

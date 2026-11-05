@@ -78,7 +78,7 @@ export default function FramePair({
                   {leftCaption}
                   {leftIsBetter !== undefined && (
                     <span className="sr-only">
-                      {leftIsBetter ? ' — the better serve' : ' — the worse serve'}
+                      {leftIsBetter ? ', the better serve' : ', the worse serve'}
                     </span>
                   )}
                 </figcaption>
@@ -89,7 +89,7 @@ export default function FramePair({
                   {rightCaption}
                   {leftIsBetter !== undefined && (
                     <span className="sr-only">
-                      {leftIsBetter ? ' — the worse serve' : ' — the better serve'}
+                      {leftIsBetter ? ', the worse serve' : ', the better serve'}
                     </span>
                   )}
                 </figcaption>

@@ -104,7 +104,7 @@ try {
   await shoot('06-empty-history', { url: '/?open=progress', prefs: null, wait: 900 })
 
   // --------------------------------------------------------------- filming
-  await shoot('07-viewfinder', { steps: async (p) => { await p.getByLabel('Film a serve').click(); await p.waitForTimeout(2800) } })
+  await shoot('07-viewfinder', { steps: async (p) => { await p.getByRole('button', { name: /Film/ }).first().click(); await p.waitForTimeout(2800) } })
 
   // --------------------------------------------------------------- waiting
   await shoot('08-waiting', {

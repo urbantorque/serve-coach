@@ -48,7 +48,7 @@ export function coachReportHtml(
     .map(
       (p, i) =>
         `<li><h3>${i + 1}. ${esc(plain(p.title))}</h3><p>${esc(plain(p.why))}</p>` +
-        `<p class="drill"><strong>${esc(p.drill.name)}</strong> — ${esc(p.drill.how)} <em>${esc(p.drill.reps)}</em></p></li>`,
+        `<p class="drill"><strong>${esc(p.drill.name)}</strong>: ${esc(p.drill.how)} <em>${esc(p.drill.reps)}</em></p></li>`,
     )
     .join('')
   const pics = safeStills.map((s) => `<figure><img src="${s.src}" alt="${esc(s.label)}, as the tracked body"><figcaption>${esc(s.label)}</figcaption></figure>`).join('')

@@ -528,7 +528,7 @@ export function sixWeekMilestone(progress: Progress): string | undefined {
   const weeks = Math.floor((latest.createdAt - first.createdAt) / (7 * 24 * 60 * 60 * 1000))
   const delta = latest.overall - first.overall
   if (Math.abs(delta) < REAL_CHANGE.trip) {
-    return `${weeks} weeks in, a typical serve scores ${latest.overall} — about where you started.`
+    return `${weeks} weeks in, a typical serve scores ${latest.overall}, about where you started.`
   }
   return delta > 0
     ? `${weeks} weeks in: a typical serve scored ${first.overall} on ${shortDate(first.createdAt)}, and ${latest.overall} on ${shortDate(latest.createdAt)}.`
@@ -1145,7 +1145,7 @@ export function longestStreakLine(
   if (longest < 2) return undefined
   const current = tripStreak(sessions, now, gap, ledger, practice)
   return current === longest
-    ? `Your longest run yet — ${longest} trips in a row.`
+    ? `Your longest run yet: ${longest} trips in a row.`
     : `Your longest run was ${longest} trips in a row.`
 }
 
@@ -1198,7 +1198,7 @@ export function bestConsistencyGap(trend: ConsistencyTrend | undefined): BestGap
  */
 export function bestGapLine(record: BestGap, viewedAt: number): string {
   return record.createdAt === viewedAt
-    ? `Your tightest gap yet — ${record.gap} points between your best serve and your worst.`
+    ? `Your tightest gap yet: ${record.gap} points between your best serve and your worst.`
     : `Your tightest gap so far is ${record.gap} points, set ${shortDate(record.createdAt)}.`
 }
 
