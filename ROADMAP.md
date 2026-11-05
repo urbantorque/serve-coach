@@ -4095,3 +4095,305 @@ changed, the promise changed, and the item says so.
         unit moved to Settings (N2.7), since speeds now show on several screens;
         the model is no longer the fix a demonstration draws (L4.3); a score
         counts up and the serve plays through in place of a ring filling (N4.6).
+- [x] **H5 Two places and one button** · L.
+      - *Done:* 2026-11-06. A bar with Today, Progress and one lime film button,
+        shown once there is a serve to navigate. A player could not tell where
+        anything lived: Progress hid behind an icon, and Home held help, backup,
+        the week and every serve. Filming is the whole screen, settings sit behind
+        a gear, the guide behind the camera's help, the session and the road in
+        sheets, every serve in a sheet reached straight from "All your serves".
+      - *Fixed on the way:* every sheet opened inside a screen was held there by
+        the screen's entry animation, because `both` keeps a transform in effect,
+        so a fixed child landed at the foot of the page. The rise fills backwards
+        and sheets go onto the page itself, over the bar.
+      - *Promises changed, with their tests:* Home's plan, session and first-run
+        strap moved to Today, `ProgrammeSheets` and the first run; the offline row
+        moved to Settings; the rubric-break checks moved from `chartGeometry` to
+        the drawn ribbon. `FirstRunDownload`, `HistoryEmpty`, `ProgressTiles`,
+        `ScoreTrend`, `Sparkline` and 12 kB of dead rules went. The split-stylesheet
+        budget went 16 to 20 kB on purpose, recorded in `bundle.test.ts`.
+- [x] **H6 The camera, the whole screen** · M.
+      - *Done:* 2026-11-06. The framing check was a sheet with a form under it. It
+        fills the phone now, with the verdict in words, one record button, Videos
+        and Hands-free beside it. A first-timer sees three rules once. A clip from
+        the camera roll is one tap inside it, so nothing else on Today asks.
+- [x] **H7 Today, one "what now"** · L.
+      - *Done:* 2026-11-06. The goal and the road to it, today's step and the one
+        action, a moment if one was earned, the momentum in three real numbers, the
+        last serves as bodies with a headline each, and the recap. Today 2.9 to 1.3
+        screens, 22 to 14 controls, 338 to 147 words. Backup stopped sitting over
+        everything: it says something only where no copy is keeping up.
+- [x] **H8 The first run** · M.
+      - *Done:* 2026-11-06. One screen: a real serve moving, "Film one serve. See the
+        one thing to fix.", one button, a sample report. 7 to 2 controls, 96 to 51
+        words. The download is said with its size before the first serve, not after.
+- [x] **H9 Progress, the shape of the serve** · L.
+      - *Done:* 2026-11-06. The typical score and a ribbon as wide as each trip ran,
+        on an axis fitted to the player but never tighter than 24 points, so a real
+        climb fills the chart and a wobble cannot pass for one. The line still stops
+        at a change of rubric, and a tap reads any trip. Faults as a grid that goes
+        dark as a fault goes away, drawn in-rates and weekly load, the body then and
+        now at one moment from the stored swing, so it outlives the stills. The pair
+        still comes through `thenAndNow`: one type, one rubric, never one trip. 6.1
+        (with the list) to 3.4 screens, 62 to 24 controls. `scoreRibbon.test.ts`.
+- [x] **H10 A programme with a goal** · M.
+      - *Done:* 2026-11-05. `programme.ts`: `programmeFor` turns the week plan into a
+        road, one row per rung still to pass and then the hold across two trips, at
+        the player's stated or inferred cadence, each with its drill, check and how
+        they will know, plus a ratio and today's session from `courtPlan`. The goal is
+        the plan's first fault, one tap changes it (`goalOptions`, `chooseGoal`), and
+        a reached goal gives way by itself. Only the picked goal and its start are
+        stored (`Prefs.goal`). A speed goal is offered once a trip gives a range,
+        reached when a later trip's range sits above the starting trip's by `apart`,
+        and always labelled as not checked against a radar. `programme.test.ts`, 34
+        checks: time alone moves no row, a late player is told what is next without
+        scolding, relapse undoes a reached goal, and every line on every rung of every
+        ladder passes `cueIssues`.
+- [x] **H11 Moments worth coming back for** · M.
+      - *Done:* 2026-11-05. `moments.ts`: `momentsFor` derives goal reached, fault
+        fixed, fastest serve, step passed, best trip, body best, streak and first
+        serve, each on its own module's noise test, and gives Today the freshest two,
+        stretched by cadence. `momentOn` compares the history before and after a
+        report, so a moment lands once on the serve that earned it, and a reopened
+        report says what it earned then. `weekRecap` covers the last complete week
+        with serves. `moments.test.ts`, 29 checks: a tap with no basket, a self-checked
+        step, an overlapping range, a trip inside the camera's floor and a relapse all
+        earn nothing.
+- [x] **H12 Serve load** · S.
+      - *Done:* 2026-11-05. `serveLoad.ts`: weekly filmed serves with practice
+        sessions, the player's usual (mean of their last four weeks with serves,
+        reaching past weeks off), a level, chart numbers, recurring strain flags and at
+        most one guidance line, with no claim about a body. `weekJumpLine` stands, its
+        threshold now the shared `weekJumped`. `serveLoad.test.ts`, 14 checks: wherever
+        `weekJumpLine` speaks this says jump on the same usual, a fortnightly player
+        gets a usual it could not give, and every line is held clear of a medical-word
+        list.
+- [x] **H13 Automatic local protection** · M.
+      - *Done:* 2026-11-05. `storage/protect.ts`: after a save the app asks for
+        persistence once likely (a second visit or installed) and keeps a rolling
+        compact snapshot at most every five serves, in the backup's own shape through
+        `buildBackup`, on the origin-private file system or a second IndexedDB
+        database, 8 MB budget, latest two with the fullest older copy kept, in idle
+        time. `protectionStatus` says what it covers and what only a file does, on
+        every path. `recoveryOffer` and `restoreFromSnapshot` restore through
+        `importBackup`. `nudge.ts`: the routine reminder fires only where no copy is
+        keeping up. `protect.test.ts`, 27 checks on the real export and import,
+        including the demo season round trip; `storageNudge.test.ts`, 9. Walked in
+        Chrome on both shelves: copy on the fifth serve, the crash screen's clear,
+        offer, restore; then rows deleted and one corrupted, offer naming the damage,
+        all six back. Not run in Safari or Firefox.
+      - *Promise changed:* the 20-serve reminder fires only where no safety copy is
+        keeping up. *Carried:* `Prefs.goal` and `ladder` are not in backups, and any
+        future "delete everything" must call `forgetSnapshots()`.
+- [x] **H14 The firing order, side-on only** · S.
+      - *Done:* 2026-11-05. From the back fence at 60 and 120 fps, the forty Bath serves
+        were told their legs came late on 16% and 19% of reads, because the swing
+        towards the net is depth and the elbow's speed in the picture peaks about 90 ms
+        early. It is now read only on clips filed side-on: the back fence reads none, and
+        a corner filed as side-on at most 0.6%. The 60 fps gate and the slack are
+        unchanged. *Proof:* `firingOrder.test.ts`.
+- [x] **H15 How far the legs led the arm, at 30 fps** · M.
+      - *Done:* 2026-11-05. `Diagnosis.legLead` differences the chain's own legs and
+        elbow, so it adds no series, and it reaches real-time clips for the first time.
+        Against 180 Hz truth, 86 ± 11 ms reads within 14 ms rms at 30 fps, 19 on the
+        app's 32 Hz read, and 16 and 13 at 60 and 120 fps. An order past 35 ms, twice
+        `CHAIN_NOISE_SD.leg_lead_ms`; `level` is the camera's limit. Side-on only, and
+        only with a hip rise of 0.05 or more. Ungraded, in `UNCALIBRATED`, with
+        `legLeadLine`. 2,398 of 2,400 real reads came back `legs_first` and 2 unread; legs
+        planted 160 ms late read `arm_first` on 88–99%. *Proof:* `legLead.test.ts`, `npm
+        run bench:mocap -- --chain`.
+- [ ] **H16 Sharper peak-finding for the chain** (not adopted).
+      - *Done:* 2026-11-05. Sub-frame splines, a parabola fitted over a window and local
+        cubics were measured from four placements at 30, 60 and 120 fps. Splines and
+        cubics beat the current method on clean landmarks and read legs to elbow at
+        24–45 ms rms at 30 and 60 fps under a tracker, against 14–19. The fitted parabola
+        ties the current method. Hips and trunk cannot be claimed at any rate. Open:
+        `chain.wrist` reads the follow-through at 60 fps and above, so `FiringTimeline`
+        still draws a misread there, and a 30 fps file's stamps move the gap by 17 ms.
+- [x] **H17 First or second, guessed from the player's own record** · M.
+      - *Done:* 2026-11-05. `guessServeNumber` speaks only where the player's own tags
+        show the pattern, from the serve before it (a 95% bound on their consecutive
+        tagged serves) or the ball's speed against their tagged sides. Simulated at 80%
+        tagged it speaks on up to 37% and is wrong on at most 3.7%. From the ball, no gap
+        speaks on 0.1% at most, and the published 17–24% gaps speak on 34–92% and are
+        wrong on at most 7.3%. Never stored as a tag, never counted. *Proof:*
+        `src/lib/__tests__/serveGuess.test.ts`.
+- [ ] **H18 First or second from the pose** (not adopted).
+      - *Done:* 2026-11-05. Published timing and impact height do not change between
+        serves, the hand's speed reads 3% for a 15% slower swing, and drop to contact
+        carries 34 ms of noise on 156. Elbow speed is the best cue but has no club figure.
+        It needs labelled clips. *Proof:* `npm run bench:mocap -- --serve-cues`.
+- [ ] **H19 Serve type from the clip** (not adopted).
+      - *Done:* 2026-11-05. The player's remembered choice stays. Slice has no published
+        position of its own, the kick's one large gap is depth from the guide's placement,
+        and side-on the best case beats the remembered choice only if the player switches
+        type on 17–42% of serves. *Proof:* `npm run bench:mocap -- --serve-cues`.
+- [x] **H20 Arm extension read off curves through the samples** · S.
+      - *Done:* 2026-11-05. The card read the straightest single sample within
+        50 ms of contact. It now reads the straightest the arm gets in that
+        window along one parabola per axis through each of its three world
+        landmarks, fitted over the samples within 100 ms of the racket head's
+        highest point, about 30 ms after contact (`pathsThrough` in `between.ts`,
+        `straightestArm`). A clip that stops inside the window, or too few
+        samples, still reads the samples. The cause on file was wrong. The real
+        arms read 150°, nowhere near the 180° ceiling, and moved 9.63° while the
+        rig's arm, on the ceiling, moved 2.38°. It was depth: from the guide's
+        placement the arm bends along the lens, and one sample moved 11°, against
+        3.6° with depth as steady as the picture. `CARD_NOISE_SD.armExtension`
+        went 9.63 → 6.45 at the table's seeds and method, 1.08 → 0.72 of what the
+        band rule asks, and `KNOWN` in `bandNoise.test.ts` is empty. At 32 fps it
+        went 10.93 → 9.08, which is 1.02 of the rule there. Accuracy improved: on
+        the forty Bath serves from five placements at 30–120 fps, the median
+        against the capture went 1.6–4.4° → 0.8–2.1° and the worst 9.7° → 4.9°;
+        30 against 60 fps, worst 6.7° → 4.9°, median by placement at most 1.4°
+        (was 2.1°). `npm run bench:mocap` prints both (`straightestInCapture`).
+        Clean clips of real arms read short of the band 49 times in 400, and now
+        never. Three real clips through the pose models moved 0.5°, 1.3° and
+        0.7°. Contact's floor went 21 → 14, arm extension's row [36, 26, 22] →
+        [24, 18, 15], the best–worst bar came down at three to six serves, and
+        the overall read differently rose 15 → 16. Checks in `mocap.test.ts` and
+        `frameRate.test.ts`. The band did not move and the scoring version stays
+        5.
+      - *Considered and not built:* the reach ratio read 13–15°: the law of
+        cosines puts the same arccosine back, and 145–180° is 2.8 cm of reach.
+        Top-k and contiguous stretches of samples reached 7.5–8.1° at 19° or
+        more against the capture. A cubic over ±200 ms reached 5.9° and read 25°
+        low on a rig arm that peaks at contact and folds. A re-weighting pass
+        against a wild sample did nothing at 32 fps, where a curve has too few
+        samples to tell one.
+      - *Costs carried:* at 32 fps, the app's rate, arm is 1.02 of the rule and 1.04 at 30;
+        the rule is judged at 50. The table is measured at 50 fps and the app reads at 32,
+        so arm noise there is 1.41× the table, up from 1.13×, and noise-only real baskets
+        name arm extension as wandering on 8 of 1,200 (was 1), all from the guide's
+        placement: 1.3% against the panel's one in a hundred. Measuring the table at the
+        app's rate would fix it and changes the method, so it stands open. One wild sample
+        moves the reading more often (at 32 fps a median 1.5, 2.4 and 3.6° for 10, 20 and
+        40 cm), and the rig's clean arm rose 2.38 to 2.79.
+- [x] **H21 The load timed from the hips, or the arms where the legs barely bent** · S.
+      - *Done:* 2026-11-05. Load ratio's noise was the trophy's moment: the
+        deepest knee bend is built on depth, its trough is flat, and it moved 52
+        ms between takes of the rig. `loadBottom` follows the hips, read off the
+        picture, along a curve through the samples to where they are lowest.
+        Hips that sank under 0.012 of the body take the arms' moment on every
+        take (`Skeleton.armsTrophy`), because on legs that barely bend noise
+        decides take by take whether the knees show a trough. That half has to
+        land with the first: at 1.67 in the table, a noise-only basket of rigid
+        legs was called wandering on one in five, and a new check holds it.
+        `CARD_NOISE_SD.loadRatio` went 4.59 → 1.67 at the table's seeds and
+        method, 0.90 → 0.33 of what the band rule asks. The worst real serve went
+        2.55 → 0.49, the rig at 32 fps 5.05 → 2.39, the rig held at 165° 5.3–6.6
+        → 1.3–1.4. Every serve in the rig's family moved down or held at every
+        rate. The moment lands a mean 4–12 ms after the knees' trough in the
+        capture by placement, the same at 30, 60 and 120 fps, 26 ms at the worst;
+        the sampled trophy ran 9–17 ms early, 41 ms at the worst. Real serves read
+        about a point lower and now agree across rates. The contact's own timing
+        was left: it moves 1–4 ms. Floors: overall 6 → 5, trip 11 → 8, rhythm 36 →
+        34, the overall read differently 16 → 12, basket gap 13 → 11, best–worst
+        at two and three serves 6, 7 → 5, 6, load ratio's row [36, 28, 21] → [32,
+        27, 24], the three-a-side rising on the modal serve. Checks in
+        `consistency.test.ts`, `mocap.test.ts` and `frameRate.test.ts`. The band
+        did not move and the scoring version stays 5.
+
+- [x] **H22 The player's own baseline** · M.
+      - *Done:* 2026-11-06. `baseline.ts`: a serve read against the player's own
+        usual and best. `playerBaseline` gives every graded row with a measured
+        camera noise a median, a MAD scaled to a deviation and an effective noise
+        never under `CARD_NOISE_SD`, for one serve type, one rubric era and one
+        camera angle, tagged seconds apart, on the newest whole trips holding
+        about thirty serves. A row needs twelve serves with no trip counting for
+        more than four, so three trips at least; below that it is absent, not
+        guessed. `againstUsual` says at most three rows past the row's reach, each
+        with direction, towards or away from the band, the size in the row's unit
+        and a first-person line. The 5% a serve is spent across all fourteen rows:
+        2.9 noises on a spread known exactly, 2.9 + 22/(n − 4) on a MAD off n
+        serves, re-measured in the test. `earlierBest` is `bestPriorTo` on the same
+        serve number and angle, refused when the best does not stand clear of
+        luck; `againstBest` holds a gap to √2 of the reach; `closestToBest` is the
+        one-line reward. `baseline.test.ts`: pure noise says something false on
+        3.4–4.65% of serves at a spread 8× the camera, 1.45% at the camera, 0% on
+        the rig's tracker noise, 1.6–2.2% on a rig player whose dials wander, up to
+        5.85% on a day shift of half a spread, 7.4% on a whole spread (outside the
+        stated rate, and printed), 1.1% against the best. A move dialled into the
+        rig is found, the same dials say nothing, and 19 mutations of the gates
+        each fail a check. Synthetic: it proves the sums keep their rate, not that
+        a reading is right on a real clip.
+- [x] **H23 Within-player links** · M.
+      - *Done:* 2026-11-06. `serveLinks.ts`: at most two things a player's fastest
+        or in-court serves share against their slower ones or their misses, worded
+        as association ("Your fastest serves bend the knees further than your
+        slower ones."), and usually nothing. Sides are read day by day: each trip's
+        fastest third against its slowest, each reading as its distance from the
+        day's mean, shuffled 4,999 times inside a trip and camera angle on a fixed
+        seed. Benjamini-Hochberg at 5% across every row and question, a gap past one
+        take of camera noise, seven readings a side (six could not pass the
+        correction), speed ranges clear of each other (`apart`), and the link found
+        again without the newest six serves. Tagged seconds stay out, and what
+        `missesInCommon` has said is not said twice. `serveLinks.test.ts`: one
+        reading of pure noise raises a link on 1.6–2.45% of histories (2,000 each),
+        1.5% on the rig; re-read every six serves from 24 to 60, 3.8% of players
+        ever see one, 13% without the hold-back. A season's drift and a moved phone
+        raise none, planted links are found on seeded and rig serves, and 11
+        mutations of the gates each fail a check. `entryGraph.test.ts` holds both
+        new modules clear of the engine. Synthetic, as above.
+- [x] **H24 Each serve against the player's own usual, on screen** · M.
+      - *Done:* 2026-11-06. `selfRead` joins the baseline's pieces, so a row is not said
+        twice. A report says what this serve did differently, in its own block, with
+        the reward in the hero. Each serve's headline on Today and in the list says the
+        strongest thing it did differently ("Deeper knee bend than usual"), the last of
+        "every recent serve has the same title". Progress says what the player's fastest
+        and in-court serves share, and what a dozen serves over three trips will unlock
+        until then. `selfRead.test.ts`, 12 checks: nothing under the floor, no row twice,
+        a serve never read against itself or anything after it, a rough read claims no
+        move, and a speed record needs its whole range past every earlier range.
+      - *Fixed on the way:* a screen-reader label in the report's moment row was placed
+        against the page and pushed the document 68 px wider.
+- [x] **H25 A wait that teaches** · M.
+      - *Done:* 2026-11-06. One screen. A real serve stops at what the coach is
+        describing, the part it reads lit in lime. When the tracker starts, the serve
+        gives way to the player's own body as it is read, and when the last frame is in
+        the whole swing lands as one exposure. The pose reaches the screen by a side
+        channel that changes nothing measured, kept in a ref, drawn at most nine times a
+        second. Walked on a real clip through the real pose models in Chrome. Not timed on
+        a phone, so the cost to the tracker is argued, not measured.
+- [x] **H26 A poster to send a friend** · M.
+      - *Done:* 2026-11-06. `serveCard.ts`: at 4:5, the whole swing as one exposure, the
+        number, the speed with its range and that no radar checked it, and the one thing
+        being worked on. It was a printed report with six stills of the player. No
+        photograph reaches a card now, so `Image()` came off the egress allow list.
+        `serveCard.test.ts`, 6 checks. The older cards take the app's face too.
+- [x] **H27 A slow-motion clip, made on the phone** · M.
+      - *Done:* 2026-11-06. `swingClip.ts` plays the figure through the swing, leaves its
+        racket's path, and lands on the number, recorded by the browser's own
+        `MediaRecorder`, MP4 first. Then and now plays two bodies aligned on the moment
+        each met the ball. Only the figure is in it. Recorded and decoded in Chrome at
+        720x900, 1.5 MB. Never run on a real phone, and iOS Safari's recorder is untested.
+        A browser without a recorder is not offered it.
+- [x] **H28 The glance, one screen** · S.
+      - *Done:* 2026-11-06. Both numbers as big as a phone allows, the one fix, the next
+        serve. 1.4 to 1 screen, and the fix is said once.
+- [x] **H29 A practice, led by what changed** · S.
+      - *Done:* 2026-11-06. The typical serve, what changed from start to end in plain
+        words and how it sat against the last session open the screen. "Start against
+        end" no longer repeats the headline, and a pick with no still is a time and a
+        score rather than a blank tile. 2.3 to 2 screens.
+- [x] **H30 Errors name the cause, and offer one thing** · S.
+      - *Done:* 2026-11-06. The cause in large type, what to do, one primary action:
+        "Film it again", or "Try again" where the clip itself may be fine. Deleting history
+        sits behind "Still broken?". With no signal a failed read says the coach is not on
+        this phone yet (`readFailure`), rather than giving tips about MP4 files.
+- [x] **H31 No long dashes in player copy** · S.
+      - *Done:* 2026-11-06. Twenty lines, none changed in what they claim.
+        `copyDashes.test.ts` reads every file that holds copy with its comments stripped.
+- [x] **H32 A moment on the report, a sound, a quieter Settings** · S.
+      - *Done:* 2026-11-06. `momentOn` reaches the report as the reveal settles. A soft
+        tone lands with the report and a longer one with a moment, made on the phone,
+        with a Settings switch. The boxed forms in Settings became segmented rows.
+- [x] **H33 Second serves, their own view** · S.
+      - *Done:* 2026-11-06. With four tagged seconds one switch turns all of Progress to
+        that serve. Only what the player tapped counts: a guess is never a tag.
+- [x] **H34 A coach's page with the record on it** · S.
+      - *Done:* 2026-11-06. `coachContextOf`: how long, which way, what keeps coming back,
+        what the player is on and how this serve sat against their usual, from the modules
+        the player's own screens read. Every page ends on what this cannot see.
+        `coachContext.test.ts`, 7 checks.
+

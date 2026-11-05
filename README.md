@@ -936,8 +936,9 @@ heading about progress would call an hour's variation improvement.
 **Progress over time.** Saved reports feed a trend view: overall score by
 session, and what changed per fundamental since your last serve. Because a
 single serve is noisy, the headline figure is a rolling average of your last
-three rather than whichever one you just hit, and any change under 3 points is
-shown as "no real change" rather than dressed up as progress.
+three rather than whichever one you just hit, and any change inside the camera's
+own noise floor (5 points on the overall) is shown as no real change rather than
+dressed up as progress.
 
 ---
 
@@ -973,7 +974,47 @@ Everything is in `src/lib`:
 | `earcon.ts` | the hands-free tones, made on the device with an oscillator, and a tap felt in the hand where the phone can |
 | `components/SpeedTrips.tsx` | serve speed by trip on Progress, one range bar a trip |
 | `styles/court.css`, `styles/speed.css` | the viewfinder, the glance's readout and every speed drawing — loaded with the screens that use them, on their own budget |
-| `share/reportCard.ts` | renders a report as one shareable image |
+| `share/reportCard.ts` | shares the cards: the serve, a basket, a trip, a season, a fault fixed |
+| `baseline.ts` | a serve against the player's own usual and best: medians, scaled spreads and a reach past their own noise, at most three rows, with the false-alarm rates measured |
+| `selfRead.ts` | joins the baseline's pieces for the screens, so a row is said once, and headlines what moved |
+| `serveLinks.ts` | what a player's fastest and in-court serves share, shuffled inside a day and corrected across every row, usually nothing |
+| `serveStory.ts` | the one true thing that sets a serve apart, for its card and its row |
+| `serveGuess.ts` | first or second, guessed only where the player's own tags show the pattern; never stored, never counted |
+| `programme.ts` | the week plan as a road: a goal, a step at a time, at the player's own pace |
+| `moments.ts` | bests, faults fixed, steps passed and the weekly recap, each on its own noise test, landing once on the serve that earned them |
+| `serveLoad.ts` | serves a week against the player's usual, as guidance and never a medical claim |
+| `storage/protect.ts` | a rolling local copy of the history, what it covers, and the offer to restore it |
+| `share/serveCard.ts` | the poster a player sends a friend: the swing as one exposure, the number, the speed with its range |
+| `share/swingClip.ts` | a slow-motion clip of the figure, or two side by side, recorded by the browser's own `MediaRecorder` |
+| `share/coachContext.ts` | what a coach would ask first, from the modules the player's own screens read, and what the camera cannot see |
+| `analysis/legLead.ts` | how far the legs led the arm, side-on only, differenced from the chain's own timings |
+| `figure/shape.ts` | the body's solids around the tracked joints, which stay exactly where they were measured |
+| `figure/athlete.ts` | paints the lit figure, its rim, its shadow, a trace and the racket's path |
+| `figure/stage.ts` | places a swing in a box at one body size, one pose, or the whole swing as one exposure |
+| `figure/swing.ts` | a report's swing as frames and moments, live or stored, and which solids carry a fault |
+| `figure/modelMotion.ts` | the model serve: Bath 39, a real serve, from `modelServe.json` |
+| `figure/modelCredit.ts` | the capture's CC BY attribution, as Settings shows it |
+| `components/TabBar.tsx` | Today, Progress and the film button, drawn once there are serves |
+| `components/AppSheets.tsx` | the sheets the app opens over any screen: settings, the guide, the phone check |
+| `components/Credits.tsx` | who made what the app stands on, in Settings |
+| `components/FirstRunStage.tsx` | a real serve moving, behind the first screen |
+| `components/AthleteCanvas.tsx` | the figure on the page: one pose, a loop, a reveal or an exposure |
+| `components/LiveBody.tsx` | the player's own body as the tracker reads it, on the wait |
+| `components/TeachStage.tsx` | a real serve stopped at what the coach is describing, the part it reads lit |
+| `components/MomentCard.tsx` | something earned, in the one bright surface the app keeps for it |
+| `components/PlayerControls.tsx` | playback as watching a serve: Slow, Very slow, Real speed, and its moments |
+| `components/ProgrammeSheets.tsx` | today's session and the road to the goal, behind Today |
+| `components/ServeCards.tsx` | the last serves as bodies, each with its own headline |
+| `components/SpeedUnitPicker.tsx` | km/h or mph, in Settings |
+| `components/ThenNow.tsx` | the player's body then and now, at one moment, from the stored swing |
+| `components/icons.ts` | the app's Phosphor glyphs, lifted out by `scripts/icons.mjs` |
+| `components/useCountUp.ts` | a number counting up as a report lands, at rest under reduced motion |
+| `screens/report/RevealStage.tsx` | the report's hero: the player's own footage with the fault drawn on it, played once |
+| `screens/report/DrillCard.tsx` | a fix as a lesson: the feel, how the step is passed, the ladder |
+| `screens/report/SideBySide.tsx` | the fault's moment beside a model serve, the player's best or their last, at one body size |
+| `screens/report/ShareChoice.tsx` | a card, a clip or a page for a coach, as one choice |
+| `dev/mocap/chain.ts` | the bench for the kinetic chain's timing on the Bath capture |
+| `dev/mocap/serveCues.ts` | the bench that measured first-or-second and serve type from the pose, and said no |
 | `analysis/serves.ts` | picks out each serve in a multi-serve clip |
 | `session/plan.ts` | a practice session: which clips are one, which serves a sample reads, and what reading it costs |
 | `session/session.ts` | a practice session as stored: one small line per serve read, and the repair a stored row goes through |
@@ -984,7 +1025,7 @@ Everything is in `src/lib`:
 | `audio/mp4Audio.ts` | a phone video's AAC frames, found in its `moov` without touching the picture, and the ADTS header for one |
 | `audio/decode.ts` | the impacts in a video's sound, decoded a stretch at a time by WebCodecs or as ADTS |
 | `audio/fuse.ts` | which reach peaks were heard, with the offset between swing and sound learned on the clip |
-| `analysis/between.ts` | readings taken between two samples: a pose on the line between them, and the top of a peak |
+| `analysis/between.ts` | readings taken between two samples: a pose on the line between them, the top of a peak, and a curve through the samples for arm extension |
 | `session/video.ts` | a session's video work: timing the file, finding the serves, reading one through a shared element |
 | `session/length.ts`, `probe.ts` | which clips are sessions, and a clip's length read from its metadata alone |
 | `session/warmth.ts` | pauses a reading when the phone reports it is running hot, where the browser can say |
@@ -1697,11 +1738,11 @@ load.
 angle near full extension is under-read on noisy tracking: 180° is a ceiling, so
 jitter on a nearly-straight limb can bend it but cannot straighten it past flat,
 and the error does not cancel out. Left alone, a genuinely straight arm measures
-bent — and arm extension is one of the measurements that tells a player to change
-something. Averaging positions first (they *do* have symmetric, cancelling noise)
-cuts that error by about two thirds. Every angle read this way sits at an
-extremum of its own motion, where the value is locally flat, so the window costs
-no real accuracy.
+bent. Averaging positions first (they *do* have symmetric, cancelling noise) cuts
+that error by about two thirds. Every angle read this way sits at an extremum of
+its own motion, where the value is locally flat, so the window costs no real
+accuracy. Arm extension goes further: it is read off a curve through the samples
+(`pathsThrough`), because from the guide's placement the arm bends along the lens.
 
 **Clips that are not serves are rejected rather than scored.** A serve lifts the
 racket hand from around the hip to well above the head; if that did not happen,

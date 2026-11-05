@@ -43,14 +43,13 @@ Do not leave half-built code behind a flag.
    existing "Show me the numbers anyway"). Lowering a number to admit more clips
    is a defect, not a fix.
 
-3. **Do not touch the design.** The dark near-black `--ink` ramp, the single
-   tennis-lime accent, the `--r-*` radii, the `--shadow-*` elevation, the system
-   font stack and the `body::before` court wash are settled. Two complete
-   redesigns were built and both rejected. New UI must be assembled from
-   `src/components/primitives.tsx` and existing tokens in `src/styles/tokens.css`.
-   You may add a component; you may not restyle an existing one, retune a colour,
-   or "modernise" anything. If a new surface genuinely has no token that fits,
-   say so in the commit body rather than inventing a colour.
+3. **Do not re-skin.** `DESIGN.md` is the visual source of truth: dark, one
+   tennis-lime accent, rounded, elevated, Archivo, the `--r-*` radii and the
+   `--shadow-*` elevation. Two complete redesigns were built and both rejected.
+   New UI uses the tokens in `src/styles/tokens.css` and the roles in `DESIGN.md`.
+   You may raise a surface and add a component; you may not bring in a second
+   accent, a second family or a light theme. If a surface genuinely has no token
+   that fits, add one there and say why.
 
 4. **Coaching copy is for someone who plays twice a month.** `analysis/voice.ts`
    lints length, sentence count, passive voice and lab jargon, and

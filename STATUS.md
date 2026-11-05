@@ -13,32 +13,38 @@ in that folder under the same names.
 
 ## What works
 
-- **One serve, read and coached.** Filmed in the app or picked from the
-  camera roll. The report has a score, the fix that matters most, two to
-  four drills worst cause first, each on a ladder, and the serve played back.
-- **On court.** Hands-free recording with a spoken countdown, and a stop
-  once the serve is over. A spoken framing verdict. The glance between
-  serves. A drill check across a trip's recorded serves, and "Check this
-  drill" from the week plan. Today's plan in minutes, and a court card
-  readable from the baseline.
-- **Practice sessions.** A long clip becomes a session, with a dashboard and
-  its own drill check. Its judged serves count towards graduation.
-- **Progress.** The score by trip, a fault strip, in-rate bars, records, best
-  sets, what the misses share, and faults drawn then and now when they clear.
-- **Sharing, by the player only.** A report card, the week in the phone's
-  calendar (`.ics`), and a scriptless HTML report for a coach.
-- **Offline.** One download with its size stated, a first read before the
-  refinement model is in, backups, and a crash screen that keeps data.
-- **Serve speed, on the report.** The launch speed and its likely range,
-  under the score and on the glance, in km/h or mph. Read on slow motion, and
-  on ordinary 30 and 60 fps clips filmed from the speed placement (six to
-  seven metres back, net side of the picture open). A miss says what to change.
-  Progress keeps the fastest serve and says a change between trips only when
-  the ranges are apart. A practice session reads every serve's speed when the
-  player chooses it on the plan, priced first, and its dashboard gives the
-  fastest and the typical serve. Never graded, and still uncalibrated against a
-  radar. Contact and toss heights
-  in metres come from the toss's own gravity and are stored, not shown.
+- **The structure.** Today, Progress and one lime film button. A new player
+  gets one screen and one action. Filming is the whole screen; everything else is
+  a sheet or a fold. `DESIGN.md` holds the visual rules.
+- **One serve, read and coached.** Filmed in the app or picked from the camera
+  roll. The first screen answers how did I do, what do I fix and what do I do
+  now, over the player's own footage with the fault drawn on it. The figure is a
+  lit form on the tracked joints, and the model serve is a real serve from the
+  Bath capture. Two to four drills, worst cause first, each on a ladder.
+- **Against the player's own serve.** Each serve read against their usual and
+  their best, past their own noise, from a dozen serves over three trips. What
+  their fastest and in-court serves share, when chance could not have. All
+  synthetic so far: the sums keep their rate, which is not the same as being
+  right on a real clip.
+- **The wait.** The coach says what it looks for on a real serve, then shows the
+  player's own body as the tracker reads it, then the whole swing as one picture.
+- **On court.** Hands-free recording with a spoken countdown, a spoken framing
+  verdict, a glance of one screen between serves, a drill check across a trip, and
+  a court card readable from the baseline.
+- **Practice sessions.** A long clip becomes a session, led by what changed.
+- **A programme.** A goal, a road of steps at the player's own pace, moments that
+  land on the serve that earned them, a weekly recap, and serve load as guidance.
+- **Progress.** The shape of the serve as a ribbon, speed by trip, faults going
+  dark, the body then and now, and second serves as their own view.
+- **Sharing, by the player only.** A poster of the swing, a slow-motion clip made
+  on the phone, then and now as a clip, the week in the phone's calendar, and a
+  coach's page with the player's record and what the camera cannot see.
+- **Offline, and protected.** One download with its size stated, a first read
+  before the refinement model is in, a rolling local copy of the history, an offer
+  to restore it, and a crash screen that keeps data.
+- **Serve speed.** The launch speed and its likely range, in km/h or mph. Read on
+  slow motion, and on ordinary 30 and 60 fps clips from the speed placement. A miss
+  says what to change. Never graded, and still uncalibrated against a radar.
 
 - **Built for the court (C0–C6).** The framing verdict is a band readable
   from the baseline, with serve pips, a countdown a third of the picture wide,
@@ -53,8 +59,9 @@ in that folder under the same names.
     the read is soft, and one first priority per page.
   - The installed app turns with the phone.
   - The coil is shown, not scored, and the open chest has its own band.
-  - A test holds every graded band to the camera's noise on it. Arm extension
-    is the one known exception.
+  - A test holds every graded band to the camera's noise on it, with no
+    exceptions left. At 32 fps, the app's own rate, arm extension sits at 1.02 of
+    the rule, which is judged at 50 fps.
   - On a phone the viewfinder starts hands-free with the voice on, offers the
     camera app where the preview cannot start, and is readable from the
     baseline.
@@ -63,8 +70,7 @@ in that folder under the same names.
     passed drill step for three days with the fault then and now.
   - A session's fixes name the drill at the player's own step, with how to do
     it and the court card.
-  - The clip-reading engine is out of the entry chunk (Q12): 114.17 of 130 kB
-    gzip and 341.55 of 385 kB raw, so Home has about 16 kB gzip of room.
+  - The clip-reading engine is out of the entry chunk (Q12).
     `entryGraph.test.ts` fails if the entry reaches the engine again.
 
 - **A phone on the same network, over HTTPS.** `npm run preview:lan` serves
@@ -88,6 +94,17 @@ in that folder under the same names.
 - **N1.10.** Recording a whole practice in the app. Optional, not started.
 - **Bench tables.** The clip-bench speed and toss columns exist; the table
   needs a run on a quiet machine.
+- **Nothing from the lift has run on a real phone.** The live body on the wait,
+  the clip recorder on iOS Safari, sounds under the ringer switch, and the bar
+  over the home indicator were all walked in Chrome only. Protection was walked
+  in Chrome, not Safari or Firefox.
+- **The band table's rate.** `CARD_NOISE_SD` is measured at 50 fps and the app
+  reads at 32. Noise-only baskets from the guide's placement name arm extension as
+  wandering on 1.3%, against the panel's one in a hundred. Measuring at the app's
+  rate would fix it and changes the method.
+- **`FiringTimeline` at 60 fps and above.** It still draws `chain.wrist`, which
+  reads the follow-through there (H16).
+- **Backups.** `Prefs.goal` and `ladder` are not in them yet.
 - **Measured and not adopted:** per-tracker noise floors (M2.1) and speed
   from the bounce's sound (N2.10). Both results are in the ledger.
 
@@ -105,11 +122,11 @@ in that folder under the same names.
 
 ## Resuming this loop
 
-Work is on `roadmap/market-ready`, and its ledger is `ROADMAP.md`: the Notch
-programme (N0–N5) and the Lift programme (M0–M5), with one order of play at
-the end of the Notch section. Pick the first open item there.
+Work is on `lift/whole-app`, and its ledger is the last section of `ROADMAP.md`
+(H1 onward). The reasoning is `docs/lift/LIFT-PLAN.md`, the visual rules are
+`DESIGN.md`, and `docs/lift/gallery.html` shows every state before and after.
 
-The suite runs **1,961 checks** (2026-10-23). The last loop tag is
+The suite runs **2,215 checks** (2026-11-06). The last loop tag is
 `loop-green-15`, from the August loop.
 
 Before trusting a size figure, run `npm run build`: `bundle.test.ts` reads
