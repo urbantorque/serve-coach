@@ -6,4 +6,15 @@ export { readMat } from './mat'
 export { BATH_ATTRIBUTION, bathServe, parseOutcomes } from './bath'
 export { PLACEMENTS, RATES, benchMocap, formatBench } from './report'
 export { METHOD_NAMES, benchCalls, benchChain, formatCalls, formatChain, truthTable } from './chain'
+export {
+  BEHIND_PLACEMENT,
+  SIDE_PLACEMENT,
+  cueSpreads,
+  formatCues,
+  formatOwnTags,
+  formatTypes,
+  measureCues,
+  ownTagGuess,
+  typeTable,
+} from './serveCues'
 export { MOCAP_POINTS, packMocap, swingCompleted } from '../../lib/analysis/mocapServe'

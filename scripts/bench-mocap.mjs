@@ -99,6 +99,22 @@ if (process.argv.includes('--chain')) {
   process.exit(0)
 }
 
+if (process.argv.includes('--serve-cues')) {
+  const takes = flag('--takes', 6)
+  const side = mocap.measureCues(serves, mocap.SIDE_PLACEMENT, takes)
+  const behind = mocap.measureCues(serves, mocap.BEHIND_PLACEMENT, takes)
+  const sideSpreads = mocap.cueSpreads(side)
+  const behindSpreads = mocap.cueSpreads(behind)
+  console.log('From the guide, 30 fps on the 32 Hz read, MediaPipe noise:\n' + mocap.formatCues(sideSpreads))
+  console.log('\nFrom the back fence:\n' + mocap.formatCues(behindSpreads))
+  console.log('\nA guess from one reading on the player own tags, by how much slower the second serves ran:')
+  const cues = ['handPeak', 'elbowPeak', 'handLast120', 'dropToContact', 'motion', 'tossToContact']
+  console.log(mocap.formatOwnTags(cues.flatMap((cue) => [6, 12].map((n) => mocap.ownTagGuess(side, cue, n)))))
+  console.log('\nFlat against kick on published gaps:')
+  console.log(mocap.formatTypes(mocap.typeTable([...sideSpreads, ...behindSpreads.filter((s) => s.cue === 'tossAcross')])))
+  process.exit(0)
+}
+
 const quick = process.argv.includes('--quick')
 const complete = serves.filter(mocap.swingCompleted)
 const tally = (o) => complete.filter((s) => s.outcome === o).length
