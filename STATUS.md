@@ -126,8 +126,10 @@ Work is on `lift/whole-app`, and its ledger is the last section of `ROADMAP.md`
 (H1 onward). The reasoning is `docs/lift/LIFT-PLAN.md`, the visual rules are
 `DESIGN.md`, and `docs/lift/gallery.html` shows every state before and after.
 
-The suite runs **2,215 checks** (2026-11-06). The last loop tag is
+The suite runs **2,229 checks** (2026-11-06). The last loop tag is
 `loop-green-15`, from the August loop.
+
+The entry chunk stands at 127.05 of 130 kB gzip and 372.75 of 385 kB raw.
 
 Before trusting a size figure, run `npm run build`: `bundle.test.ts` reads
 `dist/`. The entry chunk is close to its budgets, so new screens load lazily.
