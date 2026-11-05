@@ -73,3 +73,22 @@ export function leaveForHome(steps: { releaseVideo: () => void; showHome: () => 
   steps.showHome()
   steps.refresh()
 }
+
+/**
+ * What a failed read says when it came with no advice of its own.
+ *
+ * A dropped connection used to reach the player as tips about MP4 files. With no
+ * signal the likely cause is the coach, or a part of the app, not being on the
+ * phone yet, so that is what gets said.
+ */
+export function readFailure(online: boolean): { title: string; hints: string[] } {
+  return online
+    ? {
+        title: 'Something went wrong reading that video',
+        hints: ['Try a clip straight from your camera roll, not a shared link.', 'MP4 or MOV clips from a phone camera work best.'],
+      }
+    : {
+        title: 'The coach is not on this phone yet',
+        hints: ['Connect to the internet once, on Wi-Fi if you can, and the coach downloads.', 'After that it works with no signal at all.'],
+      }
+}

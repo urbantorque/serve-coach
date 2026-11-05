@@ -129,7 +129,15 @@ export type View =
    * nobody hit.
    */
   | { kind: 'saved'; session: Session; example?: boolean }
-  | { kind: 'error'; title: string; hints: string[]; capture?: FailedCapture; fileName?: string }
+  | {
+      kind: 'error'
+      title: string
+      hints: string[]
+      capture?: FailedCapture
+      fileName?: string
+      /** Nothing about the filming: the same clip may well read on another go. */
+      again?: boolean
+    }
   /** Every serve so far — see `screens/Progress.tsx`. A screen, not a sheet. */
   | { kind: 'progress'; serves?: boolean }
   /**
@@ -302,7 +310,7 @@ export default function App() {
         await saveSession(analysis)
       } catch {
         setSaveWarning(
-          'This report could not be saved — your device has run out of storage. Export your history from Your serves, or free up space and analyse it again.',
+          'This report could not be saved, because your phone has run out of storage. Export your history from Settings, or free up space and read it again.',
         )
       }
       refreshSessions()
@@ -918,26 +926,35 @@ export default function App() {
           )}
 
           {view.kind === 'error' && (
-            <div className="screen empty">
-              <div className="empty-inner">
-                <span className="empty-mark">
-                  <Icon name="warn" size={26} />
-                </span>
-                <h1>{view.title}</h1>
-                <ul className="empty-hints">
+            <div className="screen problem">
+              <div className="problem-text">
+                <span className="next-label problem-kicker">I could not read that one</span>
+                <h1 className="t-display">{view.title}</h1>
+                <ul>
                   {view.hints.map((h) => (
                     <li key={h}>{h}</li>
                   ))}
                 </ul>
-                <button className="btn btn--primary btn--full" onClick={() => captureAgain('pick')}>
-                  Try another video
+              </div>
+              <div className="problem-actions">
+                {view.again && lastFileRef.current ? (
+                  <button className="btn btn--primary btn--big btn--full" onClick={() => void openClip(lastFileRef.current!)}>
+                    Try again
+                  </button>
+                ) : (
+                  <button className="btn btn--primary btn--big btn--full" onClick={() => captureAgain('framing')}>
+                    <Icon name="camera" size={20} />
+                    Film it again
+                  </button>
+                )}
+                <button className="btn btn--quiet btn--full" onClick={() => captureAgain('pick')}>
+                  Pick another video
                 </button>
-                <button className="btn btn--ghost btn--full" onClick={() => captureAgain('framing')}>
-                  Check your framing
-                </button>
-                <button className="btn btn--ghost btn--full" onClick={() => setSheet('guide')}>
-                  How to film it
-                </button>
+                {!view.again && (
+                  <button className="btn btn--quiet btn--full" onClick={() => setSheet('guide')}>
+                    How to film it
+                  </button>
+                )}
                 {/* Dev-only: file this refusal as a ground-truth fixture. The
                     import is dynamic so none of it reaches the production bundle. */}
                 {import.meta.env.DEV && view.capture && (

@@ -27,7 +27,7 @@ import { applyWhenIdle, onUpdateWaiting } from '../lib/updates'
 import type { SweepProgress } from '../screens/Analyzing'
 import { loadAnalysis, loadAnalyzing, loadReport, loadSessionScreen, loadSessionLive, loadGlance } from '../appLoaders'
 import type { View } from '../App'
-import { earlyRefusal, sweepAfterRead, updateMayLand } from './runDecisions'
+import { earlyRefusal, readFailure, sweepAfterRead, updateMayLand } from './runDecisions'
 
 
 /** What the work needs from the app around it, by the names it used there. */
@@ -303,14 +303,7 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
           // it — so it goes to the console, where it is actually useful, and
           // the player gets the two things that do sometimes fix this.
           console.error(err)
-          setView({
-            kind: 'error',
-            title: 'Something went wrong reading that video',
-            hints: [
-              'Try a clip straight from your camera roll, not a shared link.',
-              'MP4 or MOV clips from a phone camera work best.',
-            ],
-          })
+          setView({ kind: 'error', again: true, ...readFailure(globalThis.navigator?.onLine !== false) })
         }
       } finally {
         markRead()

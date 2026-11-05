@@ -1,6 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { clearSessions, safely } from '../lib/storage/db'
-import { Icon } from './primitives'
 
 interface Props {
   children: ReactNode
@@ -95,20 +94,17 @@ export function CrashScreen(p: {
 }) {
   return (
     <div className="shell">
-      <div className="screen empty">
-        <div className="empty-inner">
-          <span className="empty-mark">
-            <Icon name="warn" size={26} />
-          </span>
-          <h1>Something in the app broke</h1>
-          <p className="empty-lead">
-            Nothing of yours was sent anywhere — this all happens on your device. Reloading
-            usually fixes it.
-          </p>
-          <button className="btn btn--primary btn--full" onClick={p.onReload}>
+      <div className="screen problem">
+        <div className="problem-text">
+          <span className="next-label problem-kicker">Sorry about this</span>
+          <h1 className="t-display">Something in the app broke</h1>
+          <p>Your serves are safe on this phone, and nothing was sent anywhere. Reloading usually fixes it.</p>
+        </div>
+        <div className="problem-actions">
+          <button className="btn btn--primary btn--big btn--full" onClick={p.onReload}>
             Reload the app
           </button>
-          <button className="btn btn--ghost btn--full" onClick={p.onBackup} disabled={p.backup === 'saving'}>
+          <button className="btn btn--quiet btn--full" onClick={p.onBackup} disabled={p.backup === 'saving'}>
             {p.backup === 'saving'
               ? 'Saving…'
               : p.backup === 'saved'
@@ -117,27 +113,27 @@ export function CrashScreen(p: {
                   ? 'The backup failed. Try again'
                   : 'Save a backup first'}
           </button>
-          {p.confirming ? (
-            <>
-              <p className="fineprint" role="alert">
-                This deletes every saved report on this phone, and any videos kept with them.
-                {p.backup === 'saved' ? ' Your backup file can bring them back.' : ' Save a backup first if you can.'}
-              </p>
-              <button className="btn btn--ghost btn--full" onClick={p.onConfirmClear} disabled={p.clearing}>
-                {p.clearing ? 'Clearing…' : 'Delete them and reload'}
+          <details className="problem-more" open={p.confirming}>
+            <summary>Still broken?</summary>
+            {p.confirming ? (
+              <>
+                <p role="alert">
+                  This deletes every saved report on this phone, and any videos kept with them.
+                  {p.backup === 'saved' ? ' Your backup file can bring them back.' : ' Save a backup first if you can.'}
+                </p>
+                <button className="btn btn--quiet btn--full" onClick={p.onConfirmClear} disabled={p.clearing}>
+                  {p.clearing ? 'Clearing…' : 'Delete them and reload'}
+                </button>
+                <button className="btn btn--quiet btn--full" onClick={p.onKeep} disabled={p.clearing}>
+                  Keep them
+                </button>
+              </>
+            ) : (
+              <button className="btn btn--quiet btn--full" onClick={p.onClear}>
+                Clear saved reports and reload
               </button>
-              <button className="btn btn--ghost btn--full" onClick={p.onKeep} disabled={p.clearing}>
-                Keep them
-              </button>
-            </>
-          ) : (
-            <button className="btn btn--ghost btn--full" onClick={p.onClear}>
-              Clear saved reports and reload
-            </button>
-          )}
-          <details className="error-detail">
-            <summary>Technical detail</summary>
-            <pre>{p.message}</pre>
+            )}
+            <p className="problem-detail">{p.message}</p>
           </details>
         </div>
       </div>
