@@ -21,6 +21,7 @@ import { poseAt } from '../../lib/analysis/between'
 import { sided } from '../../lib/analysis/geometry'
 import { planarSpeedSeries, sampleRadius, timeline } from '../../lib/analysis/kinematics'
 import { slowedServe, swingCompleted, trackedTake, type MocapServe, type VirtualPhone } from '../../lib/analysis/mocapServe'
+import { buildServe, type ServeDials } from '../../lib/analysis/syntheticServe'
 import { MEDIAPIPE_FIT } from '../../lib/analysis/trackerNoise'
 import type { Frame } from '../../lib/analysis/types'
 import { runEngine } from './engine'
@@ -259,7 +260,56 @@ export function typeTable(spreads: CueSpread[]): TypeRow[] {
   ]
 }
 
+export interface RigRow {
+  dial: string
+  contactAhead: number
+  contactSd: number
+  tilt: number
+  tiltSd: number
+}
+
+/**
+ * The rig with a type's published moves dialled in, at 30 fps under the rig's
+ * own jitter. It is here to answer one question: whether the type table above is
+ * the camera failing. It is not. The readings follow their dials, and what a
+ * type cannot do is move them far enough against a real serve's spread.
+ */
+export function rigResponse(takes = 16): RigRow[] {
+  const seeds = Array.from({ length: takes }, (_, i) => 7000 + i * 4523)
+  const cases: [string, Partial<ServeDials>][] = [
+    ['as built', {}],
+    ['contact 5 cm further back', { contactBehind: 0.05 }],
+    ['contact 17 cm further back', { contactBehind: 0.17 }],
+    ['contact 24 cm further back', { contactBehind: 0.24 }],
+    ['10 degrees more shoulder tilt', { shoulderTilt: 34 }],
+  ]
+  return cases.map(([dial, dials]) => {
+    const reads = seeds.flatMap((seed) => {
+      const r = read(buildServe({ noise: 0.006, depthNoise: 4, depthBias: 0.006, seed, ...dials }, 30), 30)
+      return r ? [r] : []
+    })
+    const of = (cue: Cue) => reads.map((r) => r[cue]).filter((v): v is number => v !== undefined)
+    return {
+      dial,
+      contactAhead: mean(of('contactAhead')),
+      contactSd: Math.sqrt(variance(of('contactAhead'))),
+      tilt: mean(of('shoulderTilt')),
+      tiltSd: Math.sqrt(variance(of('shoulderTilt'))),
+    }
+  })
+}
+
 const pct = (x: number) => `${(x * 100).toFixed(x < 0.1 ? 1 : 0)}%`
+
+export function formatRig(rows: RigRow[]): string {
+  return rows
+    .map(
+      (r) =>
+        `${r.dial.padEnd(32)} contact ahead ${r.contactAhead.toFixed(1).padStart(5)} ± ${r.contactSd.toFixed(1)}%` +
+        `   shoulder tilt ${r.tilt.toFixed(1).padStart(5)} ± ${r.tiltSd.toFixed(1)}°`,
+    )
+    .join('\n')
+}
 
 export function formatCues(spreads: CueSpread[]): string {
   const lines = ['reading            mean   serve  camera   moved by a swing 5 / 10 / 15 / 20 / 25% slower']

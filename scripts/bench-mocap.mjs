@@ -112,6 +112,7 @@ if (process.argv.includes('--serve-cues')) {
   console.log(mocap.formatOwnTags(cues.flatMap((cue) => [6, 12].map((n) => mocap.ownTagGuess(side, cue, n)))))
   console.log('\nFlat against kick on published gaps:')
   console.log(mocap.formatTypes(mocap.typeTable([...sideSpreads, ...behindSpreads.filter((s) => s.cue === 'tossAcross')])))
+  console.log('\nThe rig with those moves dialled in, 30 fps:\n' + mocap.formatRig(mocap.rigResponse()))
   process.exit(0)
 }
 

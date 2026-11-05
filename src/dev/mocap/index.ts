@@ -12,9 +12,11 @@ export {
   cueSpreads,
   formatCues,
   formatOwnTags,
+  formatRig,
   formatTypes,
   measureCues,
   ownTagGuess,
+  rigResponse,
   typeTable,
 } from './serveCues'
 export { MOCAP_POINTS, packMocap, swingCompleted } from '../../lib/analysis/mocapServe'
