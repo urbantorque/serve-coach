@@ -346,7 +346,7 @@ check('picked, it is defined against the trip it started from, and always carrie
   assert(p.goal.kind === 'speed' && p.chosen && p.note === SPEED_NOTE, JSON.stringify(p.goal))
   assert(p.goal.kind === 'speed' && p.goal.from.ms === 36, 'the bar is not the player\'s own trip')
   const last = p.weeks[p.weeks.length - 1]
-  assert(last.kind === 'speed' && /range clears about/.test(last.know) && /likely/.test(last.know), last.know)
+  assert(last.kind === 'speed' && /sits above this one: about/.test(last.know) && /likely/.test(last.know), last.know)
   // A range, never a promised number.
   assert(!/reach \d|hit \d|target/i.test(linesOf(p).join(' ')), 'a number was promised')
   note(`${p.title}: ${p.why}`)

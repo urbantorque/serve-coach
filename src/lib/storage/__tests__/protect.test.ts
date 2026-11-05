@@ -37,7 +37,7 @@ import type { PracticeLog, ServeTag, Session } from '../db'
 import type { TripRecord } from '../ledger'
 import type { Analysis } from '../../analysis/types'
 import { cueIssues } from '../../analysis/voice'
-import { sampleAnalysis } from '../../../dev/sampleAnalysis'
+import { sampleAnalysis, sampleHistory } from '../../../dev/sampleAnalysis'
 import { assert, check, heading, note, report } from '../../analysis/__tests__/harness'
 
 const DAY = 86_400_000
@@ -453,6 +453,31 @@ await check('forgetting takes every copy and only copies', async () => {
   await forgetSnapshots(w.deps)
   assert(w.files.size === 1 && w.files.has('something-else.txt'), [...w.files.keys()].join())
   assert(w.reports.size === 1, 'forgetting a copy touched a report')
+})
+
+heading('On the demo season')
+
+;(globalThis as { document?: unknown }).document = { createElement: () => ({ getContext: () => null }) }
+
+await check('a season fits with room to spare, and comes back whole', async () => {
+  const { sessions } = sampleHistory(NOW)
+  const w = world({ persisted: async () => true }, { reports: sessions })
+  await protectAfterSave({}, w.deps)
+  const [copy] = snapshotsOn([...w.files.keys()])
+  const chars = w.files.get(copy.name)!.length
+  note(`${copy.serves} serves in ${Math.round(chars / 1000)} kB, of a ${SNAPSHOT_BUDGET / 1_000_000} MB budget`)
+  note((await protectionStatus(w.deps)).line)
+  assert(copy.serves === sessions.length, `${copy.serves} of ${sessions.length} serves in the copy`)
+  w.reports.clear()
+  note((await recoveryOffer(0, w.deps))!.line)
+  const result = (await restoreFromSnapshot(w.deps))!
+  assert(result.added === sessions.length && result.failed === 0, JSON.stringify(result))
+  for (const s of sessions) {
+    const back = w.reports.get(s.id)
+    assert(back?.overall === s.overall && back.createdAt === s.createdAt, `${s.id} came back changed`)
+    assert(JSON.stringify(back?.speed) === JSON.stringify(s.speed), `${s.id} lost its speed`)
+    assert(JSON.stringify(back?.triage) === JSON.stringify(s.triage), `${s.id} lost its verdict`)
+  }
 })
 
 heading('The folder shelf')

@@ -176,7 +176,7 @@ export const GOAL_TITLE: Record<FlawId, string> = {
   low_contact: 'Meet the ball at full stretch',
 }
 
-export const SPEED_TITLE = 'Serve clear of your usual speed'
+export const SPEED_TITLE = 'Serve faster than your usual range'
 
 /** Every speed goal carries this: a reading from a video is not a radar's. */
 export const SPEED_NOTE = 'My reading from your video, not checked against a radar.'
@@ -373,7 +373,7 @@ const speedRow = (from: SpeedRange, unit: SpeedUnit, state: WeekState): Row => (
   drill: SPEED_DRILL,
   check: `Film ${CHECK_SERVES} first serves from the side.`,
   filmed: true,
-  know: `You will know when a trip's range clears ${aboutSpeed(from, unit)}.`,
+  know: `You will know when a trip's range sits above this one: ${aboutSpeed(from, unit)}.`,
   trips: 1,
 })
 
@@ -454,7 +454,7 @@ function paceLine(weeksLeft: number, cadence: Cadence): string {
 }
 
 function whyLine(goal: Goal, chosen: boolean, unit: SpeedUnit): string {
-  if (goal.kind === 'speed') return cue(`The trip to clear: ${aboutSpeed(goal.from, unit)}.`)
+  if (goal.kind === 'speed') return cue(`The trip to beat: ${aboutSpeed(goal.from, unit)}.`)
   return chosen ? 'You picked this one.' : 'First in your plan: the others often follow from it.'
 }
 
@@ -563,7 +563,7 @@ export function goalOptions(
     out.push({
       goal: { kind: 'speed', from: range(newest) },
       title: SPEED_TITLE,
-      line: cue(`Clear ${aboutSpeed(newest, r.unit)}. Not checked against a radar.`),
+      line: cue(`Beat ${aboutSpeed(newest, r.unit)}. Not checked against a radar.`),
     })
   }
   return out

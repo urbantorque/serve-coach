@@ -197,7 +197,7 @@ function derive(sessions: Session[], prefs: Prefs, now: number, evidence: readon
         key: `goal:speed:${goal.at}`,
         at: goal.at,
         title: 'Goal reached',
-        body: cue(`Clear of where you started: ${aboutSpeed(goal.cleared, unit)}. ${SPEED_CAVEAT}`),
+        body: cue(`Faster than where you started: ${aboutSpeed(goal.cleared, unit)}. ${SPEED_CAVEAT}`),
       })
     }
   }
