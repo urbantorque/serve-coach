@@ -63,12 +63,13 @@ function reach(startAt: string): Map<string, string> {
 
 const name = (f: string) => f.replace(/\\/g, '/').split('/').pop()!.replace(/\.tsx?$/, '')
 
-function assertNoEngine(seen: Map<string, string>) {
+/** Fails naming the chain, if any of `seen` is an engine module. */
+function assertNoEngine(seen: Map<string, string>, what: string) {
   for (const [file] of seen) {
     if (!ENGINE.includes(name(file)) || !file.replace(/\\/g, '/').includes('lib/analysis/')) continue
     const chain = [file]
     for (let at = seen.get(file); at; at = seen.get(at)) chain.push(at)
-    assert(false, `the entry reaches ${name(file)}: ${chain.reverse().map(name).join(' → ')}`)
+    assert(false, `${what} reaches ${name(file)}: ${chain.reverse().map(name).join(' → ')}`)
   }
 }
 
@@ -78,16 +79,16 @@ check('nothing the first screen imports reaches a module that reads a clip', () 
   const seen = reach('src/main.tsx')
   note(`${seen.size} modules reachable from main.tsx`)
   assert(seen.size > 40, 'the walk found too little to mean anything')
-  assertNoEngine(seen)
+  assertNoEngine(seen, 'the entry')
 })
 
 check('nor do the modules the first screen is about to read', () => {
   // Held here before any screen imports them, so the screen that does finds
   // the road already clear.
-  for (const module of ['programme', 'moments', 'serveLoad', 'storage/protect']) {
+  for (const module of ['programme', 'moments', 'serveLoad', 'storage/protect', 'baseline', 'serveLinks']) {
     const seen = reach(`src/lib/${module}.ts`)
     assert(seen.size > 3, `the walk from ${module} found too little to mean anything`)
-    assertNoEngine(seen)
+    assertNoEngine(seen, module)
   }
 })
 
