@@ -560,6 +560,24 @@ export function kneeAngles(serve: MocapServe, frame: number): { left: number; ri
   }
 }
 
+/**
+ * The straightest the racket arm gets within `reach` seconds of `at`, on the
+ * capture's own clock: what `armExtension` is after, with no phone in the way.
+ * Walked at four times the capture rate, because `pointAtTime` can.
+ */
+export function straightestInCapture(serve: MocapServe, at: number, reach: number): number {
+  const steps = Math.ceil((2 * reach * serve.rate) * 4)
+  let best = 0
+  for (let i = 0; i <= steps; i++) {
+    const t = at - reach + (2 * reach * i) / steps
+    const [shoulder, elbow, wrist] = (['Shoulder', 'Elbow', 'Wrist'] as const).map((joint) =>
+      pointAtTime(serve, `${serve.hand}${joint}`, t),
+    )
+    best = Math.max(best, angle3(shoulder, elbow, wrist))
+  }
+  return best
+}
+
 function extremum(series: number[], lo: number, hi: number, sign: 1 | -1): number {
   let best = lo
   for (let i = lo; i <= hi; i++) if (sign * series[i] > sign * series[best]) best = i

@@ -14,8 +14,19 @@
  * 3. Verdict: which faults are named on serves a real player hit, and how
  *    often. The serves are one player's; the readings are evidence about the
  *    engine, not a judgement of the player.
+ *
+ * And one reading against the capture, arm extension, which is the only card
+ * row with the same quantity to set it against in 3D.
  */
-import { filmMocap, mocapTruth, swingCompleted, type MocapServe, type VirtualPhone } from '../../lib/analysis/mocapServe'
+import { ARM_EXTENSION_WINDOW } from '../../lib/analysis/metrics'
+import {
+  filmMocap,
+  mocapTruth,
+  straightestInCapture,
+  swingCompleted,
+  type MocapServe,
+  type VirtualPhone,
+} from '../../lib/analysis/mocapServe'
 import { runEngine } from './engine'
 
 export interface Placement {
@@ -47,6 +58,8 @@ export interface BenchRow {
   flaws: Record<string, number>
   primary: Record<string, number>
   metrics: Record<string, number[]>
+  /** Arm extension minus the straightest the capture has within the same reach of contact, degrees. */
+  armError: number[]
 }
 
 export function benchMocap(serves: MocapServe[], placements = PLACEMENTS, rates = RATES): BenchRow[] {
@@ -72,6 +85,7 @@ export function benchMocap(serves: MocapServe[], placements = PLACEMENTS, rates 
         flaws: {},
         primary: {},
         metrics: {},
+        armError: [],
       }
       for (const serve of complete) {
         const phone = { ...placement.phone, fps }
@@ -98,6 +112,8 @@ export function benchMocap(serves: MocapServe[], placements = PLACEMENTS, rates 
         const primary = verdict.primary_flaw?.flaw ?? (verdict.status === 'rejected' ? `refused: ${verdict.reason}` : 'none')
         row.primary[primary] = (row.primary[primary] ?? 0) + 1
         for (const f of fundamentals) for (const m of f.metrics) (row.metrics[m.id] ??= []).push(m.value)
+        const arm = row.metrics.armExtension?.at(-1)
+        if (arm !== undefined) row.armError.push(arm - straightestInCapture(serve, truth.wristTop, ARM_EXTENSION_WINDOW))
       }
       rows.push(row)
     }
@@ -138,6 +154,17 @@ export function formatBench(rows: BenchRow[]): string {
       .map(([id, v]) => `${id} ${median(v).toFixed(2)}`)
       .join(' · ')
     out.push(`  medians: ${metrics}`)
+    const arm = r.armError.map(Math.abs)
+    if (arm.length) out.push(`  arm extension against the capture: median ${median(arm).toFixed(1)}°, worst ${Math.max(...arm).toFixed(1)}°`)
+  }
+  // Serve by serve, so only where both rates read the same serves.
+  for (const low of rows.filter((r) => r.fps === 30)) {
+    const high = rows.find((r) => r.placement === low.placement && r.fps === 60)
+    const a = low.metrics.armExtension
+    const b = high?.metrics.armExtension
+    if (!a || !b || a.length !== b.length) continue
+    const gaps = a.map((v, i) => Math.abs(v - b[i]))
+    out.push(`\n${low.placement}: arm extension, 30 against 60 fps: median ${median(gaps).toFixed(1)}°, worst ${Math.max(...gaps).toFixed(1)}°`)
   }
   return out.join('\n')
 }

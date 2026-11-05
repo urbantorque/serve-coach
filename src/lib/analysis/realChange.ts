@@ -43,22 +43,23 @@ export type ChangeScope = 'overall' | 'trip' | FundamentalId
  * one past the 90th percentile of how far two takes of one serve, graded on
  * the same rows, moved apart. A change smaller than this is "no real change".
  *
- * The spread across the areas is the measurement, not a choice. Contact is
- * scored on readings whose bands are narrow against their noise on real motion
- * (arm extension), so the camera moves it far more than it moves the toss;
- * rhythm is a single row, and one row moves its area by everything it moves.
+ * The spread across the areas is the measurement, not a choice. Rhythm is a
+ * single row, and one row moves its area by everything it moves.
  *
  * Loading was 17 while the trunk turn was one of its rows, the noisiest
  * reading in the engine. It is a reading now, and loading re-derived at 10
  * (9 at 24 takes, 8 at 60). The trip rose from 10 to 11 with it: the overall
  * leans harder on each of loading's three rows than it did on four.
+ *
+ * Contact was 21 while arm extension was the straightest single sample. Read
+ * off curves through the samples it re-derived at 14 (11 at 24 takes, 13 at 60).
  */
 export const REAL_CHANGE: Record<ChangeScope, number> = {
   overall: 6,
   toss: 7,
   loading: 10,
   swing: 6,
-  contact: 21,
+  contact: 14,
   rhythm: 36,
   trip: 11,
 }
@@ -75,15 +76,16 @@ export const REAL_CHANGE: Record<ChangeScope, number> = {
  *
  * Measured where the ensembles produce such pairs — the overall, and the swing
  * whose rows the collapse takes. The overall's rose from 14 to 15 when loading
- * lost the trunk turn, for the trip's reason. A change between the two floors is reported
- * as soft: shown, and not called a change. Past this one it is a change
- * whatever the rows were. Absent for an area the ensembles never read
- * differently (the ball and the camera's side are what change its rows in
+ * lost the trunk turn, for the trip's reason, and to 16 when arm extension moved
+ * to curves (the wobbly toss, 14 to 15 at 24 takes). A change between the two
+ * floors is reported as soft: shown, and not called a change. Past this one it
+ * is a change whatever the rows were. Absent for an area the ensembles never
+ * read differently (the ball and the camera's side are what change its rows in
  * life, and neither is in them), so a change there read differently is soft
  * however large.
  */
 export const READ_DIFFERENTLY: Partial<Record<ChangeScope, number>> = {
-  overall: 15,
+  overall: 16,
   swing: 42,
 }
 
@@ -97,7 +99,7 @@ export const GAP_CHANGE = 13
  * basket. Measured on baskets whose best and worst were read alike, which
  * `buildGap` insists on.
  */
-const BEST_WORST: Record<number, number> = { 2: 6, 3: 8, 4: 8, 5: 9, 6: 9 }
+const BEST_WORST: Record<number, number> = { 2: 6, 3: 7, 4: 7, 5: 7, 6: 8 }
 
 /** `BEST_WORST` for any basket size: the two ends hold the table's edges. */
 export function bestWorstGap(serves: number): number {
@@ -131,7 +133,7 @@ export const ROW_CHANGE: Record<string, readonly [number, number, number]> = {
   dropToContact: [39, 25, 12],
   handUnderElbow: [6, 6, 4],
   contactHeight: [5, 4, 3],
-  armExtension: [36, 26, 22],
+  armExtension: [24, 18, 15],
   contactAhead: [17, 13, 11],
   loadRatio: [36, 28, 21],
 }

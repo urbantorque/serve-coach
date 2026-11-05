@@ -38,6 +38,75 @@ export function poseAt(frames: Frame[], t: number): Frame {
   }
 }
 
+/** Three samples fix a parabola exactly and smooth nothing; a fourth is the least that averages. */
+const PATH_MIN_SAMPLES = 4
+
+/**
+ * Where some world landmarks were at any moment of a stretch of clip, read off
+ * a smooth curve through the samples rather than off any one of them.
+ *
+ * `poseAt` takes a moment from its two neighbours, so it keeps their noise.
+ * This takes every sample within `reach` seconds of `centre` and fits one
+ * parabola in time to each axis of each landmark, by least squares, the
+ * samples weighted down towards the edge (tricube, which reaches zero there,
+ * so a sample does not jump in or out as `centre` moves). What comes back is
+ * still a pose, so whatever is worked out from it is worked out after the
+ * noise has gone: an angle averaged after the fact has already kept the error
+ * its own arithmetic added.
+ *
+ * A parabola is a fair picture of a path only where nothing sudden happens, so
+ * the stretch is the caller's to choose and to justify. Undefined when too few
+ * samples hold every landmark, or when they sit at too few moments to fix a
+ * curve.
+ */
+export function pathsThrough(
+  frames: Frame[],
+  landmarks: readonly number[],
+  centre: number,
+  reach: number,
+): ((t: number) => Landmark[]) | undefined {
+  const near = frames.filter(
+    (f) =>
+      Math.abs(f.t - centre) < reach &&
+      landmarks.every((lm) => {
+        const p = f.world[lm]
+        return p !== undefined && Number.isFinite(p.x + p.y + p.z)
+      }),
+  )
+  if (near.length < PATH_MIN_SAMPLES) return undefined
+  const us = near.map((f) => (f.t - centre) / reach)
+  const weights = us.map((u) => (1 - Math.abs(u) ** 3) ** 3)
+  // The normal equations for 1, u and u²: their matrix holds these sums, and
+  // the six letters are its inverse's cofactors.
+  const s = [0, 1, 2, 3, 4].map((k) => us.reduce((sum, u, i) => sum + weights[i] * u ** k, 0))
+  const a = s[2] * s[4] - s[3] * s[3]
+  const b = s[2] * s[3] - s[1] * s[4]
+  const c = s[1] * s[3] - s[2] * s[2]
+  const d = s[0] * s[4] - s[2] * s[2]
+  const e = s[1] * s[2] - s[0] * s[3]
+  const f = s[0] * s[2] - s[1] * s[1]
+  const det = s[0] * a + s[1] * b + s[2] * c
+  if (!(Math.abs(det) > 1e-9)) return undefined
+
+  return (t) => {
+    const u = (t - centre) / reach
+    const [r0, r1, r2] = [a + b * u + c * u * u, b + d * u + e * u * u, c + e * u + f * u * u]
+    // What each sample adds to the curve at `t`. They sum to one.
+    const shares = us.map((v, i) => (weights[i] * (r0 + r1 * v + r2 * v * v)) / det)
+    return landmarks.map((lm) => {
+      const point = { x: 0, y: 0, z: 0, visibility: 1 }
+      near.forEach((sample, i) => {
+        const p = sample.world[lm]
+        point.x += shares[i] * p.x
+        point.y += shares[i] * p.y
+        point.z += shares[i] * p.z
+        point.visibility = Math.min(point.visibility, p.visibility)
+      })
+      return point
+    })
+  }
+}
+
 /**
  * The top of a peak, between samples: the vertex of the parabola through the
  * highest of the three samples around `i` and its two neighbours.

@@ -719,7 +719,7 @@ export const METRICS: Record<string, MetricCopy> = {
     // (Newton: 166 ± 5° of extension) and 30.1 ± 15.9° pooled over 27 studies:
     // 150–166° at the joint. The floor of 160 called most of them short. 145 is
     // 35° of flexion, the research brief's club edge, with room for a camera's
-    // error. The Bath serves read 144–154° here, but their elbow markers sit off
+    // error. The Bath serves read 145–159° here, but their elbow markers sit off
     // the joint (ANALYSIS-REVIEW.md §9), so they cannot settle it.
     ideal: [145, 180],
     range: [100, 180],

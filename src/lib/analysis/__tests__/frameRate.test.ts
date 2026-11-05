@@ -12,7 +12,7 @@
  * times with the suite's camera noise: how far the mean moved, in the reading's
  * own noise deviations (`CARD_NOISE_SD`).
  */
-import { peakBetween, poseAt } from '../between'
+import { pathsThrough, peakBetween, poseAt } from '../between'
 import { CARD_NOISE_SD } from '../consistency'
 import { LM } from '../geometry'
 import { measure } from '../metrics'
@@ -57,6 +57,41 @@ check('the top of a rounded peak is found between samples, and a sharp one is no
   // Not a peak: the sample's own value.
   assert(peakBetween([1, 2, 3], [0, 0.1, 0.2], 1) === 3, 'a rising series was given a top')
   assert(peakBetween([1, 2], [0, 0.1], 1) === 2, 'an end sample was given a top')
+})
+
+heading('A curve through the samples')
+
+/** One world landmark at each moment, the rest of the pose left out. */
+const pathFrames = (ts: number[], at: (t: number) => number): Frame[] =>
+  ts.map((t, i) => ({ index: i, t, image: [], world: [point(at(t), -2 * at(t))], visibility: 1 }))
+
+check('a curve follows a parabola exactly, between the samples and on uneven ones', () => {
+  const ts = [0, 0.03, 0.05, 0.11, 0.12, 0.17, 0.21]
+  const path = pathsThrough(pathFrames(ts, (t) => 3 + 40 * t - 90 * t * t), [0], 0.1, 0.15)!
+  for (const t of [0.04, 0.1, 0.133]) {
+    const [p] = path(t)
+    near(p.x, 3 + 40 * t - 90 * t * t, 1e-9, `x at ${t}`)
+    near(p.y, -2 * (3 + 40 * t - 90 * t * t), 1e-9, `y at ${t}`)
+  }
+})
+
+check('a curve averages the noise out of what it passes through', () => {
+  // A level path, every sample off by ±1, alternately. The middle of the curve
+  // takes most of it out, where the nearest sample keeps all of it.
+  const ts = Array.from({ length: 11 }, (_, i) => 0.02 * i)
+  const path = pathsThrough(pathFrames(ts, (t) => (Math.round(t / 0.02) % 2 ? 1 : -1)), [0], 0.1, 0.12)!
+  assert(Math.abs(path(0.1)[0].x) < 0.3, `the middle of the curve is ${path(0.1)[0].x}`)
+})
+
+check('a sample missing a landmark is left out, and too few samples draw no curve', () => {
+  const ts = [0, 0.02, 0.04, 0.06, 0.08]
+  const line = pathFrames(ts, (t) => t)
+  line[2].world[0] = point(Number.NaN, 0)
+  near(pathsThrough(line, [0], 0.04, 0.2)!(0.04)[0].x, 0.04, 1e-9, 'around the sample with no landmark')
+  line[3].world = []
+  assert(pathsThrough(line, [0], 0.04, 0.2) === undefined, 'three samples drew a curve')
+  // Only one moment, however many samples: nothing to fix a slope with.
+  assert(pathsThrough(pathFrames([0.1, 0.1, 0.1, 0.1, 0.1], (t) => t), [0], 0.1, 0.2) === undefined, 'one moment drew a curve')
 })
 
 heading('The contact readings, at the app’s rate and the suite’s')

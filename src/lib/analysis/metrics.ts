@@ -3,6 +3,7 @@ import type { ContactRead } from './contact'
 import { readoutOf, targetOf } from './anatomy'
 import { FUNDAMENTALS, METRICS, READINGS, metricCopy } from './coaching'
 import { imageXSplitFrom, readImageX, type BodyAxis } from './axes'
+import { pathsThrough } from './between'
 import { assessSpatial } from './spatial'
 import { contactHeightOf } from './handHeight'
 import { tossPathSpread } from './tossPath'
@@ -216,18 +217,73 @@ function steadyAngle(
  * capture, the same serve read a median 6.8° apart at 30 and 60 fps, and up to
  * 16°, against a band 20° wide.
  *
- * The straightest the arm gets near contact has a flat top, so a few
- * milliseconds of timing error barely move it. Over ±50 ms the two frame rates
- * agree to a median 2.1° (worst 5.7°), and the reading lands within 2.1° of the
- * same quantity taken from the capture in 3D. Fifty milliseconds also holds the
- * racket head's highest point, which on those serves comes 15–31 ms after the
- * wrist's.
+ * The arm opens slowly by then, so a few milliseconds of timing error barely
+ * move the straightest it gets. Over ±50 ms, off the curves below, 30 and 60 fps
+ * agree to a median 0.4–1.4° by placement (worst 4.9°), and the reading lands a
+ * median 0.8–2.1° from the same quantity taken from the capture in 3D (worst
+ * 4.9°), over five placements and 30–120 fps (`npm run bench:mocap`). Fifty
+ * milliseconds also holds the racket head's highest point, which on those
+ * serves comes 15–31 ms after the wrist's.
  */
-const ARM_EXTENSION_WINDOW = 0.05
+export const ARM_EXTENSION_WINDOW = 0.05
 
-/** The straightest racket arm within `ARM_EXTENSION_WINDOW` of contact, or nothing in reach. */
+/**
+ * The stretch the arm's three landmarks are followed through, in seconds: this
+ * far after contact, give or take `ARM_PATH_REACH`.
+ *
+ * The reading used to be the straightest single sample, and it was the one card
+ * row the camera could carry out of its own band (`bandNoise.test.ts`). The
+ * reason given was the ceiling at 180°, and that was wrong: the real arms read
+ * 150°, nowhere near it, and they moved 9.63° between takes while the rig's
+ * arm, on the ceiling, moved 2.38°. It was depth. From the guide's placement
+ * the arm bends along the lens, the axis the pose model only infers, so one
+ * sample's angle moved 11°, against 3.6° with depth as steady as the picture;
+ * and the largest of a few samples is whichever got luckiest.
+ *
+ * So the noise comes out of the positions first, along a curve through the
+ * samples (`pathsThrough`), and the angle is read off the curves. On the real
+ * serves the elbow opens at about 900°/s up to contact and about 200°/s from 20
+ * ms after it, and tops out near 80 ms after. A wide curve cuts that corner and
+ * overshoots what follows, so this one is narrow: 100 ms either side of the
+ * racket head's highest point, the nearest stand-in for the ball, which comes
+ * about 30 ms after contact as the engine times it. That trades steadiness
+ * against the capture. At ±130 ms the spread is 5.9° against 6.45° and the median
+ * 2.4° from the capture at 32 fps against 2.0°; a cubic over ±200 ms gets to 5.9°
+ * too, and reads 25° low on a rig arm that peaks at contact and folds. Centred
+ * 10 ms later, that same arm moves 12.5° between takes rather than 7.7°.
+ *
+ * Not the reach (shoulder to wrist over the two bones), which was tried and
+ * moved 13–15°. It is linear in the landmarks, but the law of cosines puts the
+ * same arccosine back: 145° to 180° is 2.8 cm of reach on a real arm, and each
+ * end of that distance moves about a centimetre, so it reads the noise and any
+ * slip in the bones' lengths.
+ */
+const ARM_PATH_CENTRE = 0.03
+const ARM_PATH_REACH = 0.1
+
+/** How finely the curves are searched for the straightest moment, in seconds. */
+const ARM_PATH_STEP = 0.005
+
+/**
+ * The straightest racket arm within `ARM_EXTENSION_WINDOW` of contact, or nothing
+ * in reach. Off the sampled poses themselves when there is no curve to read: too
+ * few samples, or a clip that stops before the end of the window.
+ */
 function straightestArm(frames: Frame[], contactT: number, R: ReturnType<typeof sided>): number | undefined {
   let best: number | undefined
+  const path =
+    frames[frames.length - 1].t >= contactT + ARM_EXTENSION_WINDOW
+      ? pathsThrough(frames, [R.shoulder, R.elbow, R.wrist], contactT + ARM_PATH_CENTRE, ARM_PATH_REACH)
+      : undefined
+  if (path) {
+    const steps = Math.round((2 * ARM_EXTENSION_WINDOW) / ARM_PATH_STEP)
+    for (let i = 0; i <= steps; i++) {
+      const [shoulder, elbow, wrist] = path(contactT - ARM_EXTENSION_WINDOW + i * ARM_PATH_STEP)
+      const angle = jointAngle(shoulder, elbow, wrist)
+      if (best === undefined || angle > best) best = angle
+    }
+    return best
+  }
   for (const f of frames) {
     if (Math.abs(f.t - contactT) > ARM_EXTENSION_WINDOW) continue
     const angle = jointAngle(f.world[R.shoulder], f.world[R.elbow], f.world[R.wrist])

@@ -9,8 +9,9 @@
  * alone: the standard deviation over twenty-four noisy takes, the larger of the
  * worst real serve (the six Bath serves, filmed from the guide's placement and
  * the back fence, `realiseReal`'s noise) and the rig's clean serve. Measured
- * 2026-10-09; `consistency.test.ts` re-measures it and fails if the camera
- * now moves a reading further than this says (L1.8).
+ * 2026-10-09, and arm extension again on 2026-11-05 when it moved to curves
+ * (`straightestArm`); `consistency.test.ts` re-measures it and fails if the
+ * camera now moves a reading further than this says (L1.8).
  *
  * A reading missing here has no measured noise, and none is subtracted from it:
  * the ball readings, which the mocap bench has no ball for.
@@ -27,7 +28,7 @@ export const CARD_NOISE_SD: Record<string, number> = {
   handUnderElbow: 2.43,
   dropToContact: 18.5,
   contactHeight: 0.0099,
-  armExtension: 9.63,
+  armExtension: 6.45,
   contactAhead: 1.97,
   loadRatio: 4.59,
 }

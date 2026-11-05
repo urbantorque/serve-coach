@@ -20,16 +20,11 @@ const Z95 = 1.96
 
 /**
  * Graded rows that do not clear the rule yet, and why they stay graded. The
- * check below fails when one clears it, so the entry goes with it.
+ * check below fails when one clears it, so the entry goes with it. None does
+ * today: arm extension, the last, was 9.63° on its 35° band until it was read
+ * off curves through the samples (`straightestArm`), and is 6.45° now.
  */
-const KNOWN: Record<string, string> = {
-  // A nearly straight elbow is under-read by jitter, never over-read (see
-  // `steadyAngle` in metrics.ts), so its spread is one-sided and wide: 9.63°
-  // against a 35° band, which keeps a centred serve inside on about 93% of
-  // takes. The band stands on four studies, so it is not demoted on the
-  // strength of the camera alone; steadying the reading is the fix.
-  armExtension: 'one-sided error near full extension, 9.63° on a 35° band',
-}
+const KNOWN: Record<string, string> = {}
 
 const graded = [...new Set(Object.values(FUNDAMENTALS).flatMap((f) => f.metrics))]
 

@@ -21,18 +21,22 @@
 import fixture from './fixtures/bath-serves.json'
 import { runEngine } from '../../../dev/mocap/engine'
 import { METRICS } from '../coaching'
+import { jointAngle, sided } from '../geometry'
+import { ARM_EXTENSION_WINDOW, measure } from '../metrics'
 import {
   GUIDE_PHONE,
   filmMocap,
   mocapTruth,
   pointAt,
+  straightestInCapture,
   swingCompleted,
   unpackMocap,
   type MocapPoint,
   type MocapServe,
   type PackedMocapServe,
 } from '../mocapServe'
-import { assert, check, heading, note, report, within } from './harness'
+import { detectServe } from '../phases'
+import { assert, check, heading, near, note, report, within } from './harness'
 
 const fromBase64 = (text: string) => Uint8Array.from(atob(text), (c) => c.charCodeAt(0))
 const SERVES: MocapServe[] = (fixture.serves as PackedMocapServe[]).map((p) => unpackMocap(p, fromBase64))
@@ -171,6 +175,77 @@ for (const fps of [30, 60, 120]) {
     for (const v of drop) within(v, -20, 30, 'drop error (ms)')
   })
 }
+
+heading('Real serve motion: arm extension against the capture')
+
+/** The card's arm extension on every serve, from one phone. */
+const armReads = (phone: Partial<typeof GUIDE_PHONE>) =>
+  readAll(phone).map(({ serve, truth, run }) => ({
+    serve,
+    read: run.fundamentals.flatMap((f) => f.metrics).find((m) => m.id === 'armExtension')!.value,
+    capture: straightestInCapture(serve, truth.wristTop, ARM_EXTENSION_WINDOW),
+  }))
+
+const ARM_PHONES: Partial<typeof GUIDE_PHONE>[] = [
+  { bearing: 90 },
+  { bearing: 270 },
+  { bearing: 180, distance: 6 },
+  { bearing: 135 },
+  { bearing: 225 },
+]
+
+check('arm extension lands on the capture, from every placement and rate', () => {
+  // The forty serves, from these five placements at 30–120 fps, read a median
+  // 0.8–2.1° from the capture and 4.9° at the worst (`npm run bench:mocap`).
+  // Before it was read off curves: a median 1.6–4.4°, and 9.7° at the worst.
+  for (const phone of ARM_PHONES) {
+    for (const fps of [30, 32, 60, 120]) {
+      const errors = armReads({ ...phone, fps }).map((r) => r.read - r.capture)
+      if (fps === 32) note(`bearing ${phone.bearing}, reading minus capture: ${errors.map((e) => e.toFixed(1)).join(' / ')}°`)
+      for (const e of errors) within(e, -5, 5, `arm extension against the capture from bearing ${phone.bearing} at ${fps} fps`)
+    }
+  }
+})
+
+check('two frame rates agree on arm extension', () => {
+  // Worst 4.9° on the forty, from 6.7° off the sampled poses.
+  for (const phone of ARM_PHONES) {
+    const low = armReads({ ...phone, fps: 30 })
+    const high = armReads({ ...phone, fps: 60 })
+    low.forEach((r, i) => within(r.read - high[i].read, -5, 5, `${r.serve.id} at 30 against 60 fps from bearing ${phone.bearing}`))
+  }
+})
+
+check('a real arm is not told it stayed short, on a clean clip from anywhere', () => {
+  // All forty reach 145° in the capture, the floor of the band. Off the sampled
+  // poses a clean clip read 49 of 400 of them short of it, and off curves none.
+  const floor = METRICS.armExtension.ideal[0]
+  for (const phone of ARM_PHONES) {
+    for (const fps of [30, 60]) {
+      for (const r of armReads({ ...phone, fps })) {
+        assert(r.capture >= floor, `${r.serve.id} is short of the band in the capture, so this check says nothing`)
+        assert(r.read >= floor, `${r.serve.id} from bearing ${phone.bearing} at ${fps} fps read ${r.read.toFixed(1)}°`)
+      }
+    }
+  }
+})
+
+check('a clip that stops inside the window reads the samples it has', () => {
+  // There is no curve to draw past the last sample, and the arm is opening
+  // fast there, so the reading stays with what was filmed.
+  for (const serve of SERVES) {
+    const frames = filmMocap(serve, { fps: 60 })
+    const skel = detectServe(frames, 60)
+    const R = sided(skel.racket)
+    const held = frames.filter((f) => f.t <= skel.times.contact + ARM_EXTENSION_WINDOW / 2)
+    const short = measure(held, { ...skel, keys: { ...skel.keys, finish: held.length - 1 } }, true, {})
+    const arm = short.flatMap((f) => f.metrics).find((m) => m.id === 'armExtension')!
+    const sampled = held
+      .filter((f) => Math.abs(f.t - skel.times.contact) <= ARM_EXTENSION_WINDOW)
+      .map((f) => jointAngle(f.world[R.shoulder], f.world[R.elbow], f.world[R.wrist]))
+    near(arm.value, Math.max(...sampled), 1e-9, `${serve.id}: the reading off the samples`)
+  }
+})
 
 heading('Real serve motion: KNOWN disagreements (ANALYSIS-REVIEW.md §9)')
 
