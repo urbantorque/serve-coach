@@ -33,6 +33,8 @@ const KIT: Tone = { shade: '#07090e', mid: '#10151e', lit: '#2b3546', edge: '#6a
 const LIME = '#cdf94a'
 const COOL = '#dfe8f2'
 const WORK = '#ff7a6b'
+/** A part lit to teach, with nothing wrong with it: the app's own lime. */
+const TEACH = '#cdff3f'
 
 export interface AthleteOptions {
   material?: Material
@@ -43,6 +45,8 @@ export interface AthleteOptions {
   stature?: number
   /** Solids to paint as the part to work on, by a fragment of their id. */
   work?: string[]
+  /** Lit to show where to look, not what is wrong. */
+  teach?: boolean
   /** How strongly the rims of light show, 0 to 1. Zero skips them, for a small figure. */
   rim?: number
   /** The shadow on the court, 0 to 1. */
@@ -93,7 +97,7 @@ function shadeOf(ctx: CanvasRenderingContext2D, s: Solid, tone: Tone): CanvasGra
   return g
 }
 
-function paintSolid(ctx: CanvasRenderingContext2D, s: Solid, tone: Tone, work: boolean) {
+function paintSolid(ctx: CanvasRenderingContext2D, s: Solid, tone: Tone, work: boolean, teach = false) {
   const path = smoothClosed(s.outline)
   ctx.fillStyle = shadeOf(ctx, s, tone)
   ctx.fill(path)
@@ -102,9 +106,10 @@ function paintSolid(ctx: CanvasRenderingContext2D, s: Solid, tone: Tone, work: b
   if (work) {
     const [a, b] = s.across
     const g = ctx.createLinearGradient(a.x, a.y, b.x, b.y)
-    g.addColorStop(0, withAlpha(WORK, 0.5))
-    g.addColorStop(0.7, withAlpha(WORK, 0.84))
-    g.addColorStop(1, withAlpha('#ffd9d3', 0.96))
+    const lit = teach ? TEACH : WORK
+    g.addColorStop(0, withAlpha(lit, 0.5))
+    g.addColorStop(0.7, withAlpha(lit, 0.84))
+    g.addColorStop(1, withAlpha(teach ? '#efffc2' : '#ffd9d3', 0.96))
     ctx.fillStyle = g
     ctx.fill(path)
   }
@@ -368,7 +373,7 @@ export function paintAthlete(ctx: CanvasRenderingContext2D, placed: Placed, o: A
   const shapes = shapesOf(placed, { stature: o.stature, near: o.near, racket: o.racket })
   const near = o.near ?? (shapes.parts[0].solids[0].id.startsWith('left') ? 'right' : 'left')
   const racketPart = near === o.racket ? 'nearArm' : 'farArm'
-  const painted = (s: Solid) => paintSolid(ctx, s, tone, o.work?.some((w) => s.id.includes(w)) ?? false)
+  const painted = (s: Solid) => paintSolid(ctx, s, tone, o.work?.some((w) => s.id.includes(w)) ?? false, o.teach)
 
   if (o.ground) paintGround(ctx, shapes, o.ground, o.floorY, Boolean(o.still))
   if (rim > 0 && !o.still) paintBackRims(ctx, shapes, rim)
@@ -387,7 +392,7 @@ export function paintAthlete(ctx: CanvasRenderingContext2D, placed: Placed, o: A
     ctx.save()
     ctx.globalAlpha *= 0.55
     for (const part of shapes.parts) {
-      for (const s of part.solids) if (o.work.some((w) => s.id.includes(w))) paintSolid(ctx, s, tone, true)
+      for (const s of part.solids) if (o.work.some((w) => s.id.includes(w))) paintSolid(ctx, s, tone, true, o.teach)
     }
     ctx.restore()
   }

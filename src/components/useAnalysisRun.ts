@@ -9,9 +9,10 @@
 import { useCallback, useEffect, useRef, useState, type Dispatch, type MutableRefObject, type SetStateAction } from 'react'
 import { markRead, markReading, type Interrupted } from '../lib/interrupted'
 import type { AnalyzeProgress } from '../lib/analysis/analyze'
+import type { PoseSample } from '../lib/analysis/kalman'
 import { forgetAll, recall, remember } from '../lib/analysisCache'
 import type { ServePairFrames } from '../lib/analysis/consistency'
-import { SCORING_VERSION, hintsOf, type Analysis, type NotAServeError } from '../lib/analysis/types'
+import { SCORING_VERSION, hintsOf, type Analysis, type Frame, type NotAServeError } from '../lib/analysis/types'
 import { Cancelled, looksLikeNonVideo } from '../lib/pose/errors'
 import { type Prefs } from '../lib/storage/prefs'
 import { clipIdOf, fileKeyOf, sessionKeyFor } from '../lib/storage/sessionKey'
@@ -47,6 +48,12 @@ export interface AnalysisRunDeps {
 export function useAnalysisRun(deps: AnalysisRunDeps) {
   const { view, setView, prefs, sessions, refreshSessions, trySave, setPair, recheckOffline, historyRef, setKeepFailedFor, setInterrupted } = deps
   const [progress, setProgress] = useState<AnalyzeProgress>({ step: 'engine', ratio: 0 })
+  // The bodies the tracker has read in this pass, for the waiting screen. A ref,
+  // because a render per pose would compete with the model for the thread.
+  const liveFrames = useRef<Frame[]>([])
+  const onPose = useCallback((s: PoseSample) => {
+    if (s.pose) liveFrames.current.push({ index: liveFrames.current.length, t: s.t, image: s.pose.image, world: s.pose.world, visibility: 1 })
+  }, [])
   /**
    * The basket sweep filling in, or nothing when a single serve is being read.
    *
@@ -188,6 +195,7 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
       lastFileRef.current = file
 
       setProgress({ step: 'engine', ratio: 0, detail: 'Getting the coach ready' })
+      liveFrames.current = []
       // One serve, so the analysing screen shows steps rather than a basket. A
       // sweep stopped a moment ago would otherwise leave its serve rows under
       // the progress bar of an unrelated clip.
@@ -232,6 +240,7 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
           // render of the whole app, and the pipeline reports hundreds of them
           // per pass on the same thread the pose model is running on.
           onProgress: throttleProgress(setProgress),
+          onPose,
         })
         if (controller.signal.aborted) return
 
@@ -310,6 +319,7 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
     // `sessions` is read to preserve the original filing date of a re-analysis;
     // leaving it out would capture an empty list from the first render.
     [
+      onPose,
       releaseVideo,
       trySave,
       sessions,
@@ -352,6 +362,7 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
       const { first, total } = sweepWindow(analysis.serves.count)
       setSweep({ total, firstNumber: first + 1, done: [] })
       setProgress({ step: 'engine', ratio: 0, detail: 'Comparing your serves' })
+      liveFrames.current = []
       void loadReport()
       void loadGlance()
       setView({ kind: 'analyzing', fileName: file.name || 'Your serve' })
@@ -785,5 +796,5 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
     }
   }, [sessionRunning, stopSession])
 
-  return { progress, sweep, lastFileRef, urlRef, run, openClip, stopSweep, stopSession, releaseVideo, cancel, startSession, sessionRunning, openPracticeSession, compareServes, closeSessionVideo }
+  return { liveFrames, progress, sweep, lastFileRef, urlRef, run, openClip, stopSweep, stopSession, releaseVideo, cancel, startSession, sessionRunning, openPracticeSession, compareServes, closeSessionVideo }
 }

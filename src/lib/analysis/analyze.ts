@@ -10,6 +10,7 @@ import {
   type ReadPose,
   refineSwing,
 } from '../pose/extract'
+import type { PoseSample } from './kalman'
 import { framingIssues } from './framingIssues'
 import { readServeSpeed, type SpeedReading } from './speedPass'
 import { gravityHeights, type GravityHeights } from '../vision/heights'
@@ -124,6 +125,8 @@ export interface AnalyzeOptions {
   videoUrl: string
   fileName: string
   onProgress?: (p: AnalyzeProgress) => void
+  /** Each pose as it is read, for the waiting screen. */
+  onPose?: (sample: PoseSample) => void
   signal?: AbortSignal
   /** Overrides the automatic guess when the player says we got it wrong. */
   handedness?: 'right' | 'left'
@@ -539,6 +542,7 @@ export async function analyzeAllServes(
            */
           ...SWEEP_SKIPS,
           knownServeTimes,
+          onPose: opts.onPose,
           onProgress: (p) =>
             opts.onProgress?.({
               ...p,
@@ -1566,6 +1570,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
       knownServeTimes,
       people,
       stretch: stretch.factor,
+      onPose: opts.onPose,
       onProgress: (p: ExtractProgress) =>
         onProgress({
           step: p.phase === 'scanning' ? 'scanning' : 'tracking',

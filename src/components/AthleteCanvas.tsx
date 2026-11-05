@@ -14,6 +14,8 @@ interface Props {
   at: number
   /** Solids to paint as the part to work on: see `workParts`. */
   work?: string[]
+  /** Lit in the accent, to show where to look rather than what is wrong. */
+  teach?: boolean
   /** Share of real speed a loop plays at. */
   rate?: number
   /** Most redraws a second, for a screen with the tracker running underneath. */
@@ -39,7 +41,7 @@ const still = () => typeof window !== 'undefined' && window.matchMedia?.('(prefe
  * leaves the screen: a phone at a court has better things to do with its
  * battery than animate a picture nobody can see.
  */
-export default function AthleteCanvas({ swing, mode, at, work, rate = 0.42, maxFps, fit, label, className, paused, onSettled }: Props) {
+export default function AthleteCanvas({ swing, mode, at, work, teach, rate = 0.42, maxFps, fit, label, className, paused, onSettled }: Props) {
   const ref = useRef<HTMLCanvasElement>(null)
   // Kept in a ref so a parent's new array on every render does not restart a loop.
   const workRef = useRef(work)
@@ -81,6 +83,7 @@ export default function AthleteCanvas({ swing, mode, at, work, rate = 0.42, maxF
         index: i,
         bodyHeight,
         work: workRef.current,
+        teach,
         ground: 1,
         still: !moving,
       })
@@ -173,7 +176,7 @@ export default function AthleteCanvas({ swing, mode, at, work, rate = 0.42, maxF
       observer?.disconnect()
       seen?.disconnect()
     }
-  }, [swing, mode, at, rate, maxFps, paused])
+  }, [swing, mode, at, teach, rate, maxFps, paused])
 
   return <canvas ref={ref} className={className ?? 'athlete'} role="img" aria-label={label} />
 }

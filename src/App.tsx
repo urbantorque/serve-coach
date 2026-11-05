@@ -406,6 +406,7 @@ export default function App() {
     openPracticeSession,
     compareServes,
     closeSessionVideo,
+    liveFrames,
   } = useAnalysisRun({
     view,
     setView,
@@ -653,6 +654,7 @@ export default function App() {
               screenLine={wakeLockLine(wakeLock)}
               history={sessions}
               cold={offlineReady === false}
+              live={liveFrames}
             />
           )}
 

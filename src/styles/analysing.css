@@ -32,14 +32,6 @@
 }
 
 /* How long it will take (L6.9): under the file name, wrapping, never cut off. */
-.analyzing-estimate {
-  font-size: 12.5px;
-  color: var(--fg-faint);
-  max-width: 34ch;
-  line-height: 1.55;
-  text-wrap: balance;
-  margin-top: -10px;
-}
 
 .pulse {
   position: relative;
@@ -168,74 +160,15 @@
    the same weight as a row that has not happened yet, and the cross inside it
    carries the meaning. Lives here rather than as an inline style on the element,
    which is where it started. */
-.step.is-skipped .step-mark {
-  color: var(--fg-faint);
-}
-
-.step-mark {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 19px;
-  height: 19px;
-  border-radius: 50%;
-  border: 1px solid var(--hairline);
-  color: var(--great);
-  flex: none;
-}
 
 /* A thread running through the marks turns a list of labels into a route —
    one line to walk, rather than five separate facts. */
-.step:not(:last-child) .step-mark::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  width: 1px;
-  height: 9px;
-  background: var(--hairline);
-  transform: translateX(-50%);
-  transition: background var(--base) var(--ease);
-}
-
-.step.is-done:not(:last-child) .step-mark::after {
-  background: var(--great);
-  opacity: 0.4;
-}
-
-.step.is-done .step-mark {
-  border-color: color-mix(in srgb, var(--great) 40%, transparent);
-  background: var(--great-dim);
-}
-
-.step.is-active .step-mark {
-  border-color: var(--lime);
-}
-
-.step-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: currentColor;
-  color: var(--fg-faint);
-}
-
-.step.is-active .step-dot {
-  background: var(--lime);
-  animation: blink 1.2s ease-in-out infinite;
-}
 
 @keyframes blink {
   50% { opacity: 0.25; }
 }
 
 /* The screen could not be kept on (L6.4): the caution colour, at the notes' size. */
-.analyzing-screen {
-  font-size: 12.5px;
-  color: var(--fair-ink);
-  max-width: 34ch;
-  line-height: 1.55;
-}
 
 .analyzing-aside {
   font-size: 12.5px;
@@ -617,17 +550,128 @@ button.session-pick:hover .session-pick-play {
 
 /* A model serve under the status (L4.3): the full column wide, left to read
    like the report's players, and a short stage so it stays a side dish. */
-.analyzing-model {
-  align-self: stretch;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 18px;
-  padding-top: 18px;
-  border-top: 1px solid var(--hairline-soft);
-  text-align: left;
+
+/* ------------------------------------------------------------- the wait */
+
+.wait {
+  gap: 16px;
+  min-height: 100dvh;
+  padding-bottom: calc(14px + var(--safe-bottom));
 }
 
-.analyzing-model h2 {
+.wait-stage {
+  position: relative;
+  flex: 1;
+  min-height: 42svh;
+  margin: calc(-18px - var(--safe-top)) -20px 0;
+  overflow: hidden;
+  background: var(--stage);
+}
+
+.wait-tag {
+  position: absolute;
+  left: 20px;
+  bottom: 18px;
+  z-index: 1;
+  padding: 7px 13px;
+  border-radius: var(--r-pill);
+  background: var(--glass);
+  box-shadow: inset 0 0 0 1px var(--glass-edge);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.wait-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wait-status {
+  min-height: 1.3em;
+  font-size: 16px;
+  color: var(--fg-muted);
+}
+
+.wait-foot .progress {
+  width: 100%;
+  margin: 4px 0;
+}
+
+.wait-note {
+  font-size: 13.5px;
+  line-height: 1.35;
+  color: var(--fg-faint);
+}
+
+.wait-keep {
+  font-size: 14.5px;
+  line-height: 1.35;
+  color: var(--fair-ink);
+}
+
+.teach {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 92px;
+  padding-top: 10px;
+  animation: teach-in var(--slow) var(--ease-out) backwards;
+}
+
+.teach p {
+  font-size: 17px;
+  line-height: 1.34;
+  text-wrap: pretty;
+}
+
+@keyframes teach-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.sweep-cells {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(62px, 1fr));
+  gap: 6px;
+  padding: 8px 0;
+}
+
+.sweep-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border-radius: var(--r-md);
+  background: var(--panel);
+  box-shadow: var(--panel-edge);
+  font-size: 12.5px;
+  color: var(--fg-faint);
+  transition: color var(--base) var(--ease);
+}
+
+.sweep-score {
+  display: grid;
+  place-items: center;
+  height: 28px;
+  font-size: 24px;
+  font-stretch: 62%;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+.sweep-cell.is-active {
+  box-shadow: inset 0 0 0 1.5px var(--lime);
+}
+
+.sweep-cell.is-done {
+  color: var(--fg-muted);
+}
+
+.sweep-cell.is-skipped .sweep-score {
   color: var(--fg-faint);
 }

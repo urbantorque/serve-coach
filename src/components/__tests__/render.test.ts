@@ -464,18 +464,17 @@ check('a model serve to watch: a real serve looped with its moments and checkpoi
   assert(Object.values(PHASE_COPY).some((p) => player.includes(p.caption)), 'no checkpoint caption')
   assert(player.includes('aria-label="Pause"') || player.includes('aria-label="Play"'), 'a loop with no pause')
   assert(player.includes('Speed: Slow'), 'the full player lost its speeds')
-  const quiet = html(createElement(ModelServe, { racket: 'right', serve, quiet: true }))
-  assert(!quiet.includes('Speed: Slow') && quiet.includes('model-serve--quiet'), 'the quiet player is not quiet')
 
   // In the guide, one tap down and closed.
   const guide = html(createElement(FilmingGuide, { racket: 'left' }))
   assert(/<details class="guide-model">/.test(guide) && guide.includes('Watch a model serve'), 'the guide has no model serve')
-  // On the analysing screen, under the status.
+  // On the analysing screen, what the coach reads, under the status.
   const reading = html(createElement(Analyzing, { progress: { step: 'tracking', ratio: 0.4 }, fileName: 'serve.mp4', onCancel: noop }))
   assert(
-    reading.indexOf('While you wait, a model serve') > reading.indexOf('role="progressbar"'),
-    'the analysing screen has no model serve under its status',
+    reading.indexOf('What I look for') > reading.indexOf('role="progressbar"'),
+    'the wait teaches nothing under its status',
   )
+  assert((reading.match(/<button/g) ?? []).length === 1, 'the wait has more than one thing to press')
   // On the example, and not on a player's own report.
   const example = html(createElement(Report, { analysis: sampleAnalysis(DEMO_DIALS.example), example: true, onBack: noop, onAnalyzeAnother: noop }))
   const own = html(createElement(Report, { analysis: sampleAnalysis(DEMO_DIALS.example), onBack: noop, onAnalyzeAnother: noop }))

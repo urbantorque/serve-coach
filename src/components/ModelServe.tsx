@@ -6,8 +6,6 @@ interface Props {
   racket: 'left' | 'right'
   /** The serve, already built. Only a test passes it; the app loads it here. */
   serve?: Serve
-  /** Fewer controls and a capped redraw rate, for the analysing screen. */
-  quiet?: boolean
 }
 
 /**
@@ -17,7 +15,7 @@ interface Props {
  * Loaded on mount rather than with the screen, so its data costs nothing until
  * somebody is looking at it. A serve that cannot be built removes itself.
  */
-export default function ModelServe({ racket, serve: given, quiet = false }: Props) {
+export default function ModelServe({ racket, serve: given }: Props) {
   const [serve, setServe] = useState<Serve | null | undefined>(given)
 
   useEffect(() => {
@@ -33,7 +31,7 @@ export default function ModelServe({ racket, serve: given, quiet = false }: Prop
 
   if (serve === null) return null
   return (
-    <div className={`model-serve${quiet ? ' model-serve--quiet' : ''}`}>
+    <div className="model-serve">
       {serve ? (
         <RigPlayer
           serves={[serve]}
@@ -41,8 +39,6 @@ export default function ModelServe({ racket, serve: given, quiet = false }: Prop
           racket={racket}
           groupLabel="A model serve to watch, with its six moments."
           canvasLabel="A real serve, drawn as a lit figure, on a loop."
-          speeds={!quiet}
-          maxFps={quiet ? 15 : undefined}
         />
       ) : (
         <div className="fault-demo-wait" aria-busy="true" />

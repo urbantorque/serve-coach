@@ -1,44 +1,58 @@
-import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react'
 import '../styles/analysing.css'
 import '../styles/player.css'
 import { Icon } from '../components/primitives'
+import LiveBody from '../components/LiveBody'
 import type { AnalyzeProgress, Step } from '../lib/analysis/analyze'
 import { MIN_COMPARABLE_SERVES } from '../lib/analysis/consistency'
-import { clipLabel } from '../lib/clipLabel'
 import { estimateLine, timingsOf } from '../lib/analysis/timings'
+import type { Frame, PhaseId } from '../lib/analysis/types'
 import type { Session } from '../lib/storage/db'
-import { PLACEMENT } from '../lib/placement'
 
-// Its own chunk, shared with the report's fault demonstrations: the entry
-// bundle carries none of the rig player.
-const ModelServe = lazy(() => import('../components/ModelServe'))
+// Its own chunk: it carries the captured serve.
+const TeachStage = lazy(() => import('../components/TeachStage'))
 
-const STEPS: { id: Step; label: string }[] = [
-  { id: 'engine', label: 'Loading the coach' },
-  { id: 'reading', label: 'Reading your video' },
-  { id: 'scanning', label: 'Finding the serve' },
-  { id: 'tracking', label: 'Tracking your body' },
-  { id: 'measuring', label: 'Measuring the fundamentals' },
-]
+const STEPS: Step[] = ['engine', 'reading', 'scanning', 'tracking', 'measuring']
 
 /**
- * Rotating notes, so a slow first run on a phone still feels like progress.
- *
- * They were indexed by step, so on a long "Tracking your body" the same line
- * sat on screen for most of the wait and the rotation the comment promised
- * never happened. They now turn on a timer (`ASIDE_MS`), and the step no
- * longer decides which one shows.
+ * What the coach is looking for, one thing at a time, so a wait on a slow phone
+ * teaches the player how to read their own serve. Before the tracker starts each
+ * stands on a real serve stopped at that moment, with the part it reads lit.
  */
-const ASIDES = [
-  'Everything runs on your device. Nothing is uploaded.',
-  'The racket hand’s highest point marks contact.',
-  'The lowest point of your bend is what gets measured.',
-  'Your hips and shoulders are tracked as they turn.',
-  `Filming side-on, ${PLACEMENT.distance} away, gives the sharpest read.`,
-  'Every height counts against your own body, not in metres.',
+const TEACH: { moment: PhaseId; title: string; text: string; parts: (racket: 'left' | 'right', toss: 'left' | 'right') => string[] }[] = [
+  {
+    moment: 'trophy',
+    title: 'The trophy',
+    text: 'I check how far your knees bend and whether your tossing arm stays up.',
+    parts: (_, toss) => ['-thigh', '-shin', `${toss}-upper`, `${toss}-fore`, `${toss}-hand`],
+  },
+  {
+    moment: 'drop',
+    title: 'The racket drop',
+    text: 'I see how low the racket falls behind you. That is where the speed starts.',
+    parts: (racket) => [`${racket}-upper`, `${racket}-fore`, `${racket}-hand`],
+  },
+  {
+    moment: 'contact',
+    title: 'The ball',
+    text: 'I measure how high you reach and how straight your arm is when you meet it.',
+    parts: (racket) => [`${racket}-upper`, `${racket}-fore`, `${racket}-hand`],
+  },
+  {
+    moment: 'drop',
+    title: 'The legs',
+    text: 'I time your legs against your arm. The push from the ground should come first.',
+    parts: () => ['-thigh', '-shin'],
+  },
+  {
+    moment: 'finish',
+    title: 'My own wobble',
+    text: 'A camera is never perfectly steady, so a change only counts when it is bigger than the wobble.',
+    parts: () => [],
+  },
 ]
 
-const ASIDE_MS = 6000
+const ASIDE_MS = 7000
 
 /** An index that moves on every `ms`, for as long as the screen is up. */
 function useTicker(count: number, ms: number): number {
@@ -97,19 +111,24 @@ interface Props {
   history?: readonly Session[]
   /** The engine is not cached, so this pass downloads it too. */
   cold?: boolean
+  /** The bodies the tracker has read so far, in this pass. */
+  live?: MutableRefObject<Frame[]>
 }
 
-export default function Analyzing({ progress, fileName, sweep, onCancel, racket = 'right', screenLine, history, cold }: Props) {
+const quiet = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
+export default function Analyzing({ progress, sweep, onCancel, racket = 'right', screenLine, history, cold, live }: Props) {
   // From this phone's own past passes, or nothing until there are enough (L6.9).
   const estimate = useMemo(
     () => estimateLine(timingsOf(history ?? []), { cold, serves: sweep?.total }),
     [history, cold, sweep?.total],
   )
-  const aside = useTicker(ASIDES.length, ASIDE_MS)
+  const aside = useTicker(TEACH.length, ASIDE_MS)
+  const [seen, setSeen] = useState(false)
   // 'done' is past the end of the list, so every step reads as complete —
   // findIndex would return −1 and light step one under a full bar.
   const activeIndex =
-    progress.step === 'done' ? STEPS.length : Math.max(0, STEPS.findIndex((s) => s.id === progress.step))
+    progress.step === 'done' ? STEPS.length : Math.max(0, STEPS.indexOf(progress.step))
   const withinStep =
     progress.step === 'done'
       ? 1
@@ -154,31 +173,31 @@ export default function Analyzing({ progress, fileName, sweep, onCancel, racket 
 
   const measured = sweep?.done.filter((d) => d.score !== undefined).length ?? 0
 
+  const teach = TEACH[aside]
+  const toss = racket === 'left' ? 'right' : 'left'
+  const watching = live && !quiet()
+  const swingRead = progress.step === 'measuring' || progress.step === 'done'
+
   return (
-    <div className="screen analyzing">
-      <div className="analyzing-inner">
-        {/* The ball, back where it was. It is the only thing on this screen
-            that says "still working" without words, which is what the seconds
-            between one step label and the next need — and it says it without
-            being a second copy of the word the live region below is already
-            reading out. */}
-        <div className="pulse">
-          <span className="pulse-ball" />
-        </div>
-
-        <h1>{sweep ? 'Comparing your serves' : 'Reading your serve'}</h1>
-        <p className="analyzing-file">{clipLabel(fileName)}</p>
-        {estimate && <p className="analyzing-estimate">{estimate}</p>}
-        {/* Which serves, when the sweep reads fewer than the clip holds (L2.2).
-            The window is the clip's last serves, so its count is the last
-            number in it. */}
-        {sweep && sweep.firstNumber > 1 && (
-          <p className="analyzing-file">
-            Found {sweep.firstNumber + sweep.total - 1} serves · comparing {sweep.firstNumber}–
-            {sweep.firstNumber + sweep.total - 1}
-          </p>
+    <div className="screen wait">
+      <div className="wait-stage">
+        {!seen && (
+          <Suspense fallback={null}>
+            <TeachStage racket={racket} moment={teach.moment} work={teach.parts(racket, toss)} label={`A real serve, at ${teach.title.toLowerCase()}.`} />
+          </Suspense>
         )}
+        {watching && <LiveBody feed={live} racket={racket} done={swingRead} onSeen={() => setSeen(true)} />}
+        <div className="hero-veil" aria-hidden="true" />
+        {seen && <p className="wait-tag">{swingRead ? 'Your whole swing' : 'This is you, as I read you'}</p>}
+      </div>
 
+      <div className="wait-foot">
+        <h1 className="t-headline">{sweep ? 'Comparing your serves' : 'Reading your serve'}</h1>
+        {/* Analysis takes several seconds; without this a screen-reader user
+            gets silence and no idea whether anything is happening. */}
+        <p className="wait-status" role="status" aria-live="polite">
+          {progress.detail ?? 'Working'}
+        </p>
         <div
           className="progress"
           role="progressbar"
@@ -191,101 +210,49 @@ export default function Analyzing({ progress, fileName, sweep, onCancel, racket 
               on a device that is currently running pose estimation. */}
           <div className="progress-fill" style={{ transform: `scaleX(${overall})` }} />
         </div>
-        {/* Analysis takes several seconds; without this a screen-reader user
-            gets silence and no idea whether anything is happening. */}
-        <p className="analyzing-detail" role="status" aria-live="polite">
-          {progress.detail ?? 'Working'}
-        </p>
+        {estimate && <p className="wait-note">{estimate}</p>}
+        {/* Which serves, when the sweep reads fewer than the clip holds (L2.2).
+            The window is the clip's last serves, so its count is the last
+            number in it. */}
+        {sweep && sweep.firstNumber > 1 && (
+          <p className="wait-note">
+            Found {sweep.firstNumber + sweep.total - 1} serves · comparing {sweep.firstNumber}–
+            {sweep.firstNumber + sweep.total - 1}
+          </p>
+        )}
 
-        <ul className="steps">
-          {sweep
-            ? Array.from({ length: sweep.total }, (_, i) => {
-                const settled = sweep.done[i]
-                const number = settled?.number ?? sweep.firstNumber + i
-                const unreadable = settled !== undefined && settled.score === undefined
-                return (
-                  <li
-                    key={i}
-                    className={`step${settled && !unreadable ? ' is-done' : ''}${
-                      unreadable ? ' is-skipped' : ''
-                    }${i === sweep.done.length ? ' is-active' : ''}`}
-                  >
-                    {/* The mark's colour for an unreadable serve is
-                        `.step.is-skipped` in analysing.css — a row with nothing
-                        in it rather than a failure state. */}
-                    <span className="step-mark">
-                      {settled ? (
-                        <Icon name={unreadable ? 'close' : 'check'} size={13} />
-                      ) : (
-                        <span className="step-dot" />
-                      )}
-                    </span>
-                    {/* One flex child, so the score sits against its label
-                        rather than a row gap away from it. */}
-                    <span>
-                      Serve {number}
-                      {settled &&
-                        (settled.score === undefined ? (
-                          ' · too unclear to read'
-                        ) : (
-                          <>
-                            {' · '}
-                            <span className="tnum">{settled.score}</span>
-                          </>
-                        ))}
-                    </span>
-                  </li>
-                )
-              })
-            : STEPS.map((s, i) => (
-                <li
-                  key={s.id}
-                  className={`step${i < activeIndex ? ' is-done' : ''}${i === activeIndex ? ' is-active' : ''}`}
-                >
-                  <span className="step-mark">
-                    {i < activeIndex ? <Icon name="check" size={13} /> : <span className="step-dot" />}
-                  </span>
-                  {s.label}
+        {sweep ? (
+          <ol className="sweep-cells">
+            {Array.from({ length: sweep.total }, (_, i) => {
+              const settled = sweep.done[i]
+              const number = settled?.number ?? sweep.firstNumber + i
+              const unreadable = settled !== undefined && settled.score === undefined
+              return (
+                <li key={i} className={`sweep-cell${settled && !unreadable ? ' is-done' : ''}${unreadable ? ' is-skipped' : ''}${i === sweep.done.length ? ' is-active' : ''}`}>
+                  <span className="sweep-score tnum">{settled ? (unreadable ? <Icon name="close" size={14} /> : settled.score) : ''}</span>
+                  <span>Serve {number}</span>
+                  {unreadable && <span className="sr-only">too unclear to read</span>}
                 </li>
-              ))}
-        </ul>
+              )
+            })}
+          </ol>
+        ) : (
+          <section className="teach" key={aside} aria-label="What I look for">
+            <span className="next-label">{teach.title}</span>
+            <p>{teach.text}</p>
+          </section>
+        )}
 
-        {/* Above the rotating notes, and not one of them: the one thing on this
-            screen the player has to do something about (L6.4). */}
-        {screenLine && <p className="analyzing-screen">{screenLine}</p>}
+        {/* The one thing on this screen the player has to do something about (L6.4). */}
+        {screenLine && <p className="wait-keep">{screenLine}</p>}
 
-        <p className="analyzing-aside" key={sweep ? 'sweep' : aside}>
-          {sweep
-            ? 'Each serve is read on its own, then the spread across them is compared.'
-            : ASIDES[aside]}
-        </p>
-
-        {/* What stopping actually does, said before they press it. Two serves
-            is the point at which there is a spread to compare — below it,
-            stopping leaves the report exactly as they left it, so the button
-            does not promise a comparison that cannot be built. */}
         {/* Not disabled once pressed, deliberately. Disabling it would drop
             keyboard focus out of the only control on the screen, and pressing
             it again is harmless — aborting an already-aborted signal does
             nothing. The label is the acknowledgement. */}
-        <button className="btn btn--ghost" onClick={onCancel}>
-          {sweep?.stopping
-            ? 'Stopping'
-            : measured >= MIN_COMPARABLE_SERVES
-              ? `Stop and compare these ${measured}`
-              : 'Cancel'}
+        <button className="btn btn--quiet btn--full" onClick={onCancel}>
+          {sweep?.stopping ? 'Stopping' : measured >= MIN_COMPARABLE_SERVES ? `Stop and compare these ${measured}` : 'Cancel'}
         </button>
-
-        {/* Something worth watching while the clip is read (L4.3): the clean
-            serve, its six moments and what each should look like. Under the
-            status and the one control, so neither moves off the first screen,
-            and drawn at a capped rate so it takes no frames from the tracker. */}
-        <section className="analyzing-model" aria-label="A model serve to watch">
-          <h2 className="t-overline">While you wait, a model serve</h2>
-          <Suspense fallback={null}>
-            <ModelServe racket={racket} quiet />
-          </Suspense>
-        </section>
       </div>
     </div>
   )

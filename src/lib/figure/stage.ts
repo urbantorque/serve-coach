@@ -87,7 +87,7 @@ export function placeSwing(frames: readonly Frame[], w: number, h: number, o: Pl
   return { place, scale, ox, oy, stature, floor }
 }
 
-export interface PoseOptions extends Pick<AthleteOptions, 'material' | 'work' | 'rim' | 'ground' | 'still'> {
+export interface PoseOptions extends Pick<AthleteOptions, 'material' | 'work' | 'teach' | 'rim' | 'ground' | 'still'> {
   racket: Side
   /** The swing around this frame, for estimating a tracked racket. */
   swing?: readonly Frame[]
@@ -111,6 +111,7 @@ export function paintPose(ctx: CanvasRenderingContext2D, frame: Frame, at: Place
     stature: at.stature,
     near: nearSide(placed, frame.world?.length ? frame.world : undefined),
     work: o.work,
+    teach: o.teach,
     rim: o.rim,
     ground: o.ground,
     floorY: at.floor,

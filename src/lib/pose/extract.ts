@@ -558,6 +558,8 @@ export async function extractFrames(
   landmarker: PoseLandmarker,
   opts: {
     onProgress?: (p: ExtractProgress) => void
+    /** Each pose as it is read, for the waiting screen. Changes nothing measured. */
+    onPose?: (sample: PoseSample) => void
     signal?: AbortSignal
     /** Which serve in the clip to sample, when the scan finds several. */
     serveIndex?: number
@@ -587,7 +589,7 @@ export async function extractFrames(
   /** The square the pose model read, in source pixels, or none for the whole frame. */
   crop?: Crop
 }> {
-  const { onProgress = () => {}, signal, serveIndex = -1, knownServeTimes: known } = opts
+  const { onProgress = () => {}, onPose, signal, serveIndex = -1, knownServeTimes: known } = opts
   const duration = video.duration
   const aspect = video.videoWidth / Math.max(1, video.videoHeight)
 
@@ -650,7 +652,9 @@ export async function extractFrames(
     // derivative in `kinematics.ts` reads this array's own gaps, so a fictional
     // even spacing here is fictional precision in every velocity built from it.
     const at = await seekTo(video, t)
-    samples.push({ t: at === false ? t : at, pose: at === false ? null : await detect() })
+    const sample: PoseSample = { t: at === false ? t : at, pose: at === false ? null : await detect() }
+    samples.push(sample)
+    onPose?.(sample)
     onProgress({ phase: 'tracking', ratio: (i + 1) / count })
   }
 
