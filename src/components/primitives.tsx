@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { Status } from '../lib/analysis/types'
+import { GLYPHS, type IconName } from './icons'
 import { useBackLayer } from './useBackLayer'
 
 /* ------------------------------------------------------------------ ScoreRing */
@@ -328,102 +329,11 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
 
 /* ---------------------------------------------------------------------- Icons */
 
-const PATHS: Record<string, ReactNode> = {
-  close: <path d="M6 6l12 12M18 6L6 18" />,
-  // A week page with two rings (M3.1).
-  calendar: <path d="M4 7h16v13H4zM4 11h16M8 4v5M16 4v5" />,
-  play: <path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none" />,
-  pause: <path d="M9 5v14M15 5v14" />,
-  chevron: <path d="M9 6l6 6-6 6" />,
-  back: <path d="M15 6l-6 6 6 6" />,
-  camera: (
-    <>
-      <path d="M3 8.5A2.5 2.5 0 015.5 6h1.7l1-1.8h5.6l1 1.8h1.7A2.5 2.5 0 0119 8.5v8A2.5 2.5 0 0116.5 19h-11A2.5 2.5 0 013 16.5z" />
-      <circle cx="11" cy="12" r="3.2" />
-    </>
-  ),
-  film: (
-    <>
-      <rect x="3" y="5" width="18" height="14" rx="2.5" />
-      <path d="M8 5v14M16 5v14" />
-    </>
-  ),
-  clock: (
-    <>
-      <circle cx="12" cy="12" r="8.5" />
-      <path d="M12 7.5V12l3 2" />
-    </>
-  ),
-  offline: (
-    <>
-      <path d="M12 3.5v11" />
-      <path d="M8 11l4 4 4-4" />
-      <path d="M4.5 17.5v1a2 2 0 002 2h11a2 2 0 002-2v-1" />
-    </>
-  ),
-  check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
-  share: (
-    <>
-      <path d="M12 3.5v11.5" />
-      <path d="M8 7.5l4-4 4 4" />
-      <path d="M5 13v6a1.8 1.8 0 001.8 1.8h10.4A1.8 1.8 0 0019 19v-6" />
-    </>
-  ),
-  trash: (
-    <>
-      <path d="M4 7h16M9.5 7V5.2A1.2 1.2 0 0110.7 4h2.6a1.2 1.2 0 011.2 1.2V7" />
-      <path d="M6.5 7l.8 12.1A1.9 1.9 0 009.2 21h5.6a1.9 1.9 0 001.9-1.9L17.5 7" />
-    </>
-  ),
-  target: (
-    <>
-      <circle cx="12" cy="12" r="8.5" />
-      <circle cx="12" cy="12" r="4" />
-      <circle cx="12" cy="12" r="0.6" fill="currentColor" />
-    </>
-  ),
-  settings: (
-    <>
-      <path d="M4.5 7h9M17.5 7h2M4.5 17h2M10.5 17h9" />
-      <circle cx="15.5" cy="7" r="2" />
-      <circle cx="8.5" cy="17" r="2" />
-    </>
-  ),
-  info: (
-    <>
-      <circle cx="12" cy="12" r="8.5" />
-      <path d="M12 11v5.5M12 7.8v.6" />
-    </>
-  ),
-  warn: (
-    <>
-      <path d="M12 4.5L21 19.5H3z" />
-      <path d="M12 10v4M12 16.6v.6" />
-    </>
-  ),
-  upload: (
-    <>
-      <path d="M12 15.5V4.5M8 8.5l4-4 4 4" />
-      <path d="M4.5 15v3a2 2 0 002 2h11a2 2 0 002-2v-3" />
-    </>
-  ),
-}
-
-export function Icon({ name, size = 20 }: { name: keyof typeof PATHS | string; size?: number }) {
+/** A glyph from `icons.ts`: Phosphor, at one weight, so the set agrees with itself. */
+export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
   return (
-    <svg
-      className="icon"
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {PATHS[name] ?? null}
+    <svg className="icon" width={size} height={size} viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+      <path d={GLYPHS[name]} />
     </svg>
   )
 }

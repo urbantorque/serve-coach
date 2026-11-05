@@ -1,3 +1,4 @@
+import type { IconName } from './icons'
 import { useEffect, useRef, useState } from 'react'
 import { useWakeLock } from './useWakeLock'
 import { Cue, Icon } from './primitives'
@@ -92,7 +93,7 @@ const DETECT_INTERVAL_MS = 400
 const MAX_POSE_DUTY = 0.5
 
 /** A glyph per grade, so the verdict survives being read without colour. */
-const BADGE: Record<FramingVerdict['grade'], string> = {
+const BADGE: Record<FramingVerdict['grade'], IconName> = {
   looking: 'info',
   clear: 'check',
   hedged: 'info',

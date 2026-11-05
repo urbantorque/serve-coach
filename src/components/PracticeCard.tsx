@@ -1,7 +1,8 @@
+import type { IconName } from './icons'
 import { practiceHeadline, repeatabilityNote, type PracticeFocus } from '../lib/practice'
 import { Cue, Icon } from './primitives'
 
-const VERDICT: Record<PracticeFocus['verdict'], { label: string; icon: string }> = {
+const VERDICT: Record<PracticeFocus['verdict'], { label: string; icon: IconName }> = {
   improving: { label: 'Improving', icon: 'check' },
   stuck: { label: 'Not moving', icon: 'clock' },
   slipping: { label: 'Going backwards', icon: 'warn' },
