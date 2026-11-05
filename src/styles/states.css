@@ -408,3 +408,114 @@
   flex-direction: column;
   gap: 18px;
 }
+
+.glance-more > summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fg-muted);
+  cursor: pointer;
+  list-style: none;
+}
+
+.glance-more > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* On court the screen reads top to bottom, tight enough to fit a phone whole. */
+.glance--court {
+  gap: 12px;
+  padding-bottom: calc(10px + var(--safe-bottom));
+}
+
+.glance--court .glance-body {
+  flex: none;
+  align-items: stretch;
+  justify-content: flex-start;
+  text-align: left;
+  gap: 10px;
+}
+
+.glance--court .glance-actions {
+  gap: 6px;
+  padding-top: 0;
+}
+
+.glance--court .glance-move {
+  width: 100%;
+  max-width: none;
+}
+
+.glance--court .court-next {
+  font-size: 14.5px;
+  color: var(--fg-muted);
+}
+
+/* ------------------------------------------------- when something goes wrong */
+
+.problem {
+  justify-content: space-between;
+  gap: 28px;
+  min-height: 100dvh;
+  padding-top: calc(72px + var(--safe-top));
+  padding-bottom: calc(18px + var(--safe-bottom));
+}
+
+.problem-text {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.problem-kicker {
+  color: var(--fair-ink);
+}
+
+.problem-text ul {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.problem-text li,
+.problem-text p {
+  font-size: 17.5px;
+  line-height: 1.38;
+  color: var(--fg-muted);
+}
+
+.problem-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.problem-more > summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  font-size: 15px;
+  color: var(--fg-faint);
+  cursor: pointer;
+  list-style: none;
+}
+
+.problem-more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.problem-more p {
+  font-size: 14.5px;
+  line-height: 1.4;
+  color: var(--fg-muted);
+}
+
+.problem-detail {
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+  color: var(--fg-faint);
+}

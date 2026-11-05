@@ -27,6 +27,8 @@ import '../styles/court.css'
  */
 export const BACK_TO_CAMERA_S = 15
 
+const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+
 /**
  * What the serve was, in one number and one line, without leaving the court.
  *
@@ -260,7 +262,7 @@ export default function Glance({
   )
 
   return (
-    <div className="screen glance" onPointerDown={backIn !== null ? () => setBackIn(null) : undefined}>
+    <div className={`screen glance${court ? ' glance--court' : ''}`} onPointerDown={backIn !== null ? () => setBackIn(null) : undefined}>
       <header className="glance-top">
         <button className="icon-btn" onClick={onBack} aria-label="Back">
           <Icon name="back" size={20} />
@@ -289,43 +291,49 @@ export default function Glance({
         </section>
       ) : (
         <section className="glance-body">
+          {/* Two numbers and one line, as big as the screen allows: the whole of
+              what a player walking back wants, and nothing to study. The speed
+              is lime because it is the reading; neither is a grade. */}
           {court && (
             <div className="court-readout">
-              <p className="court-readout-figure">
-                {reading ? reading.best : analysis.overall}
-                {reading && <span className="court-readout-unit">{reading.unit}</span>}
-                <span className="sr-only">{reading ? ' off the racket' : ' out of 100'}</span>
-              </p>
+              <div className="court-numbers">
+                {reading && (
+                  <p className="court-readout-figure court-readout-figure--speed">
+                    {reading.best}
+                    <span className="court-readout-unit">{reading.unit}</span>
+                    <span className="sr-only"> off the racket</span>
+                  </p>
+                )}
+                <p className="court-readout-figure" role="img" aria-label={`Score ${analysis.overall} out of 100`}>
+                  {analysis.overall}
+                </p>
+              </div>
+              {reading && (
+                <p className="court-readout-note">
+                  {speedGlanceLine(reading)} Not checked against a radar.
+                </p>
+              )}
+              {scoreMove && <p className="court-readout-note">{sentence(scoreMoveWords(scoreMove))}.</p>}
               <p className="court-readout-line">
                 {first ? <strong>{first.title}</strong> : 'Nothing stood out. Hit another.'}
               </p>
             </div>
           )}
-          {court && nextRow}
           {/* The next serve, under the figure rather than under every tag and
               chip on the screen (Q8). It is what the walk back is for. */}
           {court && onRecordAnother && (
-            <button className="btn btn--primary btn--full" onClick={onRecordAnother}>
-              <Icon name="camera" size={18} />
+            <button className="btn btn--primary btn--big btn--full" onClick={onRecordAnother}>
+              <Icon name="camera" size={20} />
               Record another
             </button>
           )}
+          {court && nextRow}
 
-          {/* The number the report leads with, at the size the report gives it.
-              Somebody glancing at a phone propped on a fence is reading this
-              from further away than they read anything else in the app.
-
-              No visible label, on purpose — this ring is the whole screen's
-              first sentence and a caption under it would be a second one. A
-              screen reader gets no such context from size or position, so
-              `role="img"` collapses the ring to one node with the sentence a
-              sighted glance already reads, rather than a bare "68" landing
-              ahead of the headline with nothing to say what it counts. */}
-          {/* In court mode the readout above carries the score when there is no
-              speed, so the ring would only say it twice. */}
-          {!(court && !reading) && (
+          {/* Off court there is room for the number the report leads with, and
+              no walk back to read it from. */}
+          {!court && (
             <div role="img" aria-label={`Score ${analysis.overall} out of 100`}>
-              <ScoreRing score={analysis.overall} status={analysis.overallStatus} size={court ? 96 : 132} />
+              <ScoreRing score={analysis.overall} status={analysis.overallStatus} size={132} />
             </div>
           )}
 
@@ -333,7 +341,7 @@ export default function Glance({
               chip, held to the same line (L3.1). Without it a player reads 68
               and then 74 and takes the six points home, and six is a move the
               camera makes on its own. */}
-          {scoreMove && (
+          {scoreMove && !court && (
             <span className="hero-delta">
               <DeltaChip delta={scoreMove.delta} scope="overall" alike={scoreMove.alike} />
               <span>{scoreMoveCaption(scoreMove)}</span>
@@ -363,15 +371,17 @@ export default function Glance({
           {first ? (
             <>
               <h1 className={court ? 'sr-only' : 't-headline glance-fix'}>{first.title}</h1>
-              <p className="glance-why">
-                <TermCue text={first.why} />
-              </p>
+              {!court && (
+                <p className="glance-why">
+                  <TermCue text={first.why} />
+                </p>
+              )}
             </>
           ) : (
             /* Scored, and nothing named. The report says this at length under a
                plan that is empty; here it is the whole message, and it is a
                good one to receive between serves. */
-            <p className="glance-why">Nothing stood out on that one. Hit another.</p>
+            !court && <p className="glance-why">Nothing stood out on that one. Hit another.</p>
           )}
 
           {/* Whether the last serve's fault moved — see `faultMove`.
@@ -424,7 +434,7 @@ export default function Glance({
 
           {/* The speed in one line, when one was read (N2.7); a miss waits
               for the report's fold. */}
-          {analysis.speed && 'speed' in analysis.speed && (
+          {!court && analysis.speed && 'speed' in analysis.speed && (
             <p className="glance-serves">
               {speedGlanceLine(speedFigures(analysis.speed.speed, readPrefs().speedUnit ?? defaultSpeedUnit()))}
             </p>
@@ -434,7 +444,7 @@ export default function Glance({
               shows one of them and the player can see there were more. */}
           {analysis.serves.count > 1 && (
             <p className="glance-serves">
-              {analysis.serves.count} serves in that clip — this is number{' '}
+              {analysis.serves.count} serves in that clip. This is number{' '}
               {analysis.serves.index + 1}.
             </p>
           )}
@@ -549,8 +559,8 @@ export default function Glance({
         </div>
       )}
       {onTagOutcome && onStartSet && !set?.running && (
-        <div className="glance-actions">
-          <span className="t-overline">Start a set of 10</span>
+        <details className="glance-more">
+          <summary>Start a set of 10</summary>
           <div className="reading-chips">
             {([1, 2] as const).map((n) => (
               <button key={n} className="chip chip--button" onClick={() => onStartSet(n)}>
@@ -559,7 +569,7 @@ export default function Glance({
               </button>
             ))}
           </div>
-        </div>
+        </details>
       )}
 
       <footer className="glance-actions">
@@ -570,7 +580,7 @@ export default function Glance({
             Record another
           </button>
         )}
-        <button className="btn btn--ghost btn--full" onClick={onOpenReport}>
+        <button className="btn btn--quiet btn--full" onClick={onOpenReport}>
           Show me everything
         </button>
       </footer>

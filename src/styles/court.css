@@ -317,45 +317,60 @@
 .court-readout {
   container-type: inline-size;
   display: grid;
-  justify-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
-  padding: 18px 12px 20px;
-  border-radius: var(--r-lg);
-  background: var(--ink-1);
-  border: 1px solid var(--hairline);
-  text-align: center;
+  margin-bottom: 4px;
+}
+
+.court-numbers {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 4px;
 }
 
 .court-readout-figure {
-  font-size: clamp(72px, 30cqw, 220px);
-  font-weight: var(--wt-title);
+  font-size: clamp(96px, 41cqw, 260px);
+  font-stretch: var(--wd-number);
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.045em;
-  line-height: 0.86;
-  /* Never a status colour: a speed is not graded, and the score's grade is
-     on the ring below. */
+  letter-spacing: -0.015em;
+  line-height: 0.84;
+  /* Never a status colour: a speed is not graded, and a grade is a word. */
   color: var(--fg);
 }
 
+.court-readout-figure--speed {
+  color: var(--lime);
+}
+
 .court-readout-unit {
-  margin-left: 0.12em;
-  font-size: 0.24em;
-  font-weight: var(--wt-key);
+  margin-left: 0.08em;
+  font-size: 0.19em;
+  font-stretch: 100%;
+  font-weight: 680;
   letter-spacing: 0;
 }
 
+.court-readout-note {
+  font-size: 15.5px;
+  line-height: 1.32;
+  color: var(--fg-muted);
+}
+
 .court-readout-line {
-  max-width: 24ch;
-  font-size: clamp(20px, 5.4cqw, 34px);
-  font-weight: var(--wt-key);
-  line-height: 1.2;
+  margin-top: 8px;
+  font-size: clamp(27px, 7.8cqw, 44px);
+  font-stretch: var(--wd-head);
+  font-weight: 720;
+  letter-spacing: -0.012em;
+  line-height: 1.1;
   color: var(--fg);
 }
 
 .court-readout-line strong {
-  color: var(--lime);
-  font-weight: var(--wt-title);
+  font-weight: inherit;
 }
 
 /* The way back to the camera, counted down where a player walking back can
