@@ -213,6 +213,12 @@ interface Reading {
   more: ProgrammeContext
 }
 
+/** The player's cadence: as they stated it, or read off their visits. */
+export function cadenceOf(sessions: Session[], prefs: Prefs, more: ProgrammeContext = {}): Cadence {
+  // A stored value this build does not know is no answer at all.
+  return prefs.cadence && prefs.cadence in CADENCE_GAP_MS ? prefs.cadence : inferCadence(sessions, more.ledger, more.practice)
+}
+
 function reading(
   sessions: Session[],
   prefs: Prefs,
@@ -220,8 +226,6 @@ function reading(
   evidence: readonly Session[],
   more: ProgrammeContext,
 ): Reading {
-  // A stored value this build does not know is no answer at all.
-  const stated = prefs.cadence && prefs.cadence in CADENCE_GAP_MS ? prefs.cadence : undefined
   return {
     sessions,
     pool: evidence.length ? [...sessions, ...evidence] : sessions,
@@ -230,7 +234,7 @@ function reading(
     evidence,
     week: weekPlan(sessions, prefs.ladder, now, evidence),
     trips: speedByTrip(sessions, more.tags ?? []),
-    cadence: stated ?? inferCadence(sessions, more.ledger, more.practice),
+    cadence: cadenceOf(sessions, prefs, more),
     unit: prefs.speedUnit ?? defaultSpeedUnit(),
     more,
   }

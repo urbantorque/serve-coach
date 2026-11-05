@@ -1070,7 +1070,7 @@ export function tripStreak(
  * type, so recorded trips of two types on one afternoon are one visit,
  * chained by the same gap `tripsOf` uses.
  */
-function visitSpans(
+export function visitSpans(
   sessions: Session[],
   ledger: readonly TripRecord[],
   practice: readonly Visitable[] = [],
