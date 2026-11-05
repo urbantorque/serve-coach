@@ -135,6 +135,14 @@ check('two clips recorded in the app, one straight after the other, are a sequen
   assert(guessServeNumber(later, [...sessions, fault], [...tags, tagOf(fault.id, 1, 'long')]) === undefined, 'ten minutes on was read as following')
 })
 
+check('reports from before a clip’s serves were counted cost nothing', () => {
+  const { sessions, tags } = matchFlow('qqq', WEEK)
+  const old = { id: 'serve-1', createdAt: 5 } as unknown as Session
+  const next = report_('rrr', 1, 18)
+  assert(guessServeNumber(old, [...sessions, old], tags) === undefined, 'a report with no place in a clip was guessed')
+  assert(guessServeNumber(next, [old, ...sessions], tags) === undefined, 'a serve with nothing before it was guessed')
+})
+
 check('a short record cannot be sure: the bound rises with the cases', () => {
   note(`5 of 5 ${rateFloor(5, 5).toFixed(2)}, 6 of 6 ${rateFloor(6, 6).toFixed(2)}, 12 of 12 ${rateFloor(12, 12).toFixed(2)}, 9 of 12 ${rateFloor(9, 12).toFixed(2)}`)
   assert(rateFloor(5, 5) < FAIR_BOUND, 'five cases were enough')

@@ -107,53 +107,68 @@ const levelOf = (agreed: number, cases: number): ServeGuess['confidence'] | unde
 }
 
 /**
+ * The reports oldest first, and by their place in a file. Built once, because a
+ * record is a question about every report and a history runs to thousands.
+ */
+interface Filed {
+  inOrder: readonly Session[]
+  byPlace: ReadonlyMap<string, Session>
+}
+
+/** Stored reports from before serves were counted have no index, and are one serve. */
+const serveIndex = (s: Session) => s.serves?.index ?? 0
+const placeOf = (s: Session, index: number) => `${clipIdOf(s.id)}#${index}`
+
+function fileReports(reports: readonly Session[]): Filed {
+  const inOrder = [...reports].sort((a, b) => a.createdAt - b.createdAt)
+  return { inOrder, byPlace: new Map(inOrder.map((s) => [placeOf(s, serveIndex(s)), s])) }
+}
+
+/**
  * The serve filmed straight before this one, when the clips can say.
  *
  * `createdAt` is when a report was made, not when the serve was hit, so it says
  * nothing about a clip picked from the camera roll. Two things do say: the serve
  * before it in the same file, and two clips recorded in the app, which are
- * analysed as they are filmed.
+ * analysed as they are filmed. `filedBefore` is the report made just before
+ * this one, for the second.
  */
-function filmedBefore(serve: Session, reports: readonly Session[]): Session | undefined {
-  if (serve.serves.index > 0) {
-    const clip = clipIdOf(serve.id)
-    const before = reports.find((s) => clipIdOf(s.id) === clip && s.serves.index === serve.serves.index - 1)
+function filmedBefore(serve: Session, filed: Filed, filedBefore: Session | undefined): Session | undefined {
+  const index = serveIndex(serve)
+  if (index > 0) {
+    const before = filed.byPlace.get(placeOf(serve, index - 1))
     if (!before) return undefined
-    const seconds = (serve.window.start - before.window.start) / (serve.stretch?.factor ?? 1)
+    const seconds = (serve.window?.start - before.window?.start) / (serve.stretch?.factor ?? 1)
     return seconds > 0 && seconds <= SAME_POINT_SECONDS ? before : undefined
   }
-  if (!serve.capture) return undefined
-  let before: Session | undefined
-  for (const s of reports) {
-    if (s.createdAt < serve.createdAt && (!before || s.createdAt > before.createdAt)) before = s
-  }
-  if (!before?.capture) return undefined
-  return serve.createdAt - before.createdAt <= NEXT_CLIP_SECONDS * 1000 ? before : undefined
+  if (!serve.capture || !filedBefore?.capture) return undefined
+  return serve.createdAt - filedBefore.createdAt <= NEXT_CLIP_SECONDS * 1000 ? filedBefore : undefined
 }
 
 /** How the player's own tagged serves have followed each kind of serve, newest cases only. */
-function ownRecord(reports: readonly Session[], tags: ReadonlyMap<string, ServeTag>): Record<Rule, boolean[]> {
+function ownRecord(filed: Filed, tags: ReadonlyMap<string, ServeTag>): Record<Rule, boolean[]> {
   const record: Record<Rule, boolean[]> = { after_a_fault: [], after_a_second: [], after_a_first_in: [] }
-  for (const serve of [...reports].sort((a, b) => a.createdAt - b.createdAt)) {
+  filed.inOrder.forEach((serve, i) => {
     const number = tags.get(serve.id)?.serveNumber
-    if (number === undefined) continue
-    const before = filmedBefore(serve, reports)
+    if (number === undefined) return
+    const before = filmedBefore(serve, filed, filed.inOrder[i - 1])
     const rule = before && ruleAfter(tags.get(before.id))
     if (rule) record[rule].push(number === EXPECTED[rule])
-  }
+  })
   for (const rule of Object.keys(record) as Rule[]) record[rule] = record[rule].slice(-CASES_KEPT)
   return record
 }
 
-function fromTheServeBefore(
-  serve: Session,
-  reports: readonly Session[],
-  tags: ReadonlyMap<string, ServeTag>,
-): ServeGuess | undefined {
-  const before = filmedBefore(serve, reports)
+function fromTheServeBefore(serve: Session, filed: Filed, tags: ReadonlyMap<string, ServeTag>): ServeGuess | undefined {
+  let filedBefore: Session | undefined
+  for (const s of filed.inOrder) {
+    if (s.createdAt >= serve.createdAt) break
+    filedBefore = s
+  }
+  const before = filmedBefore(serve, filed, filedBefore)
   const rule = before && ruleAfter(tags.get(before.id))
   if (!rule) return undefined
-  const cases = ownRecord(reports, tags)[rule]
+  const cases = ownRecord(filed, tags)[rule]
   const agreed = cases.filter(Boolean).length
   const confidence = levelOf(agreed, cases.length)
   return confidence && { serveNumber: EXPECTED[rule], confidence, reason: rule, agreed, cases: cases.length }
@@ -178,13 +193,9 @@ const sideOf = (s: Session, midpoint: number): 1 | 2 | undefined => {
   return reading.low > midpoint ? 1 : reading.high < midpoint ? 2 : undefined
 }
 
-function fromTheBall(serve: Session, reports: readonly Session[], tags: ReadonlyMap<string, ServeTag>): ServeGuess | undefined {
+function fromTheBall(serve: Session, filed: Filed, tags: ReadonlyMap<string, ServeTag>): ServeGuess | undefined {
   if (!readingOf(serve)) return undefined
-  const tagged = (n: 1 | 2) =>
-    [...reports]
-      .sort((a, b) => a.createdAt - b.createdAt)
-      .filter((s) => tags.get(s.id)?.serveNumber === n && readingOf(s))
-      .slice(-CASES_KEPT)
+  const tagged = (n: 1 | 2) => filed.inOrder.filter((s) => tags.get(s.id)?.serveNumber === n && readingOf(s)).slice(-CASES_KEPT)
   const firsts = tagged(1)
   const seconds = tagged(2)
   if (firsts.length < MIN_SERVES_EACH_SIDE || seconds.length < MIN_SERVES_EACH_SIDE) return undefined
@@ -233,9 +244,9 @@ export function guessServeNumber(
 ): ServeGuess | undefined {
   const byId = new Map(tags.map((t) => [t.id, t]))
   if (byId.get(serve.id)?.serveNumber !== undefined) return undefined
-  const reports = history.filter((s) => s.id !== serve.id && s.triage?.status !== 'rejected')
-  const order = fromTheServeBefore(serve, reports, byId)
-  const ball = fromTheBall(serve, reports, byId)
+  const filed = fileReports(history.filter((s) => s.id !== serve.id && s.triage?.status !== 'rejected'))
+  const order = fromTheServeBefore(serve, filed, byId)
+  const ball = fromTheBall(serve, filed, byId)
   if (order && ball && order.serveNumber !== ball.serveNumber) return undefined
   return order ?? ball
 }
