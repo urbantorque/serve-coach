@@ -258,6 +258,9 @@ const JOINT: Record<InjuryFlag, string> = {
   shoulder_load_no_drop: 'your shoulder',
 }
 
+/** A flag's joint as a noun phrase, or nothing for a flag this build has no words for. */
+export const strainJoint = (flag: InjuryFlag): string | undefined => JOINT[flag]
+
 /**
  * The warning as it reaches somebody standing on a baseline with a basket.
  *

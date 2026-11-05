@@ -1860,14 +1860,20 @@ export function servesPerWeek(
 }
 
 /**
+ * Whether a week's count stands well above a usual one: at least half again,
+ * and at least ten serves over it, so a jump from two to four is not news.
+ * `serveLoad.ts` reads the same line, so the two cannot disagree.
+ */
+export const weekJumped = (current: number, usual: number): boolean => current >= usual * 1.5 && current - usual >= 10
+
+/**
  * One plain sentence when this week's count is well above the four before it.
  *
  * A count and nothing more: the app cannot see how hard anybody served, how
  * long they rested or what their shoulder feels like, and a load warning built
  * from a tally of clips would be a medical claim it has no business making.
- * Said when the week is at least half again the recent average and at least
- * ten serves over it, so a jump from two to four is not news; and only with
- * four earlier weeks that had any serves at all to be a baseline.
+ * Said past `weekJumped`, and only with four earlier weeks that had any serves
+ * at all to be a baseline.
  */
 export function weekJumpLine(weeks: WeekCount[]): string | undefined {
   if (weeks.length < 5) return undefined
@@ -1875,7 +1881,7 @@ export function weekJumpLine(weeks: WeekCount[]): string | undefined {
   const before = weeks.slice(-5, -1).map((w) => w.serves)
   if (before.some((n) => n === 0)) return undefined
   const usual = mean(before)
-  if (current < usual * 1.5 || current - usual < 10) return undefined
+  if (!weekJumped(current, usual)) return undefined
   return cue(
     `You have filmed ${current} serves this week, against about ${Math.round(usual)} in each of the four before.`,
   )
