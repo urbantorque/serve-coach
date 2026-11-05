@@ -75,6 +75,22 @@ check('one pair of bodies, one moment chosen, and the basket comparison keeps al
   assert((all.match(/<li/g) ?? []).length === 3, 'the basket comparison changed')
 })
 
+heading('Second serves, as their own view')
+
+check('enough tagged seconds offers a view of them, and the whole screen follows', () => {
+  const tag = (s: Session, serveNumber: 1 | 2) => ({ id: s.id, serveNumber, taggedAt: s.createdAt })
+  const tagged = sessions.map((s, i) => tag(s, i % 2 ? 2 : 1))
+  const out = renderToStaticMarkup(
+    createElement(Progress, { sessions, tags: tagged, onBack: noop, onOpen: noop, onLogDrill: noop, onUndoDrill: noop, seeded: false }),
+  )
+  assert(out.includes('aria-label="Which serves"') && out.includes('Second serves'), 'no way to see the second serves')
+  const few = tagged.slice(0, 3).map((t) => ({ ...t, serveNumber: 2 as const }))
+  const none = renderToStaticMarkup(
+    createElement(Progress, { sessions, tags: few, onBack: noop, onOpen: noop, onLogDrill: noop, onUndoDrill: noop, seeded: false }),
+  )
+  assert(!none.includes('aria-label="Which serves"'), 'three seconds were offered as a view')
+})
+
 heading('A longer bar is steadier')
 
 check('the bar grows as the gap closes, and the note says so', () => {

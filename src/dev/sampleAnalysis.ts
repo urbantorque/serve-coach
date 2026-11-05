@@ -20,7 +20,7 @@ import { overallOf } from '../lib/analysis/coaching'
 import { buildConsistency } from '../lib/analysis/consistency'
 import { swingTrack } from '../lib/storage/poseTrack'
 import { findPracticeFocus } from '../lib/practice'
-import { KEEP_STILLS, type PracticeLog, type Session } from '../lib/storage/db'
+import { KEEP_STILLS, type PracticeLog, type Session, type ServeTag } from '../lib/storage/db'
 import type { Analysis, Frame } from '../lib/analysis/types'
 import { buildServe, type ServeDials } from '../lib/analysis/syntheticServe'
 import { assessSpatial, viewFromCourtYaw } from '../lib/analysis/spatial'
@@ -254,6 +254,7 @@ function placeholderStill(label: string): string {
 export function sampleHistory(now = Date.now()): {
   sessions: Session[]
   practice: PracticeLog[]
+  tags: ServeTag[]
 } {
   const DAY = 24 * 60 * 60 * 1000
 
@@ -283,10 +284,10 @@ export function sampleHistory(now = Date.now()): {
     { daysAgo: 69, serves: [{ reach: 1.13 }, { reach: 1.15, sore: 'wrist' }] },
     { daysAgo: 61, serves: [{ reach: 1.12 }, { reach: 1.16 }, { reach: 1.13, sore: 'wrist' }] },
     // The recalibration lands here — everything from this trip on is rubric 2.
-    { daysAgo: 47, serves: [{ reach: 1.18, basket: true }, { reach: 1.15 }, { reach: 1.17 }] },
-    { daysAgo: 39, serves: [{ reach: 1.2 }, { reach: 1.19, kick: true }, { reach: 1.21, sore: 'back' }, { reach: 1.2 }] },
+    { daysAgo: 47, serves: [{ reach: 1.18, basket: true }, { reach: 1.15 }, { reach: 1.17 }, { reach: 1.16 }] },
+    { daysAgo: 39, serves: [{ reach: 1.2 }, { reach: 1.19, kick: true }, { reach: 1.21, sore: 'back' }, { reach: 1.2 }, { reach: 1.19 }] },
     { daysAgo: 25, serves: [{ reach: 1.24, basket: true }, { reach: 1.22 }, { reach: 1.23 }] },
-    { daysAgo: 12, serves: [{ reach: 1.27, sore: 'back' }, { reach: 1.25, kick: true }, { reach: 1.26 }, { reach: 1.26 }] },
+    { daysAgo: 12, serves: [{ reach: 1.27, sore: 'back' }, { reach: 1.25, kick: true }, { reach: 1.26 }, { reach: 1.26 }, { reach: 1.25 }] },
     { daysAgo: 3, serves: [{ reach: 1.31, basket: true }, { reach: 1.29 }, { reach: 1.3, sore: 'back' }, { reach: 1.3, knees: 128 }] },
   ]
 
@@ -379,7 +380,15 @@ export function sampleHistory(now = Date.now()): {
       ]
     : []
 
-  return { sessions, practice }
+  // Every fifth serve a second, with where each landed, so a season can show
+  // second serves as their own view and the in-rates have something to count,
+  // and still leaves enough firsts for a baseline.
+  const OUTCOMES = ['in', 'in', 'long', 'in', 'net', 'in'] as const
+  const tags: ServeTag[] = sessions
+    .filter((s) => s.serveType === 'flat')
+    .map((s, i) => ({ id: s.id, serveNumber: i % 5 === 4 ? 2 : 1, outcome: OUTCOMES[i % 6], taggedAt: s.createdAt }))
+
+  return { sessions, practice, tags }
 }
 
 export function sampleAnalysis(dials: Partial<ServeDials> = {}, tier?: number, fps = 32): Analysis {

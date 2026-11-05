@@ -69,7 +69,7 @@ export function useHistory() {
    * a dev's own history is real data and fifteen fabricated reports in it is a
    * mess somebody has to clean up by hand.
    */
-  const seededHistory = useRef<{ sessions: Session[]; practice: PracticeLog[]; practiceSessions?: PracticeSession[] }>()
+  const seededHistory = useRef<{ sessions: Session[]; practice: PracticeLog[]; practiceSessions?: PracticeSession[]; tags?: ServeTag[] }>()
 
   /*
    * Reports brought onto the current rubric in place (L3.11): those saved
@@ -114,7 +114,7 @@ export function useHistory() {
         if (changed && !seededHistory.current) void safely(listSummaries, []).then(setSessions)
       })
     })
-    void safely(listServeTags, []).then(setServeTags)
+    void safely(listServeTags, []).then((list) => setServeTags(seededHistory.current?.tags ?? list))
     void safely(listPracticeSessions, []).then((list) => {
       if (!seededHistory.current) setPracticeSessions(list)
     })
@@ -148,8 +148,9 @@ export function useHistory() {
 
   /** Hold a seeded history in place of storage, and show it now. */
   const seed = useCallback(
-    (history: { sessions: Session[]; practice: PracticeLog[]; practiceSessions?: PracticeSession[] }) => {
+    (history: { sessions: Session[]; practice: PracticeLog[]; practiceSessions?: PracticeSession[]; tags?: ServeTag[] }) => {
       seededHistory.current = history
+      if (history.tags) setServeTags(history.tags)
       refresh()
     },
     [refresh],

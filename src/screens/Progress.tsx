@@ -1,4 +1,4 @@
-import { Suspense, lazy, useMemo, useState } from 'react'
+import { Suspense, lazy, useMemo, useState, type ReactNode } from 'react'
 import '../styles/blocks.css'
 import '../styles/depth.css'
 import '../styles/report.css'
@@ -33,6 +33,7 @@ import {
   tripRangeLine,
   tripsOf,
   thenAndNow,
+  deltaStatus,
 } from '../lib/progress'
 import { tagsById, type ServeTag, type Session } from '../lib/storage/db'
 import type { TripRecord } from '../lib/storage/ledger'
@@ -63,6 +64,8 @@ const ThenNow = lazy(() => import('../components/ThenNow'))
 
 /** One empty ledger for every render, so a memo keyed on it holds. */
 const NO_TRIPS: TripRecord[] = []
+/** Enough second serves to draw a line through. */
+const MIN_SECONDS = 4
 
 /** A part's state as the status tags colour it: a part being worked on is not a failing grade. */
 const PART_TAG: Record<PartState, string> = {
@@ -109,7 +112,29 @@ interface Props {
  * mostly empty space. The sentences are still here where a picture needs its
  * reading, and everything derived is still derived from `sessions`.
  */
-export default function Progress({
+export default function Progress(props: Props) {
+  const [which, setWhich] = useState<1 | 2 | undefined>()
+  const byId = useMemo(() => tagsById(props.tags ?? []), [props.tags])
+  const shown = useMemo(
+    () => (which ? props.sessions.filter((s) => byId.get(s.id)?.serveNumber === which) : props.sessions),
+    [props.sessions, byId, which],
+  )
+  const seconds = useMemo(() => props.sessions.filter((s) => byId.get(s.id)?.serveNumber === 2).length, [props.sessions, byId])
+  // Second serves get their own view as soon as there are enough to chart. The
+  // whole screen follows, so the record, the speed and the faults are theirs too.
+  const views = seconds >= MIN_SECONDS && (
+    <div className="seg progress-views" role="group" aria-label="Which serves">
+      {([undefined, 1, 2] as const).map((n) => (
+        <button key={String(n)} type="button" className={`seg-item${which === n ? ' is-on' : ''}`} aria-pressed={which === n} onClick={() => setWhich(n)}>
+          {n ? `${SERVE_NUMBER_LABEL[n]}s` : 'All serves'}
+        </button>
+      ))}
+    </div>
+  )
+  return <ProgressBody {...props} sessions={shown} views={views} />
+}
+
+function ProgressBody({
   sessions,
   ledger = NO_TRIPS,
   cadence,
@@ -124,7 +149,8 @@ export default function Progress({
   onOpen,
   showServes = false,
   refreshSessions,
-}: Props) {
+  views,
+}: Props & { views?: ReactNode }) {
   const form = useMemo(() => buildProgress(sessions, undefined, ledger), [sessions, ledger])
   const path = useMemo(() => servePath(sessions, ladder), [sessions, ladder])
   const bests = useMemo(() => bodyBests(sessions, form?.serveType), [sessions, form])
@@ -200,6 +226,7 @@ export default function Progress({
         <header className="today-top">
           <h1 className="t-display">Progress</h1>
         </header>
+        {views}
         <div className="progress-empty">
           <p className="t-headline">Film two serves and this shows whether your changes are working.</p>
           <button className="btn btn--primary btn--big btn--full" onClick={onBack}>
@@ -221,6 +248,7 @@ export default function Progress({
       <header className="today-top">
         <h1 className="t-display">Progress</h1>
       </header>
+      {views}
 
       <section className="shape" aria-label="Your typical serve over time">
         <div className="shape-head">
@@ -228,7 +256,7 @@ export default function Progress({
           <p>
             <strong>Typical {SERVE_TYPES[form.serveType].word} serve</strong>
             <span>{[tripDay(trip.createdAt), range].filter(Boolean).join(', ')}</span>
-            {form.tripDelta !== undefined && (
+            {form.tripDelta !== undefined && deltaStatus(form.tripDelta, 'trip') !== 'flat' && (
               <span className="shape-delta">
                 <DeltaChip delta={form.tripDelta} scope="trip" /> on your last trip
               </span>

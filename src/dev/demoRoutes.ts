@@ -9,6 +9,7 @@
  * Dynamically imported from a branch guarded on `import.meta.env.DEV`, so none
  * of it reaches the production bundle.
  */
+import type { ServeTag } from '../lib/storage/db'
 import type { View } from '../App'
 import { bandsFor, keyframeOverlay } from '../lib/analysis/analyze'
 import type { FaultMove } from '../lib/analysis/carryForward'
@@ -25,7 +26,7 @@ export interface DemoContext {
   setView: (view: View) => void
   setPair: (pair: ServePairFrames | undefined) => void
   /** Hold a seeded history in place of storage — see `demoHistory` in `App.tsx`. */
-  seedHistory: (history: { sessions: Session[]; practice: PracticeLog[]; practiceSessions?: PracticeSession[] }) => void
+  seedHistory: (history: { sessions: Session[]; practice: PracticeLog[]; tags?: ServeTag[]; practiceSessions?: PracticeSession[] }) => void
   /** The object URL of a generated clip, so `App.tsx` can release it with the rest. */
   keepVideoUrl: (url: string) => void
 }
