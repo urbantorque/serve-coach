@@ -425,6 +425,11 @@ export default function Report({
 
       <section className="hero" data-settled={settled || !fresh ? 'true' : 'false'}>
         <div className={`hero-stage${injuries.length ? ' hero-stage--short' : ''}`} onClick={() => setSettled(true)}>
+          {fresh && !settled && (
+            <button type="button" className="sr-only" onClick={() => setSettled(true)}>
+              Skip the replay
+            </button>
+          )}
           <RevealStage
             analysis={analysis}
             swing={swing}
@@ -816,7 +821,7 @@ export default function Report({
             <h2 className="block-title">How I read this clip</h2>
             <div className="reading-chips">
               {onFlipHandedness ? (
-                <button className="chip chip--button" onClick={onFlipHandedness} title="Tap if I read the wrong hand">
+                <button className="chip chip--button" onClick={onFlipHandedness} aria-label={`${analysis.handedness === 'right' ? 'Right-handed' : 'Left-handed'}. Tap if I read the wrong hand`}>
                   {analysis.handedness === 'right' ? 'Right-handed' : 'Left-handed'}
                   <Icon name="chevron" size={13} />
                 </button>

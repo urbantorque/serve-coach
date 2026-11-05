@@ -78,10 +78,12 @@ function ShareOption({ label, run }: { label: string; run: () => ReturnType<type
       className="share-option"
       onClick={() => void trigger()}
       disabled={sharing === 'working'}
-      aria-live="polite"
     >
       <Icon name={sharing === 'done' ? 'check' : 'share'} size={15} />
       {sharing === 'working' ? 'Preparing…' : sharing === 'done' ? 'Saved' : label}
+      <span className="sr-only" role="status" aria-live="polite">
+        {sharing === 'done' ? 'Saved' : ''}
+      </span>
     </button>
   )
 }
