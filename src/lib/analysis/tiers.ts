@@ -1285,6 +1285,20 @@ export const UNCALIBRATED: Record<string, string> = {
     '60 fps and above, every real serve reads zero, and no study gives a pause ' +
     'length to grade against',
 
+  /*
+   * The legs' fastest rise to the elbow's fastest moment, from the side. It
+   * says something to a player, which is new for this register: the order the
+   * two came in, once the gap is past twice its noise. The size of the gap is
+   * what stays unjudged. It scales with tempo, as the span above does, and the
+   * nearest published figures are other quantities on other players:
+   * lead-knee extension 180 ± 65 ms before contact in Olympic servers (Fleisig
+   * 2003, via Kovacs 2011), peak hip speed 108–117 ms before it in the WTA
+   * (Gao 2026). One skilled player reads 87 ± 11 ms in 3D. That is a sighting.
+   */
+  leg_lead_ms:
+    'measured and not named: holds at 30 fps within 17 ms rms from the side, ' +
+    'said only as an order, and the gap scales with tempo and has no club band',
+
   arm_cock_ratio:
     'measured and not named: the published signature is an angle (Gao 2026) and ' +
     'no study gives it as a hand height; tracks its dial from 0.156 to 0.044 at ' +

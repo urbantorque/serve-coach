@@ -21,6 +21,8 @@
  * when facing the net, +z up, z = 0 the floor.
  */
 import { LM } from './geometry'
+import { unswapFrames } from './swapGuard'
+import { withTrackerNoise, type TrackerFit } from './trackerNoise'
 import type { Frame, Landmark } from './types'
 
 /** The points a converted serve carries, in storage order. */
@@ -360,6 +362,145 @@ export function filmMocap(serve: MocapServe, phone: Partial<VirtualPhone> = {}):
     frames.push({ index: i, t, image, world, visibility: 1, racket })
   }
   return frames
+}
+
+/**
+ * The app's own read of a filmed file: `gridFps` samples a second, each one the
+ * file frame on screen at that moment, filed under the time asked for.
+ *
+ * A real-time clip is read at 32 samples a second whatever rate it was shot at
+ * (`pose/rate.ts`), and `seekTo` files each sample under `video.currentTime`,
+ * which reports the seek rather than the frame. So a 30 fps file has every
+ * sixteenth or so frame read twice and its stamps slide up to a frame out of
+ * step, and a 60 fps file alternates 17 and 33 ms steps. `filmMocap` at 30 fps
+ * is none of that: it is what a phone recorded, not what the app reads.
+ */
+export function onReadingGrid(file: Frame[], fileFps: number, gridFps: number): Frame[] {
+  const end = file[file.length - 1].t
+  const out: Frame[] = []
+  for (let i = 0; i / gridFps <= end; i++) {
+    const t = i / gridFps
+    out.push({ ...file[Math.min(file.length - 1, Math.floor(t * fileFps + 1e-6))], index: i, t })
+  }
+  return out
+}
+
+/**
+ * One take of a real serve as the engine would get it from a tracker: filmed
+ * on a sampling phase of its own, with `fit`'s error on every frame, through
+ * the swap guard, and on the app's reading grid when `grid` asks for it. No
+ * `fit` is the same take with the phase and nothing else.
+ *
+ * The phase matters and the older ensembles hold it fixed. A serve does not
+ * start on a frame boundary, and at 30 fps where the frames fall against the
+ * swing moves a peak time by as much as the tracker does, so a noise figure on
+ * a timing with one phase in it is short by that much.
+ */
+export function trackedTake(
+  serve: MocapServe,
+  o: { fps: number; fit?: TrackerFit; seed: number; grid?: number; phone?: Partial<VirtualPhone> },
+): Frame[] {
+  const lead = (o.phone?.lead ?? GUIDE_PHONE.lead) + goldenPhase(o.seed) / o.fps
+  const clean = filmMocap(serve, { ...o.phone, fps: o.fps, lead })
+  const frames = o.fit
+    ? unswapFrames(
+        withTrackerNoise(clean, {
+          fit: o.fit,
+          fps: o.fps,
+          stature: statureOf(clean[0], 'image'),
+          statureM: statureOf(clean[0], 'world'),
+          seed: o.seed,
+          // The suite's own depth error, as `realiseReal` and the tracker gates use.
+          depthMultiplier: 4,
+          depthBias: 0.006 * (statureOf(clean[0], 'image') / 0.54),
+        }),
+      ).frames
+    : clean
+  return o.grid ? onReadingGrid(frames, o.fps, o.grid) : frames
+}
+
+/** Golden-ratio steps through a frame, so every seed lands somewhere new in it. */
+const goldenPhase = (seed: number) => (seed * 0.6180339887) % 1
+
+function statureOf(f: Frame, space: 'image' | 'world'): number {
+  return (Math.max(f[space][LM.leftAnkle].y, f[space][LM.rightAnkle].y) - f[space][LM.nose].y) / 0.93
+}
+
+/* -------------------------------------------------------- planted changes */
+
+const easing = (u: number) => (u <= 0 ? 0 : u >= 1 ? 1 : 0.5 - 0.5 * Math.cos(Math.PI * u))
+
+const LOWER_BODY: ReadonlySet<MocapPoint> = new Set<MocapPoint>([
+  'leftHip',
+  'rightHip',
+  'leftKnee',
+  'rightKnee',
+  'leftAnkle',
+  'rightAnkle',
+  'leftHeel',
+  'rightHeel',
+  'leftToe',
+  'rightToe',
+])
+
+/**
+ * A real serve with the hips and legs running `delay` seconds behind the body
+ * above them, from before the knee bend until past contact: the rig's
+ * `lateLegDrive`, on motion a person made. Landmarks only, for testing what
+ * reads the legs: no body could do this with a trunk that stayed where it was.
+ */
+export function lateLegs(serve: MocapServe, delay: number): MocapServe {
+  const truth = mocapTruth(serve)
+  const on = truth.kneeBottom - 0.25
+  const off = truth.wristTop + 0.1
+  const n = MOCAP_POINTS.length
+  const xyz = new Float32Array(serve.xyz)
+  for (let f = 0; f < serve.count; f++) {
+    const t = f / serve.rate
+    const weight = easing((t - on) / 0.2) * (1 - easing((t - off) / 0.25))
+    if (weight <= 0) continue
+    MOCAP_POINTS.forEach((point, k) => {
+      if (!LOWER_BODY.has(point)) return
+      const p = pointAtTime(serve, point, Math.max(0, t - delay * weight))
+      const o = (f * n + k) * 3
+      xyz[o] = p.x
+      xyz[o + 1] = p.y
+      xyz[o + 2] = p.z
+    })
+  }
+  return { ...serve, id: `${serve.id}-late-${delay}`, xyz }
+}
+
+/**
+ * A real serve with its swing run at `rate` of its speed, from the knee bend to
+ * just past contact, easing in and out over a fifth of a second. The positions
+ * are the real ones, passed through more slowly, so every speed in that stretch
+ * scales by `rate` and every interval by its inverse.
+ */
+export function slowedServe(serve: MocapServe, rate: number): MocapServe {
+  const truth = mocapTruth(serve)
+  const ramp = 0.2
+  const from = truth.kneeBottom - 0.1
+  const to = truth.wristTop + 0.06
+  const rateAt = (t: number) => {
+    const w = t < from ? easing((t - (from - ramp)) / ramp) : t > to ? 1 - easing((t - to) / ramp) : 1
+    return 1 - (1 - rate) * w
+  }
+  const times: number[] = []
+  const end = durationOf(serve)
+  for (let t = 0; t <= end; t += rateAt(t) / serve.rate) times.push(t)
+  const n = MOCAP_POINTS.length
+  const xyz = new Float32Array(times.length * n * 3)
+  times.forEach((t, f) => {
+    MOCAP_POINTS.forEach((point, k) => {
+      const p = pointAtTime(serve, point, t)
+      const o = (f * n + k) * 3
+      xyz[o] = p.x
+      xyz[o + 1] = p.y
+      xyz[o + 2] = p.z
+    })
+  })
+  return { ...serve, id: `${serve.id}-slowed-${rate}`, count: times.length, xyz }
 }
 
 /* ------------------------------------------------------------------ truth */

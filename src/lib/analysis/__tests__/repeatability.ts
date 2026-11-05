@@ -337,6 +337,9 @@ export function flattenUngraded(d: Diagnosis): Record<string, number> {
   // The body held still at the trophy (D3.4), read only at 60 fps and above.
   const hitch = d.hitch?.share
   if (typeof hitch === 'number' && Number.isFinite(hitch)) out.hitch_share_ratio = hitch
+  // The legs' fastest rise to the elbow's fastest moment, from the side.
+  const lead = d.legLead?.ms
+  if (typeof lead === 'number' && Number.isFinite(lead)) out.leg_lead_ms = lead
   return out
 }
 

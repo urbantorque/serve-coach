@@ -27,6 +27,7 @@ import { DRILLS } from './coaching'
 import type { FaultMove, MoveVerdict, RotationMove } from './carryForward'
 import type { Diagnosis } from './diagnose'
 import type { FlawId } from './flaws'
+import type { LegLead } from './legLead'
 import type { BodyAxis } from './axes'
 import { drillIdFor, hierarchyFor, isFirm } from './faultOrder'
 import type { InjuryFlag, RejectReason, Triage } from './triage'
@@ -297,6 +298,19 @@ export function strainBehindLine(record: { trips: number; of: number }): string 
   if (record.trips < 1 || record.of < 1) return undefined
   const trips = record.of === 1 ? 'trip' : 'trips'
   return cue(`Also on ${record.trips} of your ${record.of} ${trips} before this one.`)
+}
+
+/**
+ * Which led, the legs or the arm, in words (`readLegLead`).
+ *
+ * No number: the copy rules keep raw measurements off the screen, and the size
+ * of the gap is the part nothing can judge. `level` is the camera's limit and
+ * not a fault, so it says that and gives no order to change anything.
+ */
+export function legLeadLine(lead: Pick<LegLead, 'order'>): string {
+  if (lead.order === 'legs_first') return cue('Your legs pushed up first and your arm followed, which hands the speed up to the racket.')
+  if (lead.order === 'level') return cue('Your legs and your arm came through together, too close for me to say which led.')
+  return cue('Your arm swung before your legs finished pushing up. Let the legs start the swing.')
 }
 
 /* ------------------------------------------------------------ the one job -- */

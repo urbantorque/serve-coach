@@ -23,6 +23,7 @@ import { assessSpatial, viewFromCourtYaw } from './spatial'
 import { readStance, type Stance } from './stance'
 import { readTossPlacement, type TossPlacement } from './tossPlacement'
 import { readHitch, type Hitch } from './hitch'
+import { readLegLead, type LegLead } from './legLead'
 import { readChestTurn, type ChestTurn } from './chestTurn'
 import { contactHeightOf } from './handHeight'
 import { tossPathSpread } from './tossPath'
@@ -214,6 +215,12 @@ export interface Diagnosis {
    */
   firingOrder?: FiringOrder
   /**
+   * How far the legs led the arm (`readLegLead`), at the frame rates ordinary
+   * clips have. Data only, like `chain`, and from the side only; absent when
+   * the hips barely rose, and on reports from before it existed.
+   */
+  legLead?: LegLead
+  /**
    * Where the toss went from the front foot (`readTossPlacement`, D3.1): ahead
    * of it from the side, across it from behind. Data only; absent from a
    * corner and on reports from before it existed.
@@ -262,7 +269,11 @@ export interface LandingFeet {
  *
  * A link counts as late only by more than `ORDER_SLACK` — twice the legs'
  * own deviation between takes — so a near-tie is never called a swap. Only at
- * 60 fps and above: at 30 a sample is 33 ms, wider than the slack.
+ * 60 fps and above. The reason given for that, that a 33 ms sample is wider
+ * than the slack, turned out to be wrong for the legs and the elbow: they hold
+ * at 30 fps, and `legLead` reads them there. What keeps this gate is the hand.
+ * Nothing can pose an elbow that follows it, on the rig or on real motion, so
+ * the half of this check that reads it has never been shown to catch anything.
  *
  * ONLY FROM THE SIDE (2026-11-05). The elbow's speed is read in the picture,
  * and from behind the swing towards the net is depth, so what is left of it
@@ -1308,6 +1319,7 @@ export function diagnose(
     ...(landingTravel ? { landingTravel } : {}),
     hitch: readHitch(frames, skel),
     firingOrder: readFiringOrder(frames, chain, viewFromCourtYaw(spatial.court_yaw_deg)),
+    legLead: readLegLead(frames, chain, legDrive.rise, viewFromCourtYaw(spatial.court_yaw_deg)),
     tossPlacement: readTossPlacement(
       frames,
       skel,

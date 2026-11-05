@@ -75,6 +75,30 @@ if (process.argv.includes('--fixture')) {
   process.exit(0)
 }
 
+/** The number after a flag, or the fallback. */
+const flag = (name, fallback) => {
+  const at = process.argv.indexOf(name)
+  return at < 0 ? fallback : Number(process.argv[at + 1])
+}
+
+if (process.argv.includes('--chain')) {
+  // One placement at a time, by its index in `PLACEMENTS`, so the slow table
+  // can be run in parallel; all of them in turn without `--place`.
+  const only = flag('--place', -1)
+  const takes = flag('--takes', 8)
+  const places = only >= 0 ? [mocap.PLACEMENTS[only]] : mocap.PLACEMENTS
+  console.log('Truth at 180 Hz, ms, first event to second:')
+  for (const row of mocap.truthTable(serves)) {
+    console.log(`  ${row.gap.padEnd(18)} ${row.mean.toFixed(0).padStart(5)} ± ${row.sd.toFixed(0).padStart(2)}  [${row.lo.toFixed(0)}, ${row.hi.toFixed(0)}]`)
+  }
+  for (const [method, name] of Object.entries(mocap.METHOD_NAMES)) console.log(`  ${method}: ${name}`)
+  for (const place of places) {
+    console.log(mocap.formatChain(mocap.benchChain(serves, place, takes, (line) => console.error(line))))
+    console.log('\n' + mocap.formatCalls(mocap.benchCalls(serves, place, [0, 0.05, 0.1, 0.13, 0.16, 0.2], Math.max(2, takes - 2))))
+  }
+  process.exit(0)
+}
+
 const quick = process.argv.includes('--quick')
 const complete = serves.filter(mocap.swingCompleted)
 const tally = (o) => complete.filter((s) => s.outcome === o).length

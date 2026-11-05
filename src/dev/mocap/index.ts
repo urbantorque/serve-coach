@@ -5,4 +5,5 @@
 export { readMat } from './mat'
 export { BATH_ATTRIBUTION, bathServe, parseOutcomes } from './bath'
 export { PLACEMENTS, RATES, benchMocap, formatBench } from './report'
+export { METHOD_NAMES, benchCalls, benchChain, formatCalls, formatChain, truthTable } from './chain'
 export { MOCAP_POINTS, packMocap, swingCompleted } from '../../lib/analysis/mocapServe'
