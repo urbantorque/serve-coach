@@ -3,6 +3,7 @@
  * (M3.2). Browser-only; loaded when the player asks for it, so none of it is
  * in the report's own chunk.
  */
+import type { CoachContext } from './coachContext'
 import { coachReportHtml, type CoachStill } from './coachReport'
 import { shareBlob } from './reportCard'
 import { causalPlan } from '../analysis/verdict'
@@ -33,9 +34,9 @@ function stills(analysis: Reportable): CoachStill[] {
   return out
 }
 
-export async function sendCoachReport(analysis: Reportable): Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'> {
+export async function sendCoachReport(analysis: Reportable, context?: CoachContext): Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'> {
   const plan = causalPlan(analysis.triage, analysis.diagnosis)
-  const html = coachReportHtml(analysis, plan, stills(analysis))
+  const html = coachReportHtml(analysis, plan, stills(analysis), context)
   const day = new Date(analysis.createdAt).toISOString().slice(0, 10)
   return shareBlob(new Blob([html], { type: 'text/html' }), `serve-report-${day}.html`, 'Serve report for my coach', 'text/html')
 }

@@ -16,6 +16,7 @@ import PracticeCard from '../components/PracticeCard'
 import { DeltaChip } from '../components/Trend'
 import { Cue, Icon, Sheet } from '../components/primitives'
 import type { SelfRead } from '../lib/selfRead'
+import type { CoachContext } from '../lib/share/coachContext'
 import type { Moment } from '../lib/moments'
 import { earcon } from '../lib/earcon'
 import MomentCard from '../components/MomentCard'
@@ -78,6 +79,8 @@ interface Props {
   self?: SelfRead
   /** What this report earned, as of the day it was filmed. */
   moment?: Moment
+  /** What a coach would ask first. Worked out only if a page is asked for. */
+  coachContext?: () => Promise<CoachContext>
   /** What the player said about this serve, and the taps that change it. */
   serveNumber?: 1 | 2
   outcome?: ServeOutcome
@@ -162,6 +165,7 @@ export default function Report({
   best,
   self,
   moment,
+  coachContext,
   serveNumber,
   outcome,
   onTagServe,
@@ -266,7 +270,7 @@ export default function Report({
   )
   const { sharing: clipping, trigger: makeClip } = useShareState(() => shareServeClip(analysis))
   const { sharing: sendingCoach, trigger: sendCoach } = useShareState(() =>
-    import('../lib/share/coachShare').then(({ sendCoachReport }) => sendCoachReport(analysis)),
+    import('../lib/share/coachShare').then(async ({ sendCoachReport }) => sendCoachReport(analysis, await coachContext?.())),
   )
 
   const goToPhase = (phase: PhaseId) => {

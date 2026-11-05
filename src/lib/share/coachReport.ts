@@ -11,6 +11,7 @@
  * Pure: the caller draws the stills and hands them over as data URIs.
  */
 import type { Analysis } from '../analysis/types'
+import { CANNOT_SEE, type CoachContext } from './coachContext'
 
 export interface CoachStill {
   label: string
@@ -34,7 +35,11 @@ export function coachReportHtml(
   analysis: Pick<Analysis, 'createdAt' | 'overall' | 'handedness' | 'serveType' | 'fundamentals'>,
   plan: readonly CoachPlanItem[],
   stills: readonly CoachStill[],
+  context?: CoachContext,
 ): string {
+  const lines = (items: readonly string[]) => items.map((l) => `<li>${esc(l)}</li>`).join('')
+  const about = context && [...context.record, ...context.working].length > 0
+  const own = context && context.usual.length > 0
   const when = new Date(analysis.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })
   const safeStills = stills.filter((s) => /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(s.src))
   const rows = analysis.fundamentals
@@ -64,17 +69,21 @@ h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 8px}h3{font-siz
 .meta{color:#555;margin:0 0 16px}ol{padding-left:0;list-style:none}li{margin:0 0 14px}.drill{color:#333}
 .stills{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}figure{margin:0}img{width:100%;background:#0f1218;border-radius:6px}
 figcaption{font-size:12px;color:#555}table{width:100%;border-collapse:collapse;font-size:13px}td,th{text-align:left;padding:6px 4px;border-bottom:1px solid #ddd}
-.foot{color:#777;font-size:12px;margin-top:24px}
+.foot{color:#777;font-size:12px;margin-top:24px}.notes{list-style:disc;padding-left:18px}.notes li{margin:0 0 6px}
 </style>
 </head>
 <body>
 <h1>Serve report</h1>
 <p class="meta">${esc(when)} · ${esc(analysis.handedness)}-handed · ${esc(analysis.serveType)} serve · overall ${Math.round(analysis.overall)}</p>
+${about ? `<h2>This player so far</h2><ul class="notes">${lines([...context!.record, ...context!.working])}</ul>` : ''}
+${own ? `<h2>This serve against their own usual</h2><ul class="notes">${lines(context!.usual)}</ul>` : ''}
 <h2>What to work on, in order</h2>
 <ol>${faults || '<li>Nothing stood out on this serve.</li>'}</ol>
 ${pics ? `<h2>Six moments, as the tracked body</h2><div class="stills">${pics}</div>` : ''}
 <h2>Every measurement, against its band</h2>
 <table><thead><tr><th>Area</th><th>Measurement</th><th>Reading</th><th>Band</th><th>Verdict</th></tr></thead><tbody>${rows}</tbody></table>
+<h2>What this cannot see</h2>
+<ul class="notes">${lines(CANNOT_SEE)}</ul>
 <p class="foot">Measured on the player's phone by Serve Coach from one filmed serve. The video was not sent; this page holds no script and loads nothing.</p>
 </body>
 </html>

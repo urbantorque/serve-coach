@@ -789,6 +789,7 @@ export default function App() {
               best={bestPriorTo(sessions, shownReport.createdAt, typeOf(shownReport), scoringVersionOf(shownReport))}
               self={shownSelf}
               moment={shownMoment}
+              coachContext={() => import('./lib/share/coachContext').then((c) => c.coachContextOf(shownReport, sessions, serveTags, prefs))}
               serveNumber={tagsById(serveTags).get(shownReport.id)?.serveNumber}
               serveGuess={guessServeNumber(shownReport as Session, sessions, serveTags)}
               outcome={tagsById(serveTags).get(shownReport.id)?.outcome}
