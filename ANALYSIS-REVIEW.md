@@ -1146,3 +1146,258 @@ towards the edge of the picture. Not adopted: speed from the bounce's sound
 (N2.10, 20% median error), from the wrist (11% average error on the Bath
 serves, blind to racket speed), and from blur length (needs an exposure time
 the video does not record).
+
+## The chain against 180 Hz truth (2026-11-05, still scoring version 5)
+
+**The question.** D3.8 reads the order the body fires in only at 60 fps and
+above, because a 33 ms sample is wider than its 15 ms slack. That gate was
+reasoned and never measured, and it reaches further than it says. `pose/rate.ts`
+reads a real-time clip at 32 samples a second whatever rate it was shot at, so
+only slow motion ever clears it. The forty Bath serves give 180 Hz truth for
+every link, and the virtual phone gives what a clip sees of it. Everything below
+is `npm run bench:mocap -- --chain` (`src/dev/mocap/chain.ts`).
+
+**Truth, in ms before the wrist's top, the engine's contact.**
+
+| Link | At its peak | Before contact |
+| --- | --- | --- |
+| Legs | Hips rising fastest | 167 ± 9 |
+| Shoulder joint | 3D speed | 88 ± 7 |
+| Elbow | 3D speed | 80 ± 6 |
+| Hand | 3D speed | 28 ± 3 |
+| Trunk | Shoulder line turning fastest | 22 ± 6 |
+| Hips | Pelvis turning fastest | 46 ± 41, from −52 to 129 |
+
+Between them, legs to elbow is 86 ± 11, elbow to hand 52 ± 5, legs to hand
+138 ± 10, and shoulder to elbow 8 ± 7. The pelvis has no peak to time: it turns
+at a plateau, and truth itself moves ±41 ms. The trunk peaks with the hand, not
+before the arm, which agrees with D3.8's reason for leaving it out of the check
+and with van Trigt 2024: professionals do not fire strictly from the ground up.
+
+**A take.** Every take here starts on a sampling phase of its own. The older
+ensembles hold one phase per serve, and at 30 fps where the frames fall moves a
+peak as far as the tracker does. Noise is the tracker fit (§ "Noise that behaves
+like a tracker"), through the swap guard. "Read at 32" is the app's own read of a
+file (`onReadingGrid`): `seekTo` files a sample under the time it asked for, so a
+30 fps file has about one frame in sixteen read twice and its stamps slide up to
+a frame out of step.
+
+**The methods, in ms rms against truth, from the guide's placement.** Current is
+the chain as it stands. Spline is sub-frame interpolation through every sample.
+Parabola is a curve fitted over ±100 ms of the same smoothed speed. Cubic is a
+local cubic slid along the path, which keeps a peak's shape.
+
+| Legs to elbow | Clean, 30 | MediaPipe, 30 | Read at 32 | 60 | 120 |
+| --- | --- | --- | --- | --- | --- |
+| Current | 9 | **14** | **19** | **16** | **13** |
+| Spline | 9 | 39 | 37 | 45 | 131 |
+| Parabola | 9 | 14 | 20 | 15 | 13 |
+| Cubic ±100 ms | 6 | 33 | 30 | 32 | 21 |
+| Cubic ±130 ms | 11 | 26 | 25 | 24 | 17 |
+
+| Elbow to hand | Clean, 30 | MediaPipe, 30 | Read at 32 | 60 | 120 |
+| --- | --- | --- | --- | --- | --- |
+| Current | 12 | **14** | **14** | 37, 20% lost | 35, 10% lost |
+| Spline | 9 | 33 | 30 | 41 | 167 |
+| Parabola | 15 | 16 | 15 | 32, 20% lost | 28, 10% lost |
+| Cubic ±100 ms | 11 | 26 | 26 | **22** | **26** |
+| Cubic ±130 ms | 17 | 31 | 22 | 26 | 25, 16% lost |
+
+- **The sharper methods win on clean landmarks and lose under a tracker.** At
+  60 fps clean, the cubic reads legs to elbow within 4 ms and the hand within 6
+  ms. Under MediaPipe's fit it reads them within 32 and 14. A tracker's error is
+  mostly fresh each frame, and a peak is where a curve is flattest, so an
+  estimator that keeps the shape keeps the noise.
+- **A wide smooth is the right tool at 30 fps,** by a factor of two, and that was
+  not expected. The fitted parabola adds nothing to it.
+- **Past 30 fps the tracker sets the limit, not the clock.** Legs to elbow reads
+  14 ms at 30 fps and 13 at 120.
+- **An interval beats its two ends.** Each link is timed against one contact, and
+  that contact's error cancels in the gap. On the six fixture serves under
+  RTMPose's noise at 30 fps the links move 10–11 ms between takes and the gap 5–6.
+
+**What can be claimed, from the side.**
+
+| Claim | Gap in 3D | 30 fps, and the app's read of a 30 or 60 fps file | 60, 120 fps |
+| --- | --- | --- | --- |
+| Legs before contact | 167 | Yes, 12–15 ms rms | Yes, 12–16 |
+| Legs before the elbow | 86 | Yes, 14–19 | Yes, 13–16 |
+| Elbow before the hand | 52 | Measured, 11–14, with no fault to prove it on | No: the hand is misread |
+| Shoulder before the elbow | 8 | No: reversed on 12–14% of takes | No |
+| Hips or trunk, any order | | No: 51–207 ms, 13–36% lost | No: 50–169, 8–14% lost |
+
+From the far baseline it matches, with legs to elbow at 10–20 ms. From behind only
+the first row stands. The legs are read from image y and hold at 10–18 ms from
+every side, but the elbow's speed in the picture peaks about 90 ms early, and
+legs to elbow reads the wrong way round on 59–92% of takes.
+
+**What changed.**
+
+- **The firing order is read side-on only.** From the back fence at 60 and 120
+  fps with noise, it told these skilled serves their legs came late on 16% and
+  19% of takes, and now on none. A corner the swing files as side-on does it on
+  0.6% at the worst. The check on real serves had only ever filmed the guide's
+  placement.
+- **`Diagnosis.legLead`** differences the chain's own legs and elbow, so it adds
+  no series. It is data only, from the side, in ms, with an order: `legs_first`
+  past +35 ms, `arm_first` past −35, otherwise `level`, which is a limit of the
+  camera and not a verdict. `CHAIN_NOISE_SD` carries its noise, 17 ms at the
+  worst real serve, and the call stands off zero by twice that. Ungraded, in
+  `UNCALIBRATED`. The nearest published figures are other quantities on other
+  players. `legLeadLine` says it in words.
+- **It stops when the hips barely rise.** Swept on the rig under the same noise,
+  the gap's spread is about 2.2 / rise ms: ±19 at a rise of 0.115, ±33 at 0.056,
+  ±83 at 0.024. Under 0.05 it is not read. That is where the leg rise reaches its
+  own zero, 0.0457.
+
+**The call on the forty serves, from both baseline placements.** 240 takes a
+cell, under MediaPipe's noise, the legs and hips planted late by `lateLegs`.
+
+| Legs to elbow in 3D | Read at 30 fps or on the app's read | At 60 and 120 fps |
+| --- | --- | --- |
+| +86, as played | 100% `legs_first` | 99–100%, the rest unread |
+| +36 | 13–67% `legs_first`, the rest `level` | 20–67% `legs_first`, the rest `level` |
+| −14 | 89–99% `level`, 0–11% `arm_first`, at most 1.3% `legs_first` | 63–98% `level`, 1–37% `arm_first` |
+| −44 | 45–87% `arm_first`, the rest `level` | 71–96% `arm_first`, the rest `level` |
+| −74 | 88–99% `arm_first`, the rest `level` or unread | 95–99% `arm_first` |
+| −114 | 14–31% `arm_first`, the rest unread | 55–64% `arm_first`, the rest unread |
+
+Past about 200 ms late the legs' peak leaves the search window, so the link is
+dropped rather than guessed. `legLead` never reads `legs_first` past −44. On the
+rig's own dial it reads 92, 21, −11 and −46 ms at 30 fps.
+
+**Found, and left.**
+
+1. **The chain's hand is misread at 60 fps and above.** After contact the arm has
+   a second speed peak, 8.5 m/s at about +100 ms against 10.7 before contact, and
+   a ±90 ms smooth runs the two together. It reads about 30 ms late, after
+   contact on half of takes, and from the guide's placement lands on the window's
+   edge and is dropped on 20% at 60 fps and 10% at 120. That is why the firing
+   order is absent from up to a fifth of side-on reads, and why its
+   elbow-to-hand half can never fire. Only slow motion reaches it. A ±100 ms
+   cubic reads the hand within 14–19 ms with 2% lost, but it would move
+   `chain_span_ms` and the timeline at a boundary, which is a decision for the
+   screen that draws it.
+2. **The read at 32 moves the gap by 17 ms.** A 30 fps file's stamps pull legs
+   to elbow from +3 ms of bias to −14. `requestVideoFrameCallback`'s `mediaTime`
+   would stamp the frame's own time. It needs a browser and real files to prove,
+   so it was not touched.
+3. **`ORDER_SLACK` was derived on the old jitter,** the legs at 7.5 ms. Under the
+   fitted tracker they move 12–15. Side-on it names nothing false, so it stands.
+
+**Still a model.** The motion is real and one skilled player's. The tracker is
+fitted to frames a tenth of a second apart, carried to other rates as an
+exponential. Motion blur and a tracker's lag on a fast limb are not in it. A club
+player's gap has not been seen by anything here, which is one more reason the
+reading is an order and not a band.
+
+## First or second, flat or kick (2026-11-05)
+
+**The question.** Can the app work out a serve's number or type, so the player
+need not say? There are no labelled clips. The Bath set is one player with
+outcomes and no type or number, so nothing can be learned from it about either.
+What it gives is the side of the sum a phone controls: how far each reading moves
+from serve to serve and take to take on real motion. The other side is published.
+`npm run bench:mocap -- --serve-cues` (`src/dev/mocap/serveCues.ts`) prints it, at
+30 fps on the app's read, under MediaPipe's noise.
+
+| Reading | Serve to serve | Take to take | First against second, published | Verdict |
+| --- | --- | --- | --- | --- |
+| Ball speed | about 5% (the wrist's, Bath) | 2.3%, range ±5–7% | 17%, 24% (van Trigt 2024, Chow 2003) | **Adopted** |
+| Elbow speed | 4% | 2.4% | Upper arm 15%, trunk 6%, pelvis 8% (van Trigt 2024) | Not adopted |
+| Hand speed | 5% | 2% | Racket head: no difference found (Chow 2003) | Not adopted |
+| Drop to contact | 11 ms | 34 ms | Segment timing 125 against 127 ms (van Trigt 2024) | Not adopted |
+| Toss to contact | 41 ms | 44 ms | None found | Not adopted |
+| Whole motion | 35 ms | 17 ms | None found | Not adopted |
+| Contact ahead | 4.0% of height | 5.5 | 4–7 cm, 2–4% (Chen 2024) | Not adopted |
+| Toss ahead, from the hand | 2.3% | 3.9 | Closer in on a second (Chow 2003) | Not adopted |
+| Contact height | 0.02 | 0.02 | 303.4 against 303.3 cm (Baiget 2023) | Not adopted |
+
+**Adopted: `guessServeNumber`, from the player's own record.** It speaks only
+where that player's tags have already shown the pattern, and it never stores
+anything.
+
+*What came before.* After a fault a second, after a second or a made first a new
+point. That is the rules of tennis and it is not a basket of first serves, so each
+pattern is held to the player's own consecutive tagged serves, with a 95% lower
+bound on the rate: 60% to speak, 75% to say likely. Consecutive means the serve
+before it in one file within a minute, or two clips recorded in the app within two
+minutes. `createdAt` is when a report was made, so a clip from the camera roll has
+no order to read. Simulated over five sittings of 12–20 serves, 120 players a row:
+
+| Practice | 80% tagged: speaks on, wrong on | With 5% mis-taps | 50% tagged |
+| --- | --- | --- | --- |
+| Match flow | 37%, 0% | 25%, 0.8% | 1–2%, 0–3.8% |
+| First serves only | 26%, 0% | 21%, 0% | 1–2%, 0% |
+| Second serves only | 0% | 0% | 0% |
+| First then second, whatever happened | 31%, 0% | 21%, 3.7% | 4–8%, 0–2.1% |
+| Half match, half first serves | 26%, 0.6% | 20%, 0.5% | 0.5–0.9%, 0–4% |
+
+That cannot show the rule fits real players. It shows the gate works: a guess
+speaks only on a habit the tags show, and a player who practises another way is
+left alone. Half-tagged players hear almost nothing, because a case needs both
+serves' numbers and the first one's outcome.
+
+*How fast the ball left.* Used when the tagged sides sit apart by the reader's own
+ranges, at least five a side, and this serve's whole range falls on one side of
+the middle. The reading's noise is `ServeSpeed`'s own.
+
+| First to second | Spread 5%: speaks on, wrong on | Spread 8% |
+| --- | --- | --- |
+| None | 0%, – | 0–0.1% |
+| 5% | 0.3–0.4% | 0.9% |
+| 10%, which nothing publishes | 7–12%, 2–6% | 6–11%, 14–21% |
+| 17%, van Trigt 2024 | 61–73%, 0.6–1.2% | 34–63%, 5–7% |
+| 24%, Chow 2003 | 91–92%, 0–0.1% | 78–84%, 1.4% |
+
+It reaches few clips: 37% of landscape clips at 30 fps from the speed placement,
+and almost none from the guide's. When the two kinds of evidence disagree it says
+nothing.
+
+**Not adopted, from the pose.** The best a guess could do from one reading and the
+player's own tags, six and twelve a side, gated as `secondServeSlower` is with a
+held-out check, with second serves planted by running a real swing slower:
+
+| Reading | No gap | 10% slower | 15% slower | 25% slower |
+| --- | --- | --- | --- | --- |
+| Hand speed | 0–0.5%, chance | 1–5%, wrong 24% | 0.5–3%, wrong 32% | 9–16%, wrong 13–16% |
+| Elbow speed | 0–0.6%, chance | 19–25%, wrong 9–11% | 62–65%, wrong 3–4% | 76–79%, wrong 2–3% |
+| Drop to contact | 0–0.1% | 3–6%, wrong 17–19% | 14–17%, wrong 8–9% | 16–21%, wrong 8–11% |
+| Whole motion | 0–0.4% | 26–32%, wrong 7–9% | 80–83%, wrong 3% | 97%, wrong 0.5% |
+
+- **Whole motion is reading the plant.** A slower swing is a longer swing here, and
+  published second serves keep their timing. Nothing says a real second serve
+  takes longer from the ready.
+- **Hand speed barely moves at 30 fps.** Run 15% slower it reads 3% lower: the
+  reading stops at contact and its peak sits on a sample boundary. The time left
+  in the swing, drop to contact, carries 34 ms of noise on 156.
+- **Elbow speed is the one to try again.** It tracks a real slowdown at about
+  three quarters, and it is silent on a null. But it is side-on only, it changes
+  with the read's rate, and nothing says what a club player's second serve does to
+  it. A rule built on it would be a claim with no evidence behind it. That
+  needs labelled clips.
+
+**Not adopted: serve type.** The player's remembered choice stays. What the
+literature gives, flat to kick:
+
+| Published gap | Reading | With the player's own history | With none | Beats the remembered choice only if they switch type on |
+| --- | --- | --- | --- | --- |
+| Contact 5 cm nearer, professional men (Vacek 2023) | Contact ahead | 58% | 55% | 42% of serves |
+| 17 cm, elite adolescent boys (Connolly 2021) | Contact ahead | 75% | 66% | 25% |
+| 24 cm, junior boys (Vacek 2023) | Contact ahead | 83% | 72% | 17% |
+| 18–21 cm sideways at the toss's top (Carboch 2018) | Toss across, from behind | 91% | not known | 9% |
+
+Those are ceilings: the best any rule could do from that reading, with both types
+equally likely. Campbell 2013 finds no flat and kick difference at all. The one
+large gap is sideways, which is depth from the guide's placement. Reading it from
+behind needs the serve's type to learn from, and `Session.serveType` is the
+remembered choice, not a label. Slice has no published position of its own: its
+difference is the racket's path (Sheets 2011), and the racket's path is what D3.7
+already found a side-on camera cannot see. Peak back extension does not separate
+the three (Abrams 2014), so the trunk gives nothing to hold a rule to either. On
+the rig the readings track their dials, so this is not the camera failing. The gap
+is not there to read.
+
+**What would change this.** Labelled clips of a club player's first and second
+serves. Nothing else can say what the elbow's speed does, and nothing here stands
+in for them.
