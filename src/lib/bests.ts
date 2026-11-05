@@ -40,7 +40,7 @@ const median = (xs: number[]) => {
 }
 
 /** How far a value sits from a band: 0 inside it. */
-const offBand = (v: number, [lo, hi]: [number, number]) => (v < lo ? lo - v : v > hi ? v - hi : 0)
+export const offBand = (v: number, [lo, hi]: [number, number]) => (v < lo ? lo - v : v > hi ? v - hi : 0)
 
 /** The rung a value falls on, by index. */
 const rungIndex = (id: string, v: number) => {
