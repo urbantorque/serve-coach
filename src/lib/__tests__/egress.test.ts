@@ -96,14 +96,6 @@ const ALLOWED: (Site & { why: string })[] = [
       'same same-origin paths, all vendored by `fetch-assets.mjs`.',
   },
   {
-    file: 'lib/share/reportCard.ts',
-    pattern: 'Image()',
-    why:
-      'Loads a keyframe still from a `data:` URI already held in memory, to draw it into a ' +
-      'shared report card. A `data:` source never reaches the network stack at all — this is ' +
-      'on the list so a future change that swaps in a real URL here has to touch this file too.',
-  },
-  {
     file: 'lib/speech.ts',
     pattern: 'speechSynthesis',
     why:

@@ -1,12 +1,13 @@
 import { readoutOf } from '../analysis/anatomy'
-import { SERVE_TYPES, isMeasured } from '../analysis/coaching'
 import { consistencyHeadline, type Consistency } from '../analysis/consistency'
 import type { Analysis } from '../analysis/types'
 import { plain } from '../analysis/voice'
-import { SOFT_READ, readQuality } from '../../components/statusLabels'
 import type { Session } from '../storage/db'
 import type { TripSummary } from '../progress'
 import { drawSkeleton, type DrawRect } from '../pose/skeleton'
+import { cardFonts, renderReportCard, textType } from './serveCard'
+import { clipsWork, recordSwingClip, type ClipBody } from './swingClip'
+import { swingOf } from '../figure/swing'
 import type { CardPose, GraduationCard } from '../graduationCard'
 
 type Report = Analysis | Session
@@ -25,8 +26,7 @@ const STATUS_COLOR: Record<string, string> = {
   work: '#ff7a6b',
 }
 
-const font = (weight: number, size: number) =>
-  `${weight} ${size}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
+const font = (weight: number, size: number) => textType(size, weight)
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath()
@@ -81,26 +81,6 @@ function drawLines(
   return cursor
 }
 
-/** Measure and draw in one go, for text nothing is positioned beneath. */
-function wrap(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  x: number,
-  y: number,
-  maxWidth: number,
-  lineHeight: number,
-): number {
-  return drawLines(ctx, layoutLines(ctx, text, maxWidth), x, y, lineHeight)
-}
-
-const loadImage = (src: string) =>
-  new Promise<HTMLImageElement | undefined>((resolve) => {
-    const img = new Image()
-    img.onload = () => resolve(img)
-    img.onerror = () => resolve(undefined)
-    img.src = src
-  })
-
 /**
  * Draw the report as a single shareable image.
  *
@@ -125,291 +105,6 @@ const loadImage = (src: string) =>
  * them, is a picture of two serves with nothing saying which is which. The
  * report holds both, and the report is where they mean something.
  */
-export async function renderReportCard(
-  report: Report,
-  /**
-   * The trip streak line, already worded by `streakLine` — a plain sentence,
-   * not a badge asset. Absent below two trips, the same restraint the home
-   * card holds; this card just carries the same sentence rather than
-   * inventing a shorter one for the smaller canvas.
-   */
-  streak?: string,
-  /**
-   * The best-score record line, already worded by `bestTripLine` —
-   * see the progress sheet's own `sheetBestScore`. Grouped with `streak`
-   * above rather than beside the score ring, the same "whole journey, not
-   * this one serve" reasoning that groups the two on the progress sheet.
-   */
-  bestScore?: string,
-): Promise<Blob | undefined> {
-  const W = 1080
-  const PAD = 64
-  const stills = report.phases.filter((p) => p.thumbnail)
-
-  // Lay the keyframes out three across; height follows from what is available.
-  const cols = 3
-  const rows = stills.length ? Math.ceil(stills.length / cols) : 0
-  const cellW = (W - PAD * 2 - 16 * (cols - 1)) / cols
-  const cellH = cellW * 1.25
-  const stripH = rows ? rows * (cellH + 44) + 30 : 0
-
-  const canvas = document.createElement('canvas')
-  canvas.width = W
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return undefined
-
-  /* --- layout ----------------------------------------------------------- */
-  // Everything below the focus paragraph is placed from its measured height, so
-  // a long coaching line pushes the card taller instead of running into what
-  // comes next. Measured before the canvas is sized because the card's height is
-  // one of the things it decides.
-  const cy = 250
-  const ringR = 78
-  const textX = PAD + 210
-  const textW = W - textX - PAD
-
-  ctx.font = font(400, 20)
-  // Flattened: the report marks its key words for the screen, and a canvas has
-  // no idea what an asterisk means. A card shared to a coach must not arrive
-  // with the markup showing.
-  const focusWhy = plain(report.focus.why)
-  const focusLines = layoutLines(ctx, focusWhy, textW)
-  const focusEnd = cy + 20 + focusLines.length * 30
-
-  // Clear both the paragraph and the bottom of the score ring: on a short fault
-  // the ring is the taller of the two.
-  const chipY = Math.max(focusEnd + 22, cy + ringR + 40)
-  const barY = chipY + 48
-  const HEADER = barY + 74 + 36
-
-  // A fixed strip above the drill box for each of the two optional records —
-  // absent, either must not leave a blank gap on the card.
-  const STREAK_H = streak ? 34 : 0
-  const BEST_SCORE_H = bestScore ? 34 : 0
-  const H = HEADER + stripH + 260 + STREAK_H + BEST_SCORE_H
-  canvas.height = H
-
-  ctx.fillStyle = INK
-  ctx.fillRect(0, 0, W, H)
-
-  const glow = ctx.createRadialGradient(W / 2, -140, 40, W / 2, -140, 760)
-  glow.addColorStop(0, 'rgba(205,249,74,0.16)')
-  glow.addColorStop(1, 'rgba(205,249,74,0)')
-  ctx.fillStyle = glow
-  ctx.fillRect(0, 0, W, HEADER)
-
-  /* --- header ---------------------------------------------------------- */
-  ctx.textBaseline = 'alphabetic'
-  ctx.fillStyle = LIME
-  ctx.beginPath()
-  ctx.arc(PAD + 9, PAD + 14, 9, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.font = font(640, 24)
-  ctx.fillStyle = FG
-  ctx.fillText('Serve Coach', PAD + 30, PAD + 22)
-
-  ctx.font = font(500, 20)
-  ctx.fillStyle = FAINT
-  ctx.textAlign = 'right'
-  ctx.fillText(
-    new Date(report.createdAt).toLocaleDateString(undefined, {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    }),
-    W - PAD,
-    PAD + 22,
-  )
-  ctx.textAlign = 'left'
-
-  /* --- score ring ------------------------------------------------------- */
-  const cx = PAD + 92
-  const r = ringR
-  const status = STATUS_COLOR[report.overallStatus] ?? LIME
-
-  ctx.lineWidth = 14
-  ctx.strokeStyle = '#1b2130'
-  ctx.beginPath()
-  ctx.arc(cx, cy, r, 0, Math.PI * 2)
-  ctx.stroke()
-
-  ctx.strokeStyle = status
-  ctx.lineCap = 'round'
-  ctx.beginPath()
-  ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + (report.overall / 100) * Math.PI * 2)
-  ctx.stroke()
-
-  ctx.textAlign = 'center'
-  ctx.font = font(680, 54)
-  ctx.fillStyle = FG
-  ctx.fillText(String(report.overall), cx, cy + 12)
-  ctx.font = font(600, 14)
-  ctx.fillStyle = FAINT
-  ctx.fillText('OVERALL', cx, cy + 38)
-  ctx.textAlign = 'left'
-
-  /* --- what this score is a score of ------------------------------------ */
-  /*
-   * A shared card is read without the app around it, often by a coach who was
-   * not there when it was filmed. "65 out of 100" means nothing on its own: the
-   * target bands differ by serve type, and how much the numbers can be trusted
-   * depends on how the clip was shot. A kick serve judged against kick targets
-   * and a flat serve judged against flat ones are not comparable scores, and
-   * without saying which is which the card invites exactly that comparison.
-   */
-  /*
-   * `soft` is carried on the chip rather than recovered from its words.
-   *
-   * This used to ask `label.endsWith('read')`, which worked only while the
-   * confidence phrases happened to end in that word. Renaming them for
-   * legibility silently switched the amber tint off — a caveat the card is
-   * supposed to carry, lost with nothing failing. Prose is not an identifier.
-   */
-  const chips: { label: string; soft?: boolean }[] = [
-    { label: SERVE_TYPES[report.serveType ?? 'flat']?.label ?? 'Flat / first serve' },
-    { label: report.handedness === 'left' ? 'Left-handed' : 'Right-handed' },
-    {
-      label:
-        report.quality.view === 'side'
-          ? 'Side view'
-          : report.quality.view === 'front-back'
-            ? 'Front / back view'
-            : 'Angled view',
-    },
-    {
-      label: readQuality(report.quality.confidence),
-      soft: report.quality.confidence < SOFT_READ,
-    },
-  ]
-
-  let chipX = PAD
-  ctx.font = font(560, 17)
-  for (const { label, soft } of chips) {
-    const w = ctx.measureText(label).width + 26
-    // Wrap rather than run off the edge: translated or unusually long labels
-    // would otherwise silently disappear past the right margin.
-    if (chipX + w > W - PAD) break
-    ctx.fillStyle = INK_2
-    roundRect(ctx, chipX, chipY - 20, w, 34, 17)
-    ctx.fill()
-    // Low confidence is the one of these that changes how the card should be
-    // read, so it is the one that gets colour.
-    ctx.fillStyle = soft ? STATUS_COLOR.fair : MUTED
-    ctx.fillText(label, chipX + 13, chipY + 3)
-    chipX += w + 8
-  }
-
-  /* --- focus ------------------------------------------------------------ */
-  ctx.font = font(700, 16)
-  ctx.fillStyle = LIME
-  ctx.fillText('WORK ON THIS NEXT', textX, cy - 58)
-  ctx.font = font(640, 34)
-  ctx.fillStyle = FG
-  ctx.fillText(report.focus.title, textX, cy - 16)
-  ctx.font = font(400, 20)
-  ctx.fillStyle = MUTED
-  // The same lines the layout above was measured from, so what is drawn and what
-  // was reserved for it cannot disagree.
-  drawLines(ctx, focusLines, textX, cy + 20, 30)
-
-  /* --- the five areas --------------------------------------------------- */
-  const barW = (W - PAD * 2 - 14 * (report.fundamentals.length - 1)) / report.fundamentals.length
-  report.fundamentals.forEach((f, i) => {
-    const x = PAD + i * (barW + 14)
-    ctx.fillStyle = INK_2
-    roundRect(ctx, x, barY, barW, 74, 14)
-    ctx.fill()
-
-    // A dash and no status colour for an area the clip could not grade
-    // (L1.1): the image outlives the report, and a 0 on it is a verdict.
-    const measured = isMeasured(f)
-    ctx.fillStyle = measured ? (STATUS_COLOR[f.status] ?? LIME) : FAINT
-    ctx.font = font(660, 30)
-    ctx.textAlign = 'center'
-    ctx.fillText(measured ? String(f.score) : '–', x + barW / 2, barY + 38)
-    ctx.font = font(500, 15)
-    ctx.fillStyle = FAINT
-    ctx.fillText(f.label, x + barW / 2, barY + 60)
-    ctx.textAlign = 'left'
-  })
-
-  /* --- keyframes -------------------------------------------------------- */
-  if (rows) {
-    const top = HEADER
-    const images = await Promise.all(stills.map((p) => loadImage(p.thumbnail!)))
-    stills.forEach((phase, i) => {
-      const col = i % cols
-      const row = Math.floor(i / cols)
-      const x = PAD + col * (cellW + 16)
-      const y = top + row * (cellH + 44)
-
-      ctx.save()
-      roundRect(ctx, x, y, cellW, cellH, 16)
-      ctx.clip()
-      ctx.fillStyle = INK_2
-      ctx.fillRect(x, y, cellW, cellH)
-      const img = images[i]
-      if (img) {
-        // cover, so the still fills the cell without distorting
-        const s = Math.max(cellW / img.width, cellH / img.height)
-        const dw = img.width * s
-        const dh = img.height * s
-        ctx.drawImage(img, x + (cellW - dw) / 2, y + (cellH - dh) / 2, dw, dh)
-      }
-      ctx.restore()
-
-      ctx.font = font(620, 18)
-      ctx.fillStyle = FG
-      ctx.fillText(phase.label, x, y + cellH + 26)
-    })
-  }
-
-  /* --- footer ----------------------------------------------------------- */
-  const footY = H - 150
-
-  // Above the drill box rather than beside the score, the same reasoning
-  // `sixWeekMilestone`'s home-card placement uses: these are facts about
-  // the whole journey, not about this one serve, so neither competes with
-  // the ring for the card's one big number. `streak` keeps the exact slot
-  // it always has, so a card with no `bestScore` draws pixel-identical to
-  // before; `bestScore` stacks above it only when both are present.
-  let recordY = footY - 14
-  if (streak) {
-    ctx.font = font(560, 16)
-    ctx.fillStyle = LIME
-    ctx.textAlign = 'center'
-    ctx.fillText(streak, W / 2, recordY)
-    ctx.textAlign = 'left'
-    recordY -= 34
-  }
-  if (bestScore) {
-    ctx.font = font(560, 16)
-    ctx.fillStyle = LIME
-    ctx.textAlign = 'center'
-    ctx.fillText(bestScore, W / 2, recordY)
-    ctx.textAlign = 'left'
-  }
-
-  ctx.fillStyle = INK_2
-  roundRect(ctx, PAD, footY, W - PAD * 2, 100, 18)
-  ctx.fill()
-
-  ctx.font = font(620, 19)
-  ctx.fillStyle = FG
-  ctx.fillText(report.focus.drill.name, PAD + 26, footY + 36)
-  ctx.font = font(400, 17)
-  ctx.fillStyle = MUTED
-  wrap(ctx, report.focus.drill.reps, PAD + 26, footY + 64, W - PAD * 2 - 52, 24)
-
-  ctx.font = font(400, 15)
-  ctx.fillStyle = FAINT
-  ctx.textAlign = 'center'
-  ctx.fillText('Measured on your phone · the video never left it', W / 2, H - 22)
-  ctx.textAlign = 'left'
-
-  return new Promise((resolve) => canvas.toBlob((b) => resolve(b ?? undefined), 'image/png'))
-}
-
 /** A local date stamp for a filename — `toISOString` is UTC, and an evening
  *  serve west of Greenwich would be named for tomorrow. */
 const dateStamp = (createdAt: number) => {
@@ -485,6 +180,28 @@ export async function attemptShare(
  * itself. Shared by both card kinds, so a basket card and a single-serve one
  * cannot drift apart on how the same three outcomes are decided.
  */
+export { clipsWork, renderReportCard }
+
+/** The serve as a slow clip, made here and sent only from the player's own sheet. */
+export async function shareServeClip(report: Report): Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'> {
+  const swing = swingOf(report)
+  if (!swing) return 'failed'
+  const made = await recordSwingClip({
+    bodies: [{ swing, caption: '', score: report.overall }],
+    headline: plain(report.focus.title),
+    foot: 'Serve Coach, measured on a phone.',
+  })
+  if (!made) return 'failed'
+  return shareBlob(made.blob, `serve-${dateStamp(report.createdAt)}.${made.extension}`, 'My serve', made.blob.type)
+}
+
+/** Then and now, side by side, the two bodies aligned on the ball. */
+export async function shareThenNowClip(then: ClipBody, now: ClipBody, headline: string): Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'> {
+  const made = await recordSwingClip({ bodies: [then, now], headline, foot: 'Serve Coach, measured on a phone.' })
+  if (!made) return 'failed'
+  return shareBlob(made.blob, `then-and-now.${made.extension}`, 'Then and now', made.blob.type)
+}
+
 export async function shareBlob(
   blob: Blob,
   name: string,
@@ -553,6 +270,7 @@ export async function renderBasketCard(
    */
   gapDelta?: string,
 ): Promise<Blob | undefined> {
+  await cardFonts()
   const c = consistency
   const W = 1080
   const PAD = 64
@@ -848,6 +566,7 @@ export interface SeasonRecords {
  * smaller card, it is a blank one.
  */
 export async function renderSeasonCard(records: SeasonRecords, asOf: number): Promise<Blob | undefined> {
+  await cardFonts()
   const rows = [
     records.streak,
     records.longestStreak,
@@ -972,6 +691,7 @@ export async function renderTripCard(
   /** The recurring-strain line, already worded by the caller. Absent is normal. */
   strainLine?: string,
 ): Promise<Blob | undefined> {
+  await cardFonts()
   const W = 1080
   const PAD = 64
 
@@ -1108,6 +828,7 @@ function figureRect(pose: CardPose, dw: number, x: number, y: number, w: number,
  * that did not, each dated. Figures, not photographs: see `graduationCard`.
  */
 export async function renderGraduationCard(card: GraduationCard): Promise<Blob | undefined> {
+  await cardFonts()
   const W = 1080
   const PAD = 64
   const canvas = document.createElement('canvas')

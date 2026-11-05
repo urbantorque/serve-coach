@@ -50,7 +50,7 @@ import {
   scoringVersionOf,
   type BestGap,
   type BestTrip, deltaStatus } from '../lib/progress'
-import { shareReportCard } from '../lib/share/reportCard'
+import { clipsWork, shareReportCard, shareServeClip } from '../lib/share/reportCard'
 import { swingOf, workParts } from '../lib/figure/swing'
 import { SCORING_VERSION, type Analysis, type PhaseId } from '../lib/analysis/types'
 import type { Session } from '../lib/storage/db'
@@ -258,6 +258,7 @@ export default function Report({
   const { sharing, trigger: share } = useShareState(() =>
     shareReportCard(analysis, streak, bestScore && bestTripLine(bestScore, analysis.createdAt)),
   )
+  const { sharing: clipping, trigger: makeClip } = useShareState(() => shareServeClip(analysis))
   const { sharing: sendingCoach, trigger: sendCoach } = useShareState(() =>
     import('../lib/share/coachShare').then(({ sendCoachReport }) => sendCoachReport(analysis)),
   )
@@ -336,7 +337,14 @@ export default function Report({
 
   const shareSheet = (
     <Sheet open={sharingOpen} onClose={() => setSharingOpen(false)} title="Share this serve">
-      <ShareChoice card={sharing} onCard={() => void share()} coach={sendingCoach} onCoach={() => void sendCoach()} />
+      <ShareChoice
+        card={sharing}
+        onCard={() => void share()}
+        coach={sendingCoach}
+        onCoach={() => void sendCoach()}
+        clip={clipping}
+        onClip={swing && clipsWork() ? () => void makeClip() : undefined}
+      />
     </Sheet>
   )
 

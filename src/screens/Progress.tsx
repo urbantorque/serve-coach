@@ -485,7 +485,7 @@ export default function Progress({
         <TrendTable points={form.trips} />
       </details>
 
-      <ProgressShare records={seasonRecords} sessions={sessions} strainLine={strain.map(strainLine).find(Boolean) ?? undefined} fixed={fixedCards} />
+      <ProgressShare records={seasonRecords} sessions={sessions} strainLine={strain.map(strainLine).find(Boolean) ?? undefined} fixed={fixedCards} thenNow={thenNow} />
 
       {onOpen && (
         <>

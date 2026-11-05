@@ -6,6 +6,9 @@ interface Props {
   onCard: () => void
   coach: SharingState
   onCoach: () => void
+  /** Offered where the browser can record, and there is a body to play. */
+  clip?: SharingState
+  onClip?: () => void
 }
 
 /**
@@ -15,7 +18,7 @@ interface Props {
  * two became: pick who it is for, and only then does anything get made. Nothing
  * leaves the phone until the player picks where it goes in their own share sheet.
  */
-export default function ShareChoice({ card, onCard, coach, onCoach }: Props) {
+export default function ShareChoice({ card, onCard, coach, onCoach, clip, onClip }: Props) {
   return (
     <div className="share-choice">
       <button className="share-option" onClick={onCard} disabled={card === 'working'} aria-live="polite">
@@ -27,6 +30,17 @@ export default function ShareChoice({ card, onCard, coach, onCoach }: Props) {
           <span>A picture to send to a friend.</span>
         </span>
       </button>
+      {onClip && (
+        <button className="share-option" onClick={onClip} disabled={clip === 'working'} aria-live="polite">
+          <span className="share-option-mark">
+            <Icon name={clip === 'done' ? 'check' : 'film'} size={22} />
+          </span>
+          <span>
+            <strong>{clip === 'working' ? 'Making your clip…' : clip === 'done' ? 'Saved' : 'A slow-motion clip'}</strong>
+            <span>{clip === 'working' ? 'It records as it plays, about ten seconds.' : 'Your swing, drawn. Never the video itself.'}</span>
+          </span>
+        </button>
+      )}
       <button className="share-option" onClick={onCoach} disabled={coach === 'working'} aria-live="polite">
         <span className="share-option-mark">
           <Icon name={coach === 'done' ? 'check' : 'target'} size={22} />

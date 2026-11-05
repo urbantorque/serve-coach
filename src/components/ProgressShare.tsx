@@ -1,9 +1,10 @@
 import { useMemo } from 'react'
 import { Icon } from './primitives'
 import { useShareState } from './useShareState'
-import { shareGraduationCard, shareSeasonCard, shareTripCard, type SeasonRecords } from '../lib/share/reportCard'
+import { clipsWork, shareGraduationCard, shareSeasonCard, shareThenNowClip, shareTripCard, type SeasonRecords } from '../lib/share/reportCard'
 import type { GraduationCard } from '../lib/graduationCard'
-import { tripsOf, tripSummary } from '../lib/progress'
+import { swingOf } from '../lib/figure/swing'
+import { shortDate, tripsOf, tripSummary } from '../lib/progress'
 import type { Session } from '../lib/storage/db'
 
 interface Props {
@@ -12,6 +13,22 @@ interface Props {
   strainLine?: string
   /** A fault fixed lately, then and now (L3.12). */
   fixed: GraduationCard[]
+  /** The widest honest pair, for a clip of the two side by side. */
+  thenNow?: { then: Session; now: Session }
+}
+
+const WEEK = 7 * 24 * 60 * 60 * 1000
+
+function shareBothSwings({ then, now }: { then: Session; now: Session }) {
+  const a = swingOf(then)
+  const b = swingOf(now)
+  if (!a || !b) return Promise.resolve('failed' as const)
+  const weeks = Math.round((now.createdAt - then.createdAt) / WEEK)
+  return shareThenNowClip(
+    { swing: a, caption: shortDate(then.createdAt), score: then.overall },
+    { swing: b, caption: shortDate(now.createdAt), score: now.overall },
+    weeks > 1 ? `${weeks} weeks apart` : 'Then, and now',
+  )
 }
 
 /**
@@ -23,7 +40,7 @@ interface Props {
  * The same rules as the buttons it replaces: no season card below two records,
  * no trip card below two serves. With nothing to share it renders nothing.
  */
-export default function ProgressShare({ records, sessions, strainLine, fixed }: Props) {
+export default function ProgressShare({ records, sessions, strainLine, fixed, thenNow }: Props) {
   const trip = useMemo(() => {
     const trips = tripsOf(sessions)
     const last = trips[trips.length - 1]
@@ -32,7 +49,8 @@ export default function ProgressShare({ records, sessions, strainLine, fixed }: 
   const seasonCount = [records.streak, records.longestStreak, records.bestScore, records.bestGap].filter(Boolean).length
   const season = seasonCount >= 2
   const tripOk = trip !== undefined && trip.serves >= 2
-  if (!season && !tripOk && !fixed.length) return null
+  const clip = thenNow && clipsWork()
+  if (!season && !tripOk && !fixed.length && !clip) return null
 
   return (
     <details className="share-menu">
@@ -41,6 +59,7 @@ export default function ProgressShare({ records, sessions, strainLine, fixed }: 
         Share your progress
       </summary>
       <div className="share-menu-list">
+        {clip && <ShareOption label="Then and now, a slow clip" run={() => shareBothSwings(thenNow)} />}
         {season && <ShareOption label="Your season" run={() => shareSeasonCard(records, Date.now())} />}
         {tripOk && <ShareOption label="This trip" run={() => shareTripCard(trip!, strainLine)} />}
         {fixed.map((card) => (
