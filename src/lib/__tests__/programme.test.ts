@@ -150,6 +150,18 @@ check('a ladder the player never moved has nothing done on it', () => {
   assert(!p.weeks.some((w) => w.state === 'done'), 'a medium fault starts on step two: step one was never passed')
 })
 
+check('a fault that eased from serious to medium has passed nothing by easing', () => {
+  // Named serious first, so its ladder began on step one; medium now, so the
+  // plan stands on step two. Nobody moved anything, and step one was never done.
+  const serious = trip(180, 3, [DROP]).map((s) => ({
+    ...s,
+    diagnosis: { flaws: s.diagnosis!.flaws.map((f) => ({ ...f, severity: 'high' })) },
+  })) as Session[]
+  const p = programmeFor(history(serious, trip(190, 3, [DROP])), prefs(), 191 * DAY)!
+  assert(p.weeks[0].state === 'current' && p.weeks[0].step!.at === 2, `${p.weeks[0].title}: ${p.weeks[0].state}`)
+  assert(p.ratio === 0, `ratio ${p.ratio}`)
+})
+
 check('a moved ladder is done up to the rung, from where the fault started it', () => {
   const p = programmeFor(history(trip(190, 3, [DROP])), prefs({ ladder: { [DROP]: 3 } }), 191 * DAY)!
   const done = p.weeks.filter((w) => w.state === 'done')
@@ -216,6 +228,13 @@ check('passing a basket offers the move and does not make it: the ladder moves o
   const moving = { ladder: { [DROP]: rung + 1 }, ladderMovedAt: { [DROP]: 171 * DAY } }
   const next = programmeFor(history(trip(160, 3, [DROP]), trip(170, 6, [], [DROP])), prefs(moving), 172 * DAY)!
   assert(next.current.step!.at === rung + 2 && next.moveUp === undefined, 'moving the ladder did not move the row, or old serves passed the new step')
+})
+
+check('a step the player judges is theirs to call: a clean basket does not offer it', () => {
+  // Rung two is the ball in a sock: no served ball, so nothing filmed speaks for it.
+  const h = history(trip(160, 3, [DROP]), trip(170, 6, [], [DROP]))
+  const p = programmeFor(h, prefs({ ladder: { [DROP]: 1 } }), 171 * DAY)!
+  assert(p.title === GOAL_TITLE[DROP] && !p.current.filmed && p.moveUp === undefined, JSON.stringify(p.moveUp))
 })
 
 check('a serve the fault could not be judged on passes nothing', () => {
@@ -380,6 +399,10 @@ check('with no fault left, speed is the goal the programme picks by itself', () 
   const q = programmeFor(up, prefs(), 191 * DAY)!
   assert(q.goal.kind === 'speed' && q.goal.from.ms === 42, JSON.stringify(q.goal))
   assert(goalsReached(up, prefs(), 191 * DAY)[0]?.cleared?.ms === 42, 'the clear was not a goal reached')
+  const twice = history(trip(180, 3, [], [], 36), trip(190, 3, [], [], 42), trip(200, 3, [], [], 50))
+  const r = programmeFor(twice, prefs(), 201 * DAY)!
+  assert(r.goal.kind === 'speed' && r.goal.from.ms === 50, `the bar stopped at ${JSON.stringify(r.goal)}`)
+  assert(goalsReached(twice, prefs(), 201 * DAY)[0]?.cleared?.ms === 50, 'the newest clear was not the one said')
   assert(programmeFor(history(trip(180, 3, [], [])), prefs(), 181 * DAY) === undefined, 'a goal out of nothing')
 })
 

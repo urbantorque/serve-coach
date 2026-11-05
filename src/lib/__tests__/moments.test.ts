@@ -177,7 +177,9 @@ check('a self-checked step moved up by the player\'s own word is no moment', () 
 
 check('a step taken back since is no moment', () => {
   const passed = 171 * DAY
-  const back = prefs({ ladder: { [DROP]: 2 }, ladderMovedAt: { [DROP]: passed + HOUR }, ladderPassedAt: { [DROP]: passed } })
+  // Up to rung four, then back to three: the rung below it is one the app reads.
+  const back = prefs({ ladder: { [DROP]: 3 }, ladderMovedAt: { [DROP]: passed + HOUR }, ladderPassedAt: { [DROP]: passed } })
+  assert(progressionFor(DROP)!.steps[2].check.by === 'engine', 'the fixture meant the rung below to be read')
   assert(!has(momentsFor(history(trip(170, 6, { clean: [DROP] })), back, passed + 2 * HOUR), 'step'), 'a step back kept its moment')
 })
 

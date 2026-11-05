@@ -45,10 +45,9 @@ function edges(file: string): string[] {
   return out
 }
 
-heading('The engine stays out of the entry chunk (Q12)')
-
-check('nothing the first screen imports reaches a module that reads a clip', () => {
-  const start = path.normalize('src/main.tsx')
+/** Every module reachable from a start, each with the module that first reached it. */
+function reach(startAt: string): Map<string, string> {
+  const start = path.normalize(startAt)
   const seen = new Map<string, string>([[start, '']])
   const queue = [start]
   while (queue.length) {
@@ -59,14 +58,36 @@ check('nothing the first screen imports reaches a module that reads a clip', () 
       queue.push(to)
     }
   }
-  note(`${seen.size} modules reachable from main.tsx`)
-  assert(seen.size > 40, 'the walk found too little to mean anything')
-  const name = (f: string) => f.replace(/\\/g, '/').split('/').pop()!.replace(/\.tsx?$/, '')
+  return seen
+}
+
+const name = (f: string) => f.replace(/\\/g, '/').split('/').pop()!.replace(/\.tsx?$/, '')
+
+function assertNoEngine(seen: Map<string, string>) {
   for (const [file] of seen) {
     if (!ENGINE.includes(name(file)) || !file.replace(/\\/g, '/').includes('lib/analysis/')) continue
     const chain = [file]
     for (let at = seen.get(file); at; at = seen.get(at)) chain.push(at)
     assert(false, `the entry reaches ${name(file)}: ${chain.reverse().map(name).join(' → ')}`)
+  }
+}
+
+heading('The engine stays out of the entry chunk (Q12)')
+
+check('nothing the first screen imports reaches a module that reads a clip', () => {
+  const seen = reach('src/main.tsx')
+  note(`${seen.size} modules reachable from main.tsx`)
+  assert(seen.size > 40, 'the walk found too little to mean anything')
+  assertNoEngine(seen)
+})
+
+check('nor do the modules the first screen is about to read', () => {
+  // Held here before any screen imports them, so the screen that does finds
+  // the road already clear.
+  for (const module of ['programme', 'moments', 'serveLoad', 'storage/protect']) {
+    const seen = reach(`src/lib/${module}.ts`)
+    assert(seen.size > 3, `the walk from ${module} found too little to mean anything`)
+    assertNoEngine(seen)
   }
 })
 
