@@ -214,5 +214,26 @@ written up in `DESIGN.md` as it lands.
 
 ## What only the owner can decide
 
-Nothing yet needs stopping for. The moves above stay on the device, spend nothing
-and keep the identity. If anything comes up it will be listed here.
+Nothing needed stopping for. Every move stayed on the device, spent nothing and kept
+the identity.
+
+## What became of it
+
+Built as ranked, with these changes along the way. The ledger, item by item, is the
+last section of `ROADMAP.md` (H1 to H34).
+
+- **The waiting screen went further than planned.** The plan had the player's clip
+  being read. It became the player's own body as the tracker reads it, then the whole
+  swing as one exposure.
+- **The before-and-after clip is made from the figure, never the video.** Nothing of the
+  player's footage is in anything they share, so a card can travel without a photograph.
+- **Two engine ideas were measured and not adopted:** first or second from the pose,
+  and serve type from the clip. A sharper peak-finder for the chain lost to the method
+  it was meant to replace. All three are in the ledger with their numbers.
+- **A guess at first or second came from the player's own record instead**, and is
+  never stored as a tag.
+- **Two budgets moved, both on purpose:** split stylesheets 6 to 16 to 20 kB, because
+  styles now load with their screens, recorded in `bundle.test.ts`.
+- **An outside critique of every screen** changed the report's first screen, the fault
+  grid, the session's headline and the glance. Its floating-bar and blank-tile findings
+  were artefacts of a full-page capture and the demo's placeholders.
