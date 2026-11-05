@@ -92,13 +92,12 @@ check('reading, paused, and a session reopened without its file', () => {
 check('the finished session draws every part it has data for', () => {
   const previous = { ...session, id: 'practice-before', createdAt: session.createdAt - 7 * 864e5, lines: lines.slice(0, 9) }
   const done = draw({}, { state: 'done' }, false, previous)
-  for (const part of ['What to work on', 'Start against end', 'Every serve', 'Best and worst', 'Since last session', 'All 14 serves']) {
+  for (const part of ['What to work on', 'Every serve', 'Best and worst', 'A typical score of', 'All 14 serves']) {
     assert(done.includes(part), `"${part}" is missing`)
   }
   assert(done.includes('data:image/jpeg;base64,AAAA'), 'the kept still was not drawn')
   const withUnsure = draw({ unsure: [40, 90] }, { state: 'done' }, false)
   assert(withUnsure.includes('2 overheads reached like a serve'), 'the overheads left out were not counted')
-  assert(done.includes('session-pick-blank'), 'a serve with no still did not get a blank')
   const one = draw({ lines: lines.slice(0, 1) }, { state: 'done' })
   assert(!one.includes('Every serve'), 'a section with nothing to draw kept its heading')
   const none = draw({ found: [], chosen: [], lines: [] }, { state: 'done' })

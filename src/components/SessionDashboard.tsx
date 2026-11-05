@@ -89,34 +89,29 @@ export default function SessionDashboard({ session, previous, videoUrl, onPickAg
   const fixes = stats.faults.filter((f) => f.verdict).slice(0, 4)
   const speeds = useMemo(() => sessionSpeeds(session.lines), [session.lines])
   const found = session.found?.length ?? 0
+  const gone = before?.verdict.filter((f) => !stats.verdict.includes(f)).slice(0, 2) ?? []
 
   return (
     <div className="session-dash">
-      <p className="session-lede">{headlineOf(stats)}</p>
-
-      <dl className="session-figures">
-        <div>
-          <dt>Found</dt>
-          <dd className="tnum">{found}</dd>
+      <section className="session-hero" aria-label="This practice">
+        <div className="session-numbers">
+          {stats.overall && <span className="t-score session-figure">{stats.overall.median}</span>}
+          <p>
+            <strong>{stats.overall ? 'Typical serve' : 'Your practice'}</strong>
+            <span className="tnum">
+              {found} found, {stats.read} read
+              {stats.unclear > 0 ? `, ${stats.unclear} too unclear` : ''}
+            </span>
+            {before && stats.overall && before.overall && <span className="tnum">{sinceLine(stats.overall.median, before.overall.median)}</span>}
+          </p>
         </div>
-        <div>
-          <dt>Read</dt>
-          <dd className="tnum">{stats.read}</dd>
-        </div>
-        <div>
-          <dt>Unclear</dt>
-          <dd className="tnum">{stats.unclear}</dd>
-        </div>
-        {stats.overall && (
-          <div>
-            <dt>Typical</dt>
-            <dd className={`tnum session-figure--${statusOf(stats.overall.median)}`}>{stats.overall.median}</dd>
-          </div>
+        <p className="session-lede">{headlineOf(stats)}</p>
+        {session.unsure && session.unsure.length > 0 && <p className="session-meta">{unsureLine(session.unsure.length)}</p>}
+        {(speeds || session.withSpeed) && (          <p className="session-meta" id="session-speed">
+            {speeds ? sessionSpeedLine(speeds, readPrefs().speedUnit ?? defaultSpeedUnit()) : NO_SESSION_SPEED}
+          </p>
         )}
-      </dl>
-      {session.unsure && session.unsure.length > 0 && (
-        <p className="session-meta">{unsureLine(session.unsure.length)}</p>
-      )}
+      </section>
 
       <section className="block" aria-labelledby="session-fixes">
         <h2 className="block-title" id="session-fixes">
@@ -143,7 +138,7 @@ export default function SessionDashboard({ session, previous, videoUrl, onPickAg
                             {step && `, step ${step.at} of ${step.of}`} · {drill.reps}
                           </span>
                         </p>
-                        <p className="focus-next-why">{drill.how}</p>
+                        {i === 0 && <p className="focus-next-why">{drill.how}</p>}
                         {i === 0 && bar && (
                           <button
                             type="button"
@@ -183,34 +178,23 @@ export default function SessionDashboard({ session, previous, videoUrl, onPickAg
 
       {card && <CourtCard item={card} onClose={() => setCard(undefined)} />}
 
-      <section className="block" aria-labelledby="session-change">
-        <h2 className="block-title" id="session-change">
-          Start against end
-        </h2>
-        {stats.driftOver === 0 ? (
-          <p className="session-meta">
-            {cue('Too few serves from one spot to compare the start with the end.')}
-          </p>
-        ) : stats.drifts.length ? (
-          stats.drifts.slice(0, 2).map((d) => (
-            <p className="session-meta" key={d.id}>
-              {driftLine(d)}
-            </p>
-          ))
-        ) : (
-          <p className="session-meta">{cue('Held steady from start to end.')}</p>
-        )}
-      </section>
-
-      {/* Only for a session read with speeds, or one whose lines carry them (N2.8). */}
-      {(speeds || session.withSpeed) && (
-        <section className="block" aria-labelledby="session-speed">
-          <h2 className="block-title" id="session-speed">
-            Serve speed
+      {/* The first of these is the headline already: said once. */}
+      {(stats.driftOver === 0 || stats.drifts.length !== 1) && (
+        <section className="block" aria-labelledby="session-change">
+          <h2 className="block-title" id="session-change">
+            Start against end
           </h2>
-          <p className="session-meta">
-            {speeds ? sessionSpeedLine(speeds, readPrefs().speedUnit ?? defaultSpeedUnit()) : NO_SESSION_SPEED}
-          </p>
+          {stats.driftOver === 0 ? (
+            <p className="session-meta">{cue('Too few serves from one spot to compare the start with the end.')}</p>
+          ) : stats.drifts.length ? (
+            stats.drifts.slice(1, 3).map((d) => (
+              <p className="session-meta" key={d.id}>
+                {driftLine(d)}
+              </p>
+            ))
+          ) : (
+            <p className="session-meta">{cue('Held steady from start to end.')}</p>
+          )}
         </section>
       )}
 
@@ -263,22 +247,16 @@ export default function SessionDashboard({ session, previous, videoUrl, onPickAg
         </Sheet>
       )}
 
-      {before && stats.overall && before.overall && (
+      {gone.length > 0 && (
         <section className="block" aria-labelledby="session-since">
           <h2 className="block-title" id="session-since">
             Since last session
           </h2>
-          <p className="session-meta tnum">
-            {sinceLine(stats.overall.median, before.overall.median)}
-          </p>
-          {before.verdict
-            .filter((f) => !stats.verdict.includes(f))
-            .slice(0, 2)
-            .map((f) => (
-              <p className="session-meta" key={f}>
-                {goneLine(f)}
-              </p>
-            ))}
+          {gone.map((f) => (
+            <p className="session-meta" key={f}>
+              {goneLine(f)}
+            </p>
+          ))}
         </section>
       )}
 
@@ -317,7 +295,7 @@ function Picks({
           const at = clockOf(line.t)
           const face = (
             <>
-              {stills?.[n] ? (
+              {stills?.[n] && (
                 <img
                   src={stills[n]}
                   alt={`Contact, serve at ${at}`}
@@ -326,8 +304,6 @@ function Picks({
                   loading="lazy"
                   decoding="async"
                 />
-              ) : (
-                <span className="session-pick-blank" aria-hidden="true" />
               )}
               <span className="session-pick-at tnum">{at}</span>
               <span className={`session-pick-score tnum is-${statusOf(line.overall ?? 0)}`}>{line.overall}</span>

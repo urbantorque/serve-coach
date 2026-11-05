@@ -675,3 +675,52 @@ button.session-pick:hover .session-pick-play {
 .sweep-cell.is-skipped .sweep-score {
   color: var(--fg-faint);
 }
+
+/* ------------------------------------------------------------ the session's head */
+
+.session-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.session-numbers {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+.session-numbers .session-figure {
+  line-height: 0.82;
+}
+
+.session-numbers p {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-bottom: 4px;
+  font-size: 15px;
+  line-height: 1.3;
+  color: var(--fg-muted);
+}
+
+.session-numbers strong {
+  font-size: 18px;
+  font-weight: 660;
+  color: var(--fg);
+}
+
+.session-hero .session-lede {
+  font-size: 22px;
+  font-stretch: 104%;
+  font-weight: 640;
+  letter-spacing: -0.01em;
+  line-height: 1.22;
+  text-wrap: pretty;
+}
+
+.session-strip .chart-readout {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
