@@ -4,7 +4,8 @@ import { engineMegabytes } from '../lib/engineManifest'
 import { NUDGE_COPY, type StorageNudge } from '../lib/storage/nudge'
 import { sessionEvidence } from '../lib/session/evidence'
 import { buildProgress, currentRubricEra, streakLine, tripDay, deltaStatus } from '../lib/progress'
-import { momentsFor, weekRecap, type Moment } from '../lib/moments'
+import { momentsFor, weekRecap } from '../lib/moments'
+import MomentCard from '../components/MomentCard'
 import { programmeFor } from '../lib/programme'
 import { fastestServe } from '../lib/speedTrend'
 import { defaultSpeedUnit, speedFigures } from '../lib/speedCopy'
@@ -64,18 +65,6 @@ interface Props {
 }
 
 /** Lime as a whole surface: the one loud thing on the screen, and only when it is earned. */
-function MomentCard({ moment }: { moment: Moment }) {
-  return (
-    <section className="moment" aria-label={moment.title}>
-      <Icon name={moment.kind === 'fastest' ? 'lightning' : moment.kind === 'fault' || moment.kind === 'goal' ? 'flag' : 'trophy'} size={22} />
-      <div>
-        <h2>{moment.title}</h2>
-        <p>{moment.body}</p>
-      </div>
-    </section>
-  )
-}
-
 /**
  * Today: what now, and how it is going.
  *

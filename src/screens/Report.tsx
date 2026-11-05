@@ -16,6 +16,9 @@ import PracticeCard from '../components/PracticeCard'
 import { DeltaChip } from '../components/Trend'
 import { Cue, Icon, Sheet } from '../components/primitives'
 import type { SelfRead } from '../lib/selfRead'
+import type { Moment } from '../lib/moments'
+import { earcon } from '../lib/earcon'
+import MomentCard from '../components/MomentCard'
 import { useCountUp } from '../components/useCountUp'
 import { SPEED_MISS_LINE, defaultSpeedUnit, speedFigures } from '../lib/speedCopy'
 import { SOFT_READ, readQuality, VERDICT } from '../components/statusLabels'
@@ -73,6 +76,8 @@ interface Props {
   best?: Session
   /** This serve against the player's own usual and best, past their own noise. */
   self?: SelfRead
+  /** What this report earned, as of the day it was filmed. */
+  moment?: Moment
   /** What the player said about this serve, and the taps that change it. */
   serveNumber?: 1 | 2
   outcome?: ServeOutcome
@@ -156,6 +161,7 @@ export default function Report({
   previous,
   best,
   self,
+  moment,
   serveNumber,
   outcome,
   onTagServe,
@@ -312,6 +318,12 @@ export default function Report({
   const unit = readPrefs().speedUnit ?? defaultSpeedUnit()
   const figures = speed ? speedFigures(speed, unit) : undefined
   const shown = useCountUp(analysis.overall, fresh && settled)
+  const landed = useRef(false)
+  useEffect(() => {
+    if (!fresh || !settled || landed.current || readPrefs().sounds === false) return
+    landed.current = true
+    earcon(moment ? 'moment' : 'reveal', true)
+  }, [fresh, settled, moment])
 
   const stageLabel = `Your serve at ${(focusPhase?.label ?? 'contact').toLowerCase()}${work.length ? ', with the part to work on picked out' : ''}.`
 
@@ -445,6 +457,7 @@ export default function Report({
         </div>
 
         <div className="hero-fix">
+          {moment && (settled || !fresh) && <MomentCard moment={moment} />}
           {previous &&
             (comparable ? (
               <p className="hero-delta">

@@ -22,6 +22,8 @@ import type { FlawId } from './lib/analysis/flaws'
 import { faultMoveOnTrip, rotationMoveOnTrip, scoreMoveAgainst, scoringVersionOf, streakLine, typeOf } from './lib/progress'
 import { bestPriorTo } from './lib/bestServe'
 import { selfRead } from './lib/selfRead'
+import { momentOn } from './lib/moments'
+import { unlockEarcons } from './lib/earcon'
 import { tossMapFor } from './lib/tossMap'
 /*
  * The engine, loaded when there is a serve to read or re-judge and not before.
@@ -269,6 +271,7 @@ export default function App() {
    * where it cannot, and the file picker on a machine with neither.
    */
   const startFilming = useCallback(() => {
+    unlockEarcons()
     // The coach comes down when it is first wanted, unless the connection costs
     // money, where Settings offers it with its size.
     if (offlineReady === false && !metered && !warming) void makeOffline()
@@ -278,6 +281,7 @@ export default function App() {
 
   /** The clip the viewfinder's Videos button picked: the picker opens inside the tap. */
   const pickFromFilm = useCallback(() => {
+    unlockEarcons()
     firstRunPickRef.current?.click()
     setFilm(null)
   }, [])
@@ -561,6 +565,10 @@ export default function App() {
   const liveReport = view.kind === 'report' ? view : undefined
   const shownReport = liveReport?.analysis ?? (view.kind === 'saved' && !view.example ? view.session : undefined)
   const shownSelf = useMemo(() => (shownReport ? selfRead(shownReport, sessions, serveTags) : undefined), [shownReport, sessions, serveTags])
+  const shownMoment = useMemo(
+    () => (shownReport ? momentOn(shownReport as Session, sessions, { ledger: tripLedger, practice: practiceSessions, prefs }) : undefined),
+    [shownReport, sessions, tripLedger, practiceSessions, prefs],
+  )
   // A reopened report's kept clip, and its best serve's (D6.4) — read from the
   // device as object URLs, and revoked when the report changes.
   const reopenedId = liveReport ? undefined : shownReport?.id
@@ -780,6 +788,7 @@ export default function App() {
               previous={priorTo(shownReport.createdAt, typeOf(shownReport))}
               best={bestPriorTo(sessions, shownReport.createdAt, typeOf(shownReport), scoringVersionOf(shownReport))}
               self={shownSelf}
+              moment={shownMoment}
               serveNumber={tagsById(serveTags).get(shownReport.id)?.serveNumber}
               serveGuess={guessServeNumber(shownReport as Session, sessions, serveTags)}
               outcome={tagsById(serveTags).get(shownReport.id)?.outcome}

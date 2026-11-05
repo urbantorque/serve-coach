@@ -95,6 +95,22 @@ export default function AppSheets({ sheet, onSheet, prefs, onPrefs, serves, onIm
         <Suspense fallback={null}>
           <SpeedUnitPicker value={prefs.speedUnit ?? defaultSpeedUnit()} onChange={(speedUnit) => save({ speedUnit })} />
           <CadencePicker value={prefs.cadence} onChange={(cadence) => save({ cadence })} />
+          <fieldset className="hand-pick">
+            <legend>Sounds</legend>
+            <div className="hand-pick-options">
+              {[true, false].map((on) => (
+                <button
+                  key={String(on)}
+                  type="button"
+                  className={`hand-option${(prefs.sounds ?? true) === on ? ' is-on' : ''}`}
+                  aria-pressed={(prefs.sounds ?? true) === on}
+                  onClick={() => save({ sounds: on })}
+                >
+                  {on ? 'On' : 'Off'}
+                </button>
+              ))}
+            </div>
+          </fieldset>
           {protection && (
             <p className="storage-note storage-note--ok">
               <Icon name="shield" size={16} />

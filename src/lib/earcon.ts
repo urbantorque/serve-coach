@@ -13,6 +13,18 @@
 
 /** Each tone: [frequency in hertz, start in seconds after the first]. */
 export const TONES = {
+  /** A report lands: a soft rise. */
+  reveal: [
+    [392, 0],
+    [587, 0.12],
+  ],
+  /** Something earned: the same rise, carried further. */
+  moment: [
+    [392, 0],
+    [587, 0.11],
+    [784, 0.22],
+    [1175, 0.34],
+  ],
   /** The countdown is starting. */
   armed: [
     [660, 0],
@@ -33,6 +45,8 @@ export type Earcon = keyof typeof TONES
 
 /** Loud enough to hear across a court, well under the voice. */
 const PEAK_GAIN = 0.16
+/** Sitting down with a report, a phone is in the hand. */
+const NEAR_GAIN = 0.05
 
 let context: AudioContext | undefined
 
@@ -55,19 +69,21 @@ export function unlockEarcons(): void {
 }
 
 /** Play a tone, if the way was opened. Silent otherwise, never an error. */
-export function earcon(name: Earcon): void {
+export function earcon(name: Earcon, near = false): void {
   if (!context || context.state !== 'running') return
+  const peak = near ? NEAR_GAIN : PEAK_GAIN
+  const ring = name === 'reveal' || name === 'moment' ? 0.42 : 0.12
   const t0 = context.currentTime + 0.01
   for (const [hz, at] of TONES[name]) {
     const osc = context.createOscillator()
     const gain = context.createGain()
     osc.frequency.value = hz
     gain.gain.setValueAtTime(0, t0 + at)
-    gain.gain.linearRampToValueAtTime(PEAK_GAIN, t0 + at + 0.008)
-    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + at + 0.12)
+    gain.gain.linearRampToValueAtTime(peak, t0 + at + 0.008)
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + at + ring)
     osc.connect(gain).connect(context.destination)
     osc.start(t0 + at)
-    osc.stop(t0 + at + 0.14)
+    osc.stop(t0 + at + ring + 0.02)
   }
 }
 

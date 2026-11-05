@@ -61,6 +61,8 @@ export interface Prefs {
    * (`lib/speech.ts`). Off until the player turns it on, from the glance.
    */
   speakGlance?: boolean
+  /** The soft tones a report lands with. On unless the player turns them off. */
+  sounds?: boolean
   /**
    * Keep each analysed clip on this device, so a reopened report plays the
    * real video (`storage/clipStore.ts`, D6.4). Off until the player turns it

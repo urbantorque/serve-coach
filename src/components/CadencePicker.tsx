@@ -8,7 +8,7 @@ interface Props {
 const OPTIONS: { value: Cadence | undefined; label: string }[] = [
   { value: undefined, label: 'Work it out' },
   { value: 'weekly', label: 'Weekly' },
-  { value: 'fortnightly', label: 'Every two weeks' },
+  { value: 'fortnightly', label: 'Fortnightly' },
   { value: 'monthly', label: 'Monthly' },
 ]
 
@@ -37,10 +37,7 @@ export default function CadencePicker({ value, onChange }: Props) {
           </button>
         ))}
       </div>
-      <p className="hand-pick-note">
-        The app counts your run of trips at this pace, with a few days to spare. Only trips you filmed and
-        analysed count.
-      </p>
+      <p className="hand-pick-note">I count your run of trips at this pace, with a few days to spare.</p>
     </fieldset>
   )
 }
