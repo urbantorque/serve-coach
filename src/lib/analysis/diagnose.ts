@@ -263,6 +263,15 @@ export interface LandingFeet {
  * A link counts as late only by more than `ORDER_SLACK` — twice the legs'
  * own deviation between takes — so a near-tie is never called a swap. Only at
  * 60 fps and above: at 30 a sample is 33 ms, wider than the slack.
+ *
+ * ONLY FROM THE SIDE (2026-11-05). The elbow's speed is read in the picture,
+ * and from behind the swing towards the net is depth, so what is left of it
+ * peaks with the legs, about 90 ms before the elbow really does. From the back
+ * fence at 60 and 120 fps with tracker noise, the forty Bath serves were told
+ * their legs came late on 16% and 19% of reads, and every one of them is in
+ * order in 3D. Side-on none was. A corner is left out on the same grounds: the
+ * reading there sits 20 to 30 ms off, and a wrong word costs more than a
+ * missing one.
  */
 export interface FiringOrder {
   inOrder: boolean
@@ -273,7 +282,12 @@ export interface FiringOrder {
 /** How far a link may peak past its successor and still count as in order, ms. */
 export const ORDER_SLACK = 15
 
-function readFiringOrder(frames: Frame[], chain: ChainTiming): FiringOrder | undefined {
+function readFiringOrder(
+  frames: Frame[],
+  chain: ChainTiming,
+  view: ReturnType<typeof viewFromCourtYaw>,
+): FiringOrder | undefined {
+  if (view !== 'side') return undefined
   const span = frames[frames.length - 1].t - frames[0].t
   if (!(span > 0) || (frames.length - 1) / span < 55) return undefined
   const legs = chain.legs.ms
@@ -1293,7 +1307,7 @@ export function diagnose(
     landingFeet,
     ...(landingTravel ? { landingTravel } : {}),
     hitch: readHitch(frames, skel),
-    firingOrder: readFiringOrder(frames, chain),
+    firingOrder: readFiringOrder(frames, chain, viewFromCourtYaw(spatial.court_yaw_deg)),
     tossPlacement: readTossPlacement(
       frames,
       skel,

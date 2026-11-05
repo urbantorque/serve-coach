@@ -52,6 +52,25 @@ check('the real serves fire in order', () => {
   assert(seen.every((o) => o!.inOrder), `a real serve read out of order: ${JSON.stringify(orders)}`)
 })
 
+check('real serves filmed from behind are not told the order, and from a corner never told it is wrong', () => {
+  // Seen from behind the swing towards the net is depth, so the elbow's speed
+  // in the picture peaks with the legs: these serves read "legs late" on one
+  // take in six at 60 and 120 fps until the order was kept to the side.
+  for (const fps of [60, 120]) {
+    for (const s of REAL_SERVES) {
+      const behind = filmMocap(s, { bearing: 180, distance: 6, fps })
+      assert(diagnose(behind, detectServe(behind, fps)).firingOrder === undefined, `${s.id} read from behind at ${fps} fps`)
+      // A corner the swing happens to file as side-on may still be read; what
+      // it may not do is accuse a serve that is in order.
+      for (const bearing of [135, 225]) {
+        const corner = filmMocap(s, { bearing, fps })
+        const order = diagnose(corner, detectServe(corner, fps)).firingOrder
+        assert(order === undefined || order.inOrder, `${s.id} at bearing ${bearing}, ${fps} fps: ${JSON.stringify(order)}`)
+      }
+    }
+  }
+})
+
 check('the timeline names every link it draws and says the order in words', () => {
   const d = read({ lateLegDrive: 1 }, 60)
   const html = renderToStaticMarkup(createElement(FiringTimeline, { chain: d.chain, order: d.firingOrder! }))
