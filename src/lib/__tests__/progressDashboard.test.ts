@@ -1,12 +1,13 @@
 /**
- * Progress as a dashboard (L4.9): four tiles in the first screen, then-and-now
- * one moment at a time, repeatability drawn so a longer bar is steadier, and
- * one share button for the whole sheet.
+ * Progress as a dashboard (L4.9, lift): the shape of the player's serve first,
+ * then-and-now one moment at a time, repeatability drawn so a longer bar is
+ * steadier, one share button for the whole sheet, and the list in its own sheet.
  */
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server.browser'
 import Progress from '../../screens/Progress'
 import FramePair from '../../components/FramePair'
+import ThenNow from '../../components/ThenNow'
 import { GapTrend } from '../../components/Trend'
 import { steadyWidth } from '../../components/trendGeometry'
 import { buildProgress } from '../progress'
@@ -32,41 +33,46 @@ const NO_DROP: Partial<ServeDials> = { dropBelowShoulder: -0.25 }
 const sessions = [...rigTrip(0, NO_DROP), ...rigTrip(3, {}), ...rigTrip(6, {})].sort((a, b) => b.createdAt - a.createdAt)
 const noop = () => {}
 const html = renderToStaticMarkup(
-  createElement(Progress, { sessions, onBack: noop, onLogDrill: noop, onUndoDrill: noop, seeded: false }),
+  createElement(Progress, { sessions, onBack: noop, onOpen: noop, onLogDrill: noop, onUndoDrill: noop, seeded: false }),
 )
 
-heading('Four tiles, first')
+heading('The shape first')
 
-check('the form, records, path and chart tiles come before every section', () => {
-  const tiles = html.indexOf('class="tiles"')
-  assert(tiles >= 0, 'no tiles')
-  const firstSection = html.indexOf('class="block"')
-  assert(tiles < firstSection, 'a section comes before the tiles')
-  const group = html.slice(tiles, firstSection)
+check('the typical serve and the ribbon come before every section, and the records right under them', () => {
+  const shape = html.indexOf('class="shape"')
+  assert(shape >= 0, 'no shape')
+  const firstSection = html.indexOf('class="block')
+  assert(shape < firstSection, 'a section comes before the shape')
   const form = buildProgress(sessions)!
   const path = servePath(sessions)!
-  const holding = path.parts.filter((p) => p.state === 'holding' || p.state === 'locked').length
-  note(`typical ${form.latestTrip.overall}, ${holding} of ${path.parts.length} holding, ${form.trips.length} trips`)
-  for (const label of ['Typical flat serve', 'Serve path', 'By trip']) assert(group.includes(label), `no ${label} tile`)
-  assert(group.includes(`>${form.latestTrip.overall}<`), 'the form tile does not show the trip median')
-  assert(group.includes(`${holding}<span class="tile-of">/${path.parts.length}`), 'the path tile miscounts')
-  assert((group.match(/class="tile-dot /g) ?? []).length === path.parts.length, 'one dot per part')
-  // Each door leads somewhere that exists.
-  for (const id of ['progress-path', 'progress-chart']) assert(html.includes(`id="${id}"`), `${id} is not on the sheet`)
+  note(`typical ${form.latestTrip.overall}, ${form.trips.length} trips`)
+  const top = html.slice(shape, firstSection)
+  assert(top.includes(`>${form.latestTrip.overall}<`), 'the head does not show the trip median')
+  assert(top.includes('class="ribbon'), 'no ribbon')
+  assert(top.includes('id="progress-records"') && top.includes('serves filmed'), 'the records are not under the ribbon')
+  // The path stays one tap away, every part on it.
+  assert((html.match(/class="path-part /g) ?? []).length === path.parts.length, 'one row per part of the path')
+})
+
+heading('Every serve, in its own sheet')
+
+check('the screen ends on one way to the list, and the list is not on the page', () => {
+  assert(html.includes('class="progress-all"') && html.includes(`>${sessions.length}<`), 'no way to the list, or not the count')
+  assert(!html.includes('history-trip'), 'the whole list is back on the page')
 })
 
 heading('Then and now, one moment at a time')
 
-check('one pair is shown, with a pill for every moment, and the basket comparison keeps all six', () => {
+check('one pair of bodies, one moment chosen, and the basket comparison keeps all six', () => {
+  const carried = sessions.filter((s) => s.track)
+  assert(carried.length >= 2, 'the seeded serves carry no swing')
+  const pair = renderToStaticMarkup(createElement(ThenNow, { then: carried[carried.length - 1], now: carried[0] }))
+  assert((pair.match(/<canvas/g) ?? []).length === 2, 'not one pair')
+  assert((pair.match(/class="seg-item( is-on)?"/g) ?? []).length === 4, 'a moment has no control')
+  assert((pair.match(/aria-pressed="true"/g) ?? []).length === 1, 'no moment is marked as chosen')
   const positions = (['trophy', 'drop', 'contact'] as const).map((id) => ({ id, label: id, left: 'a.jpg', right: 'b.jpg' }))
-  const one = renderToStaticMarkup(
-    createElement(FramePair, { heading: 'Then, and now', leftCaption: 'May', rightCaption: 'June', positions, oneAtATime: true }),
-  )
-  assert((one.match(/<li/g) ?? []).length === 1, 'more than one moment shown')
-  assert((one.match(/class="phase-pill( is-active)?"/g) ?? []).length === 3, 'a moment has no pill')
-  assert(one.includes('aria-pressed="true"'), 'no moment is marked as chosen')
   const all = renderToStaticMarkup(createElement(FramePair, { heading: 'Best and worst', leftCaption: 'Best', rightCaption: 'Worst', positions }))
-  assert((all.match(/<li/g) ?? []).length === 3 && !all.includes('phase-pill'), 'the basket comparison changed')
+  assert((all.match(/<li/g) ?? []).length === 3, 'the basket comparison changed')
 })
 
 heading('A longer bar is steadier')

@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useMemo, useState } from 'react'
+import '../styles/blocks.css'
+import '../styles/depth.css'
+import '../styles/report.css'
 import '../styles/progress.css'
-import FramePair, { type PairPosition } from '../components/FramePair'
 import PracticeCard from '../components/PracticeCard'
 import ProgressShare from '../components/ProgressShare'
-import ProgressTiles from '../components/ProgressTiles'
-import { DeltaBars, GapTrend, ScoreTrend, TrendTable } from '../components/Trend'
-import { Cue, Icon } from '../components/primitives'
+import { DeltaChip, DeltaBars, GapTrend, TrendTable } from '../components/Trend'
+import { Cue, Icon, Sheet } from '../components/primitives'
 import { SERVE_TYPES } from '../lib/analysis/coaching'
 import { strainClearedLine, strainLine } from '../lib/analysis/verdict'
 import type { PracticeFocus } from '../lib/practice'
@@ -16,8 +17,6 @@ import {
   secondServeSlower,
   faultTrends,
   inRateByType,
-  servesPerWeek,
-  weekJumpLine,
   bestConsistencyGap,
   bestGapEverLine,
   bestTrip,
@@ -28,31 +27,37 @@ import {
   gapDeltaLine,
   longestStreakLine,
   recurringStrainOf,
-  shortDate,
   sixWeekMilestone,
   streakLine,
-  thenAndNow,
   tripDay,
+  tripRangeLine,
   tripsOf,
+  thenAndNow,
 } from '../lib/progress'
-import { KEEP_STILLS, getSession, safely, type ServeTag, type Session } from '../lib/storage/db'
+import type { ServeTag, Session } from '../lib/storage/db'
 import type { TripRecord } from '../lib/storage/ledger'
 import type { Cadence } from '../lib/storage/prefs'
 import { partLabel, servePath, type PartState } from '../lib/servePath'
 import { bodyBestLine, bodyBests } from '../lib/bests'
 import { fastestServe, speedByServeNumber, speedByTrip, speedTrend } from '../lib/speedTrend'
 import SpeedTrips from '../components/SpeedTrips'
-import { UNIT_LABEL, defaultSpeedUnit, fastestLine, serveNumberSpeedLine, speedTrendLine } from '../lib/speedCopy'
+import { UNIT_LABEL, defaultSpeedUnit, fastestLine, serveNumberSpeedLine, speedFigures, speedTrendLine } from '../lib/speedCopy'
 import { readPrefs } from '../lib/storage/prefs'
 import { bestSetLines, type SetResult } from '../lib/sets'
 import { serveProfile } from '../lib/serveProfile'
 import { graduation } from '../lib/graduation'
 import { graduationCard } from '../lib/graduationCard'
 import FixedPair from '../components/FixedPair'
-import { FaultStrip, InRateBars } from '../components/ProgressCharts'
+import HistoryList from '../components/HistoryList'
+import { FaultGrid, InRateBars, LoadBars, ScoreRibbon } from '../components/ProgressCharts'
 import { weekPlan } from '../lib/weekPlan'
 import type { PracticeSession } from '../lib/session/session'
 import { SERVE_NUMBER_LABEL } from '../lib/serveTagCopy'
+import { serveLoad } from '../lib/serveLoad'
+import { replayFrom } from '../lib/storage/poseTrack'
+import { usePendingDelete } from '../components/usePendingDelete'
+
+const ThenNow = lazy(() => import('../components/ThenNow'))
 
 /** One empty ledger for every render, so a memo keyed on it holds. */
 const NO_TRIPS: TripRecord[] = []
@@ -67,48 +72,38 @@ const PART_TAG: Record<PartState, string> = {
 
 interface Props {
   sessions: Session[]
-  /**
-   * The season ledger (L3.3): trips whose reports were pruned, folded into the
-   * trend, the records and the streaks. Empty for a seeded history.
-   */
+  /** The season ledger: trips whose reports were pruned, folded into the trend. */
   ledger?: TripRecord[]
-  /** How often the player gets to a court, when they have said (L3.6). */
+  /** How often the player gets to a court, when they have said. */
   cadence?: Cadence
-  /** Practice sessions, whose serves count in the weekly tally (L2.8). */
+  /** Practice sessions, whose serves count in the weekly tally. */
   practiceSessions?: PracticeSession[]
-  /** What the player said about each serve — see `ServeTag`. */
+  /** What the player said about each serve. */
   tags?: ServeTag[]
-  /** Finished sets of ten (`Prefs.sets`), for the records (N3.2). */
+  /** Finished sets of ten, for the records. */
   sets?: SetResult[]
-  /** Which rung of each fault's ladder the player is on — see `Prefs.ladder`. */
+  /** Which rung of each fault's ladder the player is on. */
   ladder?: Partial<Record<string, number>>
   practice?: PracticeFocus
   onLogDrill: () => void
   onUndoDrill: () => void
-  /**
-   * The history is the dev seed, not storage — see `demoHistory` in
-   * `App.tsx`. The seed carries its own pictures, so there is nothing to
-   * fetch for the then-and-now pair.
-   */
+  /** The history is the dev seed, not storage. */
   seeded: boolean
   onBack: () => void
+  /** Open a report from the list of every serve. */
+  onOpen?: (s: Session) => void
+  /** Reload after a serve is deleted. */
+  refreshSessions?: () => void
 }
 
 /**
- * Every serve so far, as a screen of its own.
+ * Is it working? The shape of the player's improvement, as pictures first:
+ * the score over time, the speed, the faults going dark, the records, the body
+ * then and now, and every serve underneath.
  *
- * This was a bottom sheet capped at 88% of the viewport: a hero score, the
- * strain lines, the records, two share cards, the practice card, the
- * then-and-now pictures, three charts and a table, all inside a panel with a
- * grip that suggested it was a glance. It is the most substantial thing the
- * app shows after the report, and the one a returning player opens to see
- * whether the practice is working — so it gets the report's own frame: a
- * page, a back arrow, and the phone's back gesture.
- *
- * Everything it derives, it derives from `sessions` here. These selectors
- * were computed in `App.tsx` on every render of every screen for a sheet that
- * was usually closed; the two the rest of the app also needs (`practice`, and
- * the streak) are recomputed or passed in rather than shared.
+ * It was a document: sixteen sections of sentences around a chart that was
+ * mostly empty space. The sentences are still here where a picture needs its
+ * reading, and everything derived is still derived from `sessions`.
  */
 export default function Progress({
   sessions,
@@ -121,25 +116,19 @@ export default function Progress({
   practice,
   onLogDrill,
   onUndoDrill,
-  seeded,
   onBack,
+  onOpen,
+  refreshSessions,
 }: Props) {
-  const logDrill = onLogDrill
-  const undoDrill = onUndoDrill
-
   const form = useMemo(() => buildProgress(sessions, undefined, ledger), [sessions, ledger])
-  // Each part of the serve as holding or still being worked on (L3.5).
   const path = useMemo(() => servePath(sessions, ladder), [sessions, ladder])
-  // Bests as body positions the newest trip reached (L3.8).
   const bests = useMemo(() => bodyBests(sessions, form?.serveType), [sessions, form])
-  // The newest trip of this serve type, described rather than graded (L3.12).
   const profile = useMemo(() => {
     if (!form) return undefined
     const trips = tripsOf(sessions.filter((s) => (s.serveType ?? 'flat') === form.serveType))
     const trip = trips[trips.length - 1]
     return trip ? { at: trip[0].createdAt, lines: serveProfile(trip) } : undefined
   }, [sessions, form])
-  // A card for each fault fixed lately, where the history can draw both halves.
   const fixedCards = useMemo(() => {
     const week = weekPlan(sessions, ladder)
     return (week?.graduated ?? [])
@@ -149,60 +138,27 @@ export default function Progress({
       })
       .filter((c): c is NonNullable<typeof c> => c !== undefined)
   }, [sessions, ladder])
-  // Read straight off `form`, the same object Home.tsx's own copy of this call
-  // is read off — a fact about the score trend this screen already draws.
-  const sheetMilestone = useMemo(() => (form ? sixWeekMilestone(form) : undefined), [form])
-  // Not type-restricted: a streak is about showing up at all, across every
-  // serve type, the same choice `Home.tsx` makes with its own copy.
-  const streak = useMemo(
-    () => streakLine(sessions, Date.now(), { ledger, cadence, practice: practiceSessions }),
-    [sessions, ledger, cadence, practiceSessions],
-  )
-  // First and second serves apart, and how often each serve type went in
-  // (D5.3), from the player's own taps. Serves per week, and one plain line
-  // when a week jumps (D5.4).
+  const milestone = useMemo(() => (form ? sixWeekMilestone(form) : undefined), [form])
+  const streak = useMemo(() => streakLine(sessions, Date.now(), { ledger, cadence, practice: practiceSessions }), [sessions, ledger, cadence, practiceSessions])
   const numbers = useMemo(() => byServeNumber(sessions, tags, form?.serveType), [sessions, tags, form])
-  // What the misses share, behind its own statistical gates (N3.1).
   const misses = useMemo(() => missesInCommon(sessions, tags, form?.serveType), [sessions, tags, form])
   const setLines = useMemo(() => bestSetLines(sets), [sets])
   const inRates = useMemo(() => inRateByType(sessions, tags), [sessions, tags])
-  // A second serve swung slower than the first, past the camera's noise (L5.8).
   const slowSecond = useMemo(() => secondServeSlower(sessions, tags), [sessions, tags])
-  // Serve speed over time (N2.8): ranges against ranges, silent where they overlap.
   const fastest = useMemo(() => fastestServe(sessions), [sessions])
   const quicker = useMemo(() => speedTrend(sessions, tags), [sessions, tags])
   const numberSpeeds = useMemo(() => speedByServeNumber(sessions, tags), [sessions, tags])
   const tripSpeeds = useMemo(() => speedByTrip(sessions, tags), [sessions, tags])
   const unit = readPrefs().speedUnit ?? defaultSpeedUnit()
-  const weeks = useMemo(
-    () => servesPerWeek(sessions, undefined, undefined, practiceSessions),
-    [sessions, practiceSessions],
-  )
-  const weekJump = useMemo(() => weekJumpLine(weeks), [weeks])
-  // Each named fault over the recent serves, and the step of its ladder (D6.6).
+  const load = useMemo(() => serveLoad(sessions, Date.now(), practiceSessions), [sessions, practiceSessions])
   const faults = useMemo(() => faultTrends(sessions, ladder, form?.serveType), [sessions, ladder, form])
-  const longestStreakText = useMemo(
-    () => longestStreakLine(sessions, Date.now(), { ledger, cadence, practice: practiceSessions }),
-    [sessions, ledger, cadence, practiceSessions],
-  )
-  // Not type-restricted and not era-restricted — see `recurringStrainOf`. A
-  // joint has the same range whatever the serve was aiming at.
+  const longestStreakText = useMemo(() => longestStreakLine(sessions, Date.now(), { ledger, cadence, practice: practiceSessions }), [sessions, ledger, cadence, practiceSessions])
   const strain = useMemo(() => recurringStrainOf(sessions), [sessions])
   const strainCleared = useMemo(() => clearedStrainOf(sessions), [sessions])
-  // Keyed to whatever serve type the form chart settled on, so the blocks on
-  // this screen cannot end up describing different halves of the history.
-  const spread = useMemo(
-    () => (form ? buildConsistencyTrend(sessions, form.serveType) : undefined),
-    [sessions, form],
-  )
+  const spread = useMemo(() => (form ? buildConsistencyTrend(sessions, form.serveType) : undefined), [sessions, form])
   const sheetBestGap = useMemo(() => bestConsistencyGap(spread), [spread])
-  const sheetBestScore = useMemo(
-    () => (form ? bestTrip(sessions, form.serveType, ledger) : undefined),
-    [sessions, form, ledger],
-  )
+  const sheetBestScore = useMemo(() => (form ? bestTrip(sessions, form.serveType, ledger) : undefined), [sessions, form, ledger])
   const sheetGapDelta = useMemo(() => (spread ? gapDeltaLine(spread.gapDelta) : undefined), [spread])
-  // The same facts this screen renders, worded the same way, handed to the
-  // season card as strings — so the card cannot say anything this does not.
   const seasonRecords = useMemo(
     () => ({
       streak,
@@ -213,385 +169,328 @@ export default function Progress({
     [streak, longestStreakText, sheetBestScore, sheetBestGap],
   )
 
-  /**
-   * The oldest serve that still has pictures, beside the newest, once both
-   * have been fetched.
-   *
-   * Fetched rather than read off `sessions`, because `listSummaries` strips
-   * the stills on the way out. Held only while this screen is mounted: two
-   * full reports is twelve base64 images, and holding them for a screen
-   * nobody has opened is the cost `listSummaries` exists to avoid.
-   */
-  const [thenNow, setThenNow] = useState<{ then: Session; now: Session; positions: PairPosition[] }>()
-  useEffect(() => {
-    const pick = thenAndNow(sessions, KEEP_STILLS)
-    if (!pick) return
-    let live = true
-    void (async () => {
-      const [then, now] = seeded
-        ? [pick.then, pick.now]
-        : await Promise.all([
-            safely(() => getSession(pick.then.id), undefined),
-            safely(() => getSession(pick.now.id), undefined),
-          ])
-      if (!live || !then || !now) return
-      // Paired by keyframe id, never by index, for the reason `pairStills`
-      // gives; both sides or neither, since a row with one picture compares
-      // nothing.
-      const positions: PairPosition[] = then.phases
-        .map((p) => ({
-          id: p.id,
-          label: p.label,
-          left: p.thumbnail,
-          right: now.phases.find((q) => q.id === p.id)?.thumbnail,
-        }))
-        .filter((p) => p.left && p.right)
-      if (positions.length) setThenNow({ then, now, positions })
-    })()
-    return () => {
-      live = false
-    }
-  }, [sessions, seeded])
+  // The widest honest pair among serves that still carry a swing. The rules are
+  // `thenAndNow`'s: one serve type, one rubric, never one trip.
+  const thenNow = useMemo(() => {
+    const swung = sessions.filter((s) => replayFrom(s.track))
+    return form ? thenAndNow(swung, swung.length, form.serveType) : undefined
+  }, [sessions, form])
+
+  const [changed, setChanged] = useState(0)
+  const { pendingDelete, commitDelete, remove, undoDelete } = usePendingDelete({
+    refreshSessions: () => {
+      refreshSessions?.()
+      setChanged(changed + 1)
+    },
+  })
+  const listed = sessions.filter((s) => s.id !== pendingDelete)
+  const [servesOpen, setServesOpen] = useState(false)
+
+  if (!form || form.points.length < 2) {
+    return (
+      <div className="screen progress-screen">
+        <header className="today-top">
+          <h1 className="t-display">Progress</h1>
+        </header>
+        <div className="progress-empty">
+          <p className="t-headline">Film two serves and this shows whether your changes are working.</p>
+          <button className="btn btn--primary btn--big btn--full" onClick={onBack}>
+            <Icon name="camera" size={20} />
+            Film a serve
+          </button>
+        </div>
+        {sessions.length > 0 && onOpen && <HistoryList sessions={listed} onOpen={onOpen} onDelete={remove} />}
+      </div>
+    )
+  }
+
+  const trip = form.latestTrip
+  const range = tripRangeLine(trip)
+  const fig = fastest ? speedFigures(fastest, unit) : undefined
 
   return (
     <div className="screen progress-screen">
-      <header className="topbar">
-        <button className="icon-btn" onClick={onBack} aria-label="Back">
-          <Icon name="back" />
-        </button>
-        {/* Not "Your form" — the home card already owns that name for the
-            average of the last three serves, and this is the whole history
-            behind it. Two panels titled the same thing showing different
-            numbers is the one thing a player will read as a bug. */}
-        <h1 className="t-overline topbar-title">Every serve so far</h1>
-        <span className="topbar-spacer" aria-hidden="true" />
+      <header className="today-top">
+        <h1 className="t-display">Progress</h1>
       </header>
 
-      {form && form.points.length > 1 ? (
-        <div className="progress-sheet">
-          {/* The latest trip, not the latest serve (L3.2): its median, the
-              range its serves ran over, and the change against the trip
-              before when both had enough serves to stand for themselves. One
-              serve moves further on camera noise than a fixed fault moves
-              it, so a single serve was a headline that could not show
-              progress. */}
-          {/* At a glance (L4.9): the form, the records, the path and the
-              chart as four tiles in the first screen, each a door to its
-              section below. */}
-          <ProgressTiles form={form} path={path} best={sheetBestScore} bests={bests.length} />
+      <section className="shape" aria-label="Your typical serve over time">
+        <div className="shape-head">
+          <span className="t-score">{trip.overall}</span>
+          <p>
+            <strong>Typical {SERVE_TYPES[form.serveType].word} serve</strong>
+            <span>{[tripDay(trip.createdAt), range].filter(Boolean).join(', ')}</span>
+            {form.tripDelta !== undefined && (
+              <span className="shape-delta">
+                <DeltaChip delta={form.tripDelta} scope="trip" /> on your last trip
+              </span>
+            )}
+          </p>
+        </div>
+        <ScoreRibbon points={form.trips} />
+        {milestone && <p className="shape-note">{milestone}</p>}
+        {form.setAside > 0 && (
+          <p className="shape-note">
+            Showing your {SERVE_TYPES[form.serveType].word} serves. {form.setAside} other {form.setAside === 1 ? 'serve is' : 'serves are'} scored against different targets.
+          </p>
+        )}
+      </section>
 
-          {/* The serve path (L3.5): progress as parts that hold, rather than
-              as points the camera moves by as much. Under the headline score
-              because it is the other half of the same answer. */}
-          {path && (
-            <section className="block" id="progress-path">
-              <h2 className="block-title">Your serve path</h2>
-              <p className="path-headline">{path.headline}</p>
-              <ol className="path">
-                {path.parts.map((part) => (
-                  <li key={part.group} className={`path-part path-part--${part.state}`}>
-                    <span className="path-name">{part.name.charAt(0).toUpperCase() + part.name.slice(1)}</span>
-                    <em className={`tag tag--${PART_TAG[part.state]}`}>{partLabel(part)}</em>
-                    {part.slipped && <span className="path-slipped">{part.slipped}</span>}
-                  </li>
-                ))}
-              </ol>
-            </section>
+      {(fig || sheetBestScore) && (
+        <div className="record-tiles" id="progress-records">
+          {fig && (
+            <div className="record-tile">
+              <span className="t-figure tnum">{fig.best}</span>
+              <span>{fig.unit} fastest</span>
+            </div>
           )}
-
-          {/* How you serve (L3.12): the newest trip described, not graded — the
-              readout's body position for each row, with no colour or target. */}
-          {profile && profile.lines.length > 0 && (
-            <details className="block progress-more">
-              <summary className="block-title">How you served, {tripDay(profile.at)}</summary>
-              <ul className="profile">
-                {profile.lines.map((l) => (
-                  <li key={l.id} className="profile-line">
-                    <span className="path-name">{l.label}</span>
-                    <span className="profile-tag">{l.tag}</span>
-                  </li>
-                ))}
-              </ul>
-            </details>
+          {sheetBestScore && (
+            <div className="record-tile">
+              <span className="t-figure tnum">{sheetBestScore.score}</span>
+              <span>best trip</span>
+            </div>
           )}
+          <div className="record-tile">
+            <span className="t-figure tnum">{sessions.length}</span>
+            <span>serves filmed</span>
+          </div>
+        </div>
+      )}
 
-          {/* Above the records rather than below them, and above the charts,
-              because it is the one thing on this sheet that is about the
-              player's body rather than their score — and because a warning
-              filed underneath a celebration reads as a footnote to it.
+      {fixedCards.length > 0 && (
+        <section className="block" id="progress-fixed">
+          <h2 className="block-title">Fixed lately</h2>
+          {fixedCards.map((c) => (
+            <FixedPair key={c.flaw} then={c.then} now={c.now} title={c.name} line={c.line} />
+          ))}
+        </section>
+      )}
 
-              Plain sentences in the same block furniture every other section
-              here uses, not the report's `.injury` card. That card carries an
-              icon, a title and the mechanics because it is explaining a fault
-              on the serve in front of you; this is a count, the explanation
-              already happened on each of those reports, and reproducing the
-              card would restate three paragraphs to add one number. */}
-          {(strain.length > 0 || strainCleared.length > 0) && (
-            <section className="block">
-              {/* Named for what the block actually contains. A player with
-                  nothing recurring and one thing fixed should not read a
-                  heading about things coming back, and a player with both
-                  gets the heading for the half that needs acting on — the
-                  warnings lead, the cleared lines read as the counterpoint
-                  underneath rather than softening them. */}
-              <h2 className="block-title">
-                {strain.length > 0 ? 'What keeps coming back' : 'What has stopped'}
-              </h2>
-              {strain.map((record) => {
-                const line = strainLine(record)
-                return line ? (
-                  <p key={record.flag} className="strain-line">
-                    {line}
-                  </p>
-                ) : null
-              })}
-              {strainCleared.map((record) => {
-                const line = strainClearedLine(record)
-                return line ? (
-                  <p key={record.flag} className="strain-line strain-line--clear">
-                    {line}
-                  </p>
-                ) : null
-              })}
-            </section>
-          )}
-
-          {/* Facts about the whole journey rather than about form —
-              which is what the rest of this sheet (the trend, the delta
-              bars, the repeatability chart) is otherwise entirely about.
-              Each was added incrementally and reasoned, on its own, not to
-              need its own heading — but read together, with all of them
-              present, several unlabelled sentences in a row stopped reading
-              as a group and started reading as a wall of text. This gives
-              them the same overline every sibling section on this sheet
-              already has, and nothing else changes: same lines, same
-              order, same conditions. Guarded on the whole cluster so a
-              player short of every record never sees a heading over
-              nothing. */}
-          {/* Each fault fixed lately, drawn: the evidence for it was the player's
-              own two serves, and only the share card ever showed them (N3.3). */}
-          {fixedCards.length > 0 && (
-            <section className="block" id="progress-fixed">
-              <h2 className="block-title">Fixed lately</h2>
-              {fixedCards.map((c) => (
-                <FixedPair key={c.flaw} then={c.then} now={c.now} title={c.name} line={c.line} />
-              ))}
-            </section>
-          )}
-
-          {(streak || longestStreakText || sheetBestScore || bests.length > 0 || setLines.length > 0) && (
-            <section className="block" id="progress-records">
-              <h2 className="block-title">Your records</h2>
-              {bests.map((b) => (
-                <p key={b.metricId} className="progress-foot">
-                  {bodyBestLine(b)}
-                </p>
-              ))}
-              {streak && <p className="progress-foot">{streak}</p>}
-              {longestStreakText && <p className="progress-foot">{longestStreakText}</p>}
-              {sheetBestScore && <p className="progress-foot">{bestTripEverLine(sheetBestScore)}</p>}
-              {setLines.map((l) => (
-                <p key={l} className="progress-foot">
-                  {l}
-                </p>
-              ))}
-            </section>
-          )}
-
-          {(fastest || quicker || numberSpeeds) && (
-            <section className="block" id="progress-speed">
-              <h2 className="block-title">Serve speed</h2>
-              {/* The trips as a picture (C5), above the sentences that say the
-                  same thing; each sentence still stands on its own. */}
-              {tripSpeeds.length >= 2 && (
-                <>
-                  <SpeedTrips trips={tripSpeeds} unit={unit} />
-                  <p className="progress-foot">
-                    Your typical first serve each trip, in {UNIT_LABEL[unit]}. Each bar is its likely range, and the bright one is your latest trip.
-                  </p>
-                </>
-              )}
-              {fastest && <p className="progress-foot">{fastestLine(fastest, unit)}</p>}
-              {quicker && <p className="progress-foot">{speedTrendLine(quicker, unit)}</p>}
-              {numberSpeeds && <p className="progress-foot">{serveNumberSpeedLine(numberSpeeds, unit)}</p>}
-            </section>
-          )}
-
-          {/* The faults themselves, beside the measurements the charts below are
-              about: whether the thing the reports keep naming is being named
-              less. Counted only on serves that could be judged for it. */}
-          {faults.length > 0 && (
-            <section className="block">
-              <h2 className="block-title">Faults over your last serves</h2>
-              <FaultStrip faults={faults} />
-              {faults.map((f) => (
-                <p key={f.flaw} className="progress-foot">
-                  <strong>{f.title}</strong>: named on {f.named} of {f.judged} serves
-                  {f.direction === 'fewer' ? ', less often lately' : f.direction === 'more' ? ', more often lately' : ''}
-                  {f.step ? `. On step ${f.step.at} of ${f.step.of}.` : '.'}
-                </p>
-              ))}
-            </section>
-          )}
-
-          {/* Kept apart because a second serve is meant to be safer, slower
-              and spun: averaged with first serves, its score and its in-rate
-              answer neither question. Only serves the player tagged. */}
-          {(numbers.length > 0 || inRates.length > 0 || slowSecond || misses.length > 0) && (
-            <section className="block">
-              <h2 className="block-title">First and second serves</h2>
-              <InRateBars
-                rows={numbers
-                  .filter((n) => n.outcomes >= MIN_OUTCOMES_FOR_RATE)
-                  .map((n) => ({ label: `${SERVE_NUMBER_LABEL[n.serveNumber]}s`, inServes: n.inServes, outcomes: n.outcomes }))}
-              />
-              {numbers.map((n) => (
-                <p key={n.serveNumber} className="progress-foot">
-                  {SERVE_NUMBER_LABEL[n.serveNumber]}s: {n.serves} tagged, averaging {n.average}
-                  {n.outcomes >= MIN_OUTCOMES_FOR_RATE
-                    ? `, in on ${n.inServes} of the ${n.outcomes} you said where they landed.`
-                    : '.'}
-                </p>
-              ))}
-              {inRates.map((r) => (
-                <p key={r.serveType} className="progress-foot">
-                  {SERVE_TYPES[r.serveType].label}: in on {r.inServes} of {r.outcomes} tagged.
-                </p>
-              ))}
-              {slowSecond && (
-                <p className="progress-foot">
-                  <Cue text={slowSecond.line} />
-                </p>
-              )}
-              {misses.map((m) => (
-                <p key={m.miss} className="progress-foot">
-                  <Cue text={m.line} />
-                </p>
-              ))}
-            </section>
-          )}
-
-          {/* A count, never a load warning: the app cannot see how hard anybody
-              served or what their shoulder feels like. Shown once there are two
-              weeks of serves to set side by side. */}
-          {weeks.filter((w) => w.serves > 0).length >= 2 && (
-            <details className="block progress-more">
-              <summary className="block-title">Serves per week</summary>
-              <p className="progress-foot tnum">
-                This week {weeks[weeks.length - 1].serves}. The four before:{' '}
-                {weeks
-                  .slice(-5, -1)
-                  .map((w) => w.serves)
-                  .join(', ')}
-                .
+      {(strain.length > 0 || strainCleared.length > 0) && (
+        <section className="block">
+          <h2 className="block-title">{strain.length > 0 ? 'What keeps coming back' : 'What has stopped'}</h2>
+          {strain.map((record) => {
+            const line = strainLine(record)
+            return line ? (
+              <p key={record.flag} className="strain-line">
+                {line}
               </p>
-              {weekJump && <p className="sheet-note">{weekJump}</p>}
-            </details>
+            ) : null
+          })}
+          {strainCleared.map((record) => {
+            const line = strainClearedLine(record)
+            return line ? (
+              <p key={record.flag} className="strain-line strain-line--clear">
+                {line}
+              </p>
+            ) : null
+          })}
+        </section>
+      )}
+
+      {(fastest || quicker || numberSpeeds) && (
+        <section className="block" id="progress-speed">
+          <h2 className="block-title">Serve speed</h2>
+          {tripSpeeds.length >= 2 && (
+            <>
+              <SpeedTrips trips={tripSpeeds} unit={unit} />
+              <p className="progress-foot">
+                Your typical first serve each trip, in {UNIT_LABEL[unit]}. Each bar is its likely range. Not checked against a radar.
+              </p>
+            </>
           )}
+          {fastest && <p className="progress-foot">{fastestLine(fastest, unit)}</p>}
+          {quicker && <p className="progress-foot">{speedTrendLine(quicker, unit)}</p>}
+          {numberSpeeds && <p className="progress-foot">{serveNumberSpeedLine(numberSpeeds, unit)}</p>}
+        </section>
+      )}
 
-          {/* One share button (L4.9): the season, the last trip and each
-              fault fixed lately, chosen inside it. Each card leaves the phone
-              only on its own tap. */}
-          <ProgressShare
-            records={seasonRecords}
-            sessions={sessions}
-            strainLine={strain.map(strainLine).find(Boolean) ?? undefined}
-            fixed={fixedCards}
+      {faults.length > 0 && (
+        <section className="block">
+          <h2 className="block-title">Your faults, serve by serve</h2>
+          <FaultGrid faults={faults} />
+        </section>
+      )}
+
+      {thenNow && (
+        <Suspense fallback={null}>
+          <ThenNow then={thenNow.then} now={thenNow.now} />
+        </Suspense>
+      )}
+
+      {path && (
+        <details className="block progress-more" id="progress-path">
+          <summary className="block-title">
+            Your serve path
+            <Icon name="chevron" size={16} />
+          </summary>
+          <p className="path-headline">{path.headline}</p>
+          <ol className="path">
+            {path.parts.map((part) => (
+              <li key={part.group} className={`path-part path-part--${part.state}`}>
+                <span className="path-name">{part.name.charAt(0).toUpperCase() + part.name.slice(1)}</span>
+                <em className={`tag tag--${PART_TAG[part.state]}`}>{partLabel(part)}</em>
+                {part.slipped && <span className="path-slipped">{part.slipped}</span>}
+              </li>
+            ))}
+          </ol>
+        </details>
+      )}
+
+      {(numbers.length > 0 || inRates.length > 0 || slowSecond || misses.length > 0) && (
+        <section className="block">
+          <h2 className="block-title">First and second serves</h2>
+          <InRateBars
+            rows={numbers
+              .filter((n) => n.outcomes >= MIN_OUTCOMES_FOR_RATE)
+              .map((n) => ({ label: `${SERVE_NUMBER_LABEL[n.serveNumber]}s`, inServes: n.inServes, outcomes: n.outcomes }))}
           />
-
-          {/* Said out loud rather than left as a gap in the chart. Somebody who
-              has filmed twenty serves and sees eleven plotted will assume the
-              app lost the rest. */}
-          {form.setAside > 0 && (
-            <p className="progress-aside">
-              Showing your {SERVE_TYPES[form.serveType].word} serves only.{' '}
-              {form.setAside} other {form.setAside === 1 ? 'serve is' : 'serves are'} scored
-              against different targets, so mixing them in would look like a change in form.
+          {numbers.map((n) => (
+            <p key={n.serveNumber} className="progress-foot">
+              {SERVE_NUMBER_LABEL[n.serveNumber]}s: {n.serves} tagged, averaging {n.average}
+              {n.outcomes >= MIN_OUTCOMES_FOR_RATE ? `, in on ${n.inServes} of the ${n.outcomes} you said where they landed.` : '.'}
+            </p>
+          ))}
+          {inRates.map((r) => (
+            <p key={r.serveType} className="progress-foot">
+              {SERVE_TYPES[r.serveType].label}: in on {r.inServes} of {r.outcomes} tagged.
+            </p>
+          ))}
+          {slowSecond && (
+            <p className="progress-foot">
+              <Cue text={slowSecond.line} />
             </p>
           )}
+          {misses.map((m) => (
+            <p key={m.miss} className="progress-foot">
+              <Cue text={m.line} />
+            </p>
+          ))}
+        </section>
+      )}
 
-          {practice && (
-            <PracticeCard
-              focus={practice}
-              onLogDrill={logDrill}
-              onUndoDrill={practice.drilled ? undoDrill : undefined}
-            />
+      {load.weeks.filter((w) => w.serves > 0).length >= 2 && (
+        <section className="block">
+          <h2 className="block-title">Serves per week</h2>
+          <LoadBars load={load} />
+          {load.line && <p className="progress-foot">{load.line}</p>}
+        </section>
+      )}
+
+      {(bests.length > 0 || streak || longestStreakText || setLines.length > 0) && (
+        <details className="block progress-more">
+          <summary className="block-title">
+            All your records
+            <Icon name="chevron" size={16} />
+          </summary>
+          {bests.map((b) => (
+            <p key={b.metricId} className="progress-foot">
+              {bodyBestLine(b)}
+            </p>
+          ))}
+          {streak && <p className="progress-foot">{streak}</p>}
+          {longestStreakText && <p className="progress-foot">{longestStreakText}</p>}
+          {sheetBestScore && <p className="progress-foot">{bestTripEverLine(sheetBestScore)}</p>}
+          {setLines.map((l) => (
+            <p key={l} className="progress-foot">
+              {l}
+            </p>
+          ))}
+        </details>
+      )}
+
+      {practice && (
+        <details className="block progress-more">
+          <summary className="block-title">
+            The season's weakest spot
+            <Icon name="chevron" size={16} />
+          </summary>
+          <PracticeCard focus={practice} onLogDrill={onLogDrill} onUndoDrill={practice.drilled ? onUndoDrill : undefined} />
+        </details>
+      )}
+
+      {profile && profile.lines.length > 0 && (
+        <details className="block progress-more">
+          <summary className="block-title">
+            How you served, {tripDay(profile.at)}
+            <Icon name="chevron" size={16} />
+          </summary>
+          <ul className="profile">
+            {profile.lines.map((l) => (
+              <li key={l.id} className="profile-line">
+                <span className="path-name">{l.label}</span>
+                <span className="profile-tag">{l.tag}</span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+
+      {form.areaDeltas.length > 0 && (
+        <details className="block progress-more">
+          <summary className="block-title">
+            Change since your last serve
+            <Icon name="chevron" size={16} />
+          </summary>
+          <DeltaBars deltas={form.areaDeltas} />
+        </details>
+      )}
+
+      {spread && spread.points.length > 1 && (
+        <details className="block progress-more">
+          <summary className="block-title">
+            How repeatable, over time
+            <Icon name="chevron" size={16} />
+          </summary>
+          <GapTrend points={spread.points} />
+          {sheetGapDelta && <p className="sheet-note">{sheetGapDelta}</p>}
+          {spread.recurring && (
+            <p className="sheet-note">
+              {spread.recurring.label} has been your least repeatable part in {spread.recurring.sessions} of these. That is the one to practise most.
+            </p>
           )}
+          {sheetBestGap && <p className="sheet-note">{bestGapEverLine(sheetBestGap)}</p>}
+        </details>
+      )}
 
-          {/* Then against now. A chart says the number went from 58 to 66; it
-              cannot show that the racket now falls behind the back where it
-              used to stop at the shoulder, which is the thing somebody wants
-              after six weeks of the same drill. */}
-          {thenNow && (
-            <FramePair
-              heading="Then, and now"
-              leftCaption={shortDate(thenNow.then.createdAt)}
-              rightCaption={shortDate(thenNow.now.createdAt)}
-              positions={thenNow.positions}
-              oneAtATime
-            />
-          )}
+      <details className="block progress-more">
+        <summary className="block-title">
+          See the numbers as a table
+          <Icon name="chevron" size={16} />
+        </summary>
+        <TrendTable points={form.trips} />
+      </details>
 
-          <section className="block" id="progress-chart">
-            <h2 className="block-title">Typical score by trip</h2>
-            <ScoreTrend points={form.trips} />
-            {/* The sentence the chart above never states in words: `form`
-                already carries everything `sixWeekMilestone` needs, and
-                the home card already shows this same sentence — this
-                screen, built specifically to look back across a whole
-                history, had the chart but not the reading of it. */}
-            {sheetMilestone && <p className="sheet-note">{sheetMilestone}</p>}
-          </section>
+      <ProgressShare records={seasonRecords} sessions={sessions} strainLine={strain.map(strainLine).find(Boolean) ?? undefined} fixed={fixedCards} />
 
-          {form.areaDeltas.length > 0 && (
-            <details className="block progress-more">
-              <summary className="block-title">Change since your last serve</summary>
-              <DeltaBars deltas={form.areaDeltas} />
-            </details>
-          )}
-
-          {/* The long loop: not whether one serve scored higher, but whether
-              the serves are converging on each other. Only appears once the
-              sweep has been run on more than one clip, because a single
-              basket is a reading rather than a trend. */}
-          {spread && spread.points.length > 1 && (
-            <details className="block progress-more">
-              <summary className="block-title">How repeatable, over time</summary>
-              <GapTrend points={spread.points} />
-              {/* buildConsistencyTrend has computed this since it was
-                  written; the chart above never said it in words. */}
-              {sheetGapDelta && <p className="sheet-note">{sheetGapDelta}</p>}
-              {spread.recurring && (
-                <p className="sheet-note">
-                  {spread.recurring.label} has been your least repeatable part in{' '}
-                  {spread.recurring.sessions} of these. That is the one to practise most.
-                </p>
-              )}
-              {/* Read straight off the trend this section already draws —
-                  one number this chart's own shape already contains, not a
-                  second computation that could disagree with it. */}
-              {sheetBestGap && <p className="sheet-note">{bestGapEverLine(sheetBestGap)}</p>}
-            </details>
-          )}
-
-          <details className="progress-table">
-            <summary>See the numbers as a table</summary>
-            <TrendTable points={form.trips} />
-          </details>
-        </div>
-      ) : (
-        // Reachable with nothing to show now — the installed icon's shortcut
-        // opens this screen directly — so it says what fills it and offers
-        // the way there, rather than a sentence with nothing to press.
-        <div className="progress-empty">
-          <p className="sheet-empty">
-            Analyse two serves and this will show whether your changes are working.
-          </p>
-          <button className="btn btn--primary btn--full" onClick={onBack}>
-            <Icon name="film" size={18} />
-            Analyse a serve
+      {onOpen && (
+        <>
+          <button className="progress-all" onClick={() => setServesOpen(true)}>
+            <span>Every serve</span>
+            <span className="tnum">{listed.length}</span>
+            <Icon name="chevron" size={16} />
           </button>
-        </div>
+          <Sheet open={servesOpen} onClose={() => setServesOpen(false)} title="Every serve">
+            {pendingDelete && (
+              <p className="storage-note undo-row" role="status">
+                <Icon name="trash" size={15} />
+                <span>Serve deleted.</span>
+                <button className="levelled-btn" onClick={undoDelete}>
+                  Undo
+                </button>
+              </p>
+            )}
+            <HistoryList
+              sessions={listed}
+              onOpen={(s) => {
+                commitDelete(pendingDelete)
+                onOpen(s)
+              }}
+              onDelete={remove}
+            />
+            <p className="sheet-note">Reports stay on this device only.</p>
+          </Sheet>
+        </>
       )}
     </div>
   )

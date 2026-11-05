@@ -239,13 +239,12 @@ const HISTORY_CONSUMERS = [
   // A second serve swung slower than the first (L5.8).
   'secondServeSlower',
   'rotationMoveOnTrip',
-  // Serves per week (D5.4).
-  'servesPerWeek',
+  // The week's load (lift).
+  'serveLoad',
   // The serve path (L3.5).
   'servePath',
   'strainBehindOf',
   'streakLine',
-  'thenAndNow',
   // The graduation card and what it is built from (L3.12).
   'graduation',
   'graduationCard',

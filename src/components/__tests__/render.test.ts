@@ -879,8 +879,8 @@ check('progress leads its faults and serves with pictures, and folds the prose (
   }))
   const tags = history.map((s, i) => ({ id: s.id, serveNumber: (i % 2 ? 2 : 1) as 1 | 2, outcome: i % 3 ? ('in' as const) : ('net' as const), taggedAt: s.createdAt }))
   const out = html(createElement(Progress, { sessions: history, tags, onLogDrill: noop, onUndoDrill: noop, seeded: false, onBack: noop }))
-  assert(/<svg class="fault-strip"[^>]*role="img"[^>]*aria-label="[^"]+named on \d+ of \d+/.test(out), 'no fault strip with a text version')
-  assert((out.match(/class="fault-dot is-named"/g) ?? []).length > 0, 'the strip drew no named serve')
+  assert(/class="fault-cells"[^>]*role="img"[^>]*aria-label="[^"]+named on \d+ of \d+/.test(out), 'no fault grid with a text version')
+  assert((out.match(/class="fault-cell is-named"/g) ?? []).length > 0, 'the grid drew no named serve')
   assert(out.includes('class="inrate-bars"') && /aria-label="First serves: in on \d+ of \d+"/.test(out), 'no in-rate bar with a text version')
   const open = (out.match(/<section class="block"/g) ?? []).length
   assert(open <= 7, `${open} sections stand open`)
