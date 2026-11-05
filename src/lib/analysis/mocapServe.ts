@@ -344,7 +344,20 @@ export function filmMocap(serve: MocapServe, phone: Partial<VirtualPhone> = {}):
     // MediaPipe's image z is depth relative to the hips in roughly x's units.
     for (let k = 0; k < image.length; k++) image[k].z = world[k].z / Math.max(1e-6, toMetres)
 
-    frames.push({ index: i, t, image, world, visibility: 1 })
+    // The racket as the capture marked it, for drawing a real serve holding one.
+    // Nothing in the engine reads this: a clip's frame has none.
+    const onPicture = (p: Vec3) => {
+      const rel = sub(p, eye)
+      const depth = Math.max(0.05, dot(rel, forward))
+      return { x: cam.aspect / 2 + (focal * dot(rel, right)) / depth, y: 0.5 + (focal * dot(rel, down)) / depth }
+    }
+    const hand = serve.hand === 'left' ? [LM.leftIndex, LM.leftPinky] : [LM.rightIndex, LM.rightPinky]
+    const racket = {
+      grip: onPicture(mid(body[hand[0]], body[hand[1]])),
+      head: onPicture(pointAtTime(serve, 'racket', Math.max(0, t - cam.lead))),
+    }
+
+    frames.push({ index: i, t, image, world, visibility: 1, racket })
   }
   return frames
 }
