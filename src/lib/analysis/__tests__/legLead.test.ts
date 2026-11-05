@@ -31,7 +31,7 @@ const CLIPS = [
   { name: '60 fps', fps: 60 },
 ]
 
-const takeOf = (serve: (typeof REAL_SERVES)[number], clip: (typeof CLIPS)[number], seed: number, fit = MEDIAPIPE_FIT) => {
+const takeOf = (serve: (typeof REAL_SERVES)[number], clip: { fps: number; grid?: number }, seed: number, fit = MEDIAPIPE_FIT) => {
   const frames = trackedTake(serve, { fps: clip.fps, grid: clip.grid, fit, seed })
   return diagnose(frames, detectServe(frames, clip.grid ?? clip.fps))
 }
@@ -64,6 +64,14 @@ check('real serves read legs first on every take, at every rate an ordinary clip
       assert(wrong.length === 0, `${clip.name}, ${name}: ${JSON.stringify(wrong[0])}`)
     }
   }
+})
+
+check('it holds down to 20 fps, a wide window’s rate, and below that it is not read', () => {
+  for (const fps of [20, 24]) {
+    const leads = REAL_SERVES.flatMap((s) => seeds(4).map((seed) => takeOf(s, { fps }, seed).legLead))
+    assert(leads.every((l) => l?.order === 'legs_first'), `${fps} fps: ${JSON.stringify(leads.find((l) => l?.order !== 'legs_first'))}`)
+  }
+  assert(takeOf(REAL_SERVES[0], { fps: 18 }, 7).legLead === undefined, 'an unmeasured rate was read')
 })
 
 check('real serves with the legs run late are read that way, and a tie is not called', () => {

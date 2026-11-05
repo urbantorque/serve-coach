@@ -17,10 +17,11 @@
  * 13 and 16: past 30 fps the tracker sets the limit, not the clock.
  *
  * The sharper peak-finders lost. Clean, a spline through every sample and a
- * local cubic beat the chain's smoothing, by as much as 10 ms against 37 at 60
- * fps. Under the tracker they read this gap at 22 to 45 ms rms, because a
- * tracker's error is mostly fresh each frame and a peak is where a curve is
- * flattest. So this differences the chain's own links and adds no series.
+ * local cubic beat the chain's smoothing, by as much as 7 ms against 35 at 60
+ * fps. Under the tracker they read this gap at 24 to 45 ms rms at 30 and 60 fps,
+ * because a tracker's error is mostly fresh each frame and a peak is where a
+ * curve is flattest. So this differences the chain's own links and adds no
+ * series.
  *
  * WHAT IT CAN SAY. The call needs the gap past `LEG_LEAD_SLACK`, twice the
  * camera's noise on it. On those forty serves from both baseline placements,

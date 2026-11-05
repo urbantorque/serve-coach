@@ -1296,7 +1296,7 @@ export const UNCALIBRATED: Record<string, string> = {
    * (Gao 2026). One skilled player reads 87 ± 11 ms in 3D. That is a sighting.
    */
   leg_lead_ms:
-    'measured and not named: holds at 30 fps within 17 ms rms from the side, ' +
+    'measured and not named: holds at 30 fps within 20 ms rms from the side, ' +
     'said only as an order, and the gap scales with tempo and has no club band',
 
   arm_cock_ratio:

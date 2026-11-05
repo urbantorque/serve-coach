@@ -25,7 +25,7 @@ import {
   sampleRadius,
   timeline,
 } from '../../lib/analysis/kinematics'
-import { LEG_LEAD_SLACK } from '../../lib/analysis/legLead'
+import { LEG_LEAD_MIN_RISE, LEG_LEAD_SLACK } from '../../lib/analysis/legLead'
 import {
   lateLegs,
   mocapTruth,
@@ -38,7 +38,9 @@ import {
   type Vec3,
 } from '../../lib/analysis/mocapServe'
 import { detectServe, type Skeleton } from '../../lib/analysis/phases'
-import { MEDIAPIPE_FIT, RTMPOSE_FIT, type TrackerFit } from '../../lib/analysis/trackerNoise'
+import { unswapFrames } from '../../lib/analysis/swapGuard'
+import { buildServe } from '../../lib/analysis/syntheticServe'
+import { MEDIAPIPE_FIT, RTMPOSE_FIT, withTrackerNoise, type TrackerFit } from '../../lib/analysis/trackerNoise'
 import type { Frame } from '../../lib/analysis/types'
 
 export const LINKS = ['legs', 'hips', 'trunk', 'shoulder', 'elbow', 'hand'] as const
@@ -497,6 +499,83 @@ export function benchCalls(serves: MocapServe[], placement: Placement, delays: n
     }
   }
   return rows
+}
+
+export interface RiseRow {
+  rise: number
+  gap: number
+  spread: number
+  lowest: number
+  read: number
+  takes: number
+}
+
+/**
+ * The gap against how far the hips rose: the rig's legs stiffened by steps, at
+ * 30 fps under MediaPipe's noise, on `chain` directly so nothing is gated. Where
+ * `LEG_LEAD_MIN_RISE` comes from. The rig's true gap stays near 100 ms, so the
+ * spread and the lowest reading are the whole story.
+ */
+export function riseSweep(takes = 32): RiseRow[] {
+  const seeds = Array.from({ length: takes }, (_, i) => 7000 + i * 4523)
+  const stature = (f: Frame, space: 'image' | 'world') =>
+    (Math.max(f[space][LM.leftAnkle].y, f[space][LM.rightAnkle].y) - f[space][LM.nose].y) / 0.93
+  return (
+    [
+      [175, 0.93],
+      [165, 0.95],
+      [155, 0.97],
+      [150, 0.98],
+      [150, 1.0],
+      [145, 1.02],
+      [140, 1.04],
+      [130, 1.08],
+    ] as const
+  ).map(([trophyKneeAngle, contactHipHeight]) => {
+    const gaps: number[] = []
+    const rises: number[] = []
+    for (const seed of seeds) {
+      const clean = buildServe({ trophyKneeAngle, contactHipHeight, seed }, 30)
+      const frames = unswapFrames(
+        withTrackerNoise(clean, {
+          fit: MEDIAPIPE_FIT,
+          fps: 30,
+          stature: stature(clean[0], 'image'),
+          statureM: stature(clean[0], 'world'),
+          seed,
+          depthMultiplier: 4,
+          depthBias: 0.006,
+        }),
+      ).frames
+      try {
+        const d = diagnose(frames, detectServe(frames, 30))
+        if (d.legDrive.rise !== null) rises.push(d.legDrive.rise)
+        if (d.chain.legs.ms !== null && d.chain.elbow.ms !== null) gaps.push(d.chain.elbow.ms - d.chain.legs.ms)
+      } catch {
+        // A refused take is one the reading never saw.
+      }
+    }
+    const mean = (xs: number[]) => xs.reduce((s, x) => s + x, 0) / xs.length
+    const gap = mean(gaps)
+    return {
+      rise: mean(rises),
+      gap,
+      spread: Math.sqrt(gaps.reduce((s, x) => s + (x - gap) ** 2, 0) / (gaps.length - 1)),
+      lowest: Math.min(...gaps),
+      read: gaps.length,
+      takes,
+    }
+  })
+}
+
+export function formatRise(rows: RiseRow[]): string {
+  return rows
+    .map(
+      (r) =>
+        `rise ${r.rise.toFixed(3)}: gap ${r.gap.toFixed(0).padStart(4)} ± ${r.spread.toFixed(0).padStart(3)} ms, lowest ${r.lowest.toFixed(0).padStart(4)}, ` +
+        `read on ${r.read} of ${r.takes} takes (floor ${LEG_LEAD_MIN_RISE})`,
+    )
+    .join('\n')
 }
 
 const pct = (x: number) => `${(x * 100).toFixed(x > 0 && x < 0.1 ? 1 : 0)}%`

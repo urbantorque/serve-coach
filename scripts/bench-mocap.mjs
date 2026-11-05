@@ -6,6 +6,9 @@
  *   npm run bench:mocap          # every placement, 30 / 60 / 120 fps
  *   npm run bench:mocap -- --quick       # the guide's placement at 30 fps only
  *   npm run bench:mocap -- --fixture     # rewrite the committed test fixture
+ *   npm run bench:mocap -- --chain       # the chain against 180 Hz truth, slow
+ *   npm run bench:mocap -- --chain --place 0 --takes 8   # one placement of it
+ *   npm run bench:mocap -- --serve-cues  # what could tell a first from a second
  *
  * The analysis is `src/dev/mocap/report.ts`; this script only reads files.
  * Bundled with esbuild into the same overridable cache the test runner uses,
@@ -92,6 +95,7 @@ if (process.argv.includes('--chain')) {
     console.log(`  ${row.gap.padEnd(18)} ${row.mean.toFixed(0).padStart(5)} ± ${row.sd.toFixed(0).padStart(2)}  [${row.lo.toFixed(0)}, ${row.hi.toFixed(0)}]`)
   }
   for (const [method, name] of Object.entries(mocap.METHOD_NAMES)) console.log(`  ${method}: ${name}`)
+  console.log('\nThe gap against how far the hips rose, rig, 30 fps, MediaPipe noise:\n' + mocap.formatRise(mocap.riseSweep()))
   for (const place of places) {
     console.log(mocap.formatChain(mocap.benchChain(serves, place, takes, (line) => console.error(line))))
     console.log('\n' + mocap.formatCalls(mocap.benchCalls(serves, place, [0, 0.05, 0.1, 0.13, 0.16, 0.2], Math.max(2, takes - 2))))
