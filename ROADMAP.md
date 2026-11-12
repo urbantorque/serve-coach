@@ -4592,3 +4592,224 @@ changed, the promise changed, and the item says so.
       - Also measured: a 36 Hz read clears the rule on 60 fps files and does nothing at 30,
         the common rate. A full-rate swing read on 60 fps files reached 6.99°, a gain that
         vanishes under the fitted tracker.
+- [x] **H43 A steady basket names no weakest row** · S.
+      - *Done:* 2026-11-06. With the camera's noise taken out most steady baskets read 100 on
+        every row, and a sort then named whichever came first: release height, under "wanders
+        most" on the share card, and "the one to practise most" on Progress. A tie at 100 has
+        no ends now, at the bottom or the top, in `buildConsistency` and in stored reports.
+        Progress and the share card hold one line, `STEADY_ENOUGH`, and the panel's foot says
+        nothing moved more than the camera does on its own, under rows only.
+      - *Proved:* `consistency.test.ts`, `render.test.ts` and `db.test.ts`. And
+        `realTakes.test.ts`, on real takes through the app's path in real units: under the
+        suite's noise the player's usual says something false on 0.17% of serves from the
+        guide and 0.42% from behind, against a stated 5%, and no link is found in 480
+        histories of noise.
+      - *Costs carried:* that holds under the suite's noise only. Under the noise fitted to
+        MediaPipe the same check reads 3.17% and 4.63%, the worst serve 7.5%, with a link in
+        3 histories of 480. Under RTMPose's it is past the stated rate, 5.26% and 5.98%. The
+        seeded rates in the baseline and link suites are drawn in table units and do not move
+        with the table; their rig checks do.
+- [x] **H44 What five reviewers found in H35–H43** · M.
+      - *Done:* 2026-11-07. Independent reviews of the read, the engine, the measurement,
+        the promises and what was missed, each finding re-established by a skeptic before it
+        was acted on. Every confirmed finding is fixed or written down here:
+        - *The read.* The walk learns the file's phase (H35). A walk under 19 a second of the
+          serve's own clock falls back to the grid. Where the budget cannot pay for a step
+          along the frames, the grid's count is read on frames of its own: over the Bath
+          serves on five such reads, the serve anywhere in the clip, clean serves were told a
+          fault on 14 takes of 7,200, where the even grid told 52, most of them a toss called
+          wandering from behind. A moment past the last seekable point is filed where the
+          clamped seek lands. The speed pass steps from the same phase. A slow-motion clip's
+          rate is read from its container, and the corpus reads a clip with its file, as the
+          app does.
+        - *Exact rates.* At exactly 30, 60 or 120 a second a span such as 0.3 s or 0.05 s is
+          a whole number of steps, and floating point in two stamps chose a radius or a
+          window's last sample by where the serve sat in the file. On a serve with no drop a
+          third of takes read as a different serve, overall moving up to 9 points. Every such
+          edge now sits between the 24, 25 and 30 Hz families: the palm's radius, the trophy
+          and drop look-backs, the drop's separation, the trunk window, the knee radius and
+          the toss window. `filePosition.test.ts` holds a take to the same reading at every
+          position, on five serves at 25, 30 and 60 fps.
+        - *Holes.* A two-sample hole was bridged at exactly 30 Hz and not at 29.97 or 59.94,
+          which refused 16 serves in 180: `MAX_BRIDGED_SPAN` 0.1 to 0.112. The toss reads
+          nothing across a hole left open (H36).
+        - *Levelling* starts at 5°, past the stances (H37).
+        - *Floors.* The fault floors read through the app's path, levelling and all, and from
+          behind (H40); the score floors from behind as well (H39). Contact's
+          read-differently floor went with the one take it rested on. The chain table says
+          how it was measured (H41).
+        - *The basket.* The sequence, landing and arm lines were bounded by one pair's noise
+          and fired on 77% of steady baskets from the guide. They are bounded by the range of
+          that many serves now (`rangeReach`), and the sequence line is read from the side
+          only: 0 lines over 1,040 noise-only baskets. A basket where most serves have no
+          drop leaves the drop's readings out, rather than calling a missing drop a drift. A
+          tie at the top names no steadiest row. A basket with few rows says so, and one with
+          none is no basket. The coach's page sets a score only against one from the same
+          rubric.
+        - *Words.* Every 76 that is now 85, the chain's figures, the rate the pose pass reads
+          at, and what each table covers. Two test limits loosened without a reason are back:
+          arm extension 9.5° at 30 fps and the legs' load ratio 2.
+      - *Proved:* the suite, green at 2,257 checks. In Chrome, the phase on 36 offset files (H35).
+      - *Costs carried:* a 24 or 25 fps file still does not bridge a two-sample hole, and
+        half of such takes are refused as a clip that ends before contact, which is not the
+        reason. 0.126 s would bridge it and turn those into too few frames, with 13 fewer
+        takes of 180 read at 25 fps: neither is the true reason, so it is left open. On the
+        blind window at 30 fps the frames read contact ahead 2.7 times the table where the
+        grid read 2.1. Past four seconds a 30 fps clip is read with frames left out, and one
+        take's contact height can move six of its deviations from the same clip read whole
+        (`frameRate.test.ts`, KNOWN). Where the rate is unknown, the even grid still names a
+        clean toss from behind on 18 takes of 1,440, and tells 5 clean takes of 1,440 from the
+        guide that the ball was met behind them (H45).
+- [x] **H45 What a second review found in H44** · M.
+      - *Done:* 2026-11-08. Four more reviews, of the read, the engine's edges, the basket and
+        the words, each finding re-established by a second reviewer before it was acted on.
+        The review was cut off once and finished on a fresh copy of the tree.
+        - *The start of a file.* A clip read from zero whose first frame sits some way in (an
+          empty edit, a composition offset) was read before the film began: the first frame
+          twice, filed early. For a window that starts at the film's start `framePlace` now
+          seeks half a frame in, where the frame shown is the first, and the walk starts at
+          that frame's own time. A caller with a phase and no first frame (none in the app)
+          takes a phase within two microseconds under zero as the browser's rounding. The wait
+          for the frame's time starts after the seek and counts only while the page is
+          visible, and a seek that would stay on the frame on screen moves off it first.
+        - *Stamps.* `timeline()` kept them as float32, which an hour into a file are a
+          quarter of a millisecond apart, and the chain's peak times moved with where the
+          serve sat: `hip_lead_ms` by up to 23 ms with the serve five minutes into a 60 fps
+          file. They are doubles now.
+        - *Ties at 50 a second.* The chain window and the pronation window's ends sat exactly
+          between two samples at 50 Hz, the rate of every frame of 2x slow motion at 25 and
+          every other frame of 4x, and
+          of the suite's films. The chain is four samples now; pronation three back and five
+          on, the side nearly every one of the suite's films took. The hitch radius ties
+          there too and is never read below 55 a second.
+        - *Slow motion* judges a hole on the serve's clock, not the file's: a 4x or 8x clip
+          bridged nothing, and three samples lost at contact changed what was named.
+        - *The speed pass* stops where a seek reaches. Past it the clamped seek showed one
+          frame again and again, and the player was told the video carried no frame times. A
+          clip that stops right after the hit now says so.
+        - *The model of the read* stops where the app's seek does, short of a file's end. On
+          that, hip lead moves 58.1 ms between takes, and its floor follows its rule to 88. It
+          names nothing a player hears. The leg lead's 60 and 120 fps figures moved with it
+          (H46).
+        - *Floors and figures.* Toss drift's floor is 0.304, what its own rule gives. The
+          spine-lean costs, the unknown-rate figures, the chain's figures and the one-seed
+          tempo sweep are as re-measured. The leg-lead gates are 10% and 60%, marked THE
+          PROMISE CHANGED, past the eight draws they were measured on.
+        - *The basket.* The drop's rows are left out only when every serve but one is named,
+          and never on fewer than most: a majority alone told two serves that dropped the
+          racket and four that did not "Almost nothing moved". When they are left out, or no
+          drop was found on half the serves or more, the headline says so. One or more dim
+          serves are left out, the dimmest first and as few of them as give five rows, and
+          counted as too unclear to compare. The arm line runs on front-back views only,
+          bounded at 7.5°, the worst at court yaw 25 to 28: on angled phones it told still
+          serves their shoulder laid back further
+          on up to one basket in five. A stored line is kept only under the rule that wrote it
+          (`REGISTER_RULE`), a stored row with no score is dropped, and a sweep that read the
+          serves but could compare too little of them says that.
+      - *Proved:* `filePosition.test.ts` holds the chain and the leg lead too, an hour into the
+        file and at 50; putting back the float32 stamps, the chain window or the pronation
+        ends each fails it. `rate.test.ts` holds the first frame, `speedPass.test.ts` the
+        clip that stops at the hit. `consistency.test.ts`: two with a drop and four without
+        called steady on 0 of 39, and no register line over 1,170 noise-only baskets, the rear
+        corners and the edge of the view from behind included. In Chrome, 48 whole clips
+        from zero at 24, 29.97, 30 and 60 fps, the first frame 0 to 2.5 frames in, jittered
+        or not: the first frame's own time told on all of them, nothing read before it, no
+        repeats. 36 located windows and 24 clips the budget cannot walk: every sample on the
+        frame planned.
+      - *Costs carried:*
+        - A two-sample hole is never bridged on an even read under 26.8 a second, nor on the
+          spread of a clip the budget cannot walk where the three gaps around it come to more
+          than 0.112 s (any two-frame gap at 30 fps, any three-frame gap at 60, always on the
+          blind window of a 25 or 50 fps file). Where it covers contact the serve is refused
+          as a clip that ends before the racket reaches the ball, which is not the reason: on
+          a 20 fps walk 75% of such holes, at 24 and 25 fps 25 to 29%, on a 30 fps clip of
+          4.4 s read as a spread 27% (H46; the 47%, 12 to 14% and 12% first written here
+          were of holes at five places round contact). Bridging a frame more turns them into
+          too few frames, not the reason either.
+        - The arm line finds less from behind (re-measured over 1,200 baskets a cell in H46):
+          a real change of 0 to 30° across six serves on about 4 baskets of 40 at yaw 8 and 3
+          straight behind, half the basket 30° apart on 15 to 17, two serves 30° apart on 17
+          to 20, and a 20° split on 1 to 3%. The landing line from the side finds a 0.12 m
+          difference on 13 baskets of six in 40.
+        - A basket with one or two serves of six missing their drop is still called steady on
+          117 to 229 of 240: a missing drop is named no more often than a stray.
+        - On a clip the budget cannot walk, one frame more of clip moves the chain's timings
+          by about their noise. On the commonest club serve load ratio moves two and a half
+          times the table, and a still basket of it is told its time from trophy to contact
+          changes most on 1 to 3 of 240.
+- [x] **H46 What a third review found in H45** · M.
+      - *Done:* 2026-11-12. Three more reviews, of the read, the basket, and the engine's
+        edges with the words, each finding re-established by a second reviewer: 31 of 32
+        held, and the second reviewers found five more. The one that did not hold: the dim
+        serves are left out dimmest first, which is what the words said.
+        - *The read.* A whole clip took its phase from its first frame, and a first frame
+          that lasted half a frame longer than the rest put every later moment on a frame's
+          edge: in Chrome 28 of 90 samples of a 30 fps clip read twice. The phase is read off
+          a frame two and a half further on now. Every window's seek goes half a frame in,
+          and a frame told later than the moment sought is the first frame, so a window that
+          opens inside a long empty edit starts at the film too, and a file too slow to walk
+          starts its grid there as well.
+        - *The speed pass* said the clip stopped right after the hit for every miss on a
+          window cut at all, a tenth of a millisecond included, in place of the advice that
+          would have got a speed. It says so now only for a ball not found, or found too
+          loosely, where the clip's end took frames off the window and left no more after
+          contact than the fewest a track is read from.
+        - *The basket.* Kept in under "I found no racket drop on 4 of them", the drop's own
+          row was graded steady beneath it, and a basket whose drop rows were left out and
+          another row drifted said nothing of the drop. The drop's rows are left out wherever
+          half the serves or more are named, and every headline over such a basket says so,
+          within the two sentences a line keeps. A stored count of serves with no drop is
+          read back only as a whole count of the basket, left out where the rule leaves it
+          out. A sweep that read two serves of six and could compare neither says it read
+          two of six.
+        - *The chain's tempo term* is 0.0228 a second, what the suite prints, not 0.0223.
+        - *Words.* The chain and pronation notes name every read that moved, slow motion
+          included; the hip lead floor says what its figure rests on; the leg-lead figures,
+          the two-sample holes, the arm line's reach and edge, the untold walk's cost, the
+          stamps' worst case and a dozen comments are as re-measured.
+      - *Proved:* `speedPass.test.ts`: a window cut 0.1 to 150 ms short keeps "not found"
+        and the view and still reads a ball in flight, a real-time clip cut by a hair is
+        still told to film in slow motion, and five frames of flight is the clip's end.
+        `rate.test.ts`, 14 checks: a first frame lasting 0.4 to 1.45 frames, at zero or
+        some way in, is read once and nothing before it, and a grid starts at a told first
+        frame. `consistency.test.ts`: on two and four, three and three, one and two, and
+        pairs, every basket that left the drop out says so in a line the voice keeps and
+        grades no drop row; the load ratio's rate below is held. `db.test.ts`,
+        `engine.test.ts`. In Chrome, on numbered H.264: a first frame lasting 0.5 to 1.5
+        frames read with no repeat at 30 and 60 fps, where H45 read 28 samples of 90 twice
+        at 1.5;
+        windows opening inside an empty edit of 0.1 or 0.3 s read nothing before the film,
+        where H45 read 3 to 8 moments there; 108 calls with the element left anywhere were
+        all told, nothing before the film and no repeat; 48 whole clips from zero told
+        their first frame, nothing read before it, no repeats; trimmed files and files whose
+        first frames cannot be decoded read clean; and the speed pass at a file's end read
+        no frame twice. 36 located windows and 24 clips the budget cannot walk read every
+        sample on the frame planned.
+      - *Costs carried:*
+        - KNOWN, NOT FIXED, and older than H45. A still serve whose legs bend to 150 to 165°
+          is timed from the hips on some takes and the arms on others, and a basket that
+          mixes them is told its time from trophy to contact drifts or changes most: 16 to
+          24% of still baskets of six at 155 to 160° with no drop, up to 14% with one at 150°
+          at 60 fps, and Progress names it the one to practise. Comparing the row only where
+          every serve was timed the same way is the fix it wants; `consistency.test.ts`
+          holds today's rate on the suite's takes, 3 to 7 of 40.
+        - A drop missing from fewer than half the serves is still called "Almost nothing
+          moved": one serve of three on 41 to 53% of such baskets, one of four 46 to 76%,
+          two of five 31 to 68%, and a dim serve with no drop left out of three and three
+          tips it there.
+        - At the edge of the front-back view, court yaw 25 to 28 with a lot of lay-back, a
+          still basket of six is told its shoulder laid back further on about 3 in 240, up
+          to 5; the view reaches yaw 30, where takes read up to about 8°. No test tells 7.5
+          from 6 there.
+        - A first frame that lasts a frame and a half or more may still be read twice. On a
+          composition offset with no edit list Chrome shows each keyframe for the frames
+          just before it, 2 to 5 frames of 90 at 30 and 60 fps, and reads as many twice where
+          the walk's step lands on the keyframe, as before H45; a window whose seek lands
+          there loses the one or two moments before the keyframe.
+        - Hip lead's 58.1 rests on where the Bath films end, inside the trunk's smoothing:
+          each frame of 60 fps film lost at the end adds about 4 ms, and the rig, whose film
+          runs on, reads 56.2.
+        - Judging a hole on the serve's clock bridges holes in the toss's lift too: on up to
+          3 holes of 168 on a 4x clip of a 30 fps file a bridged hole named a shallow drop the
+          serve did not have, and on a 4x clip read over 4.4 s of serve one bridged sample at
+          contact was refused as too few frames on 1 of 140.

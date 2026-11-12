@@ -213,7 +213,18 @@ export async function runDemoRoute(
       // five — `sampleBasket` returns the four it could read. The counts
       // have to agree or the demo shows a panel no real clip produces.
       fitted.serves = { count: 5, index: 4 }
-      const basket = sampleBasket()
+      // `&steady` is a basket of one serve four times, so the panel's foot for a
+      // basket where nothing moved can be looked at (H43); `&steady=nodrop` the
+      // same with no racket drop to find, for the headline that says so (H45).
+      const steady = new URLSearchParams(location.search).get('steady')
+      const basket =
+        steady === null
+          ? sampleBasket()
+          : [0, 2, 3, 4].map((index) => {
+              const a = sampleAnalysis({ contactReach: 1.38, ...(steady === 'nodrop' ? { dropBelowShoulder: -0.25, trophyKneeAngle: 170 } : {}) })
+              a.serves = { count: 5, index }
+              return a
+            })
       fitted.consistency = buildConsistency(basket, 5)
       // The toss map (D6.3) reads the basket's other serves from history, as
       // one clip, so the demo files them as one. The rig throws the same toss

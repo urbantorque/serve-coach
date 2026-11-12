@@ -375,6 +375,31 @@ check('the analysing screen names the serves a sweep is comparing (L2.2)', () =>
   assert(!all.includes('Found'), 'a sweep of every serve claimed to be comparing a subset')
 })
 
+check('a basket where nothing moved says so at its foot, and names no row', () => {
+  // H43: a tie at 100 has no ends, and the foot says what that means.
+  const c = basket().consistency!
+  const still = {
+    ...c,
+    metrics: c.metrics.map((m) => ({ ...m, score: 100 })),
+    weakest: undefined,
+    steadiest: undefined,
+    uncalibrated: undefined,
+  }
+  const out = html(createElement(ConsistencyPanel, { consistency: still, onDismiss: noop, createdAt: 0 }))
+  assert(out.includes('Nothing here moved more than the camera does on its own.'), 'a still basket did not say nothing moved')
+  assert(!out.includes('Worst first'), 'a still basket pointed at a worst row')
+})
+
+check('a basket whose least steady row still held says so at its foot', () => {
+  // The middle of the panel's three feet, which no test held (H45).
+  const c = basket().consistency!
+  const held = { ...c, metrics: c.metrics.map((m, i) => ({ ...m, score: i ? 100 : 90 })) }
+  held.weakest = held.metrics[0]
+  const out = html(createElement(ConsistencyPanel, { consistency: held, onDismiss: noop, createdAt: 0 }))
+  assert(out.includes('Every row held steady. The least steady is first.'), 'a basket that held did not say so')
+  assert(!out.includes('Worst first'), 'a basket that held pointed at a worst row')
+})
+
 check('the consistency panel renders on its own', () => {
   const c = basket().consistency!
   const out = html(createElement(ConsistencyPanel, { consistency: c, onDismiss: noop, createdAt: 0 }))

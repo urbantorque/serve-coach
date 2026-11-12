@@ -1,5 +1,6 @@
 import { readoutOf } from '../analysis/anatomy'
 import { consistencyHeadline, type Consistency } from '../analysis/consistency'
+import { STEADY_ENOUGH } from '../analysis/cardNoise'
 import type { Analysis } from '../analysis/types'
 import { plain } from '../analysis/voice'
 import type { Session } from '../storage/db'
@@ -315,7 +316,10 @@ export async function renderBasketCard(
   const gapBlockH = c.gap ? 56 + differences.length * 62 + 20 : 0
 
   const notableY = gapY + gapBlockH
-  const notables = [c.weakest, c.steadiest].filter(
+  // A row only wanders past the headline's line; under it the card would print
+  // "wanders most" beneath "almost nothing moved".
+  const wanders = c.weakest && c.weakest.score < STEADY_ENOUGH ? c.weakest : undefined
+  const notables = [wanders, c.steadiest].filter(
     (m, i, arr): m is NonNullable<typeof m> => m !== undefined && arr.indexOf(m) === i,
   )
   const notableH = notables.length ? notables.length * 92 + 20 : 0
@@ -409,7 +413,7 @@ export async function renderBasketCard(
     ctx.font = font(400, 15)
     ctx.fillStyle = FAINT
     ctx.fillText(
-      `${c.skipped} ${c.skipped === 1 ? 'serve was' : 'serves were'} too unclear to measure.`,
+      `${c.skipped} ${c.skipped === 1 ? 'serve was' : 'serves were'} too unclear to compare.`,
       chipX + 8,
       chipY + 3,
     )
@@ -464,7 +468,7 @@ export async function renderBasketCard(
   /* --- weakest / steadiest ------------------------------------------------ */
   let noteY = notableY
   for (const m of notables) {
-    const isWeakest = m === c.weakest
+    const isWeakest = m === wanders
     ctx.fillStyle = INK_2
     roundRect(ctx, PAD, noteY, W - PAD * 2, 78, 16)
     ctx.fill()

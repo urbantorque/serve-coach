@@ -23,6 +23,7 @@ import {
   planPrune,
 } from '../db'
 import { buildServe } from '../../analysis/syntheticServe'
+import { REGISTER_RULE, SCORING_VERSION } from '../../analysis/types'
 import { detectServe } from '../../analysis/phases'
 import { diagnose } from '../../analysis/diagnose'
 import { assert, check, heading, note, report } from '../../analysis/__tests__/harness'
@@ -145,9 +146,10 @@ heading('A stored basket, reshaped so nothing downstream throws on it')
  * `usableConsistency` is not exported — it is `normalise`'s private repair —
  * so the block is driven the way a real read drives it: through the whole row.
  */
-const storedBasket = (consistency: unknown): unknown => ({
+const storedBasket = (consistency: unknown, scoringVersion = SCORING_VERSION): unknown => ({
   id: 'serve-abc-0',
   createdAt: 1,
+  scoringVersion,
   overall: 70,
   overallStatus: 'good',
   fundamentals: [{ id: 'toss', metrics: [{ id: 'tossPeakHeight', score: 70 }] }],
@@ -170,6 +172,7 @@ const wholeConsistency = () => ({
     worstScore: 60,
     differences: [{ id: 'tossPeakHeight', label: 'Toss height', bestValue: 1, worstValue: 2 }],
   },
+  registerRule: REGISTER_RULE,
 })
 
 check('a whole comparison block survives the read unchanged', () => {
@@ -180,6 +183,23 @@ check('a whole comparison block survives the read unchanged', () => {
     `the serve numbers were not carried through: ${JSON.stringify(s!.consistency!.serveNumbers)}`,
   )
   assert(s!.consistency!.gap?.best === 6, 'the gap was dropped from a complete block')
+})
+
+check('a stored basket with every row tied at 100 comes back naming no row', () => {
+  // H43: a sort over a tie names whichever row came first, and a stored report
+  // re-ranks its rows on the way in, so the rule has to hold here too.
+  const block = {
+    ...wholeConsistency(),
+    metrics: [
+      { id: 'tossPeakHeight', label: 'Toss height', score: 100, values: [1, 1], ideal: [0, 2], range: [0, 2] },
+      { id: 'releaseHeight', label: 'Release height', score: 100, values: [1, 1], ideal: [0, 2], range: [0, 2] },
+    ],
+    weakest: { id: 'tossPeakHeight', label: 'Toss height', score: 100 },
+    steadiest: { id: 'releaseHeight', label: 'Release height', score: 100 },
+  }
+  const s = normalise(storedBasket(block))
+  assert(s?.consistency !== undefined, 'the block was dropped')
+  assert(s!.consistency!.weakest === undefined && s!.consistency!.steadiest === undefined, 'a tie at 100 named a row')
 })
 
 check('a block with no serve numbers reads back with an empty list, not a missing one', () => {
@@ -215,6 +235,54 @@ check('an ungraded delta survives the read with its bound attached', () => {
   const d = s!.consistency!.uncalibrated?.[0]
   assert(!!d, 'a complete delta was dropped')
   assert(d!.bound === 2, `the bound came back as ${d!.bound}`)
+})
+
+check('a delta written under another rule is not printed again', () => {
+  // Before H44 the arm, landing and sequence lines were bounded by one pair's
+  // noise, or none, and printed on most baskets of a still serve; before H45 the
+  // arm line ran on angled phones. Such a row clears its own stored bound, so it
+  // goes by the rule it was written under (`REGISTER_RULE`).
+  for (const rule of [undefined, REGISTER_RULE - 1, REGISTER_RULE + 1]) {
+    const s = normalise(storedBasket({ ...wholeConsistency(), registerRule: rule, uncalibrated: [wholeDelta()] }))
+    assert(s?.consistency !== undefined, 'the whole comparison went with an old delta')
+    assert(s!.consistency!.uncalibrated === undefined, `a delta written under rule ${rule} was kept`)
+  }
+})
+
+check('a stored row with no score is dropped, not ranked as the one that changes most', () => {
+  // As 0 it was named the row that changes most, under a foot saying every row held (H45).
+  const block = {
+    ...wholeConsistency(),
+    metrics: [
+      { id: 'tossPeakHeight', label: 'Toss height', values: [1, 2], ideal: [0, 2], range: [0, 2] },
+      { id: 'releaseHeight', label: 'Release height', score: 92, values: [1, 1], ideal: [0, 2], range: [0, 2] },
+    ],
+  }
+  const s = normalise(storedBasket(block))
+  assert(s!.consistency!.metrics.length === 1, `${s!.consistency!.metrics.length} rows kept`)
+  assert(s!.consistency!.weakest?.id === 'releaseHeight', `named ${s!.consistency!.weakest?.label}`)
+})
+
+check('what the basket could not find of the drop is read back, and nothing malformed is', () => {
+  const kept = normalise(storedBasket({ ...wholeConsistency(), missingDrop: { serves: 2, leftOut: true } }))
+  assert(JSON.stringify(kept!.consistency!.missingDrop) === '{"serves":2,"leftOut":true}', 'the missing drop was not read back')
+  const one = normalise(storedBasket({ ...wholeConsistency(), missingDrop: { serves: 1, leftOut: true } }))
+  assert(one!.consistency!.missingDrop?.serves === 1, 'one serve of two, left out, was not read back')
+  // A count over the basket, a fraction, or a left-out the rule never writes would
+  // print a sentence no basket earned: "I found no racket drop on 9 of them" (H46).
+  for (const bad of [
+    { serves: '2', leftOut: true },
+    { serves: 0, leftOut: false },
+    { serves: 2 },
+    'x',
+    { serves: 3, leftOut: true },
+    { serves: 1.5, leftOut: true },
+    { serves: Infinity, leftOut: true },
+    { serves: 1, leftOut: false },
+  ]) {
+    const s = normalise(storedBasket({ ...wholeConsistency(), missingDrop: bad }))
+    assert(s!.consistency!.missingDrop === undefined, `${JSON.stringify(bad)} survived the read`)
+  }
 })
 
 check('a delta missing its bound is dropped, because the bound is the licence', () => {

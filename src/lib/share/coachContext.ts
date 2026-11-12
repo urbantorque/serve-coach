@@ -7,7 +7,7 @@
  * see. Plain lines, from the same modules the player's own screens read, so the
  * two can never disagree.
  */
-import { buildProgress, faultTrends, shortDate } from '../progress'
+import { buildProgress, currentRubricEra, faultTrends, shortDate } from '../progress'
 import { fastestServe } from '../speedTrend'
 import { programmeFor } from '../programme'
 import { selfRead } from '../selfRead'
@@ -45,8 +45,12 @@ export function coachContextOf(
   const form = buildProgress(sessions as Session[])
   if (form && form.trips.length > 1) {
     const first = form.trips[0]
+    // Scores only within one scoring era: a trip scored under an older rubric set
+    // against a newer one is the recalibration, not the player.
+    const era = currentRubricEra(form.trips)
+    const since = era.length > 1 && era[0] !== form.latestTrip ? ` Typical score ${era[0].overall}, now ${form.latestTrip.overall}.` : ''
     record.push(
-      `${sessions.length} serves filmed over ${form.trips.length} trips since ${shortDate(first.createdAt)}. Typical score ${first.overall}, now ${form.latestTrip.overall}.`,
+      `${sessions.length} serves filmed over ${form.trips.length} trips since ${shortDate(first.createdAt)}.${since}`,
     )
   }
   const fastest = fastestServe(sessions as Session[])

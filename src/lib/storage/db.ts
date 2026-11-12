@@ -9,7 +9,7 @@ import { readoutOf, targetOf } from '../analysis/anatomy'
 // a list of three names, so a fourth serve type cannot be readable on the
 // report and unreadable on the way out of storage.
 import { SERVE_TYPES } from '../analysis/coaching'
-import { LEGACY_SCORING_VERSION, SCORING_VERSION, type Analysis } from '../analysis/types'
+import { LEGACY_SCORING_VERSION, REGISTER_RULE, SCORING_VERSION, type Analysis } from '../analysis/types'
 
 /**
  * A saved report. Deliberately excludes `frames` and the video itself: the
@@ -1102,6 +1102,10 @@ function usableConsistency(raw: unknown): Session['consistency'] {
       // row's name; the same row is also `weakest`, which two screens name in
       // a sentence. A row with no readable label has nothing to be called.
       typeof m.label === 'string' &&
+      // A row without a score cannot be ranked: as 0 it was named the row that
+      // changes most, under a foot saying every row held (H45).
+      typeof m.score === 'number' &&
+      Number.isFinite(m.score) &&
       Array.isArray(m.values) &&
       Array.isArray(m.ideal) &&
       Array.isArray(m.range),
@@ -1112,12 +1116,16 @@ function usableConsistency(raw: unknown): Session['consistency'] {
   // of the same ranking the rows above came from, so a row dropped by the filter
   // can leave them pointing at something no longer in the list — and the panel
   // then names an element the table underneath it does not contain.
+  // And a tie at 100 has no ends: see `buildConsistency`.
   const ranked = [...metrics].sort((a, b) => (a.score ?? 0) - (b.score ?? 0))
+  const moved = (ranked[0].score ?? 0) < 100
+  const top = ranked[ranked.length - 1]
+  const aloneAtTop = ranked.length > 1 && (top.score ?? 0) > (ranked[ranked.length - 2].score ?? 0)
   return {
     ...(c as NonNullable<Session['consistency']>),
     metrics,
-    weakest: ranked[0],
-    steadiest: ranked[ranked.length - 1],
+    weakest: moved ? ranked[0] : undefined,
+    steadiest: moved && aloneAtTop ? top : undefined,
     /*
      * The serve numbers, or an empty list — never a missing one.
      *
@@ -1150,7 +1158,12 @@ function usableConsistency(raw: unknown): Session['consistency'] {
      * do not, since these deltas refuse readily by design, so a reader that
      * cannot cope with its absence is broken already.
      */
-    uncalibrated: usableDeltas(c.uncalibrated),
+    // A register line is kept only under the rule that wrote it. The rule before
+    // H44 fired on most steady baskets, and the arm line of H44's own fixes did
+    // on angled phones, so a line written under an older rule is more likely the
+    // camera.
+    uncalibrated: c.registerRule === REGISTER_RULE ? usableDeltas(c.uncalibrated) : undefined,
+    missingDrop: usableMissingDrop(c.missingDrop, c.serves),
     /*
      * The best-against-worst block, or nothing.
      *
@@ -1167,6 +1180,20 @@ function usableConsistency(raw: unknown): Session['consistency'] {
     // not because a look found none.
     possibleHandoff: c.possibleHandoff ?? false,
   }
+}
+
+/**
+ * The serves no racket drop was found on, or nothing: a whole count of the
+ * basket's serves, left out exactly where the rule that writes it leaves it out
+ * (half or more, H46). A count over the basket, a fraction or a left-out the
+ * rule never sets would print a sentence no basket earned.
+ */
+function usableMissingDrop(raw: unknown, serves: number): NonNullable<Session['consistency']>['missingDrop'] {
+  if (typeof raw !== 'object' || raw === null) return undefined
+  const m = raw as { serves?: unknown; leftOut?: unknown }
+  if (typeof m.serves !== 'number' || !Number.isInteger(m.serves) || m.serves < 1 || m.serves > serves) return undefined
+  if (typeof m.leftOut !== 'boolean' || m.leftOut !== m.serves * 2 >= serves) return undefined
+  return { serves: m.serves, leftOut: m.leftOut }
 }
 
 /** The best-against-worst block, if it carries everything the panel prints. */
@@ -1188,9 +1215,9 @@ function usableDeltas(raw: unknown): NonNullable<Session['consistency']>['uncali
       typeof d.to === 'number' &&
       typeof d.delta === 'number' &&
       typeof d.bound === 'number' &&
-      // The rule the writer applied, re-applied on the way back out. A row that
-      // no longer clears its own bound was either corrupted or written by a
-      // build with a laxer rule, and neither earns a line on the panel.
+      // The rule the writer applied, re-applied on the way back out: a row that
+      // no longer clears its own bound was corrupted. A row from a build with a
+      // laxer rule clears its own, so those are dropped by the rule's number, above.
       d.delta > d.bound,
   )
   return kept.length ? kept : undefined

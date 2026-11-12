@@ -3,6 +3,7 @@ import { Icon } from './primitives'
 import { uncalibratedLine } from './statusLabels'
 import { useShareState } from './useShareState'
 import { readoutOf } from '../lib/analysis/anatomy'
+import { STEADY_ENOUGH } from '../lib/analysis/cardNoise'
 import {
   consistencyHeadline,
   coverageLine,
@@ -225,7 +226,7 @@ export default function ConsistencyPanel({ consistency: c, onDismiss, pair, crea
 
       {c.skipped > 0 && (
         <p className="note">
-          {c.skipped} {c.skipped === 1 ? 'serve was' : 'serves were'} too unclear to measure and
+          {c.skipped} {c.skipped === 1 ? 'serve was' : 'serves were'} too unclear to compare and
           {c.skipped === 1 ? ' was' : ' were'} left out.
         </p>
       )}
@@ -316,9 +317,17 @@ export default function ConsistencyPanel({ consistency: c, onDismiss, pair, crea
         ))}
       </ul>
 
-      <p className="consistency-foot">
-        A low score means that part of the serve changes every time. Worst first, so the top row is the one to start on.
-      </p>
+      {c.metrics.length > 0 && (
+        <p className="consistency-foot">
+          {c.weakest && c.weakest.score < STEADY_ENOUGH ? (
+            <>A low score means that part of the serve changes every time. Worst first, so the top row is the one to start on.</>
+          ) : c.weakest ? (
+            <>Every row held steady. The least steady is first.</>
+          ) : (
+            <>Nothing here moved more than the camera does on its own.</>
+          )}
+        </p>
+      )}
 
       {/* Everything above survives a reopened report with no clip behind it —
           the chips, the best-against-worst words, the wanders-most/holds-

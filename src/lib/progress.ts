@@ -25,7 +25,7 @@ import {
   type Status,
 } from './analysis/types'
 import { NOISE_FLOOR } from './analysis/tiers'
-import { CARD_NOISE_SD } from './analysis/cardNoise'
+import { CARD_NOISE_SD, STEADY_ENOUGH } from './analysis/cardNoise'
 import { MIN_EVIDENCE, type FlawId } from './analysis/flaws'
 import { progressionFor } from './analysis/progressions'
 import {
@@ -550,7 +550,7 @@ export interface ConsistencyPoint {
    * down first when technique starts to groove.
    */
   gap: number
-  /** How many serves in that clip were readable. A gap over two is thin. */
+  /** How many serves in that clip were compared. A gap over two is thin. */
   serves: number
   /** The sweep's own repeatability score, which leans on the least steady parts. */
   score: number
@@ -635,7 +635,8 @@ export function buildConsistencyTrend(
   const tally = new Map<string, { label: string; sessions: number }>()
   for (const s of era) {
     const weakest = s.consistency?.weakest
-    if (!weakest) continue
+    // Under the headline's line the row did not wander, and is not the one to practise.
+    if (!weakest || weakest.score >= STEADY_ENOUGH) continue
     const seen = tally.get(weakest.id)
     tally.set(weakest.id, {
       label: weakest.label,
@@ -1742,8 +1743,7 @@ export interface SecondServeTempo {
  *     serve type, unlike the rest of this screen: a time is not judged on a
  *     type's band, and a second serve is usually a different type;
  *   - slower by more than one take's camera noise on this reading
- *     (`CARD_NOISE_SD.dropToContact`, measured on the Bath serves by
- *     `realiseReal`); and
+ *     (`CARD_NOISE_SD.dropToContact`, on the app's own read); and
  *   - slower by twice the gap's standard error, with each side's spread held
  *     to at least that noise, so a few lucky-steady serves cannot shrink it.
  *

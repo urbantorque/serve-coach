@@ -4,6 +4,7 @@
  * own screens use.
  */
 import { sampleHistory } from '../../../dev/sampleAnalysis'
+import { buildProgress, currentRubricEra } from '../../progress'
 import { DEFAULTS } from '../../storage/prefs'
 import { coachReportHtml } from '../coachReport'
 import { CANNOT_SEE, coachContextOf } from '../coachContext'
@@ -22,6 +23,22 @@ check('how long, which way, and how fast', () => {
   note(context.record.join(' | '))
   assert(context.record.some((l) => /serves filmed over \d+ trips since/.test(l) && /Typical score \d+, now \d+\./.test(l)), 'no record')
   assert(context.record.some((l) => l.startsWith('Fastest serve about')), 'no speed, or one that is not said as about')
+})
+
+check('a score is never set against one scored under an older rubric', () => {
+  // A scoring bump leaves older trips scored the old way. Set against a newer
+  // trip, that is the recalibration and not the player (H44).
+  const cut = newest.createdAt - 21 * 86400000
+  const older = sessions.map((s) => (s.createdAt < cut ? { ...s, scoringVersion: (s.scoringVersion ?? 6) - 1 } : s))
+  const mixed = coachContextOf(newest, older, tags, DEFAULTS)
+  const line = mixed.record.find((l) => l.includes('serves filmed over')) ?? ''
+  note(line)
+  const form = buildProgress(older)!
+  const era = currentRubricEra(form.trips)
+  assert(era.length < form.trips.length, 'the history did not span two rubrics, so this checks nothing')
+  const typical = /Typical score (\d+)/.exec(line)?.[1]
+  if (era.length > 1) assert(typical === String(era[0].overall), `the typical score was ${typical}, not the first trip of this rubric's ${era[0].overall}`)
+  else assert(typical === undefined, 'a score was set against a trip under another rubric')
 })
 
 check('what they are on, and what keeps coming back', () => {
