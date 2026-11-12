@@ -59,9 +59,9 @@ in that folder under the same names.
     the read is soft, and one first priority per page.
   - The installed app turns with the phone.
   - The coil is shown, not scored, and the open chest has its own band.
-  - A test holds every graded band to the camera's noise on it, with no
-    exceptions left. At 32 fps, the app's own rate, arm extension sits at 1.02 of
-    the rule, which is judged at 50 fps.
+  - A test holds every graded band to the camera's noise on it, on the read the
+    app really makes. One row is over: arm extension, at 1.12 of the rule, named
+    in the test with why (H38, H42).
   - On a phone the viewfinder starts hands-free with the voice on, offers the
     camera app where the preview cannot start, and is readable from the
     baseline.
@@ -98,10 +98,71 @@ in that folder under the same names.
   the clip recorder on iOS Safari, sounds under the ringer switch, and the bar
   over the home indicator were all walked in Chrome only. Protection was walked
   in Chrome, not Safari or Firefox.
-- **The band table's rate.** `CARD_NOISE_SD` is measured at 50 fps and the app
-  reads at 32. Noise-only baskets from the guide's placement name arm extension as
-  wandering on 1.3%, against the panel's one in a hundred. Measuring at the app's
-  rate would fix it and changes the method.
+- **What the noise table is.** `CARD_NOISE_SD` is measured on the app's own read now
+  (H38), and it is a floor. Its noise is the suite's, independent from frame to frame,
+  about a quarter of the error fitted to MediaPipe's wrist. Under that fitted error
+  six rows would fail the band rule and arm extension would read about 24°, on any
+  table. The player's usual holds its stated 5% of false readings under the suite's
+  noise (0.17% and 0.42%) and under MediaPipe's fit (3.2% and 4.6%), and runs past it
+  under RTMPose's, 5.3% from the guide and 6.0% from behind (H43). Only real clips can
+  say which is nearer.
+- **Arm extension.** 1.12 of the band rule at 30 samples a second, and known. A
+  steadier reading was built and not adopted, for reasons in H42.
+- **The scan can land on the toss.** On a clip over 4.5 s, the 12 Hz scan picks the
+  highest hand, and the tossing hand tops out within a fortieth of the player's height
+  (about 4 cm) of the racket hand's wrist on most placements. On motion capture 65% of
+  takes landed near the toss, and a read ends at or before contact on about a third of
+  takes. On real video it was 5 landings
+  of 13, none cut off at contact, and two servers is too few to say. It is not in the
+  table, which models a window around contact.
+- **Contact locks to the samples.** Most of contact ahead's remaining noise is
+  `refineExtremum`'s tent. A cubic took it from 3.5 to about 1.9 in a scratch test, and
+  every reader of the contact moment would move with it.
+- **Clips whose rate is unknown.** They are read on the even grid, which is noisier than
+  the table: in a located window toss path about twice it, contact ahead 1.35, drop to
+  contact 1.26 (H38); on a whole clip of 2.5 to 4.5 s toss path 2.1, contact ahead and
+  contact height 1.6, hand under elbow and drop to contact 1.5.
+  Clean serves are told a fault there: a toss wandering on 14 to 18 takes of 1,440 from
+  behind, and the ball met behind on 4 or 5 of 1,440 from the guide (H45).
+- **Clips the budget cannot walk.** A 30 fps clip past four seconds, and the blind window
+  at 25 or 30 fps where the scan found nothing, are read at the grid's count on frames of
+  their own. Rows run up to 1.65 of the table on a long clip and 2.7 (contact ahead) on
+  the blind window at 30 fps, where 3 clean takes of 720 from the guide are told the
+  ball was met behind them. One take of a long clip can move several of its deviations
+  from the same clip read whole, and one frame more of clip moves the chain's timings by
+  about their noise (H44, H45).
+- **Files under 19 fps.** The grid stays there and calls a third to three quarters of
+  takes at 12 to 15 fps too blurry, which is not the reason (H35).
+- **Two samples lost at contact.** They are never bridged on an even read under 26.8 a
+  second, nor on the spread of a clip the budget cannot walk where the three gaps around
+  them come to more than 0.112 s (any two-frame gap at 30 fps, any three-frame gap at
+  60, always on the blind window of a 25 or 50 fps file). Where the hole covers contact
+  the serve is refused as a clip that ends before contact, which is not the reason: 75%
+  of such holes on a 20 fps walk, 25 to 29% at 24 and 25 fps, 27% on a 30 fps clip of
+  4.4 s. Bridging further gives too few frames instead. A body lost at contact wants a
+  reason of its own (H44, H45, H46).
+- **What the basket can still miss.** The arm line runs on front-back views only and
+  from behind finds a real change of 0 to 30° across six serves on about 4 baskets of
+  40, half the basket 30° apart on 15 to 17, and a 20° split almost never; the landing
+  line from the side finds 0.12 m on 13 of 40. A basket where fewer than half the
+  serves lost their racket drop is still called steady: one or two of six on 117 to 229
+  of 240, one of three on 41 to 53% (H45, H46).
+- **Load ratio on legs that half bend.** Between a full load and rigid legs the load is
+  timed from the hips on some takes and from the arms on others, and a still basket
+  that mixes them is told its time from trophy to contact drifts or changes most: 16 to
+  24% of still baskets of six at 155 to 160° with no drop, up to 14% with one at 150°.
+  Progress then names it the one to practise. Comparing the row only where every serve
+  was timed the same way is the fix it wants; the rate is held where it is (H46). On the
+  commonest club serve load ratio moves two and a half times the table (H45).
+- **A tilted phone from the side.** The player's lean is in the roll the app reads, so
+  a phone tilted one way is levelled too far and one tilted the other way up to about
+  8° not at all: contact height moves up to 0.072 at six degrees. A tilt of 4° to 5° is
+  neither corrected nor told (H37).
+- **Which clips the read has seen.** Chrome only, on H.264 made for the test, a first
+  frame off zero included. No Safari, no HEVC, no B-frames, no phone file. On a
+  composition offset with no edit list Chrome shows each keyframe for the frames just
+  before it, and a first frame that lasts a frame and a half or more may be read twice
+  (H46).
 - **`FiringTimeline` at 60 fps and above.** It still draws `chain.wrist`, which
   reads the follow-through there (H16).
 - **Backups.** `Prefs.goal` and `ladder` are not in them yet.
@@ -126,10 +187,11 @@ Work is on `lift/whole-app`, and its ledger is the last section of `ROADMAP.md`
 (H1 onward). The reasoning is `docs/lift/LIFT-PLAN.md`, the visual rules are
 `DESIGN.md`, and `docs/lift/gallery.html` shows every state before and after.
 
-The suite runs **2,229 checks** (2026-11-06). The last loop tag is
+The suite runs **2,269 checks** (2026-11-12). The last loop tag is
 `loop-green-15`, from the August loop.
 
-The entry chunk stands at 127.05 of 130 kB gzip and 372.75 of 385 kB raw.
+The entry chunk stands at 127.30 of 130 kB gzip, as `bundle.test.ts` measures it
+(level 9), and 373.46 of 385 kB raw.
 
 Before trusting a size figure, run `npm run build`: `bundle.test.ts` reads
 `dist/`. The entry chunk is close to its budgets, so new screens load lazily.

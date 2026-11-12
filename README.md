@@ -269,7 +269,7 @@ What counts as a move is `NOISE_FLOOR` (`analysis/tiers.ts`) and not a threshold
 of its own — the same measured figures `flaws.ts` reads to decide a fault is real
 rather than a re-roll of the tracker's noise. A change smaller than that is
 reported as no change. The consequence is deliberate: on `hip_lead_ms`, whose
-floor is 76 ms, almost every honest improvement will read as "no change yet",
+floor is 88 ms, almost every honest improvement will read as "no change yet",
 which is the truth about what a phone can see. `analysis/carryForward.ts`
 compares `FlawFinding.miss` — how far outside its band the signal landed, in the
 signal's own units — rather than the score, which moves with twenty other
@@ -1171,17 +1171,24 @@ ends of a pronation measurement into each other and report an ordinary serve as
 a pushed contact. A test now reads the same serve at 24, 30, 50 and 120 fps and
 fails if the verdict moves.
 
-**A requested sampling time and an achieved one are not the same number.**
-Every derivative in `kinematics.ts` already divided by the real gap between two
-samples rather than assuming a fixed rate — that half of "frames are not evenly
-spaced" was already handled. The other half was not: `extractFrames` asked the
-video to seek to an evenly-spaced grid of times and then recorded the sample
-under the time it *asked for*, not the time `video.currentTime` actually landed
-at. A decoder does not seek to an exact instant, it snaps to the nearest real
-frame — a few milliseconds off target on an ordinary seek, not only on the rare
-one that times out — so every one of those careful per-sample derivatives was
-computing an exact answer from an admittedly inexact input. `pose/extract.ts`
-now files every sample under where the seek actually landed.
+**A requested sampling time and the frame it shows are not the same moment.**
+Every derivative in `kinematics.ts` divides by the real gap between two samples
+rather than assuming a fixed rate, so the stamps have to be true. `currentTime`
+does not make them true: on Chrome it reports the seek, not the frame, and the
+frame on screen is up to a whole frame older. An even grid at 31.5 Hz on a 30 fps
+file therefore read about one frame in 21 twice, and its stamps slid between
+repeats. So `readingPlan` in `pose/rate.ts` walks the file's own frames where
+the container or the camera gives its rate: the middle of every n-th frame, each
+sample its own frame, every gap even, each stamp safe to seek again. Half the
+variance of contact ahead on a 30 fps file was that beat (H35). A file's first
+frame need not sit at zero, and half a frame off it would put every moment on an
+edge, so before each window the read asks the browser for one frame's own time
+(`requestVideoFrameCallback`) and walks from there. Where the window starts at or
+before the film's first frame, it is that frame's own time, so nothing is read
+before the film begins, and the step is then read off a frame further on, since a
+first frame need not last as long as the rest. Where the budget cannot pay for a step
+along the frames, the grid's count is read on frames of its own. Where the rate is
+unknown the even grid stays.
 
 **The diagnosis is data, and only data.** `analysis/diagnose.ts` returns numbers,
 booleans and enums: signals, named flaws with the band they missed, severity,
@@ -1248,8 +1255,8 @@ obvious improvement is to thicken the sampling around contact and thin the
 lead-in, where nothing but the ready pose is measured. It is not buildable, and
 the reason is a clean anti-correlation rather than a difficulty. The budget binds
 only on a span wider than `MAX_FINE_FRAMES / FINE_FPS`, 3.75 s — which is the
-5-second blind fallback (24 fps) and a single-pass clip at its longest
-(26.7 fps). A located window spans 2.7 s and spends 86 of its 120 frames, capped
+5-second blind fallback (20 to 24 fps) and a single-pass clip at its longest
+(26.7 fps). A located window spans 2.7 s and spends 81 of its 120 frames, capped
 by the frame rate rather than by the budget. And the contact time is known in
 exactly the one case with frames to spare: the blind fallback is by definition
 the window where the scan found nothing to aim at, and a clip short enough to be
@@ -1401,8 +1408,10 @@ A real serve filmed six times could be told its hip–shoulder separation
 "changes serve to serve" from noise alone.
 
 Each reading now scores its standard deviation with the camera taken out.
-`CARD_NOISE_SD` was measured on the six Bath serves from two placements and on
-the rig, and `consistency.test.ts` re-measures it. What is taken out is as much
+`CARD_NOISE_SD` is measured on the app's own read of a file: 240 takes each of the
+six Bath serves from two placements and the rig, on 30 and 60 fps files, each take
+landing on the frames its own way, through the app's own path. `consistency.test.ts`
+re-measures exactly that. What is taken out is as much
 noise as that many takes could show by chance, ninety-nine times in a hundred
 (`noiseReach`). The result is put back on the six-serve range's scale
 (`RANGE_OF_SIX`).
@@ -1520,9 +1529,11 @@ Measured on the rig and the six Bath serves from two placements, twenty-four
 noisy takes each, 16 fps refused 54 of 312 takes. At 20 fps none were refused,
 and seven readings held. The drop depth (1.2 noise deviations), the contact
 height (1.6) and the tossing arm's hold (3.3) did not, and a session's fault
-counts are made of those. So a session reads at 32 fps, without the ball, the
-racket boxes, the stills or the second pose model, and `frameRate.test.ts`
-says so until the three hold.
+counts are made of those. So a session reads at the report's rate, without the
+ball, the racket boxes, the stills or the second pose model, and
+`frameRate.test.ts` says so until the three hold. On the app's read today the
+drop holds at 20 fps, and the contact height (2.3) and the tossing arm (1.8) still
+do not.
 
 The measuring found something nearer home. Between the app's own 32 fps and the
 suite's 50, contact height sat 1.58 deviations apart and contact in front 2.57:
@@ -2341,10 +2352,10 @@ span is measured in milliseconds and therefore grades tempo: the same serve
 served slowly has a longer chain, so a band in milliseconds would mark a
 deliberate server as having no sequence at all. Dividing by how long the motion
 took is the obvious repair, it is now computed, and it stays in `UNCALIBRATED`
-for two separate reasons the suite prints on every run. The division removes most
-of the dependence and not all of it — swept at 1.1, 1.35 and 1.7 seconds the raw
-span spreads 58% about its own mean and the ratio still spreads 21%, because the
-span is not in fact proportional to the motion. And even at zero, being
+for two separate reasons the suite prints on every run. The division removes about
+half of the dependence and not all of it: swept at 1.1, 1.35 and 1.7 seconds on one
+seed, the raw span spreads 72% about its own mean and the ratio still spreads 33%,
+because the span is not in fact proportional to the motion. And even at zero, being
 scale-free is what a quantity needs before a band could exist, not a band:
 nobody here knows what this number should be for a club player, and the rig
 cannot be asked, because every track in it hangs off one normalised phase
@@ -2383,7 +2394,7 @@ tell.** A viewfinder with its own idea of good enough would wave through clips
 the upload path then throws out, so `lib/framing/judge.ts` owns the *order* of
 what to say and not one number: cropping and distance come from
 `framingIssues`, which of them refuse from `blockingFramingIssue`, camera angle
-from `DEPTH_YAW_RANGE`, tilt from `NOTABLE_ROLL`. The sharpest thing it does is
+from `DEPTH_YAW_RANGE`, tilt from `LEVEL_FROM`, where levelling starts. The sharpest thing it does is
 refuse to overclaim: roll is the angle of the player's own standing axis off
 image vertical, and a leaning player and a tilted phone produce that reading
 identically — so the cue names the picture, offers both fixes and says it cannot
