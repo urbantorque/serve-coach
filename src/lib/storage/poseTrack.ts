@@ -230,8 +230,8 @@ export interface SwingTrack {
    * Kept parallel rather than pushed onto the front of each row, which would
    * have been fewer bytes to reason about and would have cost the property above:
    * a row that starts with a timestamp is no longer the same row a keyframe
-   * stores. Sampling is not evenly spaced — `seekTo` files a frame under the time
-   * the seek actually reached — so a replay that assumed a fixed step would drift.
+   * stores. Sampling is not always evenly spaced, and a dropped sample leaves a
+   * hole, so a replay that assumed a fixed step would drift.
    */
   times: number[]
   /**
@@ -411,10 +411,10 @@ export function replayFrom(track: SwingTrack | undefined): Replay | undefined {
 
   const times = rows.map((r) => track.times[r])
   /*
-   * Monotonic and non-degenerate, or not used at all. `seekTo` files a frame
-   * under the time the seek actually reached, so real sampling is uneven — that
-   * is the whole reason the times are stored — but it is never backwards, and a
-   * span of zero is the repaired-to-zero case above rather than a fast serve.
+   * Monotonic and non-degenerate, or not used at all. Real sampling can be
+   * uneven — that is the whole reason the times are stored — but it is never
+   * backwards, and a span of zero is the repaired-to-zero case above rather
+   * than a fast serve.
    */
   const measured =
     times.every((t) => typeof t === 'number' && Number.isFinite(t)) &&

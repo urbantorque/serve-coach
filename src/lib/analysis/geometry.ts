@@ -664,11 +664,11 @@ export function keyVisibility(f: Frame): number {
  *
  * Lived inside `PosePlayer` as a `useCallback`, which put a binary search and a
  * nearest-neighbour tie-break somewhere no test could reach — and this one has
- * a documented failure mode that the player itself reasons about at length: the
- * browser snaps `currentTime` to a decoded frame boundary, so on a clip whose
- * boundaries sit more than half a sample off the pose cadence, the frame it
- * lands on is the *neighbour* of the one a keyframe was measured at. Whether
- * that is a near miss or a wild one depends entirely on the rounding here.
+ * a documented failure mode that the player itself reasons about at length: on
+ * a clip whose frames sit more than half a sample off the pose cadence, the
+ * moment playback reports is nearest the *neighbour* of the sample a keyframe
+ * was measured at. Whether that is a near miss or a wild one depends entirely on
+ * the rounding here.
  *
  * Nearest rather than next-lowest, deliberately. The overlay is drawn against
  * whatever this returns, and picking the earlier frame every time would bias

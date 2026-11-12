@@ -340,6 +340,8 @@ export type SpeedMiss =
   | 'timing'
   /** The ball was not found leaving the racket. */
   | 'not_found'
+  /** The clip stops so soon after the hit that the ball had no flight to time. */
+  | 'clip_end'
   /** Found, but not cleanly enough to put a range on it worth saying. */
   | 'unsure'
 

@@ -30,7 +30,10 @@ export const SESSION_SAMPLE = 12
  */
 const THIRDS: [number, number, number] = [5, 2, 5]
 
-/** Seeks one serve's light read costs: the player crop, then 2.7 s at 32 fps. */
+/**
+ * Seeks one serve's light read costs: the player crop, then 2.7 s at about 32 a
+ * second. Priced on the even read, 91, because a walked file is a seek or two less.
+ */
 export const LIGHT_READ_SAMPLES = 91
 
 /** Seeks a full read costs: the light read plus the ball, the racket, the refinement and the stills. */

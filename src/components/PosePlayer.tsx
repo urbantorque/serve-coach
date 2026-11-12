@@ -233,9 +233,9 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired }: Props) 
      *
      * The fix for that belongs in the ghost and is now there — `Ghost.from`
      * carries the measured point, so the gap line is the gap on the card at any
-     * frame. Exact equality has a silent failure mode of its own: `seekTo` sets
-     * `currentTime` and the browser snaps it to a decoded frame boundary, and on
-     * a clip whose boundaries sit more than half a sample off the pose cadence
+     * frame. Exact equality has a silent failure mode of its own: a time from
+     * playback is not a sample's stamp, and on a clip whose frames sit more than
+     * half a sample off the pose cadence
      * `frameAt` returns the neighbour — so the ghost would never draw at all
      * while the lime angle callout beside it still did. A no-op, not a visible
      * bug, which is the kind nobody reports.

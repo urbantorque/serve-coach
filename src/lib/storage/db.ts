@@ -877,7 +877,7 @@ export function normalise(raw: unknown): Session | undefined {
   }
 }
 
-const MISSES = ['view', 'frame_rate', 'no_toss', 'timing', 'not_found', 'unsure']
+const MISSES = ['view', 'frame_rate', 'no_toss', 'timing', 'not_found', 'clip_end', 'unsure']
 
 function usableSpeed(v: unknown): Session['speed'] {
   if (!v || typeof v !== 'object') return undefined

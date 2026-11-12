@@ -4,10 +4,9 @@
  * This was a `useCallback` inside `PosePlayer`, which put a binary search and a
  * nearest-neighbour tie-break somewhere nothing could reach. It is worth
  * reaching because the player itself reasons at length about the case where it
- * goes wrong: the browser snaps `currentTime` to a decoded frame boundary, so
- * on a clip whose boundaries sit more than half a sample off the pose cadence,
- * the frame this lands on is the *neighbour* of the one a keyframe was measured
- * at. Whether that is a near miss or a wild one is decided entirely by the
+ * goes wrong: on a clip whose frames sit more than half a sample off the pose
+ * cadence, the moment playback reports is nearest the *neighbour* of the sample
+ * a keyframe was measured at. Whether that is a near miss or a wild one is decided entirely by the
  * rounding here — and the symptom is a no-op rather than a crash, which is the
  * kind of bug nobody reports.
  */
@@ -17,7 +16,7 @@ import { assert, check, heading, note, report } from './harness'
 /** A run of samples at a fixed rate, the way the extraction produces them. */
 const at = (times: number[]) => times.map((t) => ({ t }))
 
-/** 32 Hz, which is `FINE_FPS` — the rate a short clip is actually sampled at. */
+/** 32 Hz, which is `FINE_FPS` — the rate an even read is sampled at. */
 const cadence = at(Array.from({ length: 40 }, (_, i) => i / 32))
 
 heading('The frame under the playhead')

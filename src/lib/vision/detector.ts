@@ -388,10 +388,11 @@ export function planSharedPass(
   }
 
   /*
-   * The grid. Built from the rate rather than handed in, so there is exactly
-   * one place in the app that turns a span into instants — `readWindow` does
-   * the same arithmetic for the pose pass, and two of them drifting apart is
-   * the mismatch `Seconds` exists to prevent.
+   * The grid. Built from the rate rather than handed in: steps of `1 / hz` from
+   * the start, with the end added. It is not the pose pass's even read, which
+   * spreads `round(span x rate)` instants end to end (`readingPlan`), so the two
+   * drift apart by up to a step across a window; whoever runs this beside the
+   * pose pass has to settle which instants both read.
    *
    * Inclusive of the last instant when it lands on the end, because the
    * racket-head window ends at contact and contact is the frame that matters

@@ -9,6 +9,7 @@ import {
   type FindPeople,
   type ReadPose,
   refineSwing,
+  SEEK_END_MARGIN,
 } from '../pose/extract'
 import type { PoseSample } from './kalman'
 import { framingIssues } from './framingIssues'
@@ -224,7 +225,8 @@ export interface AnalyzeOptions {
   knownStretch?: Stretch
   /**
    * The file's own frame rate, already read with `knownStretch` — a session
-   * reads its container once, not once a serve — for the speed pass's clock.
+   * reads its container once, not once a serve — for the read and the speed
+   * pass's clock.
    */
   knownFileFps?: number
 }
@@ -316,7 +318,7 @@ export interface SweepRun {
    * How many serves were read to a conclusion — measured, or looked at and
    * found unreadable. This is what `buildConsistency` wants as its `attempted`,
    * and it deliberately excludes a serve the player interrupted: `attempted`
-   * minus measured is reported to them as "too unclear to measure", and a serve
+   * minus measured is reported to them as "too unclear to compare", and a serve
    * that was cancelled halfway through was not unclear. Nothing finished
    * looking at it.
    */
@@ -890,9 +892,9 @@ async function findRacketBoxes(
   }
   if (signal?.aborted || !perFrame.length) return []
 
-  // `readBitmaps` reports the instant it actually reached, not the one asked
-  // for — see its own comment — so frames are matched back by nearest time
-  // rather than assumed to line up positionally with the request.
+  // `readBitmaps` reports what `seekTo` reports, and may skip a moment, so frames
+  // are matched back by nearest time rather than assumed to line up positionally
+  // with the request.
   const out: { frame: number; estimate: RacketEstimate }[] = []
   for (const { t, box } of perFrame) {
     if (!box) continue
@@ -1552,14 +1554,16 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   let stretch: Stretch = opts.knownStretch ?? { factor: 1, source: 'none' }
   // The file's own frame rate, where its container says (N2.1's gate).
   let fileFps: number | undefined = opts.knownFileFps
-  if (!opts.knownStretch && opts.file) {
+  if (opts.file && (!opts.knownStretch || fileFps === undefined)) {
     // Loaded only for a clip that came with its file — see `pose/container.ts`.
     const { readContainerTiming, stretchFromContainer } = await import('../pose/container')
     const timing = await readContainerTiming(opts.file)
     fileFps = timing?.fileFps
     const fromFile = stretchFromContainer(timing)
-    if (fromFile) stretch = { factor: fromFile, source: 'file' }
+    if (fromFile && !opts.knownStretch) stretch = { factor: fromFile, source: 'file' }
   }
+  // A clip filmed here has no sample table to read, and the camera said its rate.
+  if (fileFps === undefined && opts.file) fileFps = cameraOf(opts.file)?.frameRate
 
   // Every read comes back with left and right put back where a tracker
   // traded them (`swapGuard.ts`, L5.9), before anything is measured from it.
@@ -1570,6 +1574,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
       knownServeTimes,
       people,
       stretch: stretch.factor,
+      fileFps,
       onPose: opts.onPose,
       onProgress: (p: ExtractProgress) =>
         onProgress({
@@ -1958,7 +1963,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // container or the in-app camera, and counts as 30 when neither says.
   let speed: SpeedReading | undefined
   if (!opts.skipSpeed) {
-    const nativeFps = fileFps ?? (opts.file ? cameraOf(opts.file)?.frameRate : undefined) ?? 30
+    const nativeFps = fileFps ?? 30
     const e = engine()
     const wristLM = skel.racket === 'left' ? LM.leftWrist : LM.rightWrist
     const at = e[skel.keys.contact]
@@ -1967,6 +1972,8 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
       {
         realFps: nativeFps * stretch.factor,
         factor: stretch.factor,
+        filePhase: extracted.filePhase,
+        seekableTo: video.duration - SEEK_END_MARGIN,
         contactT: at.t,
         contactAt: { x: at.image[wristLM].x, y: at.image[wristLM].y },
         bodyHeight: skel.bodyHeight,

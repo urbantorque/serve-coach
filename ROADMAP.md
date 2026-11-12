@@ -4396,4 +4396,48 @@ changed, the promise changed, and the item says so.
         what the player is on and how this serve sat against their usual, from the modules
         the player's own screens read. Every page ends on what this cannot see.
         `coachContext.test.ts`, 7 checks.
-
+- [x] **H35 The read walks the file's own frames** · M.
+      - *Done:* 2026-11-06, the phase 2026-11-07. A window was cut into 31.5 equal steps a
+        second whatever the file held. On a 30 fps file about one sample in 21 was a frame
+        read twice and the stamps slid up to a frame out of step, because `currentTime`
+        reports the seek and not the frame. `readingPlan` in `pose/rate.ts` reads the middle
+        of every n-th frame instead: each sample its own frame, every gap even, each stamp
+        safe to seek again. The rate comes from the container, or the camera for a clip
+        filmed here. Before each window `framePlace` asks the browser where the file's frames
+        really fall, from one frame's own time (`requestVideoFrameCallback`, armed before
+        the seek), and the walk steps from there (H44). Where nobody knows the rate the old
+        grid stays, to the digit. Where the budget cannot pay for a step along the frames (a
+        30 fps clip past four seconds), the grid's count is read on frames of its own
+        (H44), and where a file has fewer frames than that, under 19 a second of serve, the
+        grid stays.
+      - *Proved:* `rate.test.ts`, 13 checks over eleven rates. On a 30 fps file, pooled over
+        the six Bath serves each on a phase of its own, even grid to frames: contact ahead
+        4.23 to 3.02, drop to contact 19.7 to 13.6, hand under elbow 2.32 to 1.92, toss arm
+        2.13 to 1.73 (`frameRate.test.ts`). In Chrome on numbered H.264 at 30, 29.97, 60,
+        120 and a dropped-frame file, 7,938 of 7,938 mid-frame seeks through the app's own
+        seek landed on the frame planned. On 36 numbered files whose first frame sits 0 to
+        0.75 of a frame in, at 30 and 60 fps with 0 to 3 ms of jitter, the learned phase
+        read every sample on its own frame, no repeat and no skip. Walked from zero, a file
+        half a frame in repeated or skipped up to 26 samples of 81, and the even grid
+        repeated 4 to 6 at 30 fps. A real serve re-encoded as H.264 MP4 through
+        `analyzeServe` read at exactly 30 a second. `filePosition.test.ts`: the same take
+        reads the same wherever it sits in the file.
+      - *Costs carried:* no Safari, no phone file, no HEVC, no B-frames. Where the frame
+        callback does not answer within 300 ms of the seek, counted while the page is
+        visible, or not at all (Firefox before 132, Safari before 15.4), the walk assumes the
+        first frame at zero: right on a file at zero, and on one half a frame in, a walked
+        read takes about one sample in four twice and skips as many at 30 fps, and puts
+        about a quarter a frame off at 60 (19 to 25, and 17 to 27, of 81); a 4.4 s clip
+        read as a spread about one in five (22 of 120; H46). A variable-rate file drifts
+        against the mean rate: 5 repeats in 143 against 12. A 24 or 25 fps file reads 24 or 25 a second, and its rows
+        run up to 1.31 of the table (load ratio), arm extension 11.0 at 24. A 60 fps file
+        with no located window walks the blind five seconds at 20 a second: contact height
+        1.45 of the table, toss arm 1.4, leg drive 1.3, and the too-few-frames warning on 39%
+        of takes from the guide and 50% from behind, where the grid's 24 a second gave 2.6%
+        and 7.8% (H45). Against the grid there the rows came out mixed, so the walk stays.
+        Under 19 fps the grid stays, and at 12 to 15 fps it calls a third to three quarters of
+        takes too blurry, which is not the reason.
+      - *Considered and not built:* a true stamp for every sample from the frame callback.
+        It needs a nudge at five re-seek sites and repeats dropped before gap bridging, and
+        gains nothing at 60 fps, where the gaps stay uneven. One callback a window places the
+        walk. `FINE_FPS = 30`: a 1/30 grid sits on the frame edges.

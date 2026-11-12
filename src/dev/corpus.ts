@@ -118,6 +118,9 @@ export async function ingest(
       const analysis = await analyzeServe({
         videoUrl: url,
         fileName: name,
+        // The file itself, so its rate is read and the frames are walked, as the
+        // app does with a clip the player picks.
+        file,
         signal,
         // Nothing here draws a picture, and the stills are the expensive half of
         // a pass — six seeks and six JPEG encodes per clip, for a file that

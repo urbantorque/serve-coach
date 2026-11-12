@@ -15,7 +15,7 @@
  */
 import { analyzeServe } from '../../lib/analysis/analyze'
 import type { Analysis } from '../../lib/analysis/types'
-import { samplingRateFor } from '../../lib/pose/rate'
+import { readingPlan } from '../../lib/pose/rate'
 
 const CLIPS = [
   '0SAQUE.webm',
@@ -51,9 +51,9 @@ interface Row {
 }
 
 function describe(a: Analysis): Omit<Row, 'clip' | 'mode' | 'ms'> {
-  const span = Math.max(0.2, a.window.end - a.window.start)
-  // The same count `extractFrames` asks for; the frames kept are the ones with a pose.
-  const expected = Math.max(8, Math.round(span * samplingRateFor(span)))
+  // The count `extractFrames` asks for on these WebM clips, whose rate nobody
+  // knows; the frames kept are the ones with a pose.
+  const expected = readingPlan(a.window.start, a.window.end).times.length
   const contact = a.phases.find((p) => p.id === 'contact')
   const metric = (id: string) => a.fundamentals.flatMap((f) => f.metrics).find((m) => m.id === id)
   const pick = (id: string) => {

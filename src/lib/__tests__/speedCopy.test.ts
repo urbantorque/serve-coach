@@ -17,7 +17,7 @@ const fs = fsUntyped as {
 }
 const path = pathUntyped as { join: (...p: string[]) => string }
 
-const REASONS = ['view', 'frame_rate', 'no_toss', 'timing', 'not_found', 'unsure'] as const
+const REASONS = ['view', 'frame_rate', 'no_toss', 'timing', 'not_found', 'clip_end', 'unsure'] as const
 
 heading('Why there is no speed, said plainly')
 

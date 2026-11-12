@@ -16,6 +16,7 @@ export const SPEED_MISS_LINE: Record<SpeedMiss, string> = {
   no_toss: 'I could not follow your toss, so I had nothing to measure the picture with. Keep the whole toss in shot.',
   timing: 'This video does not carry the time of each frame, so I cannot time the ball.',
   not_found: 'I lost the ball after the hit. Turn the phone on its side, step it back and leave the net side of the picture open.',
+  clip_end: 'The clip stops right after the hit, so the ball had no flight to time. Keep filming until it lands.',
   unsure: 'I saw the ball after the hit, but not clearly enough to stand behind a speed.',
 }
 

@@ -14,6 +14,7 @@
 import { SWEEP_SKIPS, analyzeServe, captureServeStills, locateServes, type AnalyzeProgress } from '../analysis/analyze'
 import { isNotAServeError, type Analysis } from '../analysis/types'
 import type { Stretch } from '../analysis/slowMotion'
+import { cameraOf } from '../framing/camera'
 import { readContainerTiming, stretchFromContainer } from '../pose/container'
 import { hearImpacts } from '../audio/decode'
 import { loadVideo, timeScanSamples } from '../pose/extract'
@@ -75,7 +76,8 @@ export function openSessionVideo(videoUrl: string, file: Blob): SessionVideo {
       const factor = stretchFromContainer(timing)
       return {
         stretch: factor ? { factor, source: 'file' as const } : { factor: 1, source: 'none' as const },
-        fileFps: timing?.fileFps,
+        // A session filmed here has no sample table, and the camera said its rate.
+        fileFps: timing?.fileFps ?? cameraOf(file)?.frameRate,
       }
     }))
 

@@ -1,7 +1,8 @@
 /**
  * The 60 fps hint (L5.12): until the swing is sampled at the source rate
- * (D1.2), a real-time 60 fps clip is read at 32 samples a second, so no copy a
- * player reads may send them to film at 60. Slow motion is what helps.
+ * (D1.2), a real-time 60 fps clip is read on every second frame, 30 samples a
+ * second, so no copy a player reads may send them to film at 60. Slow motion is
+ * what helps.
  */
 // @ts-expect-error - node's fs, and this project carries no @types/node
 import fsUntyped from 'fs'

@@ -18,11 +18,11 @@ import { Cancelled } from './errors'
 export { Cancelled, looksLikeNonVideo } from './errors'
 import { choosePlayerCrop, uncrop, type Crop, type PersonBox } from './playerCrop'
 import { boxFromFrame, refineFrame, type Pt } from './rtmpose'
-import { FINE_FPS, MAX_FINE_FRAMES, samplingRateFor } from './rate'
+import { FINE_FPS, MAX_FINE_FRAMES, phaseOf, readingPlan, samplingRateFor } from './rate'
 
 // Re-exported so every existing importer keeps reading them from here. They
 // live in `rate.ts` now so the DOM-free vision layer can share the one grid.
-export { FINE_FPS, MAX_FINE_FRAMES, samplingRateFor }
+export { FINE_FPS, MAX_FINE_FRAMES, readingPlan, samplingRateFor }
 
 /** Clips this short are sampled in one pass; longer ones get a locating scan. */
 const SINGLE_PASS_SECONDS = 4.5
@@ -40,8 +40,8 @@ const LEAD_OUT = 0.8
  * sample and no amount of good filming can rescue it.
  *
  * Five seconds holds a whole service motion with room either side and still
- * samples at 24 fps, which resolves the swing. Wider would cover more of the
- * clip and read none of it.
+ * samples at 20 to 24 fps, by what the file allows, which resolves the swing.
+ * Wider would cover more of the clip and read none of it.
  */
 const FALLBACK_SPAN = 5
 
@@ -215,37 +215,100 @@ export function describeDecodeFailure(video: HTMLVideoElement): UnreadableVideoE
 /**
  * How far the playhead may sit from where it was sent and still be believed.
  *
- * Deliberately loose. Browsers report `currentTime` quantised to the decoded
- * frame, and a seek to a moment between two frames lands on one of them — a
- * third of a second is far wider than any of that, so this only ever fires on a
- * seek that genuinely did not happen. Which is the case worth catching: `waitFor`
+ * Deliberately loose. A third of a second is far wider than any frame, so this
+ * only ever fires on a seek that genuinely did not happen. Which is the case
+ * worth catching: `waitFor`
  * resolves rather than rejects on its timeout, so a seek the browser never
  * completed returns here looking exactly like one that did — see `seekTo`'s own
  * return for how that case is told apart from an ordinary one now.
  */
 const SEEK_TOLERANCE = 0.25
 
+/** How far short of the end a seek stops. */
+export const SEEK_END_MARGIN = 0.02
+
+/** How long to wait to be told a frame's own time, once the seek is done. */
+const FRAME_TIME_WAIT_MS = 300
+
+/** What one frame's own time says about a file's frames. */
+export interface FramePlace {
+  /** Where the frames fall against whole multiples of the rate (`phaseOf`); 0 where not told. */
+  phase: number
+  /** The first frame's own time, where the window starts at or before it. */
+  firstFrame?: number
+}
+
+type FrameCallback = (cb: (now: number, meta: { mediaTime: number }) => void) => number
+
 /**
- * Move the playhead, and say where it actually arrived — not `false` and not
- * the time that was asked for.
+ * Where this file's frames fall, from one frame's own time, or nothing where the
+ * browser will not say: then the read walks from zero.
  *
- * R9 in NEXT.md: a phone does not record frames at a perfectly even interval,
- * and asking a decoder to seek to an exact instant does not make it land
- * there — `currentTime` after a real seek routinely sits a few milliseconds
- * either side of `target`, snapped to whichever frame the container actually
- * has. Every caller used to file the sample under the time it *asked for*
- * rather than the time it *got*, on the reasoning that the gap was too small
- * to matter — which was true for an isolated reading and false for anything
- * that differentiates: `rateOf` in `kinematics.ts` divides by the difference
- * between two consecutive timestamps, and a few milliseconds of fictional
- * precision in the numerator's neighbours is a few milliseconds of real error
- * in every velocity built from them. `video.currentTime` is read anyway, to
- * decide whether the seek is within tolerance — handing it back costs nothing
- * and turns every downstream `t` from a request into a measurement.
+ * The seek goes half a frame into the window, and a seek before the first frame
+ * shows the first frame. So for a window that starts at the film's start, and for
+ * any frame told later than the moment sought, the time told is the first frame's
+ * own: the walk starts there and reads nothing before it (H45). Seeking two and a
+ * half frames in left a window that opened inside a long empty edit reading
+ * before the film (H46). On a composition offset with no edit list Chrome can tell
+ * a keyframe later than the moment sought too, and the window then loses the one
+ * or two moments before it.
+ *
+ * Where the first frame was told, the phase is read off a frame two and a half
+ * further on. A first frame need not last as long as the rest, and on a file whose
+ * first frame lasted half a frame longer a phase taken from it put every later
+ * moment on a frame's edge: a third of a 30 fps clip read twice (H46).
+ *
+ * The callback is asked for before the seek: after `seeked` it mostly never
+ * fires on a detached element, on Chrome, 0 to 5 of 103 on VP9. The wait starts
+ * once the seek is done and counts only while the page is visible: on a slow seek
+ * of a 4K file it was spent on the seek, and a hidden page is never told.
+ */
+export async function framePlace(video: HTMLVideoElement, fileFps: number, near: number): Promise<FramePlace> {
+  const rvfc = (video as HTMLVideoElement & { requestVideoFrameCallback?: FrameCallback }).requestVideoFrameCallback
+  if (!rvfc) return { phase: 0 }
+  const atStart = near <= 0.5 / fileFps
+  const target = Math.max(0, near) + 0.5 / fileFps
+  const time = await frameTimeAt(video, rvfc, fileFps, target)
+  if (time === undefined) return { phase: 0 }
+  if (!atStart && !(time > target + 1e-4)) return { phase: phaseOf(time, fileFps) }
+  const later = await frameTimeAt(video, rvfc, fileFps, time + 2.5 / fileFps)
+  const steady = later !== undefined && later > time + 0.5 / fileFps ? later : time
+  return { phase: phaseOf(steady, fileFps), firstFrame: time }
+}
+
+/** The own time of the frame a seek to `target` shows, or nothing where the browser does not say in time. */
+async function frameTimeAt(video: HTMLVideoElement, rvfc: FrameCallback, fileFps: number, target: number): Promise<number | undefined> {
+  // `seekTo` makes no seek within a tenth of a millisecond of where the element
+  // stands, as after loading, where it is parked on the first frame: nothing is
+  // presented and the callback never comes. Chrome does call back on a seek that
+  // stays on the frame on screen, which no standard asks of a browser, so a seek
+  // within a frame and a half is moved off first, then back.
+  if (Math.abs(video.currentTime - target) < 1.5 / fileFps) await seekTo(video, target + 3 / fileFps)
+  let tell: (t: number | undefined) => void = () => {}
+  const told = new Promise<number | undefined>((resolve) => (tell = resolve))
+  rvfc.call(video, (_, meta) => tell(meta.mediaTime))
+  await seekTo(video, target)
+  const cancel = timeoutWhileVisible(() => tell(undefined), FRAME_TIME_WAIT_MS)
+  const time = await told
+  cancel()
+  return time !== undefined && Number.isFinite(time) ? time : undefined
+}
+
+/**
+ * Move the playhead, and say where `video.currentTime` says it arrived, or
+ * `false` if it did not get there.
+ *
+ * NOT THE FRAME'S TIME. R9 in NEXT.md took `currentTime` to be snapped to the
+ * frame the decoder landed on, and this comment said so for a long time. On
+ * Chrome it is not (H35): it equals the seek to 0.002 ms on every clip and rate
+ * tried, and the frame on screen is the last one at or before that moment, up
+ * to a whole frame older. Safari has not been looked at. So a read that needs a
+ * stamp it can trust cannot get one here: `readingPlan` asks for the middle of
+ * a known frame instead, where the moment asked for is the stamp.
  */
 async function seekTo(video: HTMLVideoElement, t: number): Promise<number | false> {
   // Nudge off the exact end: seeking to `duration` never fires `seeked` in Safari.
-  const target = Math.min(Math.max(t, 0), Math.max(0, video.duration - 0.02))
+  const target = Math.min(Math.max(t, 0), Math.max(0, video.duration - SEEK_END_MARGIN))
   if (Math.abs(video.currentTime - target) < 1e-4) return video.currentTime
   const seeked = waitFor(video, 'seeked')
   video.currentTime = target
@@ -569,6 +632,8 @@ export async function extractFrames(
     people?: FindPeople
     /** Seconds of file per second of serve, when the clip is known to be slow motion. */
     stretch?: number
+    /** The file's own frame rate, where its container or the camera says: see `readingPlan`. */
+    fileFps?: number
   } = {},
 ): Promise<{
   frames: Frame[]
@@ -588,6 +653,8 @@ export async function extractFrames(
   times: number[]
   /** The square the pose model read, in source pixels, or none for the whole frame. */
   crop?: Crop
+  /** Where the file's frames fall against whole multiples of its rate, in seconds. */
+  filePhase: number
 }> {
   const { onProgress = () => {}, onPose, signal, serveIndex = -1, knownServeTimes: known } = opts
   const duration = video.duration
@@ -633,29 +700,34 @@ export async function extractFrames(
   const crop = await findCrop(video, opts.people, start, end, check)
   input = poseInput(video, crop)
 
-  const span = Math.max(0.2, end - start)
-  const fps = samplingRateFor(span)
-  const count = Math.max(8, Math.round(span * fps))
+  const place = opts.fileFps ? await framePlace(video, opts.fileFps, start) : { phase: 0 }
+  const filePhase = place.phase
+  const { times: moments, rate: fps, onFrames } = readingPlan(start, end, opts.fileFps, {
+    phase: filePhase,
+    firstFrame: place.firstFrame,
+    stretch: opts.stretch,
+    // `seekTo` stops short of the end, and past that a moment shows an earlier frame.
+    seekableTo: duration - SEEK_END_MARGIN,
+  })
   const samples: PoseSample[] = []
 
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < moments.length; i++) {
     check()
-    const t = start + (span * i) / (count - 1)
+    const t = moments[i]
     // A frame filed at a time the playhead never reached is the one failure
     // nothing downstream can see: the landmarks are real, they just belong to
     // another moment, and the swing is then measured out of order. A missing
     // sample is already an ordinary outcome here — `detect` returns null on any
     // frame the model found nobody in — so dropping it costs nothing new.
     //
-    // Filed under the time the seek actually reached, not the evenly-spaced
-    // time it was asked for — see `seekTo`. `rateOf` and every other
-    // derivative in `kinematics.ts` reads this array's own gaps, so a fictional
-    // even spacing here is fictional precision in every velocity built from it.
+    // A moment on a known frame is filed as itself: that frame's middle, even
+    // to the digit, and safe to seek again. Otherwise under what `seekTo`
+    // reports, in case some browser does report the frame.
     const at = await seekTo(video, t)
-    const sample: PoseSample = { t: at === false ? t : at, pose: at === false ? null : await detect() }
+    const sample: PoseSample = { t: at === false || onFrames ? t : at, pose: at === false ? null : await detect() }
     samples.push(sample)
     onPose?.(sample)
-    onProgress({ phase: 'tracking', ratio: (i + 1) / count })
+    onProgress({ phase: 'tracking', ratio: (i + 1) / moments.length })
   }
 
   // The misses are handed on rather than quietly skipped, because a hole is
@@ -667,7 +739,7 @@ export async function extractFrames(
   // see `clockOf` in phases.ts.
   const frames = bridgeDetectionGaps(samples)
 
-  return { frames, fps, window: { start, end }, serves, located, times, crop }
+  return { frames, fps, window: { start, end }, serves, located, times, crop, filePhase }
 }
 
 /** Reads a pose inside a box of the current video frame — RTMPose, from `refineEngine.ts`. */
@@ -829,9 +901,8 @@ export async function readBitmaps<T>(
     if (at === false) continue
     ctx.drawImage(video, region.x, region.y, region.w, region.h, 0, 0, canvas.width, canvas.height)
     const frame = ctx.getImageData(0, 0, canvas.width, canvas.height)
-    // The time the seek actually reached, not the one asked for — the ball's
-    // flight is fitted against these, and a curve fitted through fictionally
-    // even timestamps is a curve fitted to the wrong gravity. See `seekTo`.
+    // What `seekTo` reports. These are mostly the pose read's own stamps, so
+    // the ball's flight is fitted against the frames' own even times.
     out.push(read(frame, previous, at))
     previous = frame
   }
