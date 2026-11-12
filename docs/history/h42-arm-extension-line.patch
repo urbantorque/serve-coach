@@ -1,0 +1,390 @@
+H42, arm extension through a straight line: measured and not adopted.
+
+Kept so the work is not lost. It was written against the tree of 2026-11-06,
+before the fixes in H44, so it may not apply cleanly now. Why it was not
+adopted is in ROADMAP.md, H42.
+
+Apply with: git apply docs/history/h42-arm-extension-line.patch
+
+diff --git a/src/lib/analysis/__tests__/frameRate.test.ts b/src/lib/analysis/__tests__/frameRate.test.ts
+index 7feae09..6b1d435 100644
+--- a/src/lib/analysis/__tests__/frameRate.test.ts
++++ b/src/lib/analysis/__tests__/frameRate.test.ts
+@@ -13,10 +13,11 @@
+  * own noise deviations (`CARD_NOISE_SD`).
+  */
+ import { pathsThrough, peakBetween, poseAt } from '../between'
++import { METRICS } from '../coaching'
+ import { CARD_NOISE_SD } from '../consistency'
+ import { LM } from '../geometry'
+ import { measure } from '../metrics'
+-import { filmMocap } from '../mocapServe'
++import { filmMocap, onReadingGrid } from '../mocapServe'
+ import { detectServe } from '../phases'
+ import { assessSpatial, viewFromCourtYaw } from '../spatial'
+ import { buildServe } from '../syntheticServe'
+@@ -83,6 +84,22 @@ check('a curve averages the noise out of what it passes through', () => {
+   assert(Math.abs(path(0.1)[0].x) < 0.3, `the middle of the curve is ${path(0.1)[0].x}`)
+ })
+ 
++check('a line follows a straight path exactly, and takes less of each sample than a parabola', () => {
++  const ts = [0, 0.03, 0.05, 0.11, 0.12, 0.17, 0.21]
++  const path = pathsThrough(pathFrames(ts, (t) => 3 + 40 * t), [0], 0.1, 0.15, 'world', 1)!
++  for (const t of [0.04, 0.1, 0.133]) near(path(t)[0].x, 3 + 40 * t, 1e-9, `x at ${t}`)
++  // What one sample out by one does to the reading, for each sample in turn: at
++  // 32 Hz, off the middle of the stretch, about where the arm is read.
++  const grid = Array.from({ length: 11 }, (_, i) => i / 32)
++  const taken = (degree: 1 | 2) =>
++    grid.reduce((sum, at) => {
++      const spike = pathFrames(grid, (t) => (t === at ? 1 : 0))
++      return sum + pathsThrough(spike, [0], 5 / 32, 0.12, 'world', degree)!(5 / 32 + 0.02)[0].x ** 2
++    }, 0)
++  note(`of one sample's noise, a parabola takes ${taken(2).toFixed(2)} and a line ${taken(1).toFixed(2)}`)
++  assert(taken(1) < 0.7 * taken(2), 'a line kept as much noise as a parabola')
++})
++
+ check('a sample missing a landmark is left out, and too few samples draw no curve', () => {
+   const ts = [0, 0.02, 0.04, 0.06, 0.08]
+   const line = pathFrames(ts, (t) => t)
+@@ -213,6 +230,30 @@ check('the two readings taken off curves stay steady at the app’s own rate', (
+   assert(load <= 2.5, `load ratio moves ${load.toFixed(2)} points between takes at the app's rate`)
+ })
+ 
++check('arm extension clears the band rule on the app’s own read of a file', () => {
++  // 32 Hz off a 30 or 60 fps file, frames shown twice and all (`onReadingGrid`):
++  // 11.70° off the parabola at sixty seeds, on a row whose band asks for 8.93°.
++  const [lo, hi] = METRICS.armExtension.ideal
++  const allowed = (hi - lo) / 2 / 1.96
++  for (const fps of [30, 60]) {
++    const worst = Math.max(
++      ...SOURCES.map((src) => {
++        const xs = SEEDS.map((seed) => {
++          const frames = onReadingGrid(src.film(seed, fps), fps, 32)
++          const skel = detectServe(frames, 32)
++          const view = viewFromCourtYaw(assessSpatial(frames, skel.keys.ready, skel.bodyHeight, skel).court_yaw_deg)
++          return measure(frames, skel, view === 'side', { serveType: 'flat' })
++            .flatMap((f) => f.metrics)
++            .find((m) => m.id === 'armExtension')!.value
++        })
++        return Math.sqrt(xs.reduce((sum, x) => sum + (x - mean(xs)) ** 2, 0) / (xs.length - 1))
++      }),
++    )
++    note(`a ${fps} fps file: arm extension ${worst.toFixed(2)}° against ${allowed.toFixed(2)}°`)
++    assert(worst <= allowed, `arm extension moves ${worst.toFixed(2)}° between takes on the app's read of a ${fps} fps file`)
++  }
++})
++
+ heading('A lighter read for sessions')
+ 
+ check('KNOWN: a 20 fps read loses readings a session needs, so sessions read at 32', () => {
+diff --git a/src/lib/analysis/__tests__/mocap.test.ts b/src/lib/analysis/__tests__/mocap.test.ts
+index 599fc61..d993aa6 100644
+--- a/src/lib/analysis/__tests__/mocap.test.ts
++++ b/src/lib/analysis/__tests__/mocap.test.ts
+@@ -25,8 +25,10 @@ import { jointAngle, sided } from '../geometry'
+ import { ARM_EXTENSION_WINDOW, loadBottom, measure } from '../metrics'
+ import {
+   GUIDE_PHONE,
++  bentElbow,
+   filmMocap,
+   mocapTruth,
++  onReadingGrid,
+   pointAt,
+   straightestInCapture,
+   swingCompleted,
+@@ -197,7 +199,7 @@ const ARM_PHONES: Partial<typeof GUIDE_PHONE>[] = [
+ 
+ check('arm extension lands on the capture, from every placement and rate', () => {
+   // The forty serves, from these five placements at 30–120 fps, read a median
+-  // 0.8–2.1° from the capture and 4.9° at the worst (`npm run bench:mocap`).
++  // 0.8–1.5° from the capture and 4.9° at the worst (`npm run bench:mocap`).
+   // Before it was read off curves: a median 1.6–4.4°, and 9.7° at the worst.
+   for (const phone of ARM_PHONES) {
+     for (const fps of [30, 32, 60, 120]) {
+@@ -209,7 +211,7 @@ check('arm extension lands on the capture, from every placement and rate', () =>
+ })
+ 
+ check('two frame rates agree on arm extension', () => {
+-  // Worst 4.9° on the forty, from 6.7° off the sampled poses.
++  // Worst 4.6° on the forty, from 6.7° off the sampled poses.
+   for (const phone of ARM_PHONES) {
+     const low = armReads({ ...phone, fps: 30 })
+     const high = armReads({ ...phone, fps: 60 })
+@@ -231,6 +233,48 @@ check('a real arm is not told it stayed short, on a clean clip from anywhere', (
+   }
+ })
+ 
++/** The card's arm extension on one serve, on the app's read of a file at `fps`. */
++const appRead = (serve: MocapServe, phone: Partial<typeof GUIDE_PHONE>, fps: number) => {
++  const result = runEngine(onReadingGrid(filmMocap(serve, { ...phone, fps }), fps, 32), 32)
++  if (!result.ok) throw new Error(`${serve.id} refused: ${result.refusal}`)
++  return result.run.fundamentals.flatMap((f) => f.metrics).find((m) => m.id === 'armExtension')!.value
++}
++
++check('arm extension lands on the capture on the app’s own read of a file', () => {
++  // The six at 32 Hz off a 30 or 60 fps file, five placements. A frame read
++  // twice was counted twice: on the forty that read 8.0° low from behind, and
++  // five of them short of the band.
++  for (const phone of ARM_PHONES) {
++    for (const fps of [30, 60]) {
++      const errors = SERVES.map((serve) => {
++        const truth = mocapTruth(serve)
++        return appRead(serve, phone, fps) - straightestInCapture(serve, truth.wristTop, ARM_EXTENSION_WINDOW)
++      })
++      if (fps === 30) note(`bearing ${phone.bearing}, reading minus capture: ${errors.map((e) => e.toFixed(1)).join(' / ')}°`)
++      for (const e of errors) within(e, -5, 5, `arm extension against the capture from bearing ${phone.bearing}, a ${fps} fps file`)
++    }
++  }
++})
++
++check('a bend planted in a real serve moves the reading by as much', () => {
++  // What a steadier reading must not give up: on the six, 10–45° of bend moves
++  // the reading a mean 0.96–1.00 of what it moved in the capture from the side.
++  for (const phone of [{ bearing: 90 }, { bearing: 180, distance: 6 }]) {
++    for (const degrees of [20, 30]) {
++      const gains = SERVES.map((serve) => {
++        const bent = bentElbow(serve, degrees)
++        const [a, b] = [serve, bent].map((s) => {
++          const truth = mocapTruth(s)
++          return { read: appRead(s, phone, 30), capture: straightestInCapture(s, truth.wristTop, ARM_EXTENSION_WINDOW) }
++        })
++        return (b.read - a.read) / (b.capture - a.capture)
++      })
++      note(`bearing ${phone.bearing}, ${degrees}° bent: ${gains.map((g) => g.toFixed(2)).join(' / ')}`)
++      within(gains.reduce((sum, g) => sum + g, 0) / gains.length, 0.85, 1.15, `the mean gain from bearing ${phone.bearing}`)
++    }
++  }
++})
++
+ check('a clip that stops inside the window reads the samples it has', () => {
+   // There is no curve to draw past the last sample, and the arm is opening
+   // fast there, so the reading stays with what was filmed.
+diff --git a/src/lib/analysis/between.ts b/src/lib/analysis/between.ts
+index 08b65ea..9fa948b 100644
+--- a/src/lib/analysis/between.ts
++++ b/src/lib/analysis/between.ts
+@@ -59,6 +59,13 @@ const PATH_MIN_SAMPLES = 4
+  * the stretch is the caller's to choose and to justify. Undefined when too few
+  * samples hold every landmark, or when they sit at too few moments to fix a
+  * curve.
++ *
++ * `degree` 1 fits a straight line instead. At the app's 32 Hz about seven
++ * samples sit under the curve and the weights leave four of them doing the
++ * work, so a parabola's third coefficient is paid for out of what little
++ * averaging there was: a line takes about half as much of one sample's noise
++ * into the reading. It is for a path that barely bends across the stretch, and
++ * the caller has to show that it does.
+  */
+ export function pathsThrough(
+   frames: Frame[],
+@@ -66,6 +73,7 @@ export function pathsThrough(
+   centre: number,
+   reach: number,
+   space: 'world' | 'image' = 'world',
++  degree: 1 | 2 = 2,
+ ): ((t: number) => Landmark[]) | undefined {
+   const near = frames.filter(
+     (f) =>
+@@ -79,15 +87,17 @@ export function pathsThrough(
+   const us = near.map((f) => (f.t - centre) / reach)
+   const weights = us.map((u) => (1 - Math.abs(u) ** 3) ** 3)
+   // The normal equations for 1, u and u²: their matrix holds these sums, and
+-  // the six letters are its inverse's cofactors.
++  // the six letters are its inverse's cofactors. A line is the same with the
++  // u² row and column gone, which leaves three of them nothing to hold.
+   const s = [0, 1, 2, 3, 4].map((k) => us.reduce((sum, u, i) => sum + weights[i] * u ** k, 0))
+-  const a = s[2] * s[4] - s[3] * s[3]
+-  const b = s[2] * s[3] - s[1] * s[4]
+-  const c = s[1] * s[3] - s[2] * s[2]
+-  const d = s[0] * s[4] - s[2] * s[2]
+-  const e = s[1] * s[2] - s[0] * s[3]
+-  const f = s[0] * s[2] - s[1] * s[1]
+-  const det = s[0] * a + s[1] * b + s[2] * c
++  const line = degree === 1
++  const a = line ? s[2] : s[2] * s[4] - s[3] * s[3]
++  const b = line ? -s[1] : s[2] * s[3] - s[1] * s[4]
++  const c = line ? 0 : s[1] * s[3] - s[2] * s[2]
++  const d = line ? s[0] : s[0] * s[4] - s[2] * s[2]
++  const e = line ? 0 : s[1] * s[2] - s[0] * s[3]
++  const f = line ? 0 : s[0] * s[2] - s[1] * s[1]
++  const det = line ? s[0] * s[2] - s[1] * s[1] : s[0] * a + s[1] * b + s[2] * c
+   if (!(Math.abs(det) > 1e-9)) return undefined
+ 
+   return (t) => {
+diff --git a/src/lib/analysis/metrics.ts b/src/lib/analysis/metrics.ts
+index 372a143..0c2dc5d 100644
+--- a/src/lib/analysis/metrics.ts
++++ b/src/lib/analysis/metrics.ts
+@@ -34,7 +34,7 @@ import {
+ } from './confidence'
+ import type { Skeleton } from './phases'
+ import { ballFallMetres, flightHeightAt, type BallFlight } from '../vision/ballTrack'
+-import type { Frame, Fundamental, FundamentalId, Metric, Reading } from './types'
++import type { Frame, Fundamental, FundamentalId, Landmark, Metric, Reading } from './types'
+ 
+ /** Measurements that only exist when the ball was found in the pixels. */
+ const BALL_METRICS = new Set(['tossPeakHeight', 'contactBelowPeak', 'ballContactHeight'])
+@@ -220,8 +220,8 @@ function steadyAngle(
+  *
+  * The arm opens slowly by then, so a few milliseconds of timing error barely
+  * move the straightest it gets. Over ±50 ms, off the curves below, 30 and 60 fps
+- * agree to a median 0.4–1.4° by placement (worst 4.9°), and the reading lands a
+- * median 0.8–2.1° from the same quantity taken from the capture in 3D (worst
++ * agree to a median 0.2–1.4° by placement (worst 4.6°), and the reading lands a
++ * median 0.8–1.5° from the same quantity taken from the capture in 3D (worst
+  * 4.9°), over five placements and 30–120 fps (`npm run bench:mocap`). Fifty
+  * milliseconds also holds the racket head's highest point, which on those
+  * serves comes 15–31 ms after the wrist's.
+@@ -262,24 +262,94 @@ export const ARM_EXTENSION_WINDOW = 0.05
+ const ARM_PATH_CENTRE = 0.03
+ const ARM_PATH_REACH = 0.1
+ 
++/**
++ * Where depth is followed from the side, in seconds: a straight line through the
++ * samples, this far after contact, give or take `ARM_DEPTH_REACH`, in place of
++ * the parabola's depth. The search for the straightest moment runs on to
++ * `ARM_SIDE_END` with it.
++ *
++ * From the guide's placement all of what the arm moves between takes is depth.
++ * At the app's 32 Hz read of a file, the six real serves moved 8.5–11° with
++ * depth's noise alone and under 2° with the picture's. And from the side depth
++ * is the part of the arm that hardly moves: the swing crosses the picture, and
++ * from contact to 100 ms after it the forearm travels a median 3.8 cm along the
++ * lens on the forty serves, against 37 cm from behind. At 32 Hz a parabola takes
++ * 0.42 of one sample's noise into the reading and a line 0.19, so depth was
++ * paying for a curve it has no use for. The picture keeps its parabola, and with
++ * it the arm's shape through contact.
++ *
++ * The line is centred where a real arm is read, because a line is steadiest at
++ * its middle. The parabola had also been overshooting there, a mean 1.3–1.9°
++ * from the side, and that overshoot was hiding clips whose contact runs early:
++ * levelling a clip can move contact up to 30 ms, on an arm opening 226°/s. So
++ * from the side the search runs 10 ms on, where the arm opens more slowly.
++ * Without it the line reads 7.2° from the capture at worst; with it, 4.1°.
++ *
++ * Only from the side. Along the lens from behind or at an angle the swing itself
++ * is depth: the same line and search from every placement read up to 8.2° from
++ * the capture, and 14 clean clips of the forty serves short of the band. Wider
++ * costs too: at ±130 ms a rig arm that peaks at contact and folds reads 3–4° lower.
++ */
++const ARM_DEPTH_CENTRE = 0.05
++const ARM_DEPTH_REACH = 0.12
++const ARM_SIDE_END = 0.06
++
+ /** How finely the curves are searched for the straightest moment, in seconds. */
+ const ARM_PATH_STEP = 0.005
+ 
++/** Closer than this, in metres on all three landmarks, two reads are one frame. */
++const ARM_REPEAT_M = 0.01
++
++/**
++ * The frames with every repeat of the one before left out.
++ *
++ * The app reads at 32 Hz whatever the file's rate, so a 30 fps file shows it one
++ * frame twice every half second (`onReadingGrid`), and a repeat is filed under a
++ * moment up to 31 ms after the frame was on screen. Counted twice it doubles
++ * that one frame's noise in the fit and pulls the curve towards a pose the arm
++ * had already left: on clean clips of the forty serves it read 8.0° low at worst,
++ * and five read short of the band. The first read is the one to keep: its moment
++ * is the nearer. Nothing but a repeat stays within a centimetre on all three
++ * landmarks: around contact the wrist moves at least 14 cm between the frames of
++ * a 30 fps clip and 3.5 cm at 120. How close a real tracker's second read of one
++ * frame comes has not been measured.
++ */
++function withoutRepeats(frames: Frame[], R: ReturnType<typeof sided>): Frame[] {
++  const same = (a: Landmark | undefined, b: Landmark | undefined) =>
++    a !== undefined && b !== undefined && Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z) < ARM_REPEAT_M
++  return frames.filter((f, i) => {
++    const before = frames[i - 1]
++    return !before || ![R.shoulder, R.elbow, R.wrist].every((lm) => same(f.world[lm], before.world[lm]))
++  })
++}
++
+ /**
+  * The straightest racket arm within `ARM_EXTENSION_WINDOW` of contact, or nothing
+  * in reach. Off the sampled poses themselves when there is no curve to read: too
+  * few samples, or a clip that stops before the end of the window.
+  */
+-function straightestArm(frames: Frame[], contactT: number, R: ReturnType<typeof sided>): number | undefined {
++function straightestArm(
++  frames: Frame[],
++  contactT: number,
++  R: ReturnType<typeof sided>,
++  sideView: boolean,
++): number | undefined {
+   let best: number | undefined
++  const arm = [R.shoulder, R.elbow, R.wrist]
++  const reads = withoutRepeats(frames, R)
+   const path =
+     frames[frames.length - 1].t >= contactT + ARM_EXTENSION_WINDOW
+-      ? pathsThrough(frames, [R.shoulder, R.elbow, R.wrist], contactT + ARM_PATH_CENTRE, ARM_PATH_REACH)
++      ? pathsThrough(reads, arm, contactT + ARM_PATH_CENTRE, ARM_PATH_REACH)
+       : undefined
+   if (path) {
+-    const steps = Math.round((2 * ARM_EXTENSION_WINDOW) / ARM_PATH_STEP)
++    const depth = sideView ? pathsThrough(reads, arm, contactT + ARM_DEPTH_CENTRE, ARM_DEPTH_REACH, 'world', 1) : undefined
++    const first = contactT - ARM_EXTENSION_WINDOW
++    const last = Math.min(contactT + (depth ? ARM_SIDE_END : ARM_EXTENSION_WINDOW), frames[frames.length - 1].t)
++    const steps = Math.round((last - first) / ARM_PATH_STEP)
+     for (let i = 0; i <= steps; i++) {
+-      const [shoulder, elbow, wrist] = path(contactT - ARM_EXTENSION_WINDOW + i * ARM_PATH_STEP)
++      const t = first + i * ARM_PATH_STEP
++      const line = depth?.(t)
++      const [shoulder, elbow, wrist] = path(t).map((p, k) => (line ? { ...p, z: line[k].z } : p))
+       const angle = jointAngle(shoulder, elbow, wrist)
+       if (best === undefined || angle > best) best = angle
+     }
+@@ -638,7 +708,7 @@ export function measure(
+   // The top of the reach between samples, not the nearest sample's (L2.6).
+   values.contactHeight = contactHeightOf(frames, skel, R.wrist)
+   values.armExtension =
+-    straightestArm(frames, skel.times.contact, R) ??
++    straightestArm(frames, skel.times.contact, R, sideView) ??
+     steadyAngle(frames, keys.contact, R.shoulder, R.elbow, R.wrist)
+ 
+   {
+diff --git a/src/lib/analysis/mocapServe.ts b/src/lib/analysis/mocapServe.ts
+index cfd8de1..6fc8dae 100644
+--- a/src/lib/analysis/mocapServe.ts
++++ b/src/lib/analysis/mocapServe.ts
+@@ -503,6 +503,40 @@ export function slowedServe(serve: MocapServe, rate: number): MocapServe {
+   return { ...serve, id: `${serve.id}-slowed-${rate}`, count: times.length, xyz }
+ }
+ 
++/**
++ * A real serve with the elbow held `degrees` further bent through contact: the
++ * wrist, the hand and the racket turned about the elbow in the arm's own plane,
++ * easing in from 450 ms before the wrist's top and out to 400 ms after it.
++ * Landmarks only, for testing what reads the arm: the swing keeps the timing of
++ * the straighter arm it came from.
++ */
++export function bentElbow(serve: MocapServe, degrees: number): MocapServe {
++  const top = mocapTruth(serve).wristTop
++  const n = MOCAP_POINTS.length
++  const xyz = new Float32Array(serve.xyz)
++  const past = [`${serve.hand}Wrist`, `${serve.hand}Index`, `${serve.hand}Pinky`, 'racket'] as MocapPoint[]
++  for (let f = 0; f < serve.count; f++) {
++    const t = f / serve.rate
++    const weight = easing((t - (top - 0.45)) / 0.25) * (1 - easing((t - (top + 0.15)) / 0.25))
++    if (weight <= 0) continue
++    const elbow = pointAt(serve, `${serve.hand}Elbow`, f)
++    const axis = cross(sub(pointAt(serve, `${serve.hand}Shoulder`, f), elbow), sub(pointAt(serve, `${serve.hand}Wrist`, f), elbow))
++    if (!(Math.hypot(axis.x, axis.y, axis.z) > 1e-6)) continue
++    const u = unit(axis)
++    const turn = (-degrees * weight * Math.PI) / 180
++    for (const point of past) {
++      // Rodrigues: about `u` through the elbow, by `turn`, towards the shoulder.
++      const v = sub(pointAt(serve, point, f), elbow)
++      const p = add(elbow, add(add(scale(v, Math.cos(turn)), scale(cross(u, v), Math.sin(turn))), scale(u, dot(u, v) * (1 - Math.cos(turn)))))
++      const o = (f * n + INDEX[point]) * 3
++      xyz[o] = p.x
++      xyz[o + 1] = p.y
++      xyz[o + 2] = p.z
++    }
++  }
++  return { ...serve, id: `${serve.id}-bent-${degrees}`, xyz }
++}
++
+ /* ------------------------------------------------------------------ truth */
+ 
+ /**

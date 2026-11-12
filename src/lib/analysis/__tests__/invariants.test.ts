@@ -17,7 +17,7 @@ import { measure } from '../metrics'
 import { diagnose } from '../diagnose'
 import { LM, jointAngle, sided } from '../geometry'
 import { DRIFT_BUDGET, TRANSFORMS, budgetFor, decimate, driftBetween, rescale, tilt } from '../invariants'
-import { NOTABLE_ROLL, assessSpatial, levelFrames, levelPivot } from '../spatial'
+import { NOTABLE_ROLL, assessSpatial, levelFrames, levelPivot, levelled } from '../spatial'
 import { buildServe, CLEAN_SERVE, type ServeDials } from '../syntheticServe'
 import { assert, check, heading, note, report } from './harness'
 
@@ -29,7 +29,7 @@ const ASPECT = 1
  *
  * Including the levelling pass, which this skipped until the rig was re-posed
  * and a tilted phone started moving the shoulder tilt by a third of its band:
- * `runAnalysis` reads the roll, levels the clip if it is past `NOTABLE_ROLL` and
+ * `runAnalysis` reads the roll, levels the clip by what `levelled` takes out and
  * detects again, so a reader that does not is testing a pipeline nobody runs.
  * The order and arguments are `runAnalysis`'s, as `src/dev/mocap/engine.ts` has
  * them.
@@ -38,7 +38,7 @@ function readServe(input: ReturnType<typeof buildServe>, fps = FPS) {
   let frames = input
   let skel = detectServe(frames, fps)
   const { roll_deg } = assessSpatial(frames, skel.keys.ready, skel.bodyHeight)
-  if (Math.abs(roll_deg) >= NOTABLE_ROLL) {
+  if (levelled(roll_deg) !== 0) {
     frames = levelFrames(frames, roll_deg, levelPivot(frames))
     skel = detectServe(frames, fps)
   }
@@ -211,6 +211,23 @@ check('tilting rolls the picture and the 3D pose by the same amount, once', () =
   const skel = detectServe(rolled, FPS)
   const read = assessSpatial(rolled, skel.keys.ready, skel.bodyHeight).roll_deg
   assert(Math.abs(read - 6) <= 1, `the pipeline read ${read}° of roll off a 6° tilt`)
+})
+
+check('levelling has no edge for a stance to sit on', () => {
+  // A stance reading 3.99° was levelled on 566 takes of 960 and contact height
+  // jumped 0.044 between the two (H37). So the correction grows from nothing, from
+  // 5°, past the 3.2° to 5.1° real stances read on a level phone.
+  assert(levelled(NOTABLE_ROLL) === 0 && levelled(5) === 0 && levelled(2) === 0, 'a roll under the ramp was corrected')
+  assert(levelled(7) === 7 && levelled(-7) === -7 && levelled(12) === 12, 'a phone seven degrees off was not corrected whole')
+  assert(levelled(6) === -levelled(-6), 'the two sides are corrected differently')
+  // A thousandth of a degree of reading never moves the correction by more than
+  // the ramp's own slope allows, 4.5 at the top: there is no edge in it.
+  for (let r = 0; r < 12; r += 0.001) {
+    const step = Math.abs(levelled(r + 0.001) - levelled(r))
+    assert(step <= 0.005, `the correction jumps ${step.toFixed(4)}° at ${r.toFixed(3)}° of roll`)
+  }
+  const frames = buildServe(CLEAN_SERVE, FPS)
+  assert(levelFrames(frames, NOTABLE_ROLL) === frames, 'a clip at the line was copied for nothing')
 })
 
 note(`drift budget: ${DRIFT_BUDGET * 100}% of a measurement's own target band`)

@@ -694,17 +694,19 @@ const FLAW_COPY_FOR = (flaw: FlawId) =>
 const behindFinding = (dials: Partial<ServeDials>, serveType: ServeType = 'flat', tier = 5) =>
   run(dials, tier, undefined, serveType).diagnosis.flaws.find((f) => f.flaw === 'contact_behind')
 
-check('the rig met 0.25 m back is named on a flat serve and not a kick; 0.35 m on both; clean on neither', () => {
+check('the rig met 0.25 m back is named on a flat serve and not a kick; 0.45 m on both; clean on neither', () => {
   const clean = behindFinding({})
   const flat25 = behindFinding({ contactBehind: 0.25 })
   const kick25 = behindFinding({ contactBehind: 0.25 }, 'kick')
-  const flat35 = behindFinding({ contactBehind: 0.35 })
-  const kick35 = behindFinding({ contactBehind: 0.35 }, 'kick')
-  note(`clean ${clean?.value}, 0.25 m back ${flat25?.value} (kick floor ${kick25?.target[0]}), 0.35 m back ${flat35?.value}`)
+  // 0.35 m read -3.4 on a kick, which was named until contact ahead's floor rose
+  // to 5, what the app's own read asks for (H40). It is inside that noise now.
+  const flat45 = behindFinding({ contactBehind: 0.45 })
+  const kick45 = behindFinding({ contactBehind: 0.45 }, 'kick')
+  note(`clean ${clean?.value}, 0.25 m back ${flat25?.value} (kick floor ${kick25?.target[0]}), 0.45 m back ${flat45?.value}`)
   assert(clean !== undefined && !clean.detected, 'the clean serve was named or not read')
   assert(flat25?.detected === true, 'a flat serve met 0.25 m back was not named')
   assert(kick25?.detected === false && kick25.target[0] === 0, 'a kick met over the head was named against a floor above 0')
-  assert(flat35?.detected === true && kick35?.detected === true, 'a ball met behind the head was not named')
+  assert(flat45?.detected === true && kick45?.detected === true, 'a ball met behind the head was not named')
 })
 
 check('read from the side only, filed with the toss, and its copy names the toss', () => {

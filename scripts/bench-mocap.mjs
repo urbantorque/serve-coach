@@ -109,7 +109,7 @@ if (process.argv.includes('--serve-cues')) {
   const behind = mocap.measureCues(serves, mocap.BEHIND_PLACEMENT, takes)
   const sideSpreads = mocap.cueSpreads(side)
   const behindSpreads = mocap.cueSpreads(behind)
-  console.log('From the guide, 30 fps on the 32 Hz read, MediaPipe noise:\n' + mocap.formatCues(sideSpreads))
+  console.log('From the guide, a 30 fps file read on its frames, MediaPipe noise:\n' + mocap.formatCues(sideSpreads))
   console.log('\nFrom the back fence:\n' + mocap.formatCues(behindSpreads))
   console.log('\nA guess from one reading on the player own tags, by how much slower the second serves ran:')
   const cues = ['handPeak', 'elbowPeak', 'handLast120', 'dropToContact', 'motion', 'tossToContact']

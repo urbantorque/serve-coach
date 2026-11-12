@@ -154,7 +154,7 @@ function localFit(t: ArrayLike<number>, x: ArrayLike<number>, t0: number, W: num
 }
 
 /** The fastest moment of a path, from a local cubic slid along it. Null on an edge. */
-function localCubicPeak(t: Float32Array, path: Float32Array[], from: number, to: number, W: number, signed: boolean): number | null {
+function localCubicPeak(t: Float64Array, path: Float32Array[], from: number, to: number, W: number, signed: boolean): number | null {
   const step = 0.004
   let a = 0
   while (a < t.length - 1 && t[a] < from - W) a++
@@ -177,7 +177,7 @@ function localCubicPeak(t: Float32Array, path: Float32Array[], from: number, to:
 }
 
 /** The fastest moment of a natural cubic spline through every sample: interpolation and no smoothing. */
-function splinePeak(t: Float32Array, path: Float32Array[], from: number, to: number, signed: boolean): number | null {
+function splinePeak(t: Float64Array, path: Float32Array[], from: number, to: number, signed: boolean): number | null {
   const n = t.length
   const rate = path.map((y) => {
     const lower = new Float64Array(n)
@@ -308,17 +308,18 @@ export function readPeaks(frames: Frame[], skel: Skeleton): Record<Method, Readi
 export interface Clip {
   name: string
   fps: number
-  /** The rate the app reads the file at, when that is not the file's own. */
-  grid?: number
+  /** How the app reads the file, when that is not simply every frame of it. */
+  read?: 'frames' | 'even'
 }
 
-/** What a phone records, and the two reads the app makes of a real-time file. */
+/** The app's two reads of a real-time file, and the same film with every frame read. */
 export const CLIPS: Clip[] = [
-  { name: '30 fps', fps: 30 },
-  { name: '30 read at 32', fps: 30, grid: 32 },
-  { name: '60 read at 32', fps: 60, grid: 32 },
-  { name: '60 fps', fps: 60 },
-  { name: '120 fps', fps: 120 },
+  { name: '30 fps file', fps: 30, read: 'frames' },
+  { name: '60 fps file', fps: 60, read: 'frames' },
+  { name: '30, rate unknown', fps: 30, read: 'even' },
+  { name: '60, rate unknown', fps: 60, read: 'even' },
+  { name: '60 fps, every frame', fps: 60 },
+  { name: '120 fps, every frame', fps: 120 },
 ]
 
 export const NOISES: { name: string; fit?: TrackerFit }[] = [
@@ -372,8 +373,8 @@ export function benchChain(serves: MocapServe[], placement: Placement, takes = 8
     for (const clip of CLIPS) {
       for (const noise of NOISES) {
         for (const seed of seeds) {
-          const frames = trackedTake(serve, { fps: clip.fps, grid: clip.grid, fit: noise.fit, seed, phone: placement.phone })
-          const rate = clip.grid ?? clip.fps
+          const frames = trackedTake(serve, { fps: clip.fps, read: clip.read, fit: noise.fit, seed, phone: placement.phone })
+          const rate = clip.read ? 32 : clip.fps
           let skel: Skeleton
           try {
             skel = detectServe(frames, rate)
@@ -475,8 +476,8 @@ export function benchCalls(serves: MocapServe[], placement: Placement, delays: n
         const t = chainTruth(planted)
         truth += (t.elbow - t.legs) * 1000
         for (const seed of seeds) {
-          const frames = trackedTake(planted, { fps: clip.fps, grid: clip.grid, fit: MEDIAPIPE_FIT, seed, phone: placement.phone })
-          const rate = clip.grid ?? clip.fps
+          const frames = trackedTake(planted, { fps: clip.fps, read: clip.read, fit: MEDIAPIPE_FIT, seed, phone: placement.phone })
+          const rate = clip.read ? 32 : clip.fps
           try {
             const order = diagnose(frames, detectServe(frames, rate)).legLead?.order
             tally[order ?? 'unread']++

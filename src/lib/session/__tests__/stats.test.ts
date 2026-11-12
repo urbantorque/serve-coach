@@ -21,22 +21,12 @@ import { CARD_NOISE_SD } from '../../analysis/consistency'
 import { overallOf } from '../../analysis/coaching'
 import { diagnose } from '../../analysis/diagnose'
 import type { FlawId } from '../../analysis/flaws'
-import { LM } from '../../analysis/geometry'
 import { measure } from '../../analysis/metrics'
-import { filmMocap } from '../../analysis/mocapServe'
 import { detectServe } from '../../analysis/phases'
 import { assessSpatial, viewFromCourtYaw } from '../../analysis/spatial'
 import { buildServe, type ServeDials } from '../../analysis/syntheticServe'
 import type { Analysis, Frame } from '../../analysis/types'
-import {
-  DEPTH_AWARE,
-  DEPTH_BIAS,
-  DEPTH_MULTIPLIER,
-  IN_PLANE,
-  REAL_SERVES,
-  SEEDS,
-  seeds,
-} from '../../analysis/__tests__/repeatability'
+import { DEPTH_AWARE, REAL_SERVES, SEEDS, realOnFile, seeds } from '../../analysis/__tests__/repeatability'
 import { assert, check, heading, note, report } from '../../analysis/__tests__/harness'
 
 /* ------------------------------------------------------- seeded timelines */
@@ -268,9 +258,6 @@ check('unclear serves are counted and kept out of everything else', () => {
 
 heading('The engine, on real motion')
 
-const stature = (f: Frame) => (Math.max(f.image[LM.leftAnkle].y, f.image[LM.rightAnkle].y) - f.image[LM.nose].y) / 0.93
-const RIG = stature(buildServe({}, 50)[0])
-
 /** One take read as a session reads a serve: the engine, then `lineOf`. */
 function lineFrom(frames: Frame[], number: number): ServeLine | undefined {
   let skel
@@ -293,22 +280,9 @@ function lineFrom(frames: Frame[], number: number): ServeLine | undefined {
 
 /** Every take of every Bath serve from one placement, as one basket per serve. */
 function bathBaskets(phone: { bearing?: number; distance?: number }): ServeLine[][] {
-  return REAL_SERVES.map((serve) => {
-    const scale = stature(filmMocap(serve, { ...phone, fps: 50 })[0]) / RIG
-    return SEEDS.map((seed, i) =>
-      lineFrom(
-        filmMocap(serve, {
-          ...phone,
-          fps: 50,
-          seed,
-          noise: IN_PLANE * scale,
-          depthNoise: DEPTH_MULTIPLIER,
-          depthBias: DEPTH_BIAS * scale,
-        }),
-        i + 1,
-      ),
-    ).filter((l): l is ServeLine => l !== undefined)
-  })
+  return REAL_SERVES.map((serve) =>
+    SEEDS.map((seed, i) => lineFrom(realOnFile(serve, phone, seed, 30), i + 1)).filter((l): l is ServeLine => l !== undefined),
+  )
 }
 
 check('the Bath serves as baskets name fewer faults than the same takes judged one at a time', () => {

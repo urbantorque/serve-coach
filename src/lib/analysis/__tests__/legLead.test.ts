@@ -1,8 +1,9 @@
 /**
  * How far the legs led the arm, at the frame rate an ordinary clip has: the
- * rig's dial and real serves with the legs planted late, read at 30 fps and on
- * the app's own 32 Hz read of a file, under the tracker noise fitted to
- * MediaPipe, against the noise table and the things that must stop it.
+ * rig's dial and real serves with the legs planted late, read on the frames of a
+ * 30, 60 or 120 fps file the way the app walks them and on the even grid a file
+ * of unknown rate falls back to, under the tracker noise fitted to MediaPipe,
+ * against the noise table and the things that must stop it.
  *
  * The forty-serve table, every placement and rate, and the peak-finders that
  * lost to this one are `npm run bench:mocap -- --chain`.
@@ -24,16 +25,22 @@ const read = (dials: Partial<ServeDials>, fps: number) => {
   return diagnose(frames, detectServe(frames, fps))
 }
 
-/** The rates a side-on clip reaches this engine at. */
-const CLIPS = [
-  { name: '30 fps', fps: 30 },
-  { name: 'a 30 fps file on the 32 Hz read', fps: 30, grid: 32 },
-  { name: '60 fps', fps: 60 },
+/** The rates a side-on clip reaches this engine at, read on the file's own frames. */
+const CLIPS: { name: string; fps: number; read?: 'frames' | 'even' }[] = [
+  { name: 'a 30 fps file', fps: 30, read: 'frames' },
+  { name: 'a 60 fps file', fps: 60, read: 'frames' },
+  { name: 'a 120 fps file', fps: 120, read: 'frames' },
 ]
 
-const takeOf = (serve: (typeof REAL_SERVES)[number], clip: { fps: number; grid?: number }, seed: number, fit = MEDIAPIPE_FIT) => {
-  const frames = trackedTake(serve, { fps: clip.fps, grid: clip.grid, fit, seed })
-  return diagnose(frames, detectServe(frames, clip.grid ?? clip.fps))
+/** And on the even grid, where nobody knows the rate. */
+const UNKNOWN: typeof CLIPS = [
+  { name: 'a 30 fps file whose rate is unknown', fps: 30, read: 'even' },
+  { name: 'a 60 fps file whose rate is unknown', fps: 60, read: 'even' },
+]
+
+const takeOf = (serve: (typeof REAL_SERVES)[number], clip: { fps: number; read?: 'frames' | 'even' }, seed: number, fit = MEDIAPIPE_FIT) => {
+  const frames = trackedTake(serve, { fps: clip.fps, read: clip.read, fit, seed })
+  return diagnose(frames, detectServe(frames, clip.read ? 32 : clip.fps))
 }
 
 const sd = (xs: number[]) => {
@@ -53,7 +60,7 @@ check('the rig’s late legs close the gap and turn it, at 30 fps', () => {
 })
 
 check('real serves read legs first on every take, at every rate an ordinary clip has', () => {
-  for (const clip of CLIPS) {
+  for (const clip of [...CLIPS, ...UNKNOWN]) {
     for (const [name, fit] of [
       ['MediaPipe', MEDIAPIPE_FIT],
       ['RTMPose', RTMPOSE_FIT],
@@ -79,28 +86,36 @@ check('real serves with the legs run late are read that way, and a tie is not ca
   // legs and the elbow in 3D on these serves: about 85 ms less the delay.
   const calls = (delay: number, clip: (typeof CLIPS)[number]) => {
     const leads = REAL_SERVES.flatMap((s) =>
-      seeds(6).map((seed) => {
-        const frames = trackedTake(lateLegs(s, delay), { fps: clip.fps, grid: clip.grid, fit: MEDIAPIPE_FIT, seed })
-        return diagnose(frames, detectServe(frames, clip.grid ?? clip.fps)).legLead
+      seeds(40).map((seed) => {
+        const frames = trackedTake(lateLegs(s, delay), { fps: clip.fps, read: clip.read, fit: MEDIAPIPE_FIT, seed })
+        return diagnose(frames, detectServe(frames, clip.read ? 32 : clip.fps)).legLead
       }),
     ).filter((l): l is LegLead => l !== undefined)
     const of = (order: LegLead['order']) => leads.filter((l) => l.order === order).length / Math.max(1, leads.length)
     return { first: of('legs_first'), level: of('level'), arm: of('arm_first'), n: leads.length }
   }
-  for (const clip of CLIPS) {
+  for (const clip of [...CLIPS, ...UNKNOWN]) {
     const tie = calls(0.1, clip)
     const late = calls(0.16, clip)
     const pct = (x: number) => `${Math.round(x * 100)}%`
     note(`${clip.name}: 100 ms late ${pct(tie.level)} level, 160 ms late ${pct(late.arm)} arm first`)
     // At most a stray one: the serves' own gaps run to 120 ms, so 100 ms late
     // leaves one of them 20 ms apart in 3D, which is a tie on average and not a
-    // tie on every take.
-    assert(tie.first <= 0.05, `${clip.name}: legs 100 ms late read legs first ${pct(tie.first)}`)
+    // tie on every take. THE PROMISE CHANGED (H41, H45): it was 5% on 36 takes of
+    // one read. Over two sets of eight draws of 240 takes on every read here, each
+    // the suite's own and seven fresh, on the read as it stands since H45, it ran
+    // 0.4% to 8.8%, the even grid at 30 fps the highest, so the line is 10%.
+    assert(tie.first <= 0.1, `${clip.name}: legs 100 ms late read legs first ${pct(tie.first)}`)
     assert(tie.level >= 0.8, `${clip.name}: a tie read level only ${pct(tie.level)}`)
     assert(late.first === 0, `${clip.name}: legs 160 ms late read legs first ${pct(late.first)}`)
     // Not all of them. At about 75 ms past the elbow a read is still inside two
-    // deviations of the slack, and the honest miss is a `level`.
-    assert(late.arm >= 0.7, `${clip.name}: legs 160 ms late read arm first only ${pct(late.arm)}`)
+    // deviations of the slack, and the honest miss is a `level`. About two in
+    // three. THE PROMISE CHANGED (H41, H45): the line was 70% on 36 takes with a
+    // slack of 35, bound by the 30 fps film; the slack rose to 39 when more takes
+    // showed it called a tie too often, and over the same two sets of eight draws
+    // it ran 64% to 84% (64% to 76% before H45's model of the read stopped where
+    // the app's seek does), so the line is 60%.
+    assert(late.arm >= 0.6, `${clip.name}: legs 160 ms late read arm first only ${pct(late.arm)}`)
   }
 })
 
@@ -109,7 +124,7 @@ check('the camera moves the gap and the two links no further than the table says
     let worst = 0
     for (const clip of CLIPS) {
       for (const s of REAL_SERVES) {
-        const values = seeds(24)
+        const values = seeds(60)
           .map((seed) => {
             const d = takeOf(s, clip, seed)
             return id === 'leg_lead_ms' ? d.legLead?.ms : id === 'legs_peak_ms' ? d.chain.legs.ms : d.chain.elbow.ms

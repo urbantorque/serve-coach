@@ -44,7 +44,7 @@
  * see `CORPUS.md` for where that line is drawn and why.
  */
 import { mirrorFrames } from './mirror'
-import { levelFrames } from './spatial'
+import { rolledFrames } from './spatial'
 import type { Frame, Landmark } from './types'
 
 /**
@@ -57,8 +57,7 @@ import type { Frame, Landmark } from './types'
  * player filmed twice; this gets most of the answer off one clip.
  *
  * Timestamps are carried through untouched rather than re-spaced, because that
- * is what a real slower camera produces — see `seekTo`, which files every frame
- * under the time the playhead actually reached.
+ * is what a real slower camera produces.
  */
 export function decimate(frames: readonly Frame[], keep = 2): Frame[] {
   const out: Frame[] = []
@@ -94,15 +93,12 @@ export function rescale(frames: readonly Frame[], factor: number, about = { x: 0
 /**
  * A phone held at an angle, which the levelling pass claims to undo.
  *
- * BOTH SPACES, and the first attempt at this rotated only one. `levelFrames` is
- * the pipeline's own correction and touches image coordinates alone, correctly —
- * it is undoing a rotation of the *picture*. Using it on its own as a stand-in
- * for a tilted phone is not the same thing: a camera rolled six degrees also
- * rolls the world-space landmarks the model returns, because those are reported
- * in a frame aligned to the image. Rotating one and not the other produces a
- * body whose picture is tilted and whose 3D pose is not, which no camera can
- * produce — and it showed up immediately as `contactAhead` moving half its band
- * under a transform that should not have touched it.
+ * BOTH SPACES, and the first attempt at this rotated only one. A camera rolled
+ * six degrees also rolls the world-space landmarks the model returns, because
+ * those are reported in a frame aligned to the image. Rotating one and not the
+ * other produces a body whose picture is tilted and whose 3D pose is not, which
+ * no camera can produce — and it showed up immediately as `contactAhead` moving
+ * half its band under a transform that should not have touched it.
  *
  * That is worth recording as the general rule for this file: a transform that
  * is not a faithful model of a way of filming does not test the engine, it
@@ -111,19 +107,18 @@ export function rescale(frames: readonly Frame[], factor: number, about = { x: 0
  */
 export function tilt(frames: readonly Frame[], degrees: number): Frame[] {
   /*
-   * ONE CALL, BOTH SPACES. `levelFrames` rotates the world landmarks alongside
-   * the image ones (it has since before this transform was written — see its
-   * own comment in `spatial.ts`), so un-levelling by the roll rolls both, once,
-   * which is what a tilted phone hands over.
+   * ONE CALL, BOTH SPACES. `rolledFrames` rotates the world landmarks alongside
+   * the image ones, so rolling by the angle rolls both, once, which is what a
+   * tilted phone hands over.
    *
-   * This used to rotate the world here as well and then call `levelFrames`,
-   * which rolled the image six degrees and the world twelve. The engine's own
+   * This used to rotate the world here as well and then roll the frames, which
+   * rolled the image six degrees and the world twelve. The engine's own
    * levelling then took six back off each and left the world rolled by six
    * that no camera put there — and that residue was what the three roll gaps
    * below were measuring. A transform that is not a faithful model of a way of
    * filming tests the transform; this one did, for two months.
    */
-  return levelFrames([...frames], -degrees, { cx: 0.5, cy: 0.5 })
+  return rolledFrames([...frames], degrees, { cx: 0.5, cy: 0.5 })
 }
 
 /**
@@ -198,9 +193,11 @@ export const TRANSFORMS: {
     apply: (f) => rescale(f, 1.25),
   },
   {
-    name: 'phone held 6 degrees off level',
+    // Eight degrees, where the correction is whole: it grows from nothing at 5° and
+    // is whole from 7° (H37), so at six the clip is only half levelled by design.
+    name: 'phone held 8 degrees off level',
     proves: 'the levelling pass recovers a tilt rather than only claiming to',
-    apply: (f) => tilt(f, 6),
+    apply: (f) => tilt(f, 8),
     // No sign flips. A roll rotates the body in the picture; it does not reverse
     // the sense of anything, unlike a mirror. Listing them here was a copy of
     // the mirror's entry, and it hid `shoulderTilt` behind a magnitude

@@ -388,10 +388,21 @@ export interface PoseSample {
  * of a second, and twelve invented frames in a row is a fabricated stretch of
  * serve however briefly it lasted. Together they come to one or two missed
  * samples at the 24–32 fps the app actually reads at, which is what a tracker
- * losing a limb for a moment looks like.
+ * losing a limb for a moment looks like. 0.112 s: two missed samples from 27 Hz
+ * up, one at 24 and 25. At 0.1 a 30.00 Hz read bridged two missed samples and a
+ * 29.97 Hz read did not, and refused 16 serves in 180 for it.
+ *
+ * What it leaves open (H45, H46): two missed samples on any even read under 26.8
+ * a second (a 20 to 26 fps file, the blind window of a 60 fps file walked at 20),
+ * and on the spread of a clip the budget cannot walk wherever the three gaps
+ * around the hole come to more than 0.112 s: any two-frame gap at 30 fps, any
+ * three-frame gap at 60, and always on the blind window of a 25 or 50 fps file.
+ * A hole left open across contact is refused as a clip that ends before the
+ * racket reaches the ball, which is not the reason; bridging one frame more turns
+ * those into too few frames, which is not the reason either.
  */
 export const MAX_BRIDGED_SAMPLES = 3
-export const MAX_BRIDGED_SPAN = 0.1
+export const MAX_BRIDGED_SPAN = 0.112
 
 /**
  * What a bridged landmark admits about itself.
@@ -426,7 +437,7 @@ export const BRIDGED_VISIBILITY = 0
  * is no evidence whatsoever about where the motion went after the last thing
  * anybody saw.
  */
-export function bridgeDetectionGaps(samples: PoseSample[]): Frame[] {
+export function bridgeDetectionGaps(samples: PoseSample[], stretch = 1): Frame[] {
   const bridged = new Set<number>()
   for (let i = 0; i < samples.length; ) {
     if (samples[i].pose) {
@@ -437,7 +448,10 @@ export function bridgeDetectionGaps(samples: PoseSample[]): Frame[] {
     while (end < samples.length && !samples[end].pose) end++
     const before = i - 1
     if (before >= 0 && end < samples.length) {
-      const coast = samples[end].t - samples[before].t
+      // On the serve's clock. The samples are seconds of file, and on slow motion a
+      // missed sample is a tenth of a second of file and a fortieth of serve: judged
+      // on the file a 4x or 8x clip bridged nothing (H45).
+      const coast = (samples[end].t - samples[before].t) / Math.max(1, stretch)
       if (end - i <= MAX_BRIDGED_SAMPLES && coast <= MAX_BRIDGED_SPAN + 1e-9) {
         for (let k = i; k < end; k++) bridged.add(k)
       }

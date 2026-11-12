@@ -97,7 +97,24 @@ export interface Frame {
 // (L2.6, `between.ts`), which raises contact height slightly at lower frame rates;
 // and the shoulders turned past the hips stopped being scored, its noise floor
 // being as wide as its band, so the Loading card averages three rows, not four.
-export const SCORING_VERSION = 5
+// 6: the read walks the file's own frames, the toss is read over a fixed time and
+// levelling grows from nothing (H35–H37), and the fault floors rose on that read
+// (H40). Each moves the number a saved report already carries: the frames a 30 fps
+// file is read on; a toss from behind by up to about 3.5 points on a whole clip
+// of four seconds and under 1 on a located window; and on a level phone, the
+// contact height and shoulder tilt of a stance near the line.
+export const SCORING_VERSION = 6
+
+/**
+ * Which rule bounded a basket's register lines: the arm, the landing and the
+ * sequence. A stored basket keeps its lines only under the rule that wrote them,
+ * so when a rule is found wrong, raising this retires every line it wrote without
+ * touching the scores (H45).
+ *
+ * 1: each line bounded by the noise of that many serves (`rangeReach`), the
+ * sequence read side-on only and the arm front-back only.
+ */
+export const REGISTER_RULE = 1
 
 /**
  * What each scoring version changed (L3.11): only the card's bands or its
@@ -124,6 +141,8 @@ export const SCORING_KINDS: Record<number, 'card-bands' | 'measurement'> = {
   4: 'measurement',
   // The camera, the keyframes and five noise floors: see above.
   5: 'measurement',
+  // The read, the toss window, levelling and the fault floors: see above.
+  6: 'measurement',
 }
 
 /**

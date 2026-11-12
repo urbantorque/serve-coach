@@ -143,7 +143,7 @@ export const FLAWS: FlawSpec[] = [
    * in Fleisig 2003 the upper torso peaks before the pelvis in Olympic servers,
    * and in a 2024 IMU study of professionals (van Trigt, Front Sports Act Living
    * 6:1463299) pelvis and trunk peaks were often reversed and their timing was
-   * not associated with ball speed. Its own noise floor (76 ms) was already
+   * not associated with ball speed. Its own noise floor (88 ms) was already
    * above the 45 ms it called serious — see `UNDER_RESOLVED.hip_lead_ms`. What
    * the evidence does tie to an arm-only serve is legs that do not drive, which
    * is `no_leg_drive` below. Kept, so old reports keep their findings.

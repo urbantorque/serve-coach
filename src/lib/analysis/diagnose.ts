@@ -17,8 +17,8 @@
 import { LM, clamp, jointAngle, mean, median, sided, trunkCoilReading } from './geometry'
 import { imageXSplitFrom, readImageX } from './axes'
 import { DEPTH_COLLAPSED, SWEEP_UNRESOLVED, blurTrust, restingTrust } from './confidence'
-import { ER_DEVIATION_DEG, ER_LEAN_SENSITIVITY } from './erNoise'
-export { ER_DEVIATION_DEG, ER_LEAN_SENSITIVITY }
+import { ER_DEVIATION_DEG, ER_FRONT_BACK_DEVIATION_DEG, ER_LEAN_SENSITIVITY } from './erNoise'
+export { ER_DEVIATION_DEG, ER_FRONT_BACK_DEVIATION_DEG, ER_LEAN_SENSITIVITY }
 import { assessSpatial, viewFromCourtYaw } from './spatial'
 import { readStance, type Stance } from './stance'
 import { readTossPlacement, type TossPlacement } from './tossPlacement'
@@ -26,7 +26,7 @@ import { readHitch, type Hitch } from './hitch'
 import { readLegLead, type LegLead } from './legLead'
 import { readChestTurn, type ChestTurn } from './chestTurn'
 import { contactHeightOf } from './handHeight'
-import { tossPathSpread } from './tossPath'
+import { tossLiftStart, tossPathSpread } from './tossPath'
 import { contactAheadOf } from './contactAhead'
 import { tossArmHoldOf } from './tossArm'
 import { landingTravelOf, type LandingTravel } from './landingTravel'
@@ -615,8 +615,22 @@ const DEPTH_DOMINATES = 1.3
  * club player's whole trophy-to-contact stretch. Past here the smoothing starts
  * averaging one link's peak into its neighbour's, which is the one failure that
  * would make the chain look *more* ordered than it is.
+ *
+ * 0.0898 rather than 0.09 (H45): at 50 samples a second 0.09 is four and a half
+ * samples, and the last digit of two stamps chose four or five by where the serve
+ * sat in the file. It is four now, as most of the suite's films read it (its 1.1 s
+ * tempo films read five, and depth.test's tempo figures moved with them). It is the
+ * same whole number of samples as before on every walk of a phone's file except at
+ * 50. Where the mean rate is not a file's own (the even grid of a clip of unknown
+ * rate, the spread of a clip the budget cannot walk) the edge between k and k + 1
+ * samples moved (k + 0.5) x 0.025 a second. In real time that is 0.06 a second: a
+ * 60 fps clip of 259 frames (read on 258), and a clip of unknown rate 4.275 to
+ * 4.284 s long, read whole, take two samples where they took three, as a clip one
+ * frame longer already did. On slow motion read as a spread or on the grid the
+ * edges moved 0.1 to 0.26 a second: a 4x clip of a 30 fps file 4.52-4.58,
+ * 5.05-5.11 or 5.72-5.78 s long lost a sample of radius (H46).
  */
-export const CHAIN_WINDOW_SECONDS = 0.09
+export const CHAIN_WINDOW_SECONDS = 0.0898
 
 /**
  * The smoothing window the TRUNK PAIR is measured through, as a radius in
@@ -694,7 +708,7 @@ export const CHAIN_WINDOW_SECONDS = 0.09
  * the value in question, re-running, and putting it back. No test-only override,
  * for the reason that note gives — a production door held open for a table.
  */
-const TRUNK_WINDOW_SECONDS = 0.15
+const TRUNK_WINDOW_SECONDS = 0.165
 
 /**
  * How far either side of the swing the chain's peaks are looked for, in seconds.
@@ -787,16 +801,24 @@ export function diagnose(
   )
   const handConfidence = mean(Array.from(seen))
 
+  // 0.0698 and 0.0902 rather than 0.07 and 0.09: at 50 samples a second those are
+  // three and a half and four and a half steps from a contact on a sample, and the
+  // stamps' last digit picked the side by where the serve sat in the file (H45).
+  // Three back and five on now, the side nearly every one of the suite's 50 fps
+  // films took, and the window's shape at 30 and 60 (two and three, four and five).
+  // One real-time read moved besides (H46): the even grid of a clip of unknown rate
+  // 4.285 to 4.293 s long, read whole, now ends three samples after contact, not
+  // two; slow motion read on the grid moved both ends at a few lengths.
   const pronation = pronationBetween(
     frames,
     skel.racket,
-    sampleAt(t, contactT - 0.07),
-    sampleAt(t, contactT + 0.09),
+    sampleAt(t, contactT - 0.0698),
+    sampleAt(t, contactT + 0.0902),
   )
   const contactHandConfidence = windowVisibility(
     frames,
-    sampleAt(t, contactT - 0.07),
-    sampleAt(t, contactT + 0.09),
+    sampleAt(t, contactT - 0.0698),
+    sampleAt(t, contactT + 0.0902),
     [R.wrist, skel.racket === 'left' ? LM.leftIndex : LM.rightIndex],
   )
 
@@ -831,21 +853,21 @@ export function diagnose(
    *
    *     link        read from        deviation    band it would be graded on
    *     legs        image y             7.5 ms    none — see UNCALIBRATED
-   *     hips        world z            46.0 ms    hip_lead_ms, floor 76
-   *     shoulders   world z            13.0 ms    hip_lead_ms, floor 76
-   *     elbow       image x, y          0.7 ms    none — see UNCALIBRATED
-   *     wrist       image x, y          0.5 ms    none — see UNCALIBRATED
+   *     hips        world z            41.8 ms    hip_lead_ms, floor 88
+   *     shoulders   world z             8.6 ms    hip_lead_ms, floor 88
+   *     elbow       image x, y          1.5 ms    none — see UNCALIBRATED
+   *     wrist       image x, y          0.7 ms    none — see UNCALIBRATED
    *
-   * Two orders of magnitude between the two provenances, on the same clip, from
-   * the same tracker, in the same pass. That is the finding, and it is why the
+   * (As printed on 2026-11-08.) Up to sixty times between the two provenances, on
+   * the same clip, from the same tracker, in the same pass. That is the finding, and it is why the
    * three new links are built the way they are rather than as five more yaws.
    *
    * The trunk pair reads better here than it did when this table was written —
    * 53.3 and 27.6 — because it has since been moved onto a time-based smoothing
    * window of its own (`TRUNK_WINDOW_SECONDS`). The gap between the provenances
    * narrowed and did not close, and the three image-plane figures did not move
-   * at all, which is what says the remaining distance belongs to world z rather
-   * than to how either group was filtered.
+   * when the trunk window came in, which is what says the remaining distance
+   * belongs to world z rather than to how either group was filtered.
    *
    * It buys no new flaw, and the honesty of that is the other half of the work.
    * A repeatable measurement is necessary and nowhere near sufficient: a number
@@ -1005,7 +1027,7 @@ export function diagnose(
   const landingFeet = landing.offset === null ? undefined : readLandingFeet(at(keys.contact), at(keys.finish), skel, bodyHeight)
 
   /* --- the toss --------------------------------------------------------- */
-  const liftFrom = clamp(keys.toss - Math.round(frames.length * 0.12), keys.ready, keys.toss - 1)
+  const liftFrom = tossLiftStart(frames, keys.toss, keys.ready)
   // Drift along image x, then along the body axis image x turns out to be. This
   // used to stop at the first step and the signal was named `toss_drift_ratio`
   // off the back of a function called `lateralDrift`, so the flaw it feeds — and
@@ -1016,7 +1038,7 @@ export function diagnose(
   // of standing height, judged against the card's band: one toss, judged once.
   const driftImageX = tossPathSpread(frames, liftFrom, keys.toss, T.wrist, bodyHeight)
   const driftAxis = imageX.dominant
-  const drift = driftAxis
+  const drift = driftAxis && driftImageX !== null
     ? readImageX(driftImageX, driftAxis, imageX)
     : { value: null, confidence: 0 }
 
@@ -1350,7 +1372,7 @@ export function diagnose(
  * window of zero width has no interior and `peakTimeInside` would drop every
  * link on a clip sampled slowly enough.
  */
-const secondsToFrames = (t: Float32Array, seconds: number): number =>
+const secondsToFrames = (t: Float64Array, seconds: number): number =>
   Math.max(1, sampleRadius(t, seconds, 30))
 
 /** Mean of the worst-seen landmark per frame across a window. */
@@ -1470,21 +1492,27 @@ export const LANDING_WIDE_DEVIATION = 0.0045
 /* ------------------------------------- what a chain-ratio reading is worth -- *
  *
  * Measured in R50·3's premise cycle, across twelve seeds at each of the three
- * tempos the register itself swept. The register's own 21% is the TOTAL spread
+ * tempos the register itself swept. The register's own figure (21% then, 33% on
+ * one seed of the app's read now) is the TOTAL spread
  * with seed noise folded in — right for asking whether the quantity is bandable,
  * wrong for bounding a difference between two readings. These are the two terms
  * that figure is made of.
  */
 
-/** Deviation of the ratio between takes, flat across tempo — which is what makes the terms separable. */
-export const CHAIN_RATIO_DEVIATION = 0.0067
 /**
- * How far the mean moves per second of tempo difference: 13.5% across a 0.6 s
- * range. It was 0.0102 (5.7%) until the rig's swing was re-posed on the Bath
+ * Deviation of the ratio between takes, flat across tempo — which is what makes
+ * the terms separable. 0.0075 since H44: the worst Bath serve from the guide on
+ * the app's read moved it 0.0074, against 0.0067 on the rig at 50 fps.
+ */
+export const CHAIN_RATIO_DEVIATION = 0.0075
+/**
+ * How far the mean moves per second of tempo difference: 13.8% across a 0.6 s
+ * range, as `depth.test.ts` prints it on the app's read (0.0223 and 13.5% until
+ * H46). It was 0.0102 (5.7%) until the rig's swing was re-posed on the Bath
  * serves, and the re-posed figure is the one kept because it is the larger: a
  * bound sized on the gentler swing would let tempo through as a change.
  */
-export const CHAIN_RATIO_PER_SECOND = 0.0223
+export const CHAIN_RATIO_PER_SECOND = 0.0228
 
 /**
  * Read external rotation off one frame.

@@ -737,7 +737,7 @@ export async function extractFrames(
   // to measure the serve around it. Long ones stay open, and the compacted array
   // that results is why nothing downstream may size a window in array positions:
   // see `clockOf` in phases.ts.
-  const frames = bridgeDetectionGaps(samples)
+  const frames = bridgeDetectionGaps(samples, opts.stretch)
 
   return { frames, fps, window: { start, end }, serves, located, times, crop, filePhase }
 }

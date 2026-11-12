@@ -4,8 +4,11 @@
  * L2.6 set out to read a practice session's serves at 16 fps, keeping only the
  * readings that held within their noise of the 32 fps read. They did not, and
  * the measuring found something worse first: the contact readings drifted
- * between the app's own 32 fps and the suite's 50. This file holds what was
+ * between the app's own rate and the suite's 50. This file holds what was
  * fixed to the fix, and pins what was not, so each comes back the day it moves.
+ *
+ * The app's own rate was 32 then, and is 30 now: `readingPlan` walks the file's
+ * own frames (H35).
  *
  * Every figure is the worst over the rig's clean serve and the six Bath serves
  * from the guide's placement and from the back fence, each filmed twenty-four
@@ -16,12 +19,14 @@ import { pathsThrough, peakBetween, poseAt } from '../between'
 import { CARD_NOISE_SD } from '../consistency'
 import { LM } from '../geometry'
 import { measure } from '../metrics'
-import { filmMocap } from '../mocapServe'
+import { runEngine } from '../../../dev/mocap/engine'
+import { appRead, filmMocap } from '../mocapServe'
 import { detectServe } from '../phases'
 import { assessSpatial, viewFromCourtYaw } from '../spatial'
+import { unswapFrames } from '../swapGuard'
 import { buildServe } from '../syntheticServe'
 import type { Frame, Landmark } from '../types'
-import { DEPTH_AWARE, DEPTH_BIAS, DEPTH_MULTIPLIER, IN_PLANE, REAL_SERVES, SEEDS } from './repeatability'
+import { DEPTH_AWARE, DEPTH_BIAS, DEPTH_MULTIPLIER, IN_PLANE, REAL_SERVES, SEEDS, realOnFile, seeds } from './repeatability'
 import { assert, check, heading, near, note, report } from './harness'
 
 heading('Between two samples')
@@ -172,54 +177,160 @@ function drift(base: ReturnType<typeof readAt>, low: ReturnType<typeof readAt>):
 }
 
 const at50 = readAt(50)
-const at32 = readAt(32)
+const at30 = readAt(30)
 const at20 = readAt(20)
-const appRate = drift(at50, at32)
-const lightRate = drift(at32, at20)
+const appRate = drift(at50, at30)
+const lightRate = drift(at30, at20)
 
-check('contact height reads the same at 32 fps as at 50, within its noise', () => {
+check('contact height reads the same at 30 fps as at 50, within its noise', () => {
   // Was 1.58 off the nearest sample; the top of the reach between samples is 0.68.
-  note(`contact height moved ${appRate.contactHeight.toFixed(2)} noise deviations between 50 and 32 fps`)
+  note(`contact height moved ${appRate.contactHeight.toFixed(2)} noise deviations between 50 and 30 fps`)
   assert(appRate.contactHeight <= 1, `contact height moved ${appRate.contactHeight.toFixed(2)} deviations with the frame rate`)
 })
 
 check('KNOWN: contact ahead still moves with the frame rate, because the contact moment does', () => {
   /*
-   * Read at the refined moment between samples, and still 2.5 deviations
-   * apart. The moment itself is the cause: `refineExtremum` places contact up
-   * to 12 ms differently at 32 fps than at 50, and the hand crosses the body at
-   * about seven metres a second there, so 12 ms is five per cent of the body.
-   * This fails the day the contact moment stops moving with the rate; contact
-   * ahead then wants its noise re-measured, and this check retired.
+   * Read at the refined moment between samples, and still apart. The moment
+   * itself is the cause: `refineExtremum` places contact up to 12 ms differently
+   * at 30 fps than at 50, and the hand crosses the body at about seven metres a
+   * second there, so 12 ms is five per cent of the body. This fails the day the
+   * contact moment stops moving with the rate; contact ahead then wants its noise
+   * re-measured, and this check retired.
    */
-  note(`contact ahead moved ${appRate.contactAhead.toFixed(2)} deviations between 50 and 32 fps`)
+  note(`contact ahead moved ${appRate.contactAhead.toFixed(2)} deviations between 50 and 30 fps`)
   assert(appRate.contactAhead > 1, 'contact ahead now holds across frame rates: retire this check (L2.6)')
 })
 
 check('the two readings taken off curves stay steady at the app’s own rate', () => {
-  // `CARD_NOISE_SD` is measured at 50 fps and the app reads at 32, with a third
-  // fewer samples under each curve. Off single samples these were 10.93° and
-  // 5.05 points.
+  // Off single samples these were 10.93° and 5.05 points at 32 fps.
   const worst = (id: string) =>
     Math.max(
-      ...at32.map((takes) => {
+      ...at30.map((takes) => {
         const xs = takes.map((t) => t?.[id]).filter((v): v is number => v !== undefined)
         return Math.sqrt(xs.reduce((sum, x) => sum + (x - mean(xs)) ** 2, 0) / (xs.length - 1))
       }),
     )
   const [arm, load] = [worst('armExtension'), worst('loadRatio')]
-  note(`at 32 fps: arm extension ${arm.toFixed(2)}°, load ratio ${load.toFixed(2)} points`)
+  note(`at 30 fps: arm extension ${arm.toFixed(2)}°, load ratio ${load.toFixed(2)} points`)
   assert(arm <= 9.5, `arm extension moves ${arm.toFixed(2)}° between takes at the app's rate`)
   assert(load <= 2.5, `load ratio moves ${load.toFixed(2)} points between takes at the app's rate`)
 })
 
+heading('The read of a file')
+
+/** The card's readings of one take, through the app's own path. */
+function engineValues(frames: Frame[]): Record<string, number> {
+  const read = runEngine(unswapFrames(frames).frames, 32)
+  if (!read.ok) return {}
+  return Object.fromEntries(read.run.fundamentals.flatMap((f) => f.metrics).map((m) => [m.id, m.value]))
+}
+
+const spreadOf = (xs: number[]) => Math.sqrt(xs.reduce((sum, x) => sum + (x - mean(xs)) ** 2, 0) / (xs.length - 1))
+
+check('a 30 fps file read on its frames is the film itself, half a frame later', () => {
+  const film = buildServe({ ...DEPTH_AWARE, seed: 3 }, 30)
+  const read = appRead(film, 30)
+  assert(read.length === film.length, `read ${read.length} samples of ${film.length} frames`)
+  read.forEach((sample, i) => {
+    assert(sample.image === film[i].image, `sample ${i} is not frame ${i}`)
+    near(sample.t, film[i].t + 1 / 60, 1e-9, `sample ${i}'s stamp`)
+  })
+})
+
+check('walking the file’s frames steadies what is timed against them', () => {
+  /*
+   * A 30 fps file with a sampling phase per take, the six Bath serves from the
+   * guide, pooled within each serve. Half of contact ahead's variance on the
+   * even grid was the grid: a frame read twice, and stamps that slide (H35).
+   */
+  const rows = ['contactAhead', 'dropToContact', 'handUnderElbow', 'tossArmHold']
+  const pooled = (read: 'frames' | 'even') => {
+    const takes = REAL_SERVES.map((serve) => seeds(120).map((seed) => engineValues(realOnFile(serve, {}, seed, 30, read))))
+    return Object.fromEntries(
+      rows.map((id) => {
+        const within = takes.map((t) => spreadOf(t.map((v) => v[id]).filter(Number.isFinite)) ** 2)
+        return [id, Math.sqrt(mean(within))]
+      }),
+    )
+  }
+  const [frames, even] = [pooled('frames'), pooled('even')]
+  for (const id of rows) {
+    note(`${id}: ${even[id].toFixed(2)} on the even grid, ${frames[id].toFixed(2)} on the frames`)
+    assert(frames[id] < even[id], `${id} is no steadier on the frames`)
+  }
+  assert(frames.contactAhead < 0.8 * even.contactAhead, 'contact ahead gained less than a fifth')
+  assert(frames.dropToContact < 0.8 * even.dropToContact, 'drop to contact gained less than a fifth')
+})
+
+check('how long a read runs moves no reading', () => {
+  /*
+   * The toss path sized its window as 12% of the samples, so one toss from
+   * behind read 1.40 at 64 samples and 4.60 at 120, on a band of 0 to 3 (H36).
+   * The last pose held on, as a clip that keeps rolling after the serve.
+   */
+  const moved: Record<string, number> = {}
+  for (const [phone, serves] of [
+    [{}, REAL_SERVES],
+    [{ bearing: 180, distance: 6 }, REAL_SERVES],
+  ] as const) {
+    for (const serve of serves) {
+      for (const seed of SEEDS.slice(0, 8)) {
+        const short = realOnFile(serve, phone, seed, 30)
+        const last = short[short.length - 1]
+        const held = Array.from({ length: 120 - short.length }, (_, i) => ({
+          ...last,
+          index: short.length + i,
+          t: last.t + (i + 1) / 30,
+        }))
+        const [a, b] = [engineValues(short), engineValues([...short, ...held])]
+        for (const id of Object.keys(CARD_NOISE_SD)) {
+          if (Number.isFinite(a[id]) && Number.isFinite(b[id])) {
+            moved[id] = Math.max(moved[id] ?? 0, Math.abs(a[id] - b[id]) / CARD_NOISE_SD[id])
+          }
+        }
+      }
+    }
+  }
+  const worst = Object.entries(moved).sort((x, y) => y[1] - x[1])[0]
+  note(`the most any reading moved, going to 120 samples: ${worst[0]}, ${worst[1].toFixed(3)} of its noise`)
+  assert(worst[1] < 0.5, `${worst[0]} moved ${worst[1].toFixed(2)} of its noise with the length of the read`)
+})
+
+check('KNOWN: past four seconds a 30 fps clip is read with frames left out, and one take can move', () => {
+  /*
+   * Where the check above ends. 120 samples is four seconds of a 30 fps clip;
+   * past that the budget leaves frames out, spread over the clip (`readingPlan`),
+   * and a frame left out at contact moves that take's contact. The even grid
+   * there, whose stamps slid against the film, also named clean tosses from
+   * behind (`rate.ts`). This fails the day a long clip reads like the same clip
+   * read whole.
+   */
+  const moved: Record<string, number> = {}
+  for (const phone of [{}, { bearing: 180, distance: 6 }]) {
+    for (const serve of REAL_SERVES) {
+      for (const seed of SEEDS.slice(0, 8)) {
+        const short = realOnFile(serve, phone, seed, 30)
+        const last = short[short.length - 1]
+        const file = [...short, ...Array.from({ length: 132 - short.length }, () => last)].map((f, i) => ({ ...f, index: i, t: i / 30 }))
+        const [a, b] = [engineValues(short), engineValues(appRead(file, 30))]
+        for (const id of Object.keys(CARD_NOISE_SD)) {
+          if (Number.isFinite(a[id]) && Number.isFinite(b[id])) moved[id] = Math.max(moved[id] ?? 0, Math.abs(a[id] - b[id]) / CARD_NOISE_SD[id])
+        }
+      }
+    }
+  }
+  const worst = Object.entries(moved).sort((x, y) => y[1] - x[1])
+  note(`a 4.4 s clip, the most a take moved: ${worst.slice(0, 3).map(([id, v]) => `${id} ${v.toFixed(2)}`).join(', ')} of its noise`)
+  assert(worst[0][1] > 1, 'a long clip now reads like the same clip read whole: say so in rate.ts and drop this')
+})
+
 heading('A lighter read for sessions')
 
-check('KNOWN: a 20 fps read loses readings a session needs, so sessions read at 32', () => {
+check('KNOWN: a 20 fps read loses readings a session needs, so sessions read at the report’s rate', () => {
   /*
    * L2.6's plan was a light read at 16 fps. At 16, a sixth of the takes were
-   * refused outright (54 of 312). At 20 none were, and seven readings held
-   * within their noise of the 32 fps read; the drop and the contact did not,
+   * refused outright (54 of 312). At 20 none were, and most readings held
+   * within their noise of the full read; contact height and the toss arm did not,
    * and those are what a session's fault counts are made of. A session
    * therefore reads every serve at the report's rate, without the ball, the
    * racket boxes, the stills or the second pose model (`session/video.ts`).

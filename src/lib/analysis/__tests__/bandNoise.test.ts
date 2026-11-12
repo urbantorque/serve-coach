@@ -20,11 +20,26 @@ const Z95 = 1.96
 
 /**
  * Graded rows that do not clear the rule yet, and why they stay graded. The
- * check below fails when one clears it, so the entry goes with it. None does
- * today: arm extension, the last, was 9.63° on its 35° band until it was read
- * off curves through the samples (`straightestArm`), and is 6.45° now.
+ * check below fails when one clears it, so the entry goes with it.
  */
-const KNOWN: Record<string, string> = {}
+const KNOWN: Record<string, string> = {
+  /*
+   * Read off curves through the samples it cleared the rule at 50 fps (6.45°,
+   * H20), but the app reads at 30, and there it moves 9.97° on a band that asks
+   * for 8.93: 1.12 of the rule, so a clean arm reads inside on 92% of takes
+   * rather than 95%. The cause is how few samples fall near contact: it runs as
+   * one over the root of the rate and clears at about 36 a second, which a 30 fps
+   * file cannot give. Almost all of it is depth, from the guide's placement.
+   *
+   * It stays graded because the alternative is a worse reading, not a better
+   * one. Widening the band would be weakening the rule to pass it, and a line
+   * through depth instead of a curve (H42) cleared it at 7.7° only by trading
+   * accuracy: the mean reading swung 8° across phone angles a player really
+   * stands at, against about 1° today, for a gain that rests on depth error
+   * being independent from frame to frame.
+   */
+  armExtension: 'too few samples near contact at 30 a second',
+}
 
 const graded = [...new Set(Object.values(FUNDAMENTALS).flatMap((f) => f.metrics))]
 

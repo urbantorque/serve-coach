@@ -118,8 +118,47 @@ export interface Spatial {
  */
 const SHOULDER_SPAN_RATIO = 0.21
 
-/** Past this roll the phone was not level and the correction earns its keep. */
+/**
+ * Past this roll the reading costs confidence. The correction starts at `LEVEL_FROM`,
+ * so from here to there a tilt is left in the reading, uncorrected and not called
+ * out by the viewfinder (H37, H45).
+ */
 export const NOTABLE_ROLL = 4
+
+/** Where the correction starts, and where the viewfinder says the picture leans. */
+export const LEVEL_FROM = 5
+
+/** Where the correction is whole. Between `LEVEL_FROM` and here it grows from nothing. */
+const WHOLE_ROLL = 7
+
+/**
+ * How much of a roll reading is taken out of the clip.
+ *
+ * A RAMP, BECAUSE THE LINE WAS A CLIFF (H37). A body is not a perfect plumb line:
+ * on a dead level phone the six Bath serves' stances read 3.3° to 5.1°. The
+ * correction used to be all or nothing at `NOTABLE_ROLL`, so a stance reading
+ * 3.99° was levelled on 566 takes of 960 and left alone on the rest, and contact
+ * height jumped 0.044 between the two with nothing changed: about four and a half
+ * times that row's noise, for that player, on every serve. A threshold always has
+ * somebody sitting on it. A ramp has no edge to fall off.
+ *
+ * From 5° to 7°, past the stances. A ramp from 4° still rotated a level phone's
+ * clip by up to 2.8°, and over a ramp the correction moves about three times as
+ * far as the reading, so it tripled that noise. With tilts drawn around level
+ * (sd 1°, 2° and 4°), every row's error from the guide's placement was 0.57,
+ * 0.86 and 1.24 of its noise from 5°, against 0.81, 1.03 and 1.32 from 4°, and
+ * the two were level from behind and on the rig.
+ *
+ * What it gives up is a phone truly five or six degrees off, which is now only
+ * partly corrected: half a deviation of error on a plumb body at 6°. And a body
+ * is not plumb: a real stance's lean is in the reading, so from the side a phone
+ * tilted one way is over-corrected by it and one tilted the other way up to about
+ * 8° is not corrected at all. The step did the same. Nothing here can separate a
+ * lean from a tilt, and `invariants.test.ts` holds that gap open.
+ */
+export function levelled(roll_deg: number): number {
+  return roll_deg * clamp((Math.abs(roll_deg) - LEVEL_FROM) / (WHOLE_ROLL - LEVEL_FROM), 0, 1)
+}
 
 /**
  * Past this roll the picture is refused, before a serve is looked for in it.
@@ -264,10 +303,10 @@ export function assessSpatial(
 
   const depth_unreliable = yaw.deg < DEPTH_YAW_RANGE[0] || yaw.deg > DEPTH_YAW_RANGE[1]
 
-  // Roll is corrected rather than merely reported, so it costs confidence only
-  // once it is large enough that the correction itself is working from a noisy
-  // estimate — a body leaning on its own two degrees looks the same as a phone
-  // held two degrees off.
+  // A body leaning on its own two degrees looks the same as a phone held two
+  // degrees off, so small rolls cost nothing. Past `NOTABLE_ROLL` they do: from 4°
+  // to `LEVEL_FROM` the tilt is left in the reading uncorrected, and past that the
+  // correction is working from a noisy estimate.
   const rollCost = clamp(1 - Math.max(0, Math.abs(roll) - NOTABLE_ROLL) / 30, 0.25, 1)
   const yawCost = depth_unreliable ? 0.75 : 1
 
@@ -378,7 +417,8 @@ export function levelPivot(frames: Frame[]): { cx: number; cy: number } {
 }
 
 /**
- * Rotate the whole clip back onto gravity.
+ * Rotate the whole clip back onto gravity, by as much of `roll_deg` as `levelled`
+ * takes out.
  *
  * Returns the frames untouched when there is nothing worth correcting, so the
  * common case costs one comparison rather than a copy of every landmark.
@@ -398,8 +438,14 @@ export function levelFrames(
   roll_deg: number,
   pivot = levelPivot(frames),
 ): Frame[] {
-  if (Math.abs(roll_deg) < NOTABLE_ROLL) return frames
-  return rotateFrames(frames, (-roll_deg * Math.PI) / 180, pivot)
+  const by = levelled(roll_deg)
+  if (by === 0) return frames
+  return rotateFrames(frames, (-by * Math.PI) / 180, pivot)
+}
+
+/** The clip as a phone rolled this far would have filmed it. For a transform, not a correction. */
+export function rolledFrames(frames: Frame[], degrees: number, pivot: { cx: number; cy: number }): Frame[] {
+  return rotateFrames(frames, (degrees * Math.PI) / 180, pivot)
 }
 
 /**

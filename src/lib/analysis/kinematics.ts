@@ -25,8 +25,15 @@ import type { Frame, Landmark } from './types'
 
 const DEG = 180 / Math.PI
 
-export const timeline = (frames: Frame[]): Float32Array => {
-  const t = new Float32Array(frames.length)
+/**
+ * The samples' stamps, in seconds of file. Doubles, unlike the series: a serve
+ * deep in a long clip sits thousands of seconds in, where a float32 step is a
+ * quarter of a millisecond, and the chain's peak times then moved with where the
+ * serve sat in the file: `hip_lead_ms` by up to 23 ms with the serve five
+ * minutes into a 60 fps file (H45).
+ */
+export const timeline = (frames: Frame[]): Float64Array => {
+  const t = new Float64Array(frames.length)
   for (let i = 0; i < frames.length; i++) t[i] = frames[i].t
   return t
 }
@@ -126,7 +133,7 @@ export function unwrapDegrees(xs: Float32Array): Float32Array {
 }
 
 /** Central-difference derivative in units per second. */
-export function rateOf(values: Float32Array, t: Float32Array): Float32Array {
+export function rateOf(values: Float32Array, t: Float64Array): Float32Array {
   const out = new Float32Array(values.length)
   for (let i = 1; i < values.length - 1; i++) {
     const dt = t[i + 1] - t[i - 1]
@@ -147,7 +154,7 @@ export function rateOf(values: Float32Array, t: Float32Array): Float32Array {
  * frames means something different on a 240 fps slow-motion clip than on a 30
  * fps one. The measurement has to be a fact about the serve, not about the phone.
  */
-export function sampleAt(t: Float32Array, seconds: number): number {
+export function sampleAt(t: Float64Array, seconds: number): number {
   let best = 0
   for (let i = 1; i < t.length; i++) {
     if (Math.abs(t[i] - seconds) < Math.abs(t[best] - seconds)) best = i
@@ -173,7 +180,7 @@ export function peakAbsIn(xs: Float32Array, from: number, to: number): number {
  * on a phone-shot clip. Three samples around a smooth maximum determine a
  * parabola, and its vertex lands well inside a frame.
  */
-export function refinedPeakTime(xs: Float32Array, t: Float32Array, at: number): number {
+export function refinedPeakTime(xs: Float32Array, t: Float64Array, at: number): number {
   if (at <= 0 || at >= xs.length - 1) return t[clamp(at, 0, t.length - 1)] ?? 0
   const a = Math.abs(xs[at - 1])
   const b = Math.abs(xs[at])
@@ -216,13 +223,13 @@ export function refinedPeakTime(xs: Float32Array, t: Float32Array, at: number): 
  * quietly becoming a fact about the phone above a rate nobody had checked.
  *
  * Where it binds now: nothing in the app can reach it. The pose grid is capped
- * at `FINE_FPS` = 32 in `extract.ts`, so the chain's radius is 3 samples on
+ * at `FINE_FPS` = 32 in `extract.ts`, so the chain's radius is 2 or 3 samples on
  * real footage however fast the file was shot. What can reach it is the
  * synthetic rig, which films at whatever rate it is handed, and the frame-rate
  * tables in `diagnose.ts` are derived exactly that way — so the trap was set
  * for the next person deriving one, not for a player.
  */
-export function sampleRadius(t: Float32Array, seconds: number, max = 24): number {
+export function sampleRadius(t: Float64Array, seconds: number, max = 24): number {
   if (t.length < 2) return 1
   const dt = (t[t.length - 1] - t[0]) / (t.length - 1)
   if (!(dt > 1e-6)) return 1
@@ -248,7 +255,7 @@ export function sampleRadius(t: Float32Array, seconds: number, max = 24): number
  */
 export function peakTimeInside(
   xs: Float32Array,
-  t: Float32Array,
+  t: Float64Array,
   from: number,
   to: number,
 ): number | null {
@@ -545,8 +552,11 @@ export function palmNormalAt(frames: Frame[], side: Side, index: number, seconds
 export function palmSkyElevation(frames: Frame[], side: Side, index: number): number {
   // A wider window than the pronation measurement gets: the trophy is the one
   // moment in the serve where the hand is nearly still, so there is nothing for
-  // a longer average to smear.
-  const normal = palmNormalAt(frames, side, index, 0.05)
+  // a longer average to smear. 0.0545 rather than 0.05, which is 1.5 samples on any
+  // 30 Hz read, so floating point in two stamps picked 1 or 2 sample by sample,
+  // and the same frames moved this reading up to 47° by where they sat in the file.
+  // The new edge is at 27.5 Hz, between the 25 and 30 a second files are read at.
+  const normal = palmNormalAt(frames, side, index, 0.0545)
   // A hand nobody saw comes back as the zero vector, and `angleBetween`
   // answers 0 for degenerate input — which 90 − 0 would report as a *maximal*
   // waiter's tray, fabricated from nothing. Not-a-number is the honest answer,

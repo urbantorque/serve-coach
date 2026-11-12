@@ -340,8 +340,7 @@ function findRelease(
  * exact for a peak whose two sides have different slopes. Same rig, same
  * noise: **+10 ms at 30 fps, +15 at 24, +5 at 60**, RMS 35 → 14 ms at 30 fps.
  *
- * Fitted on real timestamps (the samples are filed at the time each seek
- * actually reached), held between the two neighbouring samples, and the
+ * Fitted on the samples' own stamps, held between the two neighbouring samples, and the
  * sample's own time returned wherever a side is not rising or falling as a
  * peak's must — an edge, a plateau, noise on a flank.
  */
@@ -472,11 +471,12 @@ function trophyOfArms(
  * trophy around 400 ms before, so the two events are a quarter of a second apart
  * even on a hurried club motion. Eighty milliseconds is well under that and
  * still wide enough to swallow the couple of frames `sharpen` may nudge the drop
- * by at 30 fps, the slowest camera the app will read — so the test answers "were
+ * by at 30 fps — so the test answers "were
  * these two events found separately" rather than "did the smoothing move one of
- * them".
+ * them". 0.072, not 0.08, which is two samples on the dot at 25 Hz and four at
+ * 50: the same answer at 24, 25 and 30 a second, with the edges at 27.8 and 41.7.
  */
-const MIN_DROP_SEPARATION = 0.08
+const MIN_DROP_SEPARATION = 0.072
 
 /**
  * How far before contact a racket drop can be, in seconds.
@@ -484,9 +484,19 @@ const MIN_DROP_SEPARATION = 0.08
  * The drop bottoms out 110–230 ms before contact on the card's own band, and a
  * median 145 ms on the Bath serves; 0.3 s holds the slowest of those with room
  * to spare and still keeps the backswing — a quarter of a second earlier at the
- * very least — out of the search.
+ * very least — out of the search. 0.31, because 0.3 is nine steps on the dot at
+ * 30 Hz and a shade under nine at 29.97, and on a serve with no drop in it that
+ * ninth step decided the trophy and the drop: a third of takes read as a different
+ * serve, by where they sat in the file or which side of 30 the phone's rate fell.
  */
-const DROP_LOOKBACK = 0.3
+const DROP_LOOKBACK = 0.31
+
+/**
+ * How far before the toss the trophy may be looked for. Not 0.2, which is whole
+ * steps at 25 and 30 Hz; 0.2175 keeps six steps at 30 and five at 25, with its
+ * edges at 23.0, 27.6 and 32.2 a second.
+ */
+const TROPHY_LOOKBACK = 0.2175
 
 /** Enforce a strictly readable order without letting one bad pick eat the rest. */
 function orderKeys(raw: Keyframes, n: number): Keyframes {
@@ -539,8 +549,10 @@ function clockOf(frames: Frame[], fps: number) {
       }
       const target = frames[origin].t + seconds
       let out = origin
+      // Within a nanosecond is on it: a span measured between two stamps lands on
+      // a sample, and floating point should not decide which side.
       for (let i = origin + step; i >= 0 && i <= last; i += step) {
-        if (step > 0 ? frames[i].t > target : frames[i].t < target) break
+        if (step > 0 ? frames[i].t > target + 1e-9 : frames[i].t < target - 1e-9) break
         out = i
       }
       return out === origin ? atLeastOne : out
@@ -678,10 +690,13 @@ export function detectServe(
     // Sized off how densely the samples actually arrived, not off the nominal
     // rate: a radius counted in samples covers more of the serve the more of
     // them are missing, and this is the one series smoothed hard enough for
-    // that to move the trophy.
-    Math.max(2, Math.round(clock.rate / 12)),
+    // that to move the trophy. 11.3 rather than 12, which put a 30 Hz read on
+    // 2.5 samples, so floating point chose 2 or 3 clip by clip and moved the
+    // knee 0.4° with nothing changed. Its edges are at 28.3 and 39.6 a second,
+    // clear of the 24, 25 and 30 a second reads and of a few dropped frames.
+    Math.max(2, Math.round(clock.rate / 11.3)),
   )
-  const trophyFrom = clock.at(toss, -0.2)
+  const trophyFrom = clock.at(toss, -TROPHY_LOOKBACK)
   const armsTrophy = trophyOfArms(racketPosture, toss, beforeContact, Math.max(toss, clock.at(contact, -DROP_LOOKBACK)))
   const found = findTrophy(kneeAngles, armsTrophy, trophyFrom, beforeContact)
   const trophy = found.index

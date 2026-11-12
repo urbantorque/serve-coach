@@ -7,7 +7,7 @@
  * read off the nearest sampled frame. At contact the hand is the fastest thing
  * in the picture, so where the sampling grid fell moved both readings. Read at
  * 32 fps against the suite's 50, on the rig and the six Bath serves from two
- * placements, contact ahead sat 2.6 of its own noise deviations away and
+ * placements, contact ahead sat 2.6 of its noise deviations of the day away and
  * contact height 1.6; at 20 fps, 7.0 and 2.8. A reading that depends on the
  * phone's frame rate is a reading two phones disagree about.
  */

@@ -31,12 +31,24 @@
  * Real motion asked for wider floors on four signals; see `NOISE_FLOOR`.
  */
 import fixture from './fixtures/bath-serves.json'
+import { runEngine } from '../../../dev/mocap/engine'
 import { diagnose, type Diagnosis } from '../diagnose'
 import { LM } from '../geometry'
-import { filmMocap, unpackMocap, type MocapServe, type PackedMocapServe, type VirtualPhone } from '../mocapServe'
+import {
+  appRead,
+  filmMocap,
+  GUIDE_PHONE,
+  gridTrim,
+  readPhase,
+  stepOf,
+  unpackMocap,
+  type MocapServe,
+  type PackedMocapServe,
+  type VirtualPhone,
+} from '../mocapServe'
 import { injuriesIn, type InjuryFlag } from '../triage'
 import { detectServe } from '../phases'
-import { buildServe, type ServeDials } from '../syntheticServe'
+import { buildServe, CLEAN_SERVE, type ServeDials } from '../syntheticServe'
 import { unswapFrames } from '../swapGuard'
 import { NOISE_FLOOR, SIGNALS, UNDER_RESOLVED } from '../tiers'
 import type { Frame } from '../types'
@@ -211,6 +223,32 @@ export function realiseFilmed(
 }
 
 /**
+ * The same ensemble through the app's whole path (`runEngine`): levelling and
+ * confidence included, as a player's clip is read. `realiseFilmed` detects and
+ * diagnoses directly, and a take-to-take levelling correction is noise it never
+ * sees. Since levelling starts at 5° that moves the toss drift under 1% pooled from
+ * the guide (up to 3% on one serve) and not at all from behind; before, 9%.
+ */
+export function realiseOnPath(film: (seed: number) => Frame[], tier = 5, over: readonly number[] = SEEDS): Realisation[] {
+  const out: Realisation[] = []
+  for (const seed of over) {
+    const read = runEngine(unswapFrames(film(seed)).frames, 32, 'flat', tier)
+    if (!read.ok) continue
+    const d = read.run.diagnosis
+    out.push({
+      signals: d.signals,
+      chain: flattenUngraded(d),
+      named: new Set(d.flaws.filter((f) => f.detected).map((f) => f.flaw)),
+      bySignal: Object.fromEntries(
+        d.flaws.map((f) => [f.signal, { detected: f.detected, miss: f.miss, confidence: f.confidence }]),
+      ),
+      injuries: injuriesIn(d).map((r) => r.flag),
+    })
+  }
+  return out
+}
+
+/**
  * The six real serves in `fixtures/bath-serves.json` — the Bath motion
  * capture, CC BY 4.0, attribution in that file and in `src/dev/mocap/bath.ts`.
  */
@@ -229,6 +267,40 @@ function statureInPicture(frame: Frame): number {
 
 /** The rig's player in its own picture, which every noise figure here is sized against. */
 const RIG_STATURE = statureInPicture(buildServe({}, FPS)[0])
+
+/** The files an ordinary phone hands the app. */
+export const FILE_RATES = [30, 60]
+
+/**
+ * One take of the rig as the app reads a file of it (`appRead`), on a sampling
+ * phase of its own (`readPhase`), with the suite's camera noise.
+ */
+export function rigOnFile(dials: Partial<ServeDials>, seed: number, fileFps: number, read: 'frames' | 'even' = 'frames'): Frame[] {
+  const leadIn = CLEAN_SERVE.leadIn + readPhase(seed) * stepOf(fileFps, read)
+  return appRead(buildServe({ ...DEPTH_AWARE, ...dials, seed, leadIn }, fileFps), fileFps, read === 'frames', gridTrim(seed, fileFps, read))
+}
+
+/** The same of a real serve, the noise sized as `realiseReal` sizes it. */
+export function realOnFile(
+  serve: MocapServe,
+  phone: Partial<VirtualPhone>,
+  seed: number,
+  fileFps: number,
+  read: 'frames' | 'even' = 'frames',
+): Frame[] {
+  const scale = statureInPicture(filmMocap(serve, { ...phone, fps: FPS })[0]) / RIG_STATURE
+  const lead = (phone.lead ?? GUIDE_PHONE.lead) + readPhase(seed) * stepOf(fileFps, read)
+  const film = filmMocap(serve, {
+    ...phone,
+    fps: fileFps,
+    lead,
+    seed,
+    noise: IN_PLANE * scale,
+    depthNoise: DEPTH_MULTIPLIER,
+    depthBias: DEPTH_BIAS * scale,
+  })
+  return appRead(film, fileFps, read === 'frames', gridTrim(seed, fileFps, read))
+}
 
 /**
  * Real serve motion, filmed by the virtual phone from the guide's placement
@@ -466,7 +538,7 @@ function spreadOf(
  */
 export function floorWanted(sd: number, signal: string): number {
   const step = SIGNALS[signal]?.unit === 'ratio' ? 0.001 : 1
-  return Math.ceil((1.5 * sd) / step - 1e-9) * step
+  return +(Math.ceil((1.5 * sd) / step - 1e-9) * step).toFixed(6)
 }
 
 export interface FloorVerdict extends SignalDeviation {

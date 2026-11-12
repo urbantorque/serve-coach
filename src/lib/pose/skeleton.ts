@@ -399,8 +399,7 @@ export interface GhostInput {
    * pixels. On a corrected clip the two differ by exactly the roll that was
    * taken out, so a ghost placed off `groundY` would sit tilted away from the
    * body it is meant to be a target for — a hand's width out at the edge of the
-   * frame on a 4° correction, which is `NOTABLE_ROLL` and the smallest one that
-   * gets corrected at all. The transform back is owned by `spatial.ts` at frame
+   * frame on a 4° correction. The transform back is owned by `spatial.ts` at frame
    * granularity and there is no point-level export of it; a second copy here is
    * how a pivot and a sign drift apart. So a rolled clip gets no ghost. It is a
    * minority of clips — see `Analysis.tilt`, "absent on the clips that needed no

@@ -13,12 +13,25 @@
  * table and fails if the camera now moves a score further than it says. The
  * ensembles: the modal club serve (rigid legs, no drop), a family of club
  * faults dialled into the rig one at a time, and the six Bath serves filmed by
- * the virtual phone from the guide's placement — each serve filmed 24 and 60
- * times with the suite's camera noise, at 30 and 50 fps. The rule for each
+ * the virtual phone from the guide's placement and from behind — each serve
+ * filmed 240 times with the suite's camera noise, on 30 and 60 fps files, read
+ * the way the app reads a file and scored through the app's own path (H39). The rule for each
  * figure is the same: take the 90th percentile of how far the statistic moved
- * between takes of ONE serve, keep the largest over every serve and both frame
- * rates, and call a change real only past it. So no serve in the ensembles
- * shows a noise-only change as real more than one time in ten.
+ * between takes of ONE serve, keep the largest over every serve and both files,
+ * and call a change real only past it. So no serve in the ensembles shows a
+ * noise-only change as real more than one time in ten.
+ *
+ * It used to be 24 and 60 takes of films at 30 and 50 fps, one sampling phase
+ * each, with no levelling and no confidence. Most floors fell, and not mostly for
+ * the read: 240 takes rather than 24 or 60 took rhythm from 34 to 31, the toss
+ * read in seconds (H36) took the toss from 7 to 5, and walking the frames took a
+ * point off the swing and contact. The old films on today's engine land within a
+ * point of these.
+ *
+ * STILL ONE DRAW. A fresh set of 240 takes breaks about 11 of the 58 figures,
+ * nearly all by landing exactly on the floor, which is what a fresh table against
+ * a fresh draw of the same size does too. So a figure is good to about a point,
+ * and a change of ensemble can still redden the suite with no change of engine.
  *
  * Per serve and not pooled, because a player has one serve. Pooling the family
  * would let the steady members cover for a wobbly toss's own noise.
@@ -57,14 +70,21 @@ export type ChangeScope = 'overall' | 'trip' | FundamentalId
  * When load ratio stopped taking its moment from the knees, the overall fell
  * from 6 to 5 (4 at both), the trip from 11 to 8 (7 at both) and rhythm from 36
  * to 34 (31 at 24 takes, 33 at 60).
+ *
+ * On the app's read (H39) the toss fell from 7 to 5, loading from 10 to 9, the
+ * swing from 6 to 5, contact from 14 to 13 and rhythm from 34 to 31. Loading moves
+ * 8 at its 90th percentile with or without the serves from behind, so 9 either way.
+ * What the back fence does raise is two rows: shoulder tilt's floors are 19, 15
+ * and 12 with it against 16, 11 and 9 without, and contact height's two a side 3
+ * against 2 (H45).
  */
 export const REAL_CHANGE: Record<ChangeScope, number> = {
   overall: 5,
-  toss: 7,
-  loading: 10,
-  swing: 6,
-  contact: 14,
-  rhythm: 34,
+  toss: 5,
+  loading: 9,
+  swing: 5,
+  contact: 13,
+  rhythm: 31,
   trip: 8,
 }
 
@@ -88,14 +108,18 @@ export const REAL_CHANGE: Record<ChangeScope, number> = {
  * read differently (the ball and the camera's side are what change its rows in
  * life, and neither is in them), so a change there read differently is soft
  * however large.
+ *
+ * Contact asked for one once, on the app's path, from one odd take of 240. A
+ * floor needs several takes on the side read differently (H44), so a change in
+ * contact read differently stays soft.
  */
 export const READ_DIFFERENTLY: Partial<Record<ChangeScope, number>> = {
-  overall: 12,
-  swing: 42,
+  overall: 13,
+  swing: 43,
 }
 
 /** One basket's best-to-worst gap against another's, for `gapDeltaLine`, on six serves each. */
-export const GAP_CHANGE = 11
+export const GAP_CHANGE = 12
 
 /**
  * The smallest best-to-worst gap that is two different serves, by how many
@@ -104,7 +128,7 @@ export const GAP_CHANGE = 11
  * basket. Measured on baskets whose best and worst were read alike, which
  * `buildGap` insists on.
  */
-const BEST_WORST: Record<number, number> = { 2: 5, 3: 6, 4: 7, 5: 7, 6: 8 }
+const BEST_WORST: Record<number, number> = { 2: 5, 3: 6, 4: 7, 5: 8, 6: 9 }
 
 /** `BEST_WORST` for any basket size: the two ends hold the table's edges. */
 export function bestWorstGap(serves: number): number {
@@ -127,20 +151,20 @@ export function bestWorstGap(serves: number): number {
  * wider than the noise there and so errs towards "not moving".
  */
 export const ROW_CHANGE: Record<string, readonly [number, number, number]> = {
-  releaseHeight: [4, 3, 2],
-  tossArmHold: [8, 5, 5],
-  tossPathWobble: [14, 12, 10],
-  kneeBend: [15, 10, 8],
-  shoulderTilt: [16, 12, 10],
-  legDrive: [6, 4, 4],
-  dropDepth: [52, 34, 23],
-  elbowAtDrop: [23, 18, 9],
-  dropToContact: [39, 25, 12],
-  handUnderElbow: [6, 6, 4],
-  contactHeight: [5, 4, 3],
-  armExtension: [24, 18, 15],
-  contactAhead: [17, 13, 11],
-  loadRatio: [32, 27, 24],
+  releaseHeight: [3, 3, 2],
+  tossArmHold: [5, 4, 4],
+  tossPathWobble: [10, 7, 6],
+  kneeBend: [14, 10, 8],
+  shoulderTilt: [19, 15, 12],
+  legDrive: [5, 4, 3],
+  dropDepth: [51, 33, 23],
+  elbowAtDrop: [23, 16, 13],
+  dropToContact: [40, 27, 22],
+  handUnderElbow: [6, 6, 5],
+  contactHeight: [4, 4, 3],
+  armExtension: [26, 18, 15],
+  contactAhead: [16, 12, 10],
+  loadRatio: [31, 22, 18],
 }
 
 /**
@@ -170,15 +194,18 @@ const rowsOf = (f: Graded): string =>
  * areas measured: the overall is renormalised over what was measured, so a
  * Rhythm that left the card changes what the overall is an average of.
  */
+/** Which rows a report graded, in a scope: two reports read alike when these match. */
+export function readAlikeKey(fs: Graded[], scope: 'overall' | FundamentalId = 'overall'): string {
+  return fs
+    .filter(isMeasured)
+    .filter((f) => scope === 'overall' || f.id === scope)
+    .map((f) => `${f.id}:${rowsOf(f)}`)
+    .sort()
+    .join('|')
+}
+
 export function readAlike(a: Graded[], b: Graded[], scope: 'overall' | FundamentalId = 'overall'): boolean {
-  const key = (fs: Graded[]) =>
-    fs
-      .filter(isMeasured)
-      .filter((f) => scope === 'overall' || f.id === scope)
-      .map((f) => `${f.id}:${rowsOf(f)}`)
-      .sort()
-      .join('|')
-  return key(a) === key(b)
+  return readAlikeKey(a, scope) === readAlikeKey(b, scope)
 }
 
 /**

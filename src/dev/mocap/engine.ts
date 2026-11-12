@@ -17,7 +17,7 @@ import { assessQuality } from '../../lib/analysis/analyze'
 import { diagnose, type Diagnosis } from '../../lib/analysis/diagnose'
 import { measure } from '../../lib/analysis/metrics'
 import { detectServe, type Skeleton } from '../../lib/analysis/phases'
-import { NOTABLE_ROLL, assessSpatial, levelFrames, levelPivot, turnedPicture } from '../../lib/analysis/spatial'
+import { assessSpatial, levelFrames, levelPivot, levelled, turnedPicture } from '../../lib/analysis/spatial'
 import { assessResilience, triage, type Resilience, type Triage } from '../../lib/analysis/triage'
 import { NotAServeError, type Frame, type Fundamental, type Quality } from '../../lib/analysis/types'
 import type { ServeType } from '../../lib/storage/prefs'
@@ -47,7 +47,7 @@ function detect(frames: Frame[], fps: number): Skeleton {
   }
 }
 
-export function runEngine(input: Frame[], fps: number, serveType: ServeType = 'flat'): EngineResult {
+export function runEngine(input: Frame[], fps: number, serveType: ServeType = 'flat', tier?: number): EngineResult {
   let frames = input
   let skel: Skeleton
   const turned = turnedPicture(frames)
@@ -55,7 +55,7 @@ export function runEngine(input: Frame[], fps: number, serveType: ServeType = 'f
   try {
     skel = detect(frames, fps)
     const tilt = assessSpatial(frames, skel.keys.ready, skel.bodyHeight)
-    if (Math.abs(tilt.roll_deg) >= NOTABLE_ROLL) {
+    if (levelled(tilt.roll_deg) !== 0) {
       const pivot = levelPivot(frames)
       frames = levelFrames(frames, tilt.roll_deg, pivot)
       skel = detect(frames, fps)
@@ -78,7 +78,7 @@ export function runEngine(input: Frame[], fps: number, serveType: ServeType = 'f
       blur: resilience.blur,
     },
   })
-  const diagnosis = diagnose(frames, skel, { serveType })
+  const diagnosis = diagnose(frames, skel, tier === undefined ? { serveType } : { serveType, tier })
   const verdict = triage(diagnosis, resilience)
   return { ok: true, run: { frames, skel, resilience, quality, fundamentals, diagnosis, verdict } }
 }

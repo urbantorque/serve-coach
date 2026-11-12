@@ -582,6 +582,15 @@ export interface ServeDials {
    */
   lightLevel: number
   /**
+   * Seconds of stillness before the motion starts.
+   *
+   * A dial so a take can have a sampling phase of its own: the frames of the
+   * rig otherwise fall on the same moments of the swing at every seed, and a
+   * noise figure on anything timed against them comes out short. Drop to
+   * contact reads 4.75 ms on one phase at 30 fps and 18.2 across them (H38).
+   */
+  leadIn: number
+  /**
    * Which noise realisation to draw.
    *
    * Vary this to measure across an ensemble. Holding it fixed while changing
@@ -663,6 +672,7 @@ export const CLEAN_SERVE: ServeDials = {
   dropout: 0,
   occlusionSeconds: 0,
   lightLevel: 1,
+  leadIn: 0.35,
   seed: 20240803,
 }
 
@@ -705,7 +715,7 @@ export function buildServe(dials: Partial<ServeDials> = {}, fps = 50): Frame[] {
   const rand = seeded(d.seed)
 
   // A little lead-in and follow-through around the measured motion.
-  const preroll = 0.35
+  const preroll = d.leadIn
   const postroll = 0.45
   /*
    * The hitch, as a share of the motion, and the warp that applies it.

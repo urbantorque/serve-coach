@@ -64,7 +64,7 @@ check('the same tempo tagged both ways says nothing', () => {
 
 check('a gap inside one take of the camera’s noise says nothing', () => {
   // 1.35 s against 1.65 s is about 10 ms of drop to contact on the rig,
-  // under one take's 18.5.
+  // under one take's 16.4.
   const { sessions, tags } = basket(1.35, 1.65, 8)
   const said = secondServeSlower(sessions, tags)
   assert(said === undefined, `a 10 ms gap was said: ${said?.line}`)

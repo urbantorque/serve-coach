@@ -63,8 +63,10 @@ import {
   DEPTH_AWARE,
   DEPTH_BIAS,
   DEPTH_MULTIPLIER,
+  FILE_RATES,
   FPS,
   IN_PLANE,
+  REAL_SERVES,
   SEEDS,
   chainDeviations,
   deviations,
@@ -73,8 +75,11 @@ import {
   namedOn,
   pooledDeviations,
   pooledFloorVerdicts,
+  realOnFile,
   realise,
+  realiseOnPath,
   realiseReal,
+  rigOnFile,
   seeds,
   type Realisation,
 } from './repeatability'
@@ -209,6 +214,34 @@ for (const s of deviations(deep.reads).slice(0, 6)) {
 const REAL_SEEDS = seeds(60)
 const real = realiseReal(undefined, REAL_SEEDS)
 
+/*
+ * And as the app reads a file (H40): 240 takes of each, on 30 and 60 fps files,
+ * each serve landing on the frames its own way, through the app's own path with
+ * its levelling (`realiseOnPath`). Floors exist for what a player is told, and a
+ * player's clip reaches the engine this way, not as a film at 50. The Bath serves
+ * from behind as well, where the spine's lean is read and nowhere else.
+ *
+ * The rig's clean drop sits on the border of the collapse, and on this read 2 or
+ * 3 takes in 60 land it on the toss, so `shallow_drop` is named through the path
+ * no floor gates. Those takes are set apart, because they are a different reading
+ * of the serve and not noise on one: left in, they ask 0.047 of the elbow's lift,
+ * which would name no collapsed elbow on most takes. The Bath serves' drop never
+ * does this (0 of 2,880).
+ */
+const FILE_SEEDS = seeds(240)
+const rigOnFiles = FILE_RATES.map((fps) => {
+  const reads = realiseOnPath((seed) => rigOnFile({}, seed, fps), 5, FILE_SEEDS)
+  const apart = reads.filter((r) => r.named.has('shallow_drop')).length
+  // Bounded, so the drop landing on the toss more often cannot hide in the filter.
+  if (apart > 12) throw new Error(`the clean rig's drop landed on the toss on ${apart} takes of ${reads.length} at ${fps} fps`)
+  return reads.filter((r) => !r.named.has('shallow_drop'))
+})
+const realOnFiles = FILE_RATES.flatMap((fps) =>
+  [{}, { bearing: 180, distance: 6 }].map((phone) =>
+    REAL_SERVES.map((serve) => realiseOnPath((seed) => realOnFile(serve, phone, seed, fps), 5, FILE_SEEDS)),
+  ),
+)
+
 note(`real motion — ${real.length} serves × ${REAL_SEEDS.length} takes, against the rig's one serve × ${deep.reads.length}:`)
 {
   const rigSd = new Map(deviations(deep.reads).map((d) => [d.id, d.sd]))
@@ -244,6 +277,8 @@ check('every signal has a noise floor, and it covers what the signal does', () =
   for (const [motion, devs] of [
     ['rig', deviations(deep.reads)],
     ['real motion', pooledDeviations(real)],
+    ...rigOnFiles.map((reads) => ['the rig on a file', deviations(reads)] as const),
+    ...realOnFiles.map((reads) => ['real motion on a file', pooledDeviations(reads)] as const),
   ] as const) {
     for (const s of devs) {
       const floor = NOISE_FLOOR[s.id]
@@ -294,6 +329,8 @@ check('no floor is quietly set below what its own repeatability asks for', () =>
   for (const [motion, v] of [
     ...floorVerdicts(deep.reads).map((v) => ['rig', v] as const),
     ...pooledFloorVerdicts(real).map((v) => ['real motion', v] as const),
+    ...rigOnFiles.flatMap((reads) => floorVerdicts(reads).map((v) => ['the rig on a file', v] as const)),
+    ...realOnFiles.flatMap((reads) => pooledFloorVerdicts(reads).map((v) => ['real motion on a file', v] as const)),
   ]) {
     if (v.floor !== undefined && v.capped) {
       capped.push(
@@ -1072,7 +1109,7 @@ check('a peak that is only the edge of its own window is not a peak', () => {
    * Three series, one shape each: still climbing at the close, still falling
    * from before the open, and a genuine interior maximum.
    */
-  const t = Float32Array.from({ length: 12 }, (_, i) => i * 0.02)
+  const t = Float64Array.from({ length: 12 }, (_, i) => i * 0.02)
   const climbing = Float32Array.from({ length: 12 }, (_, i) => i)
   const falling = Float32Array.from({ length: 12 }, (_, i) => 20 - i)
   const peaked = Float32Array.from({ length: 12 }, (_, i) => 10 - Math.abs(i - 6))
@@ -1605,7 +1642,7 @@ check('the trunk lead moves with the camera, and is noisiest where the guide put
 // reads it as steadier — the same stricter-wins rule the floor check uses.
 const underResolved = (() => {
   const byId = new Map(floorVerdicts(deep.reads).map((v) => [v.id, v]))
-  for (const v of pooledFloorVerdicts(real)) {
+  for (const v of [...pooledFloorVerdicts(real), ...realOnFiles.flatMap((reads) => pooledFloorVerdicts(reads))]) {
     const rig = byId.get(v.id)
     if (!rig || (v.underResolved && !rig.underResolved)) byId.set(v.id, v)
   }
@@ -1956,9 +1993,9 @@ heading('Splitting the chain ratio spread into the two things it is made of')
 /**
  * R50·3's premise, measured — and it is not the number the register carries.
  *
- * `UNCALIBRATED.chain_span_ratio` says the division "removes most of the tempo
- * dependence and not all of it — 58% spread becomes 21%", and `README.md` repeats
- * it. That figure is the *total* spread of the reading across a tempo sweep, with
+ * `UNCALIBRATED.chain_span_ratio` says the division removes most of the tempo
+ * dependence and not all of it: on one seed a 72% spread becomes 33% (58% and 21%
+ * when this was written). That figure is the *total* spread of the reading across a tempo sweep, with
  * seed-to-seed noise folded into it. It is the right number for the question the
  * register asks, which is whether the quantity is scale-free enough to band.
  *
@@ -1966,7 +2003,7 @@ heading('Splitting the chain ratio spread into the two things it is made of')
  * the wrong number for the landing (R50·2). A delta between two of one player's
  * serves is confounded by two independent things — how far the reading wanders
  * between takes, and how far the mean shifts when the tempo differs — and they
- * add in quadrature rather than being one figure. Bounding with 21% would refuse
+ * add in quadrature rather than being one figure. Bounding with a third would refuse
  * essentially every comparison and refuse it for a reason that is mostly not
  * about tempo at all.
  *
@@ -1974,21 +2011,24 @@ heading('Splitting the chain ratio spread into the two things it is made of')
  * register swept:
  *
  *     tempo    mean     sd      sd/mean
- *     1.10 s   0.0925   0.0067    7.2%
- *     1.35 s   0.0999   0.0063    6.3%
- *     1.70 s   0.1059   0.0070    6.6%
+ *     1.10 s   0.0924   0.0044    4.7%
+ *     1.35 s   0.0997   0.0056    5.6%
+ *     1.70 s   0.1061   0.0070    6.6%
  *
- * So the two terms are **noise at about 7% of the reading, flat across tempo**,
- * and a **mean that moves 13.5% across the whole 0.6 s range** — about 0.0223 per
- * second of tempo difference. A delta between two serves therefore carries
- * `hypot(√2 × 0.0067, 0.0223 × |Δt|)`, which at equal tempo is 0.0094 — 9.4% of
- * the reading — and grows as the two serves' tempos diverge.
+ * So the two terms are **noise at about 5 to 7% of the reading, roughly flat
+ * across tempo**, and a **mean that moves 13.8% across the whole 0.6 s range**,
+ * about 0.0228 per second of tempo difference. A delta between two serves
+ * therefore carries the noise of the pair and the tempo term in quadrature, which
+ * at equal tempo is 0.0080, 8% of the reading, and grows as the two serves'
+ * tempos diverge. (As printed on 2026-11-08. The 1.1 s row read 0.0064 until H45
+ * moved the chain window off its tie at 50 samples a second, where those films
+ * had read a radius of five.)
  *
  * Re-measured after the rig's swing was re-posed on the Bath serves. The tempo
  * term more than doubled (it was 5.7%, 0.0102 per second): a hand that bottoms
  * out at the shoulder and climbs steeply to contact puts more of the chain's
  * span into the part of the swing that tempo stretches. It is still the smaller
- * share of the register's 21%, which is the finding, and no longer by much.
+ * share of the register's total, which is the finding.
  *
  * NOTHING IS BUILT ON THIS YET. R50·3 is the round that would, and this is its
  * premise cycle: the numbers written down, no production code, so that the round
@@ -2042,17 +2082,18 @@ check('the reading wanders about a sixteenth of itself between takes, at every t
 
 check('the tempo term is smaller than the register total, which is the finding', () => {
   /*
-   * The check that would go red if somebody read the 21% as a tempo sensitivity
+   * The check that would go red if somebody read the register's total as a tempo sensitivity
    * and built a bound on it. Stated as the movement of the MEAN, which is the
    * only part of that figure a tempo difference actually causes.
    */
   const means = RATIO_STATS.map((s) => s.mean)
   const spread = (Math.max(...means) - Math.min(...means)) / Math.abs(meanOf(means))
   note(`  the mean moves ${(100 * spread).toFixed(1)}% across ${RATIO_TEMPOS[0]}–${RATIO_TEMPOS[2]}s`)
-  // Four fifths of the register total: past that the tempo term IS most of it.
+  // Four fifths of the register total as first written (21%): past that the tempo
+  // term IS most of it. Its one seed reads 33% now, so this is the stricter line.
   assert(
     spread < 0.17,
-    `the mean moves ${(100 * spread).toFixed(1)}% across the tempo range — at or near the 21% ` +
+    `the mean moves ${(100 * spread).toFixed(1)}% across the tempo range — at or near the total ` +
       'the register states, so that figure IS the tempo term after all and this finding is wrong',
   )
   assert(

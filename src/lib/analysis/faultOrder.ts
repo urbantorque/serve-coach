@@ -161,7 +161,7 @@ export const isFirm = (f: Pick<FlawFinding, 'confidence'>): boolean => f.confide
  */
 export const INJURY_INPUTS: Record<InjuryFlag, readonly string[]> = {
   // The palm alone since L1.3. The forearm's turn through contact is
-  // `UNDER_RESOLVED` (a 76° floor, and real serves turn about 93°), so as the
+  // `UNDER_RESOLVED` (an 85° floor, and real serves turn about 93°), so as the
   // flag's second witness it was true on every real serve and proved nothing.
   wrist_strain_forced_pronation: ['palm_to_sky_deg'],
   lumbar_load_posture_collapse: ['spine_lean_deg'],

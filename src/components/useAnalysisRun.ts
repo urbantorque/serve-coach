@@ -419,7 +419,7 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
           // read and saved already, so it stays on screen with a line saying
           // why there is no comparison, rather than an error screen in its
           // place (L1.7, `withoutComparison`).
-          setView({ kind: 'report', analysis: withoutComparison(analysis, swept.serves.length), videoUrl: url })
+          setView({ kind: 'report', analysis: withoutComparison(analysis, swept.serves.length, swept.attempted), videoUrl: url })
           return
         }
 

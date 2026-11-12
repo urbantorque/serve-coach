@@ -19,7 +19,7 @@
 import { blockingFramingIssue } from '../../analysis/analyze'
 import { LM } from '../../analysis/geometry'
 import { framingIssues } from '../../analysis/framingIssues'
-import { DEPTH_YAW_RANGE, NOTABLE_ROLL, levelPivot, unlevelFrames } from '../../analysis/spatial'
+import { DEPTH_YAW_RANGE, LEVEL_FROM, NOTABLE_ROLL, levelPivot, unlevelFrames } from '../../analysis/spatial'
 import { buildServe } from '../../analysis/syntheticServe'
 import type { Frame } from '../../analysis/types'
 import { command, cueIssues, plain } from '../../analysis/voice'
@@ -267,12 +267,13 @@ const leaning = (frames: Frame[], deg: number): Frame[] => {
 }
 
 check('roll is called out at exactly the angle spatial.ts corrects from', () => {
-  for (const roll of [0, 2, NOTABLE_ROLL - 0.5, NOTABLE_ROLL, 12, 20]) {
+  // That angle moved from 4° to 5° when levelling became a ramp (H37).
+  for (const roll of [0, 2, NOTABLE_ROLL, LEVEL_FROM - 0.5, LEVEL_FROM, 12, 20]) {
     const base = standing(CORNER)
     const frames = unlevelFrames(base, { roll_deg: roll, ...levelPivot(base) })
     const r = readFraming(frames)
     const call = judgeFraming(r).call
-    const expected = Math.abs(roll) >= NOTABLE_ROLL ? 'off-vertical' : 'ready'
+    const expected = Math.abs(roll) >= LEVEL_FROM ? 'off-vertical' : 'ready'
     assert(call === expected, `a ${roll}° roll said ${call}`)
   }
 })

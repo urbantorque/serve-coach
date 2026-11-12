@@ -55,3 +55,18 @@ export const ER_LEAN_SENSITIVITY = 0.5
  * retyped. Naming it changes nothing — nothing in this file reads it.
  */
 export const ER_DEVIATION_DEG = 11.8
+
+/**
+ * The same reading's deviation on a front-back view, on the app's read: the only
+ * view the basket's arm line runs on (H45). Straight behind it moves 3.4° to 5.1°
+ * between takes of one serve (the rig at yaw 0 and 8, the six Bath serves, 30 and
+ * 60 fps files, 240 takes each); at the edge of the class, a phone a little off the
+ * centre line (court yaw 25 to 28.5), 5.6° to 7.4°, and up to about 8 where the
+ * class reaches yaw 30. Bounded at 7.5, a still serve at that edge with a lot of
+ * lay-back is told of a change on about 1 pair in 240, 2 baskets of three, and 3
+ * of six, up to 5 (H46); at 6 it was up to 6%, at 8 the line found half as much
+ * from behind, and at the side-on 11.8 no real change in a basket of six could
+ * clear it. An angled phone reads it 6.5° to 10.4°, so the line does not run there
+ * at all.
+ */
+export const ER_FRONT_BACK_DEVIATION_DEG = 7.5

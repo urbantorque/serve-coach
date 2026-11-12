@@ -112,7 +112,9 @@ check('the correction holds all the way to the refusal boundary, not just at a g
     (skel.groundY - fs[skel.keys.contact].image[16].y) / skel.bodyHeight
   const baseline = contactHeightOf(level, cleanSkel)
 
-  for (const deg of [6, 10, 14, 17]) {
+  // From 8°: levelling grows from nothing at 5° and is whole from 7° (H37), so a
+  // 6° tilt is half corrected by design, not by a failing correction.
+  for (const deg of [8, 10, 14, 17]) {
     const tilted = rollFrames(level, deg)
     const tiltedSkel = detectServe(tilted, FPS)
     const spatial = assessSpatial(tilted, tiltedSkel.keys.ready, tiltedSkel.bodyHeight)

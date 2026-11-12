@@ -493,6 +493,30 @@ export const SIGNALS: Record<string, SignalSpec> = {
  * is as steady on real motion as on the rig, or steadier. Confirmed on all
  * forty Bath serves at sixty takes each, which agree with the six to within a
  * rounding step.
+ *
+ * ON THE APP'S OWN READ SINCE H40. Those figures came from films at 50 fps, and
+ * the app reads a file at 30 samples a second with each serve landing on the
+ * frames its own way. `depth.test.ts` now holds every floor to that read as well,
+ * 240 takes each of the rig and the Bath serves on 30 and 60 fps files, from the
+ * guide and from behind, through the app's own path with its levelling, and
+ * these rose to what it asks for:
+ *
+ *                        worst sd  was    now    what it costs, rig faults, 120 takes
+ *   contact_ahead_pct      3.12      3      5     met 0.25 m back: 107 named, not 120
+ *   toss_arm_hold_pct      2.18      2      4     a mild drop (0.4): 35, not 73
+ *   hip_lead_ms            58.1     76     88     nothing: arming is not named
+ *   pronation_deg          56.2     76     85     nothing: pancake is not named
+ *   palm_to_sky_deg        13.3     18     20     a mild tray (60°): 40, not 55
+ *   toss_drift_ratio       0.2025  0.22   0.304   the gentlest wander: 72, not 82
+ *   spine_lean_deg         7.7     10     12      a 26° collapse: 5, not 16
+ *   contact_height_ratio   0.0083  0.012  0.013   a reach of 1.1: 51, not 55
+ *   leg_drive_rise_ratio   0.0067  0.01   0.011   legs that never drive: 117, not 118
+ *
+ * Contact in front moved furthest, and for a reason that may yet be fixed: most
+ * of its noise is the contact moment locking onto the samples. No Bath serve
+ * changed what it was told at any rung; the Bath serves carry no fault at these
+ * bands, so the cost falls on the rig's own faults, which is the table above.
+ * Grosser faults of each kind are named as before.
  */
 export const NOISE_FLOOR: Record<string, number> = {
   // Two peak-finds on a smoothed derivative, differenced. Still the least
@@ -525,19 +549,28 @@ export const NOISE_FLOOR: Record<string, number> = {
   // it was worth. Was 45 before that, clipped to `seriousMiss`. Both moves are
   // in `UNDER_RESOLVED.hip_lead_ms`, which is also where the detector's rates at
   // each floor are, because a floor is only worth what it does to those.
-  hip_lead_ms: 76,
+  //
+  // 85 since H40, on 56.5 ms between takes on the app's read; 88 since H45, when
+  // the suite's model of that read stopped where the app's seek stops, short of a
+  // file's end: 58.1 ms, which asks for 87.2. That figure rests on where the Bath
+  // films end, about 0.2 s after contact, inside the trunk's smoothing: each frame
+  // of 60 fps film lost at the end adds about 4 ms to it, while the rig, whose
+  // film runs on, reads 56.2 (H46).
+  hip_lead_ms: 88,
   // Forearm rotation between two sampled instants, from the palm normal — a
   // 3D orientation recovered from landmarks the network placed in depth, on the
   // smallest structure in the skeleton. The rig's deviation is 18.3°; real
-  // motion's is 50.1°, because a real hand turns fast through contact and the
-  // keyframe lands a sample either side of the turn, so 1.5 × that rounds up to
-  // 76. Was 31 from the rig alone, and 16 before that, clipped to `seriousMiss`.
+  // motion's is 50.2° at 50 fps (50.1 when this was set), because a real hand
+  // turns fast through contact and the keyframe lands a sample either side of
+  // the turn, so 1.5 × that rounds up to 76. Was 31 from the rig alone, and 16
+  // before that, clipped to `seriousMiss`.
+  // 85 since H40: 56.2° between takes on the app's read asks for 84.4.
   //
   // Nothing is graded against this floor any longer — `pancake_contact` is
   // measured and never named, for the reasons in `UNDER_RESOLVED` — but the
   // figure stays, because it is the measurement, and the day a better pronation
   // estimator arrives this is the number it has to beat.
-  pronation_deg: 76,
+  pronation_deg: 85,
   // Same normal, read on one frame near the trophy. 18 since D7.6: real motion
   // moves it 11.7° between takes of one serve against the rig's 4.2°, so 1.5×
   // rounds up to 18. The cost, at sixty takes: the tray demonstration's dial is
@@ -548,6 +581,8 @@ export const NOISE_FLOOR: Record<string, number> = {
   // The rig's deviation was 6.8° when the paragraph below was written; the rig
   // has since been re-posed on real motion (D7.2) and reads 4.2°.
   //
+  // 20 since H40: real motion moves it 13.1° on the app's read.
+  //
   // Was 10, and that one degree is worth the comment it costs. Nobody capped
   // this on purpose: 1.5 × 6.783 is 10.17, and somebody wrote down the round
   // number. It went unnoticed for as long as it did because the check that
@@ -555,7 +590,7 @@ export const NOISE_FLOOR: Record<string, number> = {
   // against the one-and-a-half this file documents. A rounded-down floor is a
   // cap however small and however accidental, and this is a signal that names a
   // grip fault, so it now rounds the way floors have to round — up.
-  palm_to_sky_deg: 18,
+  palm_to_sky_deg: 20,
   // A yaw difference. Hedged already by the camera check, and wider than its
   // own serious miss on real motion: see `UNDER_RESOLVED.separation_deg` for
   // why it sits at 30 and not at the 14 its deviation asks for. Was 9, from a
@@ -611,28 +646,36 @@ export const NOISE_FLOOR: Record<string, number> = {
   // on some takes and not others, 3.8% of all takes; at 10, 22 serves and 1.3%.
   // The tail is long — 16 still leaves 0.2% — so the floor stops where its own
   // rule puts it rather than chasing zero into a detector that never fires.
-  spine_lean_deg: 10,
+  //
+  // 12 since H40, and now past its serious miss: no ensemble had read it on the
+  // app's read, because it is read from behind and nowhere else. There the lean
+  // moves 7.7° between takes. See `UNDER_RESOLVED.spine_lean_deg`.
+  spine_lean_deg: 12,
   // The rest are read from x and y, which the camera genuinely saw, and are an
   // order of magnitude steadier for it.
   //
   // In percent of height since L5.1, when the drift became the card's spread
-  // (`tossPath.ts`): the rig moves it 0.143 between takes and the Bath serves
-  // 0.128, and one and a half of the rig's rounds up to 0.22.
-  toss_drift_ratio: 0.22,
+  // (`tossPath.ts`). On the app's path the Bath serves from behind move it 0.2025
+  // between takes, and one and a half of that rounds up to 0.304, three places as
+  // every ratio here keeps. The rig's gentlest wandering hand is named on 72 takes
+  // of 120 rather than 82 on a 30 fps file; the rest, all.
+  toss_drift_ratio: 0.304,
   drop_depth_ratio: 0.012,
   // 0.017 since D7.6: the rig's elbow moves 0.006 between takes and a real one
   // 0.011. The back-scratch dial is named on every take either way, and no real
   // serve was named at either floor.
   elbow_lift_ratio: 0.017,
-  contact_height_ratio: 0.012,
+  contact_height_ratio: 0.013,
   toss_peak_ratio: 0.02,
-  // One and a half of the Bath serves' deviation between takes, 1.5, rounded
-  // up (L5.3); the rig moves it a third as far.
-  contact_ahead_pct: 3,
-  // One and a half of the Bath serves' deviation, 1.15, rounded up (L5.4).
-  toss_arm_hold_pct: 2,
-  // One and a half of its ensemble deviation, 0.006, rounded up to the next hundredth.
-  leg_drive_rise_ratio: 0.01,
+  // One and a half of the Bath serves' deviation between takes on the app's read,
+  // 3.12, rounded up (L5.3, H40); the rig moves it a fifth as far.
+  contact_ahead_pct: 5,
+  // One and a half of the rig's deviation on the app's read, 2.18, rounded up (L5.4,
+  // H40). The tossing arm's hold is a count of samples, and there are about 24.
+  toss_arm_hold_pct: 4,
+  // One and a half of the Bath serves' deviation, 0.0067, rounded up to the next
+  // thousandth.
+  leg_drive_rise_ratio: 0.011,
   // Real motion asks for more than the rig (13.5 ms against 7.5): one and a
   // half of the real deviation, from `realiseReal` (D3.6).
   chest_open_ms: 21,
@@ -657,7 +700,7 @@ export const NOISE_FLOOR: Record<string, number> = {
  * MOSTLY GONE SINCE D7.4. The hand's height above the hips now comes from the
  * world skeleton, which has no perspective in it (`handHeight.ts`), and the
  * same forty serves agree from all five places to 0.023 (medians 1.211 to
- * 1.234). Half of that is 0.012, the signal's own noise floor, so the allowance
+ * 1.234). Half of that is 0.012, under the signal's own noise floor (0.013), so the allowance
  * no longer widens anything; it stays as the measured figure, so a change that
  * brings the spread back shows up here first. It was 0.06.
  *
@@ -704,6 +747,19 @@ export const CAMERA_ALLOWANCE: Record<string, number> = {
  * the first to arrive that way: the rig's default camera never read it at all.
  */
 export const UNDER_RESOLVED: Record<string, string> = {
+
+  /*
+   * Kept, at a floor of 12, two over its serious miss (H40). It is read from
+   * behind and nowhere else, and on the app's read the Bath serves' lean moves
+   * 7.7° between takes there, so one and a half deviations ask for 12. From
+   * behind on the rig, 120 takes each on a 30 fps file: a spine bent 40° sideways
+   * is named on 97 rather than 109, 30° on 26 rather than 41, 26° on 5 rather than
+   * 16 (on a 60 fps file 106, 28 and 7); clean Bath serves on 3 takes of 720
+   * rather than 5. A gross collapse is still named; a mild one mostly is not.
+   */
+  spine_lean_deg:
+    'kept: floor 12, over its 10 — the lean moves 7.7° between takes from behind on ' +
+    "the app's read; a 40° collapse is still named on 81% of takes, a 26° one on 4%",
 
   /*
    * Kept, at an honest floor, because it still tells a gross fault from none.
@@ -788,8 +844,8 @@ export const UNDER_RESOLVED: Record<string, string> = {
    */
   hip_lead_ms:
     'kept: smoothing moved to a time-based window, floor followed the ' +
-    'measurement 85 -> 76 ms — 0% of clean serves against 92% of grossly ' +
-    'armed ones, and 57% of genuinely armed ones against 50% before',
+    'measurement 85 -> 76 ms, back to 85 on the app\'s read (H40) and 88 where its seek stops short of the end (H45); ' +
+    'arming_the_ball is not named, so the floor moves nothing a player is told',
 
   /*
    * Kept, at a floor well above its deviation, because only an open chest
@@ -867,14 +923,15 @@ export const UNDER_RESOLVED: Record<string, string> = {
    * it.
    *
    * Real motion settled it further (D7.6). The same noise on the Bath serves
-   * moves this reading 50.1° between takes of one serve, so the floor is now 76
+   * moved this reading 50.1° between takes of one serve when this was written
+   * (50.2 since H45), so the floor was 76 (85 since H40, on the app's read)
    * — twice the band's lower edge at any rung.
    *
    * Both roads end in the same place, so this takes the one that says so. The
-   * signal stays: `signals.pronation_deg` still carries the measured value, and
-   * the `wrist_strain_forced_pronation` injury flag still reads it against an
-   * absolute limit, deliberately unfloored, for the reason two comments above.
-   * What stops is naming a stroke fault from it.
+   * signal stays: `signals.pronation_deg` still carries the measured value.
+   * The `wrist_strain_forced_pronation` injury flag no longer reads it: it reads
+   * the palm alone (`faultOrder.ts`, `INJURY_INPUTS`). What stops is naming a
+   * stroke fault from it.
    *
    * A separate observation for whoever revisits this, weaker but pointed in the
    * same direction: swept against the rig's own pronation dial the reading is
@@ -889,7 +946,7 @@ export const UNDER_RESOLVED: Record<string, string> = {
    */
   pronation_deg:
     'not named: `pancake_contact` fires on 10% of clean serves against 35% of ' +
-    'genuine pancakes, and an unsigned angle cannot miss its band by 76°',
+    'genuine pancakes, and an unsigned angle cannot miss its band by 85°',
 }
 
 /**
@@ -1089,11 +1146,13 @@ export const UNCALIBRATED: Record<string, string> = {
    *
    * Dividing helps, and it does not remove the dependence. Swept over the
    * `motionSeconds` dial at 1.1, 1.35 and 1.7 s, with `DEPTH_AWARE` dials at
-   * 50 fps and one seed: the raw span reads 99, 114 and 174 ms — a 58% spread
-   * about its own mean — and the ratio reads 0.1010, 0.1000 and 0.1225, which is
-   * 21%. Most of the tempo dependence is gone. A fifth of it is not, because the
-   * span is not actually proportional to the motion: 1.0/1.15/1.76 against
-   * tempos of 1.0/1.23/1.55.
+   * 50 fps and one seed, as depth.test prints it on 2026-11-08: the raw span reads
+   * 82, 107 and 168 ms, a 72% spread about its own mean, and the ratio 0.0854,
+   * 0.0922 and 0.1183, which is 33%. About half the tempo dependence is gone. The
+   * rest is not, because the span is not actually proportional to the motion:
+   * 1.0/1.30/2.05 against tempos of 1.0/1.23/1.55. One seed moves with any change
+   * to the chain's windows: this read 58% and 21% when it was written, and 65% and
+   * 26% until H45 moved the chain window off its tie at 50 samples a second.
    *
    * The entry above records that ratio as "0.092, 0.088 and 0.092 across those
    * three tempos, scale-free to within 5%". That does not reproduce. It states
@@ -1105,10 +1164,10 @@ export const UNCALIBRATED: Record<string, string> = {
    *
    * What would move this into `SIGNALS`, stated so nobody has to guess:
    *
-   *   1. The residual has to be understood. A quantity 21% dependent on tempo
+   *   1. The residual has to be understood. A quantity a third dependent on tempo
    *      grades a deliberate server, which is the exact fault that sent the raw
    *      span here. Either the residual is sampling — 20 ms of frame at 50 fps
-   *      against a 99 ms span is a fifth of it, which would be settled by the
+   *      against an 82 ms span is a quarter of it, which would be settled by the
    *      same sweep at 120 fps — or the sequence genuinely changes shape with
    *      tempo, which is a finding about serving and not a calibration problem.
    *   2. Real footage, because the rig cannot produce the variation a band would
@@ -1124,7 +1183,7 @@ export const UNCALIBRATED: Record<string, string> = {
    */
   chain_span_ratio:
     'measured and not named: the division removes most of the tempo dependence ' +
-    'and not all of it — 58% spread becomes 21% — and no band exists either way',
+    'and not all of it — on one seed a 72% spread becomes 33% — and no band exists either way',
 
   /*
    * The landing, and the first reading in this engine taken past contact.
@@ -1554,8 +1613,8 @@ export function severityOf(signal: string, value: number, band: [number, number]
  * one flaw. Measured, when `hip_lead_ms`'s floor moved from 45 to 85: a serve
  * whose shoulders fire 30 ms *early* went from rating 4 to rating 9, the same
  * rung as a clean 70 ms lead, because 85 ms of slack is wider than the whole
- * 42 ms ladder that signal is graded on. The floor has since come down to 76,
- * which does not change the conclusion — 76 is still wider than that ladder —
+ * 42 ms ladder that signal is graded on. The floor has since come down to 76 and
+ * gone back to 85 (H40) and 88 (H45), which does not change the conclusion — it is still wider than that ladder —
  * and is why the exclusion below is stated against the rung rather than against
  * a particular floor. That is not forgiveness, it is a signal
  * with nothing left to say voting anyway.
@@ -1567,7 +1626,7 @@ export function severityOf(signal: string, value: number, band: [number, number]
  * this cannot tell rung 5 from rung 6 — whichever rung it reports is the noise
  * talking — so `inferTier` drops it rather than averaging it in, the same way
  * `metrics.ts` drops a value it could not compute instead of defaulting one.
- * Currently that excludes every one of the four: `hip_lead_ms` (76 ms floor
+ * Currently that excludes every one of the four: `hip_lead_ms` (88 ms floor
  * against a 7 ms rung), `separation_deg` (30° against 2.8°), `drop_depth_ratio`,
  * whose band no longer moves with the rung at all — real motion showed hand
  * depth does not separate levels — and `contact_height_ratio`, whose band is

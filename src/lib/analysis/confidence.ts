@@ -22,6 +22,7 @@ import { assessSpatial } from './spatial'
 import type { Frame, Metric } from './types'
 import { cue } from './voice'
 import { SOFT_MEASUREMENT } from './softness'
+import { tossLiftStart } from './tossPath'
 
 export { SOFT_MEASUREMENT } from './softness'
 
@@ -196,11 +197,14 @@ const armOf = (s: Side) => [sided(s).shoulder, sided(s).elbow, sided(s).wrist]
  * Anything not listed is read across the whole motion, which is the honest
  * window for a duration or a path.
  */
-const READ_AT: Record<string, (k: Skeleton['keys']) => [number, number]> = {
+const READ_AT: Record<string, (k: Skeleton['keys'], frames: Frame[]) => [number, number]> = {
   tossArmExtension: (k) => [k.toss, k.toss],
   releaseHeight: (k) => [k.toss, k.toss],
   tossArmHold: (k) => [k.toss, k.contact],
-  tossPathWobble: (k) => [k.toss, k.contact],
+  // The lift it is read over (`tossPath.ts`), which the diagnosis prices too. It
+  // was everything after the release: a lift nobody saw gave a crisp card, and
+  // an arm lost after the release a hedged one beside a named fault.
+  tossPathWobble: (k, frames) => [tossLiftStart(frames, k.toss, k.ready), k.toss],
   syncAtRelease: (k) => [k.toss, k.toss],
   kneeBend: (k) => [k.trophy, k.trophy],
   hipShoulderSeparation: (k) => [k.trophy, k.trophy],
@@ -527,7 +531,7 @@ export function metricConfidence(id: string, ctx: ConfidenceContext): number {
   // decide how much of it is guesswork.
   const landmarks = LANDMARKS[id]?.(skel.racket) ?? []
   if (landmarks.length) {
-    const [readFrom, readTo] = READ_AT[id]?.(skel.keys) ?? [skel.keys.ready, skel.keys.finish]
+    const [readFrom, readTo] = READ_AT[id]?.(skel.keys, ctx.frames) ?? [skel.keys.ready, skel.keys.finish]
     const last = ctx.frames.length - 1
     const from = clamp(Math.round(readFrom) - KEYFRAME_SLACK, 0, last)
     const to = clamp(Math.round(readTo) + KEYFRAME_SLACK, from, last)

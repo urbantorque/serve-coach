@@ -4269,6 +4269,8 @@ changed, the promise changed, and the item says so.
         app's rate would fix it and changes the method, so it stands open. One wild sample
         moves the reading more often (at 32 fps a median 1.5, 2.4 and 3.6° for 10, 20 and
         40 cm), and the rig's clean arm rose 2.38 to 2.79.
+      - *Closed by H38:* the table is measured on the app's read now. Arm extension is
+        10.0° there, 1.12 of the rule, and named in `KNOWN`.
 - [x] **H21 The load timed from the hips, or the arms where the legs barely bent** · S.
       - *Done:* 2026-11-05. Load ratio's noise was the trophy's moment: the
         deepest knee bend is built on depth, its trough is flat, and it moved 52
@@ -4441,3 +4443,152 @@ changed, the promise changed, and the item says so.
         It needs a nudge at five re-seek sites and repeats dropped before gap bridging, and
         gains nothing at 60 fps, where the gaps stay uneven. One callback a window places the
         walk. `FINE_FPS = 30`: a 1/30 grid sits on the frame edges.
+- [x] **H36 The toss read in seconds** · S.
+      - *Done:* 2026-11-06. The window was 12% of however many samples the read held, so
+        one toss from behind read 1.40 at 64 samples, 2.38 at 86 and 4.60 at 120, on a band
+        of 0 to 3. The smoothing was two samples, which at 30 Hz took a wandering hand on the
+        rig from named on 54 takes of 60 to none. Now 0.298 s back from the release, smoothed
+        0.04 s either side, the chord drawn in time. A window across a hole the tracker left
+        open, or with under three samples or half its span, is no reading rather than a
+        straight toss (H44).
+      - *Proved:* no card reading moves by more than a thousandth of its noise from 66
+        samples to 120 (`frameRate.test.ts`). The rig's wandering hand reads over the band
+        at 30 Hz again. `tossPath.test.ts`: a lift with a hole in it reads nothing, and the
+        card prices the window the diagnosis reads.
+      - *Costs carried:* the Bath serves from behind read lower than the app's read did.
+        That is the band's own calibration back: it was set on films where the window was
+        0.26 s. 0.298 s is judgement between the two. At 0.34 s real arms from behind read
+        out of band, at 0.26 s the rig's hand barely reaches it, and 0.29 s gave a 24 or 48
+        fps file a six-step window, which the rig's hand cannot fill.
+- [x] **H37 Levelling grows from nothing** · S.
+      - *Done:* 2026-11-06, the ramp moved 2026-11-07. The six Bath serves' stances read
+        3.3° to 5.1° of roll on a dead level phone, and the correction was all or nothing at
+        4°. One stance read 3.99° and was levelled on 566 takes of 960: contact height jumped
+        0.044 between the two, about four and a half times that row's noise, for one player,
+        on every serve. `levelled` grows the correction from nothing at 5° to whole at 7°,
+        past the stances, and the viewfinder says the picture leans from 5° with it.
+      - *Proved:* with tilts drawn around level (sd 1°, 2° and 4°), every row's error from
+        the guide was 0.57, 0.86 and 1.24 of its noise with the ramp from 5°, against 0.81,
+        1.03 and 1.32 from 4°, and level from behind and on the rig. On the table's own
+        measurement contact height's noise went from .0227 under the step to .00874, leg
+        drive's from .0115 to .00723 and release height's from .0100 to .00766, with the rest
+        of H44 in. `invariants.test.ts` holds the ramp to no step and a seven-degree phone
+        to a whole correction.
+      - *Costs carried:* a phone truly five or six degrees off is only partly corrected, half
+        a deviation of error on a plumb body at 6°, and one four or five degrees off is
+        neither corrected nor told. A real stance's lean is in the reading, so from the side
+        a phone tilted one way is over-corrected and one tilted the other way up to about 8°
+        is not corrected at all: contact height moves up to 0.072 with the phone six degrees
+        off (`filePosition.test.ts`, KNOWN). The step did the same. A level phone whose
+        stance reads 4° to 5° is no longer levelled, so shoulder tilt reads about 3° higher
+        and contact height 0.03 on those clips, which moves a saved report and is one of the
+        reasons for scoring version 6. Against the capture, contact timing from the side
+        against its own definition got worse at 30 fps, 5 ± 9 to 8 ± 11 ms from the guide and
+        7 ± 10 to 11 ± 13 from the right, and better at 60, -5 ± 7 to -1 ± 4 from the guide.
+        Against the event it stands for it improved at every side rate. From behind nothing
+        moved.
+- [x] **H38 The noise table on the app's own read** · M.
+      - *Done:* 2026-11-06, measured again 2026-11-07 with H44 in, on the owner's word that
+        the method could change. 240 takes over 26 cells: the rig and six Bath serves from
+        two placements, on 30 and 60 fps files, each take on a sampling phase of its own,
+        through `appRead` and `runEngine`, levelling and swap guard included.
+        `consistency.test.ts` re-measures exactly that, on the same seeds.
+      - *The table, was to is:* release height .0069 to .00766; toss arm 1.53 to 2.33; toss
+        path .224 to .300; knee 3.77 to 4.27; shoulder tilt 2.59 to 3.04; leg drive .0081 to
+        .00723; drop depth .0074 to .00985; elbow at drop 5.29 to 5.81; hand under elbow 2.43
+        to 2.65; drop to contact 18.5 to 16.4; contact height .0099 to .00874; arm extension
+        6.45 to 10.0; contact ahead 1.97 to 3.46; load ratio 1.67 to 2.38. Without H35–H37 the
+        same measurement read contact ahead 4.91, drop to contact 21.7, toss path .524 and
+        contact height .0227. Those were defects, and they are gone rather than recorded.
+      - *Proved:* on the first measurement, over seeds 24, 60, 240 and 960, 240 takes agreed
+        with the long run within 16% at worst and 3.6% rms, where 24 takes ran .63 to 1.73
+        of it. Noise-only baskets: 2 of 480 from the guide were told a row drifts and none
+        that one changes most, 0 of 480 from behind, and 470 of 480 from the guide read 100
+        on every row. `bandNoise.test.ts` judges the rule on the app's read: one row is over,
+        arm extension at 1.12, and it is in `KNOWN` with why. 120 and 240 fps files stay
+        within 9%.
+      - *Costs carried:* it is a regression check on its own seeds, not a bound on the
+        camera. Against disjoint takes a figure moves up to about a fifth, 7 to 8% rms by
+        row, and on heavy tails it runs low (load ratio 2.57 over 2,880 takes). It is a
+        floor, not the tracker's whole error (see STATUS). Drop depth's figure is set by the
+        clean rig's drop landing on the toss on about one take in 25; without those takes
+        it would be .00774. Arm extension's wander is near silent in a basket: even odds need
+        about 1.3 bands. Where the rate is unknown toss path reads about twice the table,
+        in a located window contact ahead 1.35 and drop to contact 1.26, and read whole, by
+        length, up to 1.6 and 1.5; `cardNoise.ts` lists every read it does not cover (H45,
+        H46). It takes about 10 s of the suite.
+- [x] **H39 The score floors on the app's path** · S.
+      - *Done:* 2026-11-06, from behind as well 2026-11-07. `realChange.test.ts` read films
+        at 30 and 50 fps with no levelling and no confidence, on one phase, at 24 and 60
+        takes. Two fresh draws of the same films broke a dozen of its figures. It now reads
+        files through `runEngine`, 240 takes of 17 serves, the Bath serves from the guide and
+        from behind, on 30 and 60 fps files, and a floor is one past the 90th percentile.
+      - *Moved:* the toss 7 to 5, loading 10 to 9, the swing 6 to 5, contact 14 to 13,
+        rhythm 34 to 31, overall read differently 12 to 13, the swing read differently 42 to
+        43, the gap 11 to 12, the best-worst bar of five 7 to 8, and most rows' floors fell.
+        Overall stays 5 and the trip 8. Contact is never read differently on these takes, so
+        it has no floor there and a change across that stays soft.
+      - *Why each moved:* rhythm 34 to 30 is the take count, 240 rather than 24 or 60, and
+        the app's path puts one back. The toss 7 to 5 is the toss read in seconds (H36), and
+        shows on the old films too. Loading 10 to 9 is the take count and the app's path: it
+        moves 8 at its 90th percentile with the serves from behind or without them. The swing
+        and contact lose one each to the frames walk. What the back fence does raise is two
+        rows: shoulder tilt's floors 19, 15 and 12 against 16, 11 and 9, and contact height's
+        two a side 3 against 2 (H45).
+      - *Considered and not built:* the investigation's own table on the old read raised 31
+        cells. An independent re-measure on the exact app path found 19 to 22 of them needed
+        on no read. It was never written down.
+      - *Costs carried:* still one draw. A fresh set of 240 takes breaks about 11 of the 58
+        figures, nearly all by landing exactly on the floor, so a figure is good to about a
+        point, and a change of ensemble can redden the suite with no change of engine. The
+        ensembles have no ball.
+- [x] **H40 The fault floors on the app's read** · S.
+      - *Done:* 2026-11-06, on the app's own path 2026-11-07. `depth.test.ts` derived
+        `NOISE_FLOOR` at 50 fps. It now also holds every floor to 240 takes on 30 and 60 fps
+        files, from the guide and from behind, read through the app's path with its
+        levelling (`realiseOnPath`). Contact ahead 3 to 5, toss arm 2 to 4, hip lead 76 to
+        85 (88 since H45), pronation 76 to 85, palm 18 to 20, toss drift .22 to .304, spine lean 10 to 12,
+        contact height .012 to .013, leg drive .01 to .011. Spine lean is declared in
+        `UNDER_RESOLVED`: from behind its floor sits over its serious miss.
+      - *Costs carried, rig faults over 120 takes:* contact met 0.25 m back named on 107,
+        not 120; a mild toss arm drop on 35, not 73; a mild tray on 40, not 55; the gentlest
+        toss wander on 72, not 82; a 26° collapse on 5, not 16; a reach of 1.1 on 51, not 55;
+        legs that never drive on 117, not 118. A kick met 0.35 m back is no longer named;
+        0.45 m is. No Bath serve changed what it was told at any rung, but they carry no
+        fault at these bands, so that is no evidence the raises are free. The clean rig's
+        drop lands on the toss on 9 to 11 takes of 240 on this read, which no floor gates.
+        Those takes are set apart from the elbow and depth floors, and counted. Bath's never
+        does, 0 of 5,760.
+- [x] **H41 The chain's timing on the new read** · S.
+      - *Done:* 2026-11-06. `CHAIN_NOISE_SD` is 17, 14 and 18 ms for the leg lead, the legs'
+        peak and the elbow's: each the worst over 30, 60 and 120 fps files, the larger of 60
+        and 240 takes, rounded up. On the even grid a 30 fps file moves them 23, 17 and 22.
+        `LEG_LEAD_SLACK` 35 to 39: over 240 takes rather than 36, a tie read legs first on 6%.
+      - *Proved:* the forty Bath serves at slack 39. From the side 2,878 of 2,880 reads came
+        back legs first, and the other two were unread. With the legs run late, on the app's
+        reads of a 30 or 60 fps file, a true gap of -14 ms reads level on 94 to 100% and legs
+        first on 0.8% at most; -74 reads arm first on 85 to 99%. `legLead.test.ts` reads the
+        file's frames and the even grid, and holds a tie to 10% legs first and 160 ms late to
+        60% arm first, past the 0.4 to 8.8% and 64 to 84% that two sets of eight draws of
+        240 takes, each the suite's own and seven fresh, reached on every read (H45, H46).
+      - *Costs carried:* -44 ms reads arm first on 36 to 81% of takes, where a slack of 35
+        reads 46 to 88% on the same reads, 7 to 20 points a cell (H46; 36 to 73% and 46 to
+        83% before the model of the read stopped where the app's seek does, and the 71 to
+        87% before H41 was the old 32 Hz read). The rest read level, never legs first.
+- [x] **H42 Arm extension through a straight line** · S.
+      - *Measured, not adopted.* From the side the noise is almost all depth, so the depth
+        axis went through a straight line instead of a curve, the search ran later, and
+        repeats were dropped. It cleared the rule, 7.41–7.70° on the app's read. The patch is
+        `docs/history/h42-arm-extension-line.patch`.
+        - An independent re-measure found the mean reading swung 8° across phone angles of
+          60–120°, about 1° today, with every capture gate sitting on five angles it
+          happened to pass. A bend that opens just after contact read 0.65–0.72 of its size.
+        - The gain rests on depth error being independent from frame to frame. With the
+          correlation fitted on the tracker bench it misses the rule anyway (9.94°), and at
+          full fitted MediaPipe noise it gains nothing.
+        - The costs do not depend on the noise and the gain does, so a real clip could get
+          the costs alone. The later search also leaned on levelling's old contact shift,
+          which H37 removed.
+      - Also measured: a 36 Hz read clears the rule on 60 fps files and does nothing at 30,
+        the common rate. A full-rate swing read on 60 fps files reached 6.99°, a gain that
+        vanishes under the fitted tracker.

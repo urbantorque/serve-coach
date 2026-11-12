@@ -6,7 +6,7 @@ import { imageXSplitFrom, readImageX, type BodyAxis } from './axes'
 import { pathsThrough } from './between'
 import { assessSpatial } from './spatial'
 import { contactHeightOf } from './handHeight'
-import { tossPathSpread } from './tossPath'
+import { tossLiftStart, tossPathSpread } from './tossPath'
 import { contactAheadOf, forwardDirection } from './contactAhead'
 import { tossArmHoldOf } from './tossArm'
 import { cue } from './voice'
@@ -248,8 +248,8 @@ export const ARM_EXTENSION_WINDOW = 0.05
  * overshoots what follows, so this one is narrow: 100 ms either side of the
  * racket head's highest point, the nearest stand-in for the ball, which comes
  * about 30 ms after contact as the engine times it. That trades steadiness
- * against the capture. At ±130 ms the spread is 5.9° against 6.45° and the median
- * 2.4° from the capture at 32 fps against 2.0°; a cubic over ±200 ms gets to 5.9°
+ * against the capture. At ±130 ms the spread at 50 fps is 5.9° against 6.45° and the
+ * median 2.4° from the capture at 32 fps against 2.0°; a cubic over ±200 ms gets to 5.9°
  * too, and reads 25° low on a rig arm that peaks at contact and folds. Centred
  * 10 ms later, that same arm moves 12.5° between takes rather than 7.7°.
  *
@@ -319,8 +319,8 @@ const LOAD_MIN_SINK = 0.012
  * fps, 9 ms at 120, and 41 ms at the worst.
  *
  * The hips go down with the knees and are read straight off the picture, so
- * there is no depth in them. Along a curve through the samples, the rig's noise
- * is 1.67 points and the worst real serve's 0.49 (2.55 before), and the moment
+ * there is no depth in them. Along a curve through the samples, at 50 fps, the rig's
+ * noise is 1.67 points and the worst real serve's 0.49 (2.55 before), and the moment
  * lands a mean 4–12 ms after the knees' trough in the capture by placement, the
  * same at 30, 60 and 120 fps, and 26 ms at the worst (`npm run bench:mocap`). A
  * curve through the knee angles themselves, or through the leg landmarks, gets
@@ -495,7 +495,7 @@ export function measure(
   // then told their hand "drifts sideways" and sent to a fence-line drill that
   // constrains the one axis the reading barely contained.
   {
-    const from = clamp(keys.toss - Math.round(frames.length * 0.12), keys.ready, keys.toss - 1)
+    const from = tossLiftStart(frames, keys.toss, keys.ready)
     // The same reading the diagnosis judges toss drift by (L5.1, `tossPath.ts`).
     const wobbleImageX = tossPathSpread(frames, from, keys.toss, T.wrist, bodyHeight)
 
@@ -510,7 +510,7 @@ export function measure(
     // unset, which is this file's established answer to a measurement that could
     // not be taken: see the filters at the bottom of `measure`.
     const axis = imageX.dominant
-    const reading = axis ? readImageX(wobbleImageX, axis, imageX) : { value: null, confidence: 0 }
+    const reading = axis && wobbleImageX !== null ? readImageX(wobbleImageX, axis, imageX) : { value: null, confidence: 0 }
     if (reading.value !== null) {
       values.tossPathWobble = reading.value
       measuredAxis.tossPathWobble = axis as BodyAxis

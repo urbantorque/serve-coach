@@ -31,8 +31,10 @@ import {
   MIN_COMPARABLE_SERVES,
   buildConsistency,
   pairStills,
+  rangeReach,
   splitByServeNumber,
 } from '../consistency'
+import { ER_FRONT_BACK_DEVIATION_DEG } from '../erNoise'
 import { Cancelled } from '../../pose/extract'
 import { CHAIN_RATIO_DEVIATION, CHAIN_RATIO_PER_SECOND, diagnose } from '../diagnose'
 import { LM, MIN_OPENING_SWEEP_DEG, scoreAgainst, statusOf, trunkCoil } from '../geometry'
@@ -1631,13 +1633,14 @@ console.log('\n\x1b[1mA reading with no band, said as a change between two serve
  * not whether the engine measures either well. That question is `depth.test.ts`'s
  * and is already answered there.
  */
-function deltaBasket(serves: ({ deg: number | null; lean?: number } | null)[]) {
+function deltaBasket(serves: ({ deg: number | null; lean?: number } | null)[], view: 'front-back' | 'side' | 'angled' = 'front-back') {
   const analyses = serves.map((s, i) => {
     const { fundamentals } = run()
     return {
       fundamentals,
       overall: 70,
       serves: { count: serves.length, index: i },
+      quality: { view },
       diagnosis: s && {
         externalRotation: { deg: s.deg, confidence: 0.9, lever: 0.8 },
         signals: s.lean === undefined ? {} : { spine_lean_deg: s.lean },
@@ -1650,13 +1653,41 @@ function deltaBasket(serves: ({ deg: number | null; lean?: number } | null)[]) {
 const erDelta = (c: ReturnType<typeof deltaBasket>) =>
   c.uncalibrated?.find((d) => d.id === 'external_rotation_deg')
 
-check('a change bigger than the posture that could fake it is reported', () => {
-  // 18° apart, and the lean differs by 4° — which buys 2° at 0.5°/°.
-  const d = erDelta(deltaBasket([{ deg: 40, lean: 10 }, { deg: 58, lean: 14 }]))
-  assert(!!d, 'an 18° change against a 2° bound was not reported')
+/*
+ * THE PROMISE CHANGED (H44). The bound was the posture alone, as if the reading
+ * had no noise of its own, and 18° between two serves was reported. The reading
+ * moves 11.8° between takes of one serve, so two takes of one serve differ by
+ * more than that a third of the time, and the line printed on most baskets of a
+ * still serve filmed from behind. The bound now adds the reading's own reach
+ * across the basket (`rangeReach`).
+ *
+ * AND AGAIN (H45). That reach used the side-on 11.8°, under which no real change
+ * in a basket of six could clear the bound (56°). The line runs on front-back
+ * views only now, where the reading moves 3.4° to 7.4° between takes of one
+ * serve, and is bounded by the worst of that, 7.5°: 27° between two serves.
+ */
+const erNoise = (n: number) => rangeReach(n) * ER_FRONT_BACK_DEVIATION_DEG
+
+check('a change bigger than its posture and its own noise is reported', () => {
+  // 50° apart, and the lean differs by 4° — which buys 2° at 0.5°/°.
+  const d = erDelta(deltaBasket([{ deg: 20, lean: 10 }, { deg: 70, lean: 14 }]))
+  assert(!!d, 'a 50° change against a 27° bound was not reported')
   assert(d!.from === 1 && d!.to === 2, `named serves ${d!.from} and ${d!.to}, not 1 and 2`)
-  assert(Math.abs(d!.delta - 18) < 1e-9, `reported a delta of ${d!.delta}`)
-  assert(Math.abs(d!.bound - 2) < 1e-9, `reported a bound of ${d!.bound}`)
+  assert(Math.abs(d!.delta - 50) < 1e-9, `reported a delta of ${d!.delta}`)
+  assert(Math.abs(d!.bound - Math.hypot(2, erNoise(2))) < 1e-9, `reported a bound of ${d!.bound}`)
+})
+
+check('the arm line runs on a front-back view only, where its noise was measured', () => {
+  // From an angle the lean is read but the arm moves 6.5° to 10.4° between takes,
+  // and still serves were told their shoulder laid back further (H45). Side-on
+  // the lean is not read at all.
+  for (const view of ['angled', 'side'] as const) {
+    assert(!erDelta(deltaBasket([{ deg: 20, lean: 10 }, { deg: 90, lean: 10 }], view)), `a 70° change was reported from a ${view} view`)
+  }
+})
+
+check('an 18° change two takes of one serve could show is refused', () => {
+  assert(!erDelta(deltaBasket([{ deg: 40, lean: 10 }, { deg: 58, lean: 14 }])), 'a change inside the reading’s own noise was reported')
 })
 
 check('a change posture alone could account for is refused, not hedged', () => {
@@ -1670,8 +1701,9 @@ check('a change posture alone could account for is refused, not hedged', () => {
 check('a change exactly equal to its bound is refused', () => {
   // The boundary, because `>` and `>=` differ on exactly this input and nothing
   // sampling the middle of the range would ever see the difference.
+  const bound = Math.hypot(10, erNoise(2))
   assert(
-    !erDelta(deltaBasket([{ deg: 40, lean: 10 }, { deg: 50, lean: 30 }])),
+    !erDelta(deltaBasket([{ deg: 20, lean: 10 }, { deg: 20 + bound, lean: 30 }])),
     'a change exactly the size of its bound was reported',
   )
 })
@@ -1680,8 +1712,8 @@ check('the extremes are named, not the first and last serves', () => {
   const d = erDelta(
     deltaBasket([
       { deg: 50, lean: 10 },
-      { deg: 38, lean: 10 },
-      { deg: 62, lean: 10 },
+      { deg: 10, lean: 10 },
+      { deg: 90, lean: 10 },
       { deg: 51, lean: 10 },
     ]),
   )
@@ -1696,7 +1728,7 @@ check('a serve whose trophy arm was too folded to read drops out of the comparis
    * lever threshold in `consistency.ts` would be one more thing to keep in step.
    */
   const d = erDelta(
-    deltaBasket([{ deg: null, lean: 10 }, { deg: 40, lean: 10 }, { deg: 55, lean: 10 }]),
+    deltaBasket([{ deg: null, lean: 10 }, { deg: 40, lean: 10 }, { deg: 95, lean: 10 }]),
   )
   assert(!!d, 'two readable serves beside one unreadable one produced nothing')
   assert(d!.from === 2 && d!.to === 3, `named serves ${d!.from} and ${d!.to}, not 2 and 3`)
@@ -1754,11 +1786,12 @@ const landingDelta = (c: ReturnType<typeof landingBasket>) =>
 
 check('a landing change bigger than the reading own noise is reported', () => {
   // 0.0035 square against 0.0657 at 0.12 m is the measured range; this spans
-  // most of it, and is an order of magnitude past the ~0.0053 difference noise.
+  // most of it, past the 0.0164 that noise can set between two serves' extremes
+  // (H44: the bound was one deviation of a difference, 0.0053).
   const d = landingDelta(landingBasket([0.0035, 0.0501]))
   assert(!!d, 'a change across most of the measured range was not reported')
   assert(d!.from === 1 && d!.to === 2, `named serves ${d!.from} and ${d!.to}, not 1 and 2`)
-  assert(Math.abs(d!.bound - Math.hypot(0.0028, 0.0045)) < 1e-9, `bound came back ${d!.bound}`)
+  assert(Math.abs(d!.bound - rangeReach(2) * 0.0045) < 1e-9, `bound came back ${d!.bound}`)
 })
 
 check('a landing change inside the noise on a difference is refused', () => {
@@ -1790,16 +1823,18 @@ check('a landing nobody could read drops out rather than counting as square', ()
 check('the two ungraded deltas are independent, and both can appear at once', () => {
   // A basket carrying both readings gets both lines. The check that matters is
   // that neither entry's refusal silences the other — they are bounded by
-  // different things and have no business agreeing.
+  // different things and have no business agreeing. Filmed from behind, the one
+  // view the arm line runs on (H45).
   const analyses = [
-    { deg: 40, lean: 10, offset: 0.0035 },
-    { deg: 58, lean: 14, offset: 0.0501 },
+    { deg: 20, lean: 10, offset: 0.0035 },
+    { deg: 70, lean: 14, offset: 0.0501 },
   ].map((s, i) => {
     const { fundamentals } = run()
     return {
       fundamentals,
       overall: 70,
       serves: { count: 2, index: i },
+      quality: { view: 'front-back' },
       diagnosis: {
         externalRotation: { deg: s.deg, confidence: 0.9, lever: 0.8 },
         signals: { spine_lean_deg: s.lean },
@@ -1984,14 +2019,20 @@ check('a serve the engine refused is an unclear one, not a score (L1.7)', () => 
 
 check('a sweep with nothing to compare leaves the report, with one line saying why (L1.7)', () => {
   const a = sampleAnalysis()
-  for (const readable of [0, 1]) {
-    const kept = withoutComparison(a, readable)
+  // Read but not comparable says how many were read: two of six read said it had
+  // read the other serves (H46).
+  for (const [readable, attempted] of [[0, 0], [1, 1], [2, 6], [6, 6]]) {
+    const kept = withoutComparison(a, readable, attempted)
     assert(kept.id === a.id && kept.overall === a.overall, 'the report was replaced')
     assert(kept.consistency === undefined, 'a comparison appeared from nowhere')
     const added = kept.quality.warnings.slice(a.quality.warnings.length)
     assert(added.length === 1, `added ${added.length} lines`)
     assert(cueIssues(added[0]).length === 0, `"${added[0]}": ${cueIssues(added[0]).join('; ')}`)
     assert(added[0].includes('compare') || added[0].includes('alone'), `the line does not say why: "${added[0]}"`)
+    if (readable >= 2) {
+      const said = readable < attempted ? added[0].includes(`${readable} of the ${attempted}`) : added[0].includes('read the other serves')
+      assert(said, `${readable} of ${attempted} read: "${added[0]}"`)
+    }
   }
   assert(a.quality.warnings.length === sampleAnalysis().quality.warnings.length, 'the original report was changed')
 })
@@ -2019,11 +2060,11 @@ check('stopping between serves keeps every serve already measured', () => {
 })
 
 // The one that decides whether the panel lies. `skipped` is shown to the player
-// as "too unclear to measure", and a serve whose read was interrupted was not
+// as "too unclear to compare", and a serve whose read was interrupted was not
 // unclear — nothing ever finished looking at it. Counting it would put a
 // sentence about the camera and the player on screen off the back of the player
 // pressing stop.
-check('a serve interrupted mid-read is never reported as one too unclear to measure', () => {
+check('a serve interrupted mid-read is never reported as one too unclear to compare', () => {
   const r = stoppedMidServe.result
   assert(r.cancelled, 'a sweep stopped mid-serve did not report itself as stopped')
   assert(r.serves.length === 4, `measured ${r.serves.length} serves before the stop, expected 4`)
@@ -2922,13 +2963,14 @@ console.log('\n\x1b[1mThe sequence, as a change between two of your own serves\x
 
 /**
  * R50·3, on the bound its own premise cycle measured rather than the one the
- * round stated. The register's 21% is the total spread with seed noise in it;
+ * round stated. The register's 21% (33% on one seed of the app's read now) is
+ * the total spread with seed noise in it;
  * these are the two terms it is made of, in quadrature.
  *
  * The tempo comes from the stored `phases` rather than a new field — `motionSeconds`
  * is `contact.t − ready.t`, and both are on every stored report.
  */
-function ratioBasket(serves: { ratio: number | null; seconds: number }[]) {
+function ratioBasket(serves: { ratio: number | null; seconds: number; view?: string }[]) {
   const analyses = serves.map((s, i) => {
     const { fundamentals } = run()
     return {
@@ -2939,6 +2981,7 @@ function ratioBasket(serves: { ratio: number | null; seconds: number }[]) {
         { id: 'ready', t: 0 },
         { id: 'contact', t: s.seconds },
       ],
+      quality: { view: s.view ?? 'side' },
       diagnosis: { chain: { span_ratio: s.ratio } },
     } as unknown as Parameters<typeof buildConsistency>[0][number]
   })
@@ -2948,17 +2991,38 @@ function ratioBasket(serves: { ratio: number | null; seconds: number }[]) {
 const ratioDelta = (c: ReturnType<typeof ratioBasket>) =>
   c.uncalibrated?.find((d) => d.id === 'chain_span_ratio')
 
+/*
+ * THE PROMISE CHANGED (H44). The noise term was one deviation of a difference,
+ * which is what two serves picked in advance differ by; the line names a basket's
+ * extremes, and six takes of one serve, nothing changed, printed it on 184
+ * baskets of 238. The term is now `rangeReach` deviations: 0.027 between two
+ * serves, 0.036 across six. And it is read from the side only.
+ */
 check('a sequence change past both terms is reported', () => {
-  // 0.04 apart at identical tempo, against a ~0.0095 floor.
+  // 0.04 apart at identical tempo, against a 0.027 floor.
   const d = ratioDelta(ratioBasket([
     { ratio: 0.09, seconds: 1.35 },
     { ratio: 0.13, seconds: 1.35 },
   ]))
   assert(!!d, 'a 0.04 change at equal tempo was not reported')
   assert(
-    Math.abs(d!.bound - Math.SQRT2 * CHAIN_RATIO_DEVIATION) < 1e-9,
+    Math.abs(d!.bound - rangeReach(2) * CHAIN_RATIO_DEVIATION) < 1e-9,
     `at equal tempo the bound came back ${d!.bound}`,
   )
+})
+
+check('from behind or a corner the sequence is not compared', () => {
+  // The elbow's speed there is half depth, as the leg lead says: the same serve
+  // filmed from behind moved this ratio up to nine times as far.
+  for (const view of ['front-back', 'angled']) {
+    assert(
+      !ratioDelta(ratioBasket([
+        { ratio: 0.09, seconds: 1.35, view },
+        { ratio: 0.16, seconds: 1.35, view },
+      ])),
+      `a change was reported from ${view}`,
+    )
+  }
 })
 
 check('a change inside the noise on a difference is refused', () => {
@@ -2975,27 +3039,27 @@ check('a tempo difference widens the bound, and can eat the change', () => {
   /*
    * The half that makes this entry different from its two siblings: its bound
    * is not a constant. Two serves a second apart in tempo carry `CHAIN_RATIO_PER_SECOND`
-   * (0.0223) of false change before the sequence has done anything, so the same
+   * (0.0228) of false change before the sequence has done anything, so the same
    * delta that passes at equal tempo is refused across one.
    */
   const same = ratioDelta(ratioBasket([
     { ratio: 0.100, seconds: 1.35 },
-    { ratio: 0.111, seconds: 1.35 },
+    { ratio: 0.130, seconds: 1.35 },
   ]))
-  // 0.011 sits between the two bounds: past 0.0095 at equal tempo, inside the
-  // 0.0202 that a 0.8 s gap buys. Chosen to straddle them rather than to be
+  // 0.030 sits between the two bounds: past 0.027 at equal tempo, inside the
+  // 0.033 that a 0.8 s gap buys. Chosen to straddle them rather than to be
   // comfortably large, since a comfortable delta would pass both and prove
   // nothing about the tempo term.
-  assert(!!same, 'a 0.011 change at equal tempo was refused')
+  assert(!!same, 'a 0.030 change at equal tempo was refused')
 
   const apart = ratioDelta(ratioBasket([
     { ratio: 0.100, seconds: 1.10 },
-    { ratio: 0.111, seconds: 1.90 },
+    { ratio: 0.130, seconds: 1.90 },
   ]))
   assert(!apart, 'the same change across a 0.8 s tempo gap was reported anyway')
   assert(
-    Math.hypot(Math.SQRT2 * CHAIN_RATIO_DEVIATION, CHAIN_RATIO_PER_SECOND * 0.8) > 0.011,
-    'the 0.8 s bound no longer covers the 0.011 change this check straddles with',
+    Math.hypot(rangeReach(2) * CHAIN_RATIO_DEVIATION, CHAIN_RATIO_PER_SECOND * 0.8) > 0.03,
+    'the 0.8 s bound no longer covers the 0.030 change this check straddles with',
   )
 })
 

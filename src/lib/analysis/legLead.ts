@@ -3,18 +3,20 @@
  * fastest moment, at the frame rate an ordinary clip has.
  *
  * WHAT THE FIRING ORDER COULD NOT DO. `Diagnosis.firingOrder` is gated at 60
- * fps, and the pose grid reads a real-time clip at 32 samples a second however
- * the file was shot (`pose/rate.ts`), so outside slow motion no player ever saw
+ * fps, and the pose grid reads a real-time clip at about 30 samples a second
+ * however the file was shot (`pose/rate.ts`), so outside slow motion no player ever saw
  * it. The gate's reason was that a 33 ms sample is wider than the 15 ms slack.
  * That was reasoned, not measured.
  *
- * MEASURED AGAINST 180 Hz TRUTH (ANALYSIS-REVIEW.md, 2026-11-05). The forty Bath
- * serves through the virtual phone, each take on a sampling phase of its own,
- * under the tracker noise fitted to MediaPipe. Truth is 86 ± 11 ms from the
- * legs to the elbow and 167 ± 9 from the legs to contact. From the guide's side
- * at 30 fps the two read within 14 and 13 ms rms, and on the app's own 32 Hz
- * read of a 30 fps file within 19 and 15. At 60 and 120 fps they read 16 and 12,
- * 13 and 16: past 30 fps the tracker sets the limit, not the clock.
+ * MEASURED AGAINST 180 Hz TRUTH (ANALYSIS-REVIEW.md, 2026-11-05; run again on
+ * the frames walk for H41). The forty Bath serves through the virtual phone,
+ * each take on a sampling phase of its own, under the tracker noise fitted to
+ * MediaPipe. Truth is 86 ± 11 ms from the legs to the elbow and 167 ± 9 from the
+ * legs to contact. From the guide's side, on a 30 fps file read the way the app
+ * walks it, the two read within 15 and 14 ms rms, and on a 60 fps file within 13
+ * and 12. On the even grid a file of unknown rate falls back to, 16 and 15 at 30
+ * fps, 17 and 16 at 60. Every frame of a 120 fps clip reads 13 and 15: past 30
+ * fps the tracker sets the limit, not the clock.
  *
  * The sharper peak-finders lost. Clean, a spline through every sample and a
  * local cubic beat the chain's smoothing, by as much as 7 ms against 35 at 60
@@ -23,14 +25,19 @@
  * curve is flattest. So this differences the chain's own links and adds no
  * series.
  *
- * WHAT IT CAN SAY. The call needs the gap past `LEG_LEAD_SLACK`, twice the
- * camera's noise on it. On those forty serves from both baseline placements,
- * at 30, 60 and 120 fps and on the app's two reads of a file, 2,398 of 2,400
+ * WHAT IT CAN SAY. The call needs the gap past `LEG_LEAD_SLACK`, a little over
+ * twice the camera's noise on it. On those forty serves from both baseline
+ * placements, 240 takes on each of six reads (30 and 60 fps files read both of
+ * the app's ways, and every frame of 60 and 120 fps slow motion), 2,878 of 2,880
  * reads came back `legs_first` and the other two were unread. With the hips and
- * legs run late on the same serves, a true gap of −14 ms reads `level` on
- * 89–99% of 30 fps takes and `legs_first` on 1.3% at most; −44 reads `arm_first`
- * on 71–87%; −74 on 88–95%. From about 200 ms late the legs' peak leaves the
- * search window and the link is dropped rather than guessed.
+ * legs run late on the same serves, on the app's reads of a 30 or 60 fps file: a
+ * true gap of −14 ms reads `level` on 94–100% of takes and `legs_first` on 0.8%
+ * at most; −44 reads `arm_first` on 36–81% and `legs_first` on none; −74 reads
+ * `arm_first` on 85–99%. Raising the slack from 35 to 39 (H41) cost the −44 row
+ * 7 to 20 points a cell: at 35 these reads give 46–88%. (36–73% and 46–83% before
+ * H45's model of the read stopped where the app's seek does; the 71–87% before H41
+ * was the old 32 Hz read.) From about 200 ms late the legs' peak leaves the search
+ * window and the link is dropped rather than guessed.
  *
  * ONLY FROM THE SIDE. Seen from behind the swing towards the net is depth, and
  * the elbow's speed in the picture peaks 90 ms early, with the legs. The legs
@@ -64,10 +71,12 @@ export interface LegLead {
 }
 
 /**
- * How far the gap has to clear zero to be called, ms: about twice its noise
- * (`CHAIN_NOISE_SD.leg_lead_ms`), so a near-tie is never called a swap.
+ * How far the gap has to clear zero to be called, ms: a little over twice its
+ * noise (`CHAIN_NOISE_SD.leg_lead_ms`, 17), so a near-tie is never called a
+ * swap. It was 35 until 240 takes, rather than 36, showed a tie read legs first
+ * too often (H41).
  */
-export const LEG_LEAD_SLACK = 35
+export const LEG_LEAD_SLACK = 39
 
 /** How far the hips must rise, in body heights, for the peak of that rise to be a moment. */
 export const LEG_LEAD_MIN_RISE = 0.05
@@ -83,7 +92,8 @@ export function readLegLead(
 ): LegLead | undefined {
   if (view !== 'side') return undefined
   const span = frames[frames.length - 1].t - frames[0].t
-  if (!(span > 0) || (frames.length - 1) / span < LEG_LEAD_MIN_RATE) return undefined
+  // A shade under the line, so a read at 20 on the dot passes whatever its last digit.
+  if (!(span > 0) || (frames.length - 1) / span < LEG_LEAD_MIN_RATE - 0.05) return undefined
   const legs = chain.legs.ms
   const elbow = chain.elbow.ms
   if (legs === null || elbow === null) return undefined

@@ -87,7 +87,7 @@ export function measureCues(serves: MocapServe[], phone: Partial<VirtualPhone>, 
     for (const rate of SLOWDOWNS) {
       const planted = rate === 1 ? serve : slowedServe(serve, rate)
       for (const seed of seeds) {
-        const r = read(trackedTake(planted, { fps: 30, grid: 32, fit: MEDIAPIPE_FIT, seed, phone }), 32)
+        const r = read(trackedTake(planted, { fps: 30, read: 'frames', fit: MEDIAPIPE_FIT, seed, phone }), 32)
         if (!r) continue
         for (const cue of READINGS) {
           const v = r[cue]

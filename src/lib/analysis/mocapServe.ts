@@ -20,6 +20,7 @@
  * Court frame throughout: metres, +x towards the net, +y the server's left
  * when facing the net, +z up, z = 0 the floor.
  */
+import { readingPlan } from '../pose/rate'
 import { LM } from './geometry'
 import { unswapFrames } from './swapGuard'
 import { withTrackerNoise, type TrackerFit } from './trackerNoise'
@@ -365,31 +366,39 @@ export function filmMocap(serve: MocapServe, phone: Partial<VirtualPhone> = {}):
 }
 
 /**
- * The app's own read of a filmed file: `gridFps` samples a second, each one the
- * file frame on screen at that moment, filed under the time asked for.
+ * The app's own read of a whole filmed file (`readingPlan`): each sample is the
+ * file frame on screen at the moment asked for, filed under that moment.
  *
- * A real-time clip is read at 32 samples a second whatever rate it was shot at
- * (`pose/rate.ts`), and `seekTo` files each sample under `video.currentTime`,
- * which reports the seek rather than the frame. So a 30 fps file has every
- * sixteenth or so frame read twice and its stamps slide up to a frame out of
- * step, and a 60 fps file alternates 17 and 33 ms steps. `filmMocap` at 30 fps
- * is none of that: it is what a phone recorded, not what the app reads.
+ * `known` is whether the app knows the file's rate. Where it does, the read
+ * walks the frames, so a 30 fps file comes back as itself, half a frame later.
+ * Where it does not, this is the even grid, and it is not the same thing: a
+ * 30 fps file has about one sample in 21 read twice and its stamps slide up to a
+ * frame out of step, and a 60 fps file gets about ten 33 ms steps to one 17 ms step.
+ * `seekTo` files a sample under `video.currentTime`, which reports the seek.
+ *
+ * `trim` takes that much off each end of the window. A clip's window opens and
+ * closes anywhere against the file's frames, and an even grid is pinned to both,
+ * so this is what walks its repeats through the swing. Trimmed at one end only,
+ * the far end holds the grid nearly still around contact, which understates it.
+ * It moves the window by one file frame, not one step, so at 60 fps and up the
+ * even grid is still a little understated.
  */
-export function onReadingGrid(file: Frame[], fileFps: number, gridFps: number): Frame[] {
-  const end = file[file.length - 1].t
-  const out: Frame[] = []
-  for (let i = 0; i / gridFps <= end; i++) {
-    const t = i / gridFps
-    out.push({ ...file[Math.min(file.length - 1, Math.floor(t * fileFps + 1e-6))], index: i, t })
-  }
-  return out
+export function appRead(file: Frame[], fileFps: number, known = true, trim: readonly [number, number] = [0, 0]): Frame[] {
+  const end = file[file.length - 1].t + 1 / fileFps - trim[1]
+  // Where the app's seek stops, as `extractFrames` tells the plan (H45).
+  const seekableTo = file[file.length - 1].t + 1 / fileFps - 0.02
+  return readingPlan(file[0].t + trim[0], end, known ? fileFps : undefined, { seekableTo }).times.map((t, i) => ({
+    ...file[Math.min(file.length - 1, Math.floor(t * fileFps + 1e-6))],
+    index: i,
+    t,
+  }))
 }
 
 /**
  * One take of a real serve as the engine would get it from a tracker: filmed
  * on a sampling phase of its own, with `fit`'s error on every frame, through
- * the swap guard, and on the app's reading grid when `grid` asks for it. No
- * `fit` is the same take with the phase and nothing else.
+ * the swap guard, and through the app's read of the file when `read` says which.
+ * No `fit` is the same take with the phase and nothing else.
  *
  * The phase matters and the older ensembles hold it fixed. A serve does not
  * start on a frame boundary, and at 30 fps where the frames fall against the
@@ -398,9 +407,9 @@ export function onReadingGrid(file: Frame[], fileFps: number, gridFps: number): 
  */
 export function trackedTake(
   serve: MocapServe,
-  o: { fps: number; fit?: TrackerFit; seed: number; grid?: number; phone?: Partial<VirtualPhone> },
+  o: { fps: number; fit?: TrackerFit; seed: number; read?: 'frames' | 'even'; phone?: Partial<VirtualPhone> },
 ): Frame[] {
-  const lead = (o.phone?.lead ?? GUIDE_PHONE.lead) + goldenPhase(o.seed) / o.fps
+  const lead = (o.phone?.lead ?? GUIDE_PHONE.lead) + readPhase(o.seed) * stepOf(o.fps, o.read)
   const clean = filmMocap(serve, { ...o.phone, fps: o.fps, lead })
   const frames = o.fit
     ? unswapFrames(
@@ -416,11 +425,35 @@ export function trackedTake(
         }),
       ).frames
     : clean
-  return o.grid ? onReadingGrid(frames, o.fps, o.grid) : frames
+  return o.read ? appRead(frames, o.fps, o.read === 'frames', gridTrim(o.seed, o.fps, o.read)) : frames
 }
 
-/** Golden-ratio steps through a frame, so every seed lands somewhere new in it. */
-const goldenPhase = (seed: number) => (seed * 0.6180339887) % 1
+/**
+ * Where one take's frames fall against the serve, as a share of a step: drawn by
+ * the seed alone and independently of its neighbours, because a basket's serves
+ * land on the frames independently. A sequence through the step, golden ratio or
+ * otherwise, spreads any six seeds evenly, which no basket does.
+ */
+export function readPhase(seed: number): number {
+  let h = Math.imul(seed ^ 0x9e3779b9, 0x85ebca6b)
+  h ^= h >>> 13
+  h = Math.imul(h, 0xc2b2ae35)
+  h ^= h >>> 16
+  return (h >>> 0) / 4294967296
+}
+
+/** Where an even grid's window falls against the file's frames, for this take. A read on the frames has no such thing. */
+export const gridTrim = (seed: number, fps: number, read?: 'frames' | 'even'): readonly [number, number] =>
+  read === 'even' ? [readPhase(seed + 1) / fps, readPhase(seed + 2) / fps] : [0, 0]
+
+/**
+ * The time between two samples of a read, the span a take's phase has to cover.
+ * On a 60 fps file one frame is half of it, and the other half is which frame the
+ * window starts on.
+ */
+export function stepOf(fps: number, read?: 'frames' | 'even'): number {
+  return read ? Math.max(1 / fps, 1 / readingPlan(0, 2.7, read === 'frames' ? fps : undefined).rate) : 1 / fps
+}
 
 function statureOf(f: Frame, space: 'image' | 'world'): number {
   return (Math.max(f[space][LM.leftAnkle].y, f[space][LM.rightAnkle].y) - f[space][LM.nose].y) / 0.93

@@ -4,12 +4,13 @@ import {
   LANDING_WIDE_DEVIATION,
   CHAIN_RATIO_DEVIATION,
   CHAIN_RATIO_PER_SECOND,
+  ER_FRONT_BACK_DEVIATION_DEG,
 } from './diagnose'
 import { SOFT_MEASUREMENT } from './confidence'
 import { clamp, mean, statusOf } from './geometry'
 import { bestWorstGap, readAlike } from './realChange'
-import { CARD_NOISE_SD } from './cardNoise'
-import type { Analysis, Metric, PhaseId, Status } from './types'
+import { CARD_NOISE_SD, STEADY_ENOUGH } from './cardNoise'
+import { REGISTER_RULE, type Analysis, type Metric, type PhaseId, type Status } from './types'
 import { cue } from './voice'
 
 /**
@@ -264,9 +265,12 @@ export interface Consistency {
    */
   serveNumbers: number[]
   metrics: MetricSpread[]
-  /** The element that varies most — what to groove before anything else. */
+  /**
+   * The element that varies most — what to groove before anything else. Absent
+   * when no row moved past the camera, because then nothing does.
+   */
   weakest?: MetricSpread
-  /** The steadiest element, so the report has something to stand on. */
+  /** The steadiest element, so the report has something to stand on. Absent with `weakest`. */
   steadiest?: MetricSpread
   /** The best serve against the worst one. Absent when they scored the same. */
   gap?: ServeGap
@@ -287,6 +291,14 @@ export interface Consistency {
    * unclear; nothing finished looking at them either.
    */
   skipped: number
+  /**
+   * How many of the serves compared were named for a racket drop the engine could
+   * not find, and whether the drop's own rows were left out for it (H45). Absent
+   * when none was, and on a basket stored before.
+   */
+  missingDrop?: { serves: number; leftOut: boolean }
+  /** Which rule bounded the register lines: see `REGISTER_RULE`. */
+  registerRule?: number
   /**
    * The standing heights measured across these serves disagree by more than
    * one body, filmed from one camera, plausibly does — see `possibleHandoff`.
@@ -377,6 +389,24 @@ function stdev(xs: number[]): number {
   return Math.sqrt(xs.reduce((a, x) => a + (x - m) ** 2, 0) / (xs.length - 1))
 }
 
+/** Rows read at the drop, which a serve with no drop has no moment for. */
+const READ_AT_THE_DROP = new Set(['dropDepth', 'elbowAtDrop', 'dropToContact'])
+
+/** Fewer rows compared than this, and the panel does not call the serve steady or not. */
+const FEW_ROWS = 5
+
+/**
+ * How far apart the highest and lowest of `n` readings of one thing can sit from
+ * noise alone, ninety-nine times in a hundred, in that noise's own deviations:
+ * the upper 1% points of the studentized range.
+ *
+ * The register's three lines compare a basket's extremes, and they were bounded
+ * as if the two had been picked in advance: one deviation of a difference. Six
+ * takes of one serve, nothing changed, printed a line on 184 baskets of 238.
+ */
+const RANGE_REACH = [0, 0, 3.64, 4.12, 4.4, 4.6, 4.76, 4.88, 4.99, 5.08, 5.16, 5.23, 5.29, 5.35, 5.4, 5.45, 5.49, 5.54, 5.57, 5.61, 5.65]
+export const rangeReach = (n: number) => RANGE_REACH[Math.min(Math.max(2, Math.round(n)), RANGE_REACH.length - 1)]
+
 /**
  * How far a sample variance of `n` draws of pure camera noise can reach, as a
  * multiple of the noise's own variance, ninety-nine times in a hundred:
@@ -385,7 +415,7 @@ function stdev(xs: number[]): number {
  * alone give a standard deviation up to 1.7 times the camera's, so taking out
  * only the camera's average still called a still serve wandering on about one
  * basket in fifty. Ninety-nine in a hundred per reading, because the panel
- * reads fifteen of them and names the worst: the engine may miss a wander and
+ * reads fourteen of them and names the worst: the engine may miss a wander and
  * may not invent one.
  */
 function noiseReach(n: number): number {
@@ -431,12 +461,25 @@ function consistencyScore(spread: number, ideal: [number, number]): number {
  * are compared, since a measurement dropped for one serve (contact depth needs a
  * side-on view) would otherwise skew its own spread.
  */
-export function buildConsistency(analyses: Analysis[], attempted: number): Consistency | undefined {
+export function buildConsistency(all: Analysis[], attempted: number): Consistency | undefined {
+  const analyses = withoutTheDimmest(all)
   if (analyses.length < MIN_COMPARABLE_SERVES) return undefined
 
   const byId = new Map<string, { metric: Metric; values: number[] }>()
 
+  // A drop the serve never made has no depth to wander in. Where the serves are
+  // named for it, the drop is read at whichever moment the search lands on, toss
+  // or trophy, and on the commonest club serve that alone told 38 steady baskets
+  // of 40 their racket drop drifts. Left out when half the serves or more are
+  // named, and the headline says so whatever else it says. A majority left out
+  // in silence told two serves that dropped the racket and four that did not
+  // "Almost nothing moved" (H45); kept in under "I found no racket drop on 4 of
+  // them", the drop's own row was graded steady beneath it (H46).
+  const named = analyses.filter((a) => a.diagnosis?.flaws?.some((f) => f.flaw === 'shallow_drop' && f.detected)).length
+  const noDrop = named > 0 && named * 2 >= analyses.length
+
   for (const id of analyses[0].fundamentals.flatMap((f) => f.metrics.map((m) => m.id))) {
+    if (noDrop && READ_AT_THE_DROP.has(id)) continue
     const readings: number[] = []
     let template: Metric | undefined
 
@@ -482,7 +525,21 @@ export function buildConsistency(analyses: Analysis[], attempted: number): Consi
     }
   })
 
+  // Nothing compared is nothing to score: a mean of no rows is 0, which read as a
+  // basket that wandered everywhere.
+  if (!metrics.length) return undefined
+
   const ranked = [...metrics].sort((a, b) => a.score - b.score)
+
+  // A tie has no end. With the camera's noise taken out, most baskets of a steady
+  // serve read 100 on every row (470 of 480 from the guide on the table's own
+  // takes), and a sort then hands back whichever row came first. The share card printed it
+  // under "wanders most", and Progress could call it the one to practise. The top
+  // is the same: in a basket that moved, nine or ten rows still read 100, and the
+  // last of them in card order was printed under "holds steadiest".
+  const moved = ranked.length > 0 && ranked[0].score < 100
+  const top = ranked[ranked.length - 1]
+  const aloneAtTop = ranked.length > 1 && top.score > ranked[ranked.length - 2].score
 
   // Lean on the least repeatable elements rather than the flat average. A serve
   // is a chain: one toss that wanders ruins the serve no matter how steady the
@@ -503,8 +560,8 @@ export function buildConsistency(analyses: Analysis[], attempted: number): Consi
     // hand — the tests do — rather than reading through a `serves` that is not there.
     serveNumbers,
     metrics: ranked,
-    weakest: ranked[0],
-    steadiest: ranked[ranked.length - 1],
+    weakest: moved ? ranked[0] : undefined,
+    steadiest: moved && aloneAtTop ? top : undefined,
     gap: buildGap(
       metrics,
       overallScores,
@@ -514,9 +571,49 @@ export function buildConsistency(analyses: Analysis[], attempted: number): Consi
     score,
     status: statusOf(score),
     skipped: Math.max(0, attempted - analyses.length),
+    ...(named ? { missingDrop: { serves: named, leftOut: noDrop } } : {}),
+    registerRule: REGISTER_RULE,
     possibleHandoff: possibleHandoff(analyses),
     uncalibrated: uncalibratedDeltas(analyses, serveNumbers),
   }
+}
+
+/** The rows a serve's card is firm on: the only rows it can be compared on. */
+const firmRows = (a: Analysis) =>
+  new Set(a.fundamentals.flatMap((f) => f.metrics).filter((m) => (m.confidence ?? 1) >= SOFT_MEASUREMENT).map((m) => m.id))
+
+/** How many rows every serve here is firm on. */
+function sharedRows(analyses: Analysis[]): number {
+  if (!analyses.length) return 0
+  const sets = analyses.map(firmRows)
+  return [...sets[0]].filter((id) => sets.every((s) => s.has(id))).length
+}
+
+/**
+ * The basket without the serves that empty it (H45).
+ *
+ * A row is compared only where every serve is firm on it, so one serve triage
+ * let through but hedged on nearly every row emptied the basket, and the sweep
+ * then said it could not read the other serves. Five clear serves and one dim
+ * one gave no basket on 4 of 20 sweeps and a basket of a few rows on the rest.
+ * So where the basket would compare under `FEW_ROWS`, the dimmest serves are left
+ * out, as few as reach it and never under `MIN_COMPARABLE_SERVES`: they join
+ * `skipped`, which the panel calls too unclear to compare. A take the engine
+ * hedged on most of its rows can be left out of an otherwise ordinary basket:
+ * on the commonest club serve, about one basket in a hundred.
+ */
+function withoutTheDimmest(analyses: Analysis[]): Analysis[] {
+  if (sharedRows(analyses) >= FEW_ROWS) return analyses
+  const order = analyses
+    .map((a, i) => [firmRows(a).size, i] as const)
+    .sort((x, y) => x[0] - y[0] || x[1] - y[1])
+    .map(([, i]) => i)
+  for (let k = 1; analyses.length - k >= MIN_COMPARABLE_SERVES; k++) {
+    const out = new Set(order.slice(0, k))
+    const rest = analyses.filter((_, i) => !out.has(i))
+    if (sharedRows(rest) >= FEW_ROWS) return rest
+  }
+  return analyses
 }
 
 /* ------------------------------------------------------ uncalibrated deltas */
@@ -559,8 +656,14 @@ function uncalibratedDeltas(
  *
  * Computed rather than written down, so the day either deviation is re-measured
  * this follows instead of disagreeing with its own source.
+ *
+ * AND IT IS NOT THE BOUND ANY MORE (H44). The line compares the basket's two
+ * extremes, which noise sets further apart than two serves picked in advance, so
+ * the bound is the wider deviation times `rangeReach`: 0.0164 between two serves,
+ * 0.0214 across six.
  */
 const LANDING_DELTA_NOISE = Math.hypot(LANDING_SQUARE_DEVIATION, LANDING_WIDE_DEVIATION)
+const landingBound = (n: number) => rangeReach(n) * Math.max(LANDING_SQUARE_DEVIATION, LANDING_WIDE_DEVIATION)
 
 /**
  * How much further across their own feet the player finished on one serve than
@@ -607,14 +710,16 @@ function landingBalanceDelta(
   if (low.serve === high.serve) return undefined
 
   const delta = high.offset - low.offset
-  if (!(delta > LANDING_DELTA_NOISE)) return undefined
+  const bound = landingBound(read.length)
+  if (!(delta > bound)) return undefined
+  void LANDING_DELTA_NOISE
 
   return {
     id: 'landing_offset_ratio',
     from: low.serve,
     to: high.serve,
     delta,
-    bound: LANDING_DELTA_NOISE,
+    bound,
   }
 }
 
@@ -657,6 +762,10 @@ function externalRotationDelta(
      * not see well enough is absent here rather than present and wrong — which
      * means this refusal inherits that bar instead of setting a second one.
      */
+    // Front-back only (H45). The lean is read on every view but side-on, and an
+    // angled phone reads the arm 6.5° to 10.4° between takes of one serve: there a
+    // still serve was told its shoulder laid back further on up to one basket in five.
+    if (a.quality?.view !== 'front-back') return
     if (typeof deg === 'number' && Number.isFinite(deg) &&
         typeof lean === 'number' && Number.isFinite(lean)) {
       read.push({ serve: serveNumbers[i] ?? i + 1, deg, lean })
@@ -673,7 +782,9 @@ function externalRotationDelta(
   if (low.serve === high.serve) return undefined
 
   const delta = high.deg - low.deg
-  const bound = ER_LEAN_SENSITIVITY * Math.abs(high.lean - low.lean)
+  // The posture, and the reading's own noise across the basket (H44), as it is on
+  // the front-back view this runs on (`ER_FRONT_BACK_DEVIATION_DEG`, H45).
+  const bound = Math.hypot(ER_LEAN_SENSITIVITY * Math.abs(high.lean - low.lean), rangeReach(read.length) * ER_FRONT_BACK_DEVIATION_DEG)
   if (!(delta > bound)) return undefined
 
   return { id: 'external_rotation_deg', from: low.serve, to: high.serve, delta, bound }
@@ -768,11 +879,26 @@ export function coverageLine(c: Pick<Consistency, 'serves' | 'skipped' | 'serveN
 
 /** A sentence for the top of the consistency panel. */
 export function consistencyHeadline(c: Consistency): string {
-  if (!c.weakest) return ''
-  if (c.weakest.score >= 85) {
+  if (!c.metrics.length) return ''
+  // The drop's rows left out are said on every line, not only the steady one: a
+  // basket whose drop came and went was told its motion "repeats well" over a
+  // table with no drop in it (H46). Two sentences and 25 words is all a cue
+  // keeps (`voice.ts`), so each line makes room for it: the longest label,
+  // with "changes most", comes to 24 words.
+  const m = c.missingDrop
+  const dropOut = m?.leftOut ? ` I found no racket drop on ${m.serves >= c.serves ? 'any' : m.serves} of them, so I left it out.` : ''
+  // A verdict on two or three rows is not a verdict on the serve.
+  if (c.metrics.length < FEW_ROWS) {
+    return cue(dropOut ? `I could compare only a few readings across these serves.${dropOut}` : 'I could compare only a few of your readings across these serves.')
+  }
+  if (!c.weakest || c.weakest.score >= STEADY_ENOUGH) {
+    // Not while a drop was left out: the drop did not hold steady, the engine
+    // could not find it (H45).
+    if (dropOut) return cue(`Almost nothing else moved across ${c.serves} serves.${dropOut}`)
     return cue(`Almost nothing moved across ${c.serves} serves. That repeatability holds up under pressure.`)
   }
   if (c.weakest.score >= 70) {
+    if (dropOut) return cue(`${c.weakest.label} drifts across ${c.serves} serves.${dropOut}`)
     return cue(`Your motion repeats well across ${c.serves} serves. ${c.weakest.label} drifts.`)
   }
   /*
@@ -783,6 +909,7 @@ export function consistencyHeadline(c: Consistency): string {
    * working on once the cause above it holds. The label leads, never after
    * "Your", for the reason `repeatabilityNote` gives.
    */
+  if (dropOut) return cue(`${c.weakest.label} changes most across ${c.serves} serves.${dropOut}`)
   return cue(`${c.weakest.label} changes most from serve to serve. Groove it once your first fix holds.`)
 }
 
@@ -812,22 +939,28 @@ function motionSecondsOf(a: Analysis): number | undefined {
  * THE CONFOUNDER IS TEMPO, AND ONLY PARTLY. `chain_span_ratio` exists because
  * the raw span grades tempo — the same serve served slowly has a longer chain —
  * and dividing by the motion's own duration removes most of that dependence and
- * not all of it. What is left is 0.0223 per second of tempo difference, measured
+ * not all of it. What is left is 0.0228 per second of tempo difference, measured
  * in R50·3's premise cycle and again after the rig's swing was re-posed on real
  * motion, which doubled it; the larger is the one kept.
  *
  * **THE ROUND'S OWN 21% IS THE WRONG NUMBER AND THIS IS WHY.** That figure is
- * the register's, and it is the *total* spread of the reading across a tempo
+ * the register's (33% on one seed of the app's read now), and it is the *total* spread of the reading across a tempo
  * sweep with seed noise folded in — the right answer to "is this bandable" and
  * the wrong one for a difference. Bounding with it would refuse every comparison
  * there is, and refuse it mostly for a reason that is not tempo. The two terms
- * add in quadrature: 0.0095 at equal tempo, growing as the two serves diverge.
+ * add in quadrature, growing as the two serves diverge; at equal tempo the bound
+ * is `rangeReach` of the basket times 0.0075 (H44).
  *
  * REFUSED WITHOUT BOTH TEMPOS. The bound cannot be computed without them, and a
  * delta with no bound is a number nobody can say is not the clock.
+ *
+ * ACROSS THE BASKET, AND FROM THE SIDE (H44). The line names the basket's extremes,
+ * so the noise term is `rangeReach` deviations, not one deviation of a difference.
+ * And it is read from the side only, as the leg lead is: from behind the elbow's
+ * speed is half depth, and the same serve's ratio moved up to nine times further.
  */
-const chainRatioBound = (deltaSeconds: number) =>
-  Math.hypot(Math.SQRT2 * CHAIN_RATIO_DEVIATION, CHAIN_RATIO_PER_SECOND * Math.abs(deltaSeconds))
+const chainRatioBound = (deltaSeconds: number, n: number) =>
+  Math.hypot(rangeReach(n) * CHAIN_RATIO_DEVIATION, CHAIN_RATIO_PER_SECOND * Math.abs(deltaSeconds))
 
 function chainRatioDelta(
   analyses: Analysis[],
@@ -837,6 +970,7 @@ function chainRatioDelta(
   analyses.forEach((a, i) => {
     const ratio = a.diagnosis?.chain?.span_ratio
     const seconds = motionSecondsOf(a)
+    if (a.quality?.view !== 'side') return
     if (typeof ratio === 'number' && Number.isFinite(ratio) && seconds !== undefined) {
       read.push({ serve: serveNumbers[i] ?? i + 1, ratio, seconds })
     }
@@ -852,7 +986,7 @@ function chainRatioDelta(
   if (low.serve === high.serve) return undefined
 
   const delta = high.ratio - low.ratio
-  const bound = chainRatioBound(high.seconds - low.seconds)
+  const bound = chainRatioBound(high.seconds - low.seconds, read.length)
   if (!(delta > bound)) return undefined
 
   return { id: 'chain_span_ratio', from: low.serve, to: high.serve, delta, bound }

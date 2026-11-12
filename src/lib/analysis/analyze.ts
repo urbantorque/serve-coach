@@ -67,9 +67,9 @@ import { diagnose } from './diagnose'
 import { capturedSamples } from './kalman'
 import { measure } from './metrics'
 import {
-  NOTABLE_ROLL,
   assessSpatial,
   levelFrames,
+  levelled,
   levelPivot,
   rotateImagePoint,
   turnedPicture,
@@ -460,11 +460,17 @@ export async function sweepServes(
  * saying why there is no comparison under it. Not saved: the note is about
  * this run of the sweep, not about the serve.
  */
-export function withoutComparison(analysis: Analysis, readable: number): Analysis {
+export function withoutComparison(analysis: Analysis, readable: number, attempted = readable): Analysis {
+  // Read but not comparable is its own reason (H45), and it says how many were
+  // read: a sweep that read two of six said it read the other serves (H46).
   const note =
     readable === 1
       ? 'I could read only this serve in the clip, so there is nothing to compare it with.'
-      : 'I could not read the other serves in this clip, so this report covers this serve alone.'
+      : readable >= 2 && readable >= attempted
+        ? 'I read the other serves, but too little of them clearly enough to compare, so this report covers this serve alone.'
+        : readable >= 2
+          ? `I read ${readable} of the ${attempted} serves, and too little of them clearly enough to compare, so this report covers this serve alone.`
+          : 'I could not read the other serves in this clip, so this report covers this serve alone.'
   return { ...analysis, quality: { ...analysis.quality, warnings: [...analysis.quality.warnings, cue(note)] } }
 }
 
@@ -1754,14 +1760,15 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // common case costs one comparison.
   const tilt = assessSpatial(frames, skel.keys.ready, skel.bodyHeight)
   let applied: Tilt | undefined
-  if (Math.abs(tilt.roll_deg) >= NOTABLE_ROLL) {
+  const correction = levelled(tilt.roll_deg)
+  if (correction !== 0) {
     const pivot = levelPivot(frames)
     frames = levelFrames(frames, tilt.roll_deg, pivot)
     for (const f of frames) f.visibility = keyVisibility(f)
     skel = detect()
     // Remembered on the report: measurement lives in this levelled space, the
     // video pixels do not, and drawing needs the transform to bridge the two.
-    applied = { roll_deg: tilt.roll_deg, ...pivot }
+    applied = { roll_deg: correction, ...pivot }
   }
 
   // Skipped by a session's light read: it is a second pass over the video

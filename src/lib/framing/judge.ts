@@ -15,7 +15,7 @@
  *   · `framingIssues` decides cropped, unclear, too far and hands unseen.
  *   · `blockingFramingIssue` decides which of those the analyser would refuse.
  *   · `DEPTH_YAW_RANGE` decides which camera angles collapse a body axis.
- *   · `NOTABLE_ROLL` decides when a tilt is worth correcting for.
+ *   · `LEVEL_FROM` decides when a tilt is worth correcting for.
  *
  * That is not tidiness. A viewfinder with its own idea of "good enough" is worse
  * than no viewfinder: it would wave a clip through that the upload path then
@@ -31,7 +31,7 @@ import { blockingFramingIssue } from '../analysis/framingIssues'
 import { LM, median } from '../analysis/geometry'
 import { framingIssues } from '../analysis/framingIssues'
 import { ANKLES_SEEN_FLOOR, MIN_STANDING_HEIGHT, NOSE_SHARE_OF_HEIGHT } from '../analysis/phases'
-import { NOTABLE_ROLL, assessSpatial, type Spatial } from '../analysis/spatial'
+import { LEVEL_FROM, assessSpatial, type Spatial } from '../analysis/spatial'
 import type { Frame, Landmark } from '../analysis/types'
 import { cue } from '../analysis/voice'
 import { PLACEMENT } from '../placement'
@@ -276,7 +276,9 @@ const RANKING: {
     call: 'off-vertical',
     grade: 'hedged',
     say: '**Straighten up, and check the phone is level.** One of the two is leaning and I cannot tell which.',
-    fires: (r) => r.spatial !== null && Math.abs(r.spatial.roll_deg) >= NOTABLE_ROLL,
+    // Where levelling starts (H37). At the old 4° a level phone's own stance,
+    // 3.3° to 5.1° on the Bath serves, was told to check the phone.
+    fires: (r) => r.spatial !== null && Math.abs(r.spatial.roll_deg) >= LEVEL_FROM,
   },
 ]
 
