@@ -2,14 +2,15 @@
 
 Serve Coach analyses a tennis serve from a phone clip, entirely on the
 device. This page says what works, what is open, and what is the owner's
-call. The ledger of how each item was built and proved is `ROADMAP.md`; the
-reasoning behind the current programme is `NOTCH-REVIEW.md`; the design
-record is `README.md`; the working rules are `LOOP.md`.
+call. The current programme is `docs/next/HANDOVER.md` and its ledger is
+`docs/next/LEDGER.md`; the design record is `README.md`.
 
-Finished ledgers from earlier loops are in `docs/history/`: `NEXT.md`,
+Finished ledgers from earlier loops are in `docs/history/`: `ROADMAP.md`,
+`LOOP.md`, `ANALYSIS-REVIEW.md`, `NOTCH-REVIEW.md`, `NEXT.md`,
 `PROGRESS.md`, `BACKLOG.md`, `PHASE-8.md`, `UNATTENDED-LOOP.md` and
 `LEVEL-UP-REVIEW.md`. Source comments still cite them by name, and they are
-in that folder under the same names.
+in that folder under the same names. Where `LOOP.md` and the handover
+disagree, the handover wins for this programme.
 
 ## What works
 
@@ -183,11 +184,13 @@ in that folder under the same names.
 
 ## Resuming this loop
 
-Work is on `lift/whole-app`, and its ledger is the last section of `ROADMAP.md`
-(H1 onward). The reasoning is `docs/lift/LIFT-PLAN.md`, the visual rules are
-`DESIGN.md`, and `docs/lift/gallery.html` shows every state before and after.
+Work is on `next/premium`, cut from `master` at `e8bf74c`. The programme is
+`docs/next/HANDOVER.md` and its ledger is `docs/next/LEDGER.md`. The lift
+before it is the last section of `docs/history/ROADMAP.md` (H1 onward), the
+visual rules are `DESIGN.md`, and `docs/lift/gallery.html` shows the lift's
+states before and after.
 
-The suite runs **2,269 checks** (2026-11-12). The last loop tag is
+The suite runs **2,246 checks** (2026-11-16, after N0.4 removed two unused detectors and their 23 checks). The last loop tag is
 `loop-green-15`, from the August loop.
 
 The entry chunk stands at 127.30 of 130 kB gzip, as `bundle.test.ts` measures it
@@ -198,7 +201,7 @@ Before trusting a size figure, run `npm run build`: `bundle.test.ts` reads
 
 How to work here, in short:
 
-- One commit per ledger item, each ticked in `ROADMAP.md` with what it turned
+- One commit per ledger item, each ticked in `docs/next/LEDGER.md` with what it turned
   out to be and how it was proved. A measured "not adopted" is a result.
 - Run the full chain before a commit: `npm run typecheck`, `npx eslint .`,
   `npm run build`, `npm test`. `npm run release` runs all of it and then
