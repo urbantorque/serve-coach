@@ -651,7 +651,7 @@ export default function App() {
   }, [reopenedId, reopenedBestId])
 
   return (
-    <div className="app">
+    <div className={(view.kind === 'home' || view.kind === 'progress') && sessions.length > 0 ? 'app has-bar' : 'app'}>
       <main className="shell">
         <Suspense fallback={null}>
           {view.kind === 'home' && (

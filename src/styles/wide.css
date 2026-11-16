@@ -1,0 +1,231 @@
+/* ============================================================================
+   Laptop and tablet widths (N3.2)
+
+   DESIGN.md, "Space, shape and the grid": a phone column centred alone on a
+   wide screen is a defect. From 1024 px the bottom bar becomes a side rail and
+   the screens lay out inside --wide in two panes. 768 px is the tablet step,
+   where the column only gets more room. These three numbers are the only widths
+   written in a @media rule; custom properties cannot sit in one.
+   ========================================================================= */
+
+@media (min-width: 768px) {
+  .shell {
+    max-width: 720px;
+    padding: 0 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .shell {
+    max-width: var(--wide);
+    padding: 0 40px;
+  }
+
+  /* Room for the rail, and the column centred in what is left. */
+  .has-bar .shell {
+    max-width: calc(var(--wide) + var(--rail));
+    padding-left: calc(var(--rail) + 40px);
+  }
+
+  /* --------------------------------------------------------------- the rail */
+
+  .tabbar {
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: var(--rail);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: calc(22px + var(--safe-top)) 0 22px;
+    transform: none;
+    background: var(--ink-1);
+    box-shadow: inset -1px 0 0 var(--hairline-soft);
+  }
+
+  /* Film first, at the top of the rail, where a pointer starts. */
+  .tab-film {
+    order: -1;
+    width: 56px;
+    height: 56px;
+    margin: 0 0 18px;
+  }
+
+  .tab-film-ring {
+    inset: -3px;
+    width: 62px;
+    height: 62px;
+  }
+
+  .tab {
+    width: 64px;
+    min-height: 64px;
+    border-radius: var(--r-md);
+    gap: 4px;
+  }
+
+  .tab:hover {
+    color: var(--fg);
+  }
+
+  .tab.is-on {
+    background: var(--ink-3);
+  }
+
+  /* The rail is at the side, so nothing needs room under the screens. */
+  .today,
+  .progress-screen {
+    padding-bottom: calc(56px + var(--safe-bottom));
+  }
+
+  /* ---------------------------------------------------- Today, in two panes */
+
+  /* Above the screen's own rule, which loads with the screen and so comes later. */
+  .shell > .today {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: 28px 48px;
+    align-items: start;
+  }
+
+  .today > * {
+    grid-column: 1 / -1;
+  }
+
+  /* The next session on the left, the week's momentum beside it. */
+  .today > .next-up {
+    grid-column: 1;
+    grid-row: span 3;
+  }
+
+  .today > .momentum,
+  .today > .today-streak,
+  .today > .recap {
+    grid-column: 2;
+  }
+
+  /* ------------------------------------------------- Progress, in two panes */
+
+  .shell > .progress-screen {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-auto-flow: row dense;
+    gap: 32px 48px;
+    align-items: start;
+  }
+
+  .progress-screen > header,
+  .progress-screen > .seg,
+  .progress-screen > .progress-deeper,
+  .progress-screen > .share-menu,
+  .progress-screen > .progress-all {
+    grid-column: 1 / -1;
+  }
+
+  /* The shape of the serve, with the records and the first fold beside it. */
+  .progress-screen > .shape {
+    grid-column: 1;
+    grid-row: span 3;
+  }
+
+  .progress-screen > .record-tiles {
+    grid-column: 2;
+  }
+
+
+  /* ------------------------------------------- the report, as a review studio */
+
+  /*
+   * DESIGN.md, "The review studio": the player's own clip on the left, held in
+   * view while the words, the fix and the one action scroll on the right.
+   */
+  .shell > .report {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: 28px 44px;
+    align-items: start;
+    padding-top: calc(84px + var(--safe-top));
+    padding-bottom: calc(56px + var(--safe-bottom));
+  }
+
+  .report > * {
+    grid-column: 2;
+  }
+
+  .report > .watch {
+    grid-column: 1;
+    grid-row: 1 / span 12;
+    position: sticky;
+    top: 24px;
+  }
+
+  /* The header runs across the top of both panes. Positioned absolutely, it
+     would otherwise take its box from the grid column every child is given. */
+  .report > .report-top {
+    grid-column: 1 / -1;
+    top: calc(20px + var(--safe-top));
+  }
+
+  /* On a laptop the picture sits in its pane, not out to the edges. */
+  .report .hero-stage {
+    margin: 0;
+    border-radius: var(--r-xl);
+    /* The clip is already big on the left; here it is the number's backdrop. */
+    height: 300px;
+    min-height: 0;
+  }
+
+  /* The one action sits under the fix, in the right pane, not at the foot of the window. */
+  .report > .hero {
+    order: -2;
+  }
+
+  .report > .report-bar {
+    order: -1;
+    position: static;
+    width: auto;
+    padding: 0;
+    transform: none;
+    background: none;
+  }
+
+  /* ------------------------------------------------------------ the first run */
+
+  /* The figure on the left, the promise and the one action on the right. */
+  .shell > .first-run {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    grid-template-rows: 1fr auto auto auto 1fr;
+    column-gap: 64px;
+    row-gap: 18px;
+    min-height: 100dvh;
+    padding-bottom: 32px;
+  }
+
+  .first-run > * {
+    grid-column: 2;
+  }
+
+  .first-run > .first-stage {
+    grid-column: 1;
+    grid-row: 1 / -1;
+    margin: 32px 0;
+    border-radius: var(--r-xl);
+  }
+
+  .first-run > .first-copy {
+    grid-row: 2;
+    margin-top: 0;
+  }
+
+  .first-run > .first-actions {
+    grid-row: 3;
+  }
+
+  .first-run > .first-foot {
+    grid-row: 4;
+    text-align: left;
+  }
+}

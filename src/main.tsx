@@ -12,6 +12,7 @@ import './styles/shell.css'
 import './styles/controls.css'
 import './styles/today.css'
 import './styles/states.css'
+import './styles/wide.css'
 
 // A new version is discovered here and taken later, at a moment that costs
 // nothing — see `lib/updates.ts` for why this app cannot reload on its own

@@ -73,3 +73,22 @@ Findings checked against the code before work starts:
   under `/` and a sub-path base. Walked in the browser: Progress and back,
   `/serves`, `/sample` and back, a stored serve reloaded at its address, and
   an unknown id landing on Today.
+- [x] **N3.2 A laptop layout for Today, Progress and the first run.**
+  `styles/wide.css`, the one home for screen layouts at 768 and 1024 px. From
+  1024 the bar becomes a side rail with Film at the top, the column widens to
+  `--wide`, Today puts the next session beside the week, Progress puts the
+  shape of the serve beside the records and flows its sections in two
+  columns, and the first run puts the figure beside the promise. Phone is
+  untouched: all 30 phone states measure as before. At 1440 px Today went
+  from 1.3 screens to 1 and Progress from 3.4 to 2.3.
+- [x] **N3.3 The report as a review studio on a laptop.** The player's clip
+  holds the left pane, sticky, while the number, the fix, the one action and
+  the depth scroll on the right. The action bar sits under the fix instead of
+  floating at the window's foot, and the hero's picture shrinks to a backdrop
+  because the clip is already big. Reports went from about 3 laptop screens
+  to 2.3. Gate green, 2,251 checks.
+
+Not yet wide, and left for wave 5's rebuild: the practice session and the
+glance (a readable column, centred), sheets (centred modals), and charts
+whose SVG labels grow with the column. The first run still says "on this
+phone" on a laptop; the landing page (wave 6) takes that line.

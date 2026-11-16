@@ -80,8 +80,10 @@ On a canvas, the widths are the font keywords `extra-condensed` and `expanded`, 
 - Laptop, 1024 px and up: a side rail (`--rail`) replaces the bottom bar, and
   screens lay out in two panes inside `--wide` (1280 px): the picture or the
   chart on the left, the words and the one action on the right (`--aside`).
-- Breakpoints are 768, 1024 and 1280. Custom properties cannot sit in a media
-  query, so these three numbers are the only widths written in a `@media` rule.
+- Breakpoints are 768, 1024 and 1280, and the screen layouts live in
+  `styles/wide.css`. Custom properties cannot sit in a media query, so these are
+  the numbers to use. Three older component rules (400, 480 and 640 px) predate
+  them and should fold into them when their screens are rebuilt.
 - Radii: 12 for small, 16 for chips, 22 for cards, 28 for sheets and stages, pill
   for anything pressed.
 - Touch targets 44 px at least. The film button is 70.

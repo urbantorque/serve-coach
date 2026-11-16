@@ -137,7 +137,7 @@ try {
       await p.waitForTimeout(2200)
     },
   })
-  await shoot('10-report-live', { url: '/?demo=live', wait: 4500 })
+  await shoot('10-report-live', { url: '/?demo=live', wait: 9000 })
   await shoot('11-report-basket', { url: '/?demo=basket', wait: 5000 })
   await shoot('12-report-reopened', { url: '/?demo=report', wait: 2200 })
   await shoot('12b-report-own-serve', { url: '/?demo=history', wait: 2200, steps: async (p) => { await p.locator('.serve-card').first().click(); await p.waitForTimeout(2600) } })
