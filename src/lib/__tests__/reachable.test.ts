@@ -247,9 +247,9 @@ check('every share entry point has a control that presses it', () => {
  * things that were never reached: a tap prop, a history filter, a share card, and
  * a tie-drop written as an exact float equality that could not fire at all.
  *
- * Twelve refusal values across four unions: the triage rejections, the pairing
- * refusals, the detector declines and the outbound ones. All twelve are produced
- * by at least one check today. This keeps that true.
+ * Eleven refusal values across two unions: the triage rejections and the pairing
+ * refusals. All of them are produced by at least one check today. This keeps that
+ * true. (The detector and outbound unions went with their unused modules in N0.)
  *
  * WHAT IT DOES NOT CLAIM. That the refusal is *right*, or that its copy is good —
  * `copy.test.ts` reads the triage refusals and nothing reads the rest, because
@@ -271,12 +271,6 @@ const REFUSALS: readonly string[] = [
   'serve_type_changed',
   'no_contact',
   'no_scale',
-  // the shared pixel pass, and the outbound detector
-  'window_empty',
-  'too_slow',
-  'no_streaks',
-  'disagreed',
-  'too_few_streaks',
 ]
 
 check('every refusal the app can produce is produced by at least one check', () => {
@@ -312,8 +306,6 @@ check('the refusal list has not fallen behind the unions it tracks', () => {
   const sources = [
     'lib/analysis/triage.ts',
     'lib/trackPair.ts',
-    'lib/vision/detector.ts',
-    'lib/vision/outbound.ts',
   ].map((f) => fs.readFileSync(path.join(root, f), 'utf8'))
 
   const declared = new Set<string>()
