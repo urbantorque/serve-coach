@@ -34,7 +34,7 @@
   gap: 9px;
   flex: 1;
   min-width: 12rem;
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: 1.5;
   color: var(--fg-muted);
 }
@@ -59,7 +59,7 @@
   margin: 0;
   padding-top: 10px;
   border-top: 1px solid var(--hairline);
-  font-size: 13px;
+  font-size: 14px;
   line-height: var(--lh-snug);
   color: var(--fg);
   text-wrap: pretty;
@@ -88,7 +88,7 @@
   border-radius: var(--r-sm);
   background: var(--ink-3);
   border: 1px solid var(--hairline);
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 620;
   font-variant-numeric: tabular-nums;
   color: var(--fg-muted);
@@ -204,7 +204,7 @@
 .consistency--work  .consistency-score { color: var(--work); }
 
 .consistency-out-of {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: var(--wt-label);
   letter-spacing: 0;
   color: var(--fg-faint);
@@ -223,7 +223,7 @@
   grid-column: 2;
   grid-row: 3;
   align-self: start;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.6;
   color: var(--fg-muted);
 }
@@ -237,7 +237,7 @@
 /* The same kicker the block headings use, so a label inside a card and a label
    over a section are not two different sizes of the same idea. */
 .consistency-label {
-  font-size: 11.5px;
+  font-size: 14px;
   font-weight: 660;
   letter-spacing: var(--tr-kicker);
   text-transform: uppercase;
@@ -270,7 +270,7 @@
 }
 
 .cchip > span {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--fg-faint);
 }
 
@@ -287,7 +287,7 @@
 
 .best-worst-lead {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   line-height: var(--lh-snug);
   color: var(--fg-muted);
 }
@@ -313,7 +313,7 @@
 }
 
 .best-worst-metric {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--fg-faint);
 }
 
@@ -324,7 +324,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 4px 12px;
-  font-size: 13px;
+  font-size: 14px;
   line-height: var(--lh-snug);
 }
 
@@ -358,7 +358,7 @@
 .pair-label {
   display: block;
   margin-bottom: 5px;
-  font-size: 11px;
+  font-size: 14px;
   color: var(--fg-faint);
 }
 
@@ -391,7 +391,7 @@
 }
 
 .pair-shots figcaption {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--fg-muted);
 }
 
@@ -412,7 +412,7 @@
 
 .pair-absent {
   margin: 0;
-  font-size: 12px;
+  font-size: 14px;
   line-height: var(--lh-snug);
   color: var(--fg-faint);
   text-wrap: pretty;
@@ -420,7 +420,7 @@
 
 .best-worst-none {
   margin: 0;
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: var(--lh-snug);
   color: var(--fg-muted);
   text-wrap: pretty;
@@ -441,7 +441,7 @@
 }
 
 .spread-label {
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 560;
 }
 
@@ -474,7 +474,7 @@
 
 .spread-detail {
   margin-top: 8px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: var(--wt-label);
   line-height: var(--lh-tight);
   color: var(--fg-muted);
@@ -487,7 +487,7 @@
 }
 
 .consistency-foot {
-  font-size: 11.5px;
+  font-size: 14px;
   line-height: 1.6;
   color: var(--fg-faint);
 }
@@ -516,7 +516,7 @@
 }
 
 .gap-date {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--fg-faint);
 }
 
@@ -556,7 +556,7 @@
 }
 
 .gap-value {
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 620;
   text-align: right;
   color: var(--fg-muted);
@@ -564,7 +564,7 @@
 
 .gaps-note {
   margin-top: 3px;
-  font-size: 11.5px;
+  font-size: 14px;
   line-height: 1.55;
   color: var(--fg-faint);
 }
@@ -687,14 +687,14 @@
    is how to do the one thing, not a second one thing. */
 
 .focus-drill h3 {
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: var(--wt-key);
   letter-spacing: var(--tr-title);
   margin: 7px 0 6px;
 }
 
 .focus-drill p {
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.6;
   color: var(--fg-muted);
 }
@@ -721,7 +721,7 @@
 .focus-drill .drill-check p {
   flex: 1 1 200px;
   min-width: 0;
-  font-size: 13px;
+  font-size: 14px;
   line-height: var(--lh-snug);
   color: var(--fg);
 }
@@ -746,7 +746,7 @@
 
 .focus-drill .drill-feel,
 .focus-drill .drill-note {
-  font-size: 13px;
+  font-size: 14px;
   line-height: var(--lh-snug);
   color: var(--fg-muted);
 }
@@ -788,7 +788,7 @@
   position: absolute;
   left: 12px;
   top: 9px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--fg-faint);
   font-variant-numeric: tabular-nums;
@@ -807,7 +807,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: var(--wt-key);
   color: var(--fg);
 }
@@ -817,20 +817,20 @@
   border-radius: var(--r-pill);
   background: var(--lime-glow);
   color: var(--lime);
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .drill-step-how {
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: var(--lh-snug);
   color: var(--fg-muted);
 }
 
 .drill-step-reps {
-  font-size: 11.5px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--fg-faint);
   font-variant-numeric: tabular-nums;
@@ -852,7 +852,7 @@
   grid-template-columns: 1fr 1fr;
   margin-top: -4px;
   text-align: center;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.11em;
   text-transform: uppercase;
@@ -862,7 +862,7 @@
 /* What to look at in the demonstration (L4.5): the one part the two bodies
    differ in, named in the voice of an instruction, above the small print. */
 .fault-demo-watch {
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: var(--wt-key);
   color: var(--fg);
 }
@@ -921,7 +921,7 @@
   border-radius: var(--r-pill);
   border: 1px solid var(--hairline);
   color: var(--fg-muted);
-  font-size: 11.5px;
+  font-size: 14px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -931,7 +931,7 @@
 }
 
 .focus-next-title {
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: var(--wt-key);
   letter-spacing: var(--tr-title);
   line-height: var(--lh-snug);
@@ -940,7 +940,7 @@
 .focus-next-why {
   margin-top: 4px;
   max-width: var(--measure);
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: var(--lh-snug);
   color: var(--fg-muted);
   text-wrap: pretty;
@@ -951,7 +951,7 @@
   align-items: flex-start;
   gap: 6px;
   margin-top: 8px;
-  font-size: 12px;
+  font-size: 14px;
   line-height: var(--lh-snug);
   color: var(--fg-muted);
 }
@@ -983,7 +983,7 @@
 }
 
 .levelled-text {
-  font-size: 12px;
+  font-size: 14px;
   line-height: var(--lh-snug);
   color: var(--fg-faint);
 }
@@ -994,7 +994,7 @@
   position: relative;
   gap: 3px;
   flex: none;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--lime);
 }
@@ -1031,7 +1031,7 @@
  */
 .levelled-note {
   margin-top: 10px;
-  font-size: 12px;
+  font-size: 14px;
   line-height: var(--lh-snug);
   color: var(--fg-muted);
 }
@@ -1060,7 +1060,7 @@
 
 .level-pick legend {
   padding: 0;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1088,13 +1088,13 @@
 }
 
 .level-option strong {
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 620;
   color: var(--fg-muted);
 }
 
 .level-option span {
-  font-size: 11.5px;
+  font-size: 14px;
   line-height: 1.4;
   color: var(--fg-faint);
 }
@@ -1110,7 +1110,7 @@
 
 .level-pick-note {
   margin-top: 11px;
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: 1.55;
   color: var(--fg-faint);
 }
@@ -1153,7 +1153,7 @@
 .reading-unseen {
   margin-top: 11px;
   max-width: var(--measure);
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: 1.55;
   color: var(--fg-muted);
   text-wrap: pretty;
@@ -1172,7 +1172,7 @@
 
 .judged-lead {
   display: block;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1192,13 +1192,13 @@
   width: auto;
   height: auto;
   padding: 8px 14px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .judged-note {
   margin-top: 11px;
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: 1.55;
   color: var(--fg-faint);
 }
@@ -1214,7 +1214,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px 14px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--fg-muted);
 }
 
@@ -1234,7 +1234,7 @@
 }
 
 .toss-map-aim {
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: var(--lh-snug);
   color: var(--fg-muted);
 }
@@ -1242,12 +1242,12 @@
 /* The firing-order timeline (D3.8): labels in the muted ink, never the marks'. */
 .firing-label {
   fill: var(--fg-muted);
-  font-size: 11px;
+  font-size: 14px;
   font-family: var(--font);
 }
 
 .firing-note {
-  font-size: 12px;
+  font-size: 14px;
 }
 
 /* ============================================================================

@@ -91,25 +91,25 @@ check('no string in a component says we, our or us', () => {
   assert(hits.length === 0, `a second narrator:\n    ${hits.join('\n    ')}`)
 })
 
-heading('Nothing a player reads under 11px')
+heading('Nothing a player reads under 14px (DESIGN.md, the floor)')
 
-check('every font size in every stylesheet is at least 11px', () => {
+check('every font size in every stylesheet is at least 14px', () => {
   const small: string[] = []
   const files = filesUnder(path.join(process.cwd(), 'src'), '.css')
   for (const file of files) {
     const css = fs.readFileSync(file, 'utf8')
     for (const m of css.matchAll(/font-size:\s*([\d.]+)px/g)) {
-      if (Number(m[1]) < 11) small.push(`${file.split(/[\\/]/).pop()}: ${m[0]}`)
+      if (Number(m[1]) < 14) small.push(`${file.split(/[\\/]/).pop()}: ${m[0]}`)
     }
   }
   note(`${files.length} stylesheets read`)
   assert(files.length > 5, 'the stylesheets were not found')
-  assert(small.length === 0, `text under 11px:\n    ${small.join('\n    ')}`)
+  assert(small.length === 0, `text under 14px:\n    ${small.join('\n    ')}`)
 })
 
 heading('Signposts a player can read (N4.4)')
 
-check('the labels that carry meaning are 12px and in the readable grey, not the faint one', () => {
+check('the labels that carry meaning are 15px and in the readable grey, not the faint one', () => {
   const where: Record<string, string> = {
     '.t-overline': 'tokens.css',
     '.block-title': 'blocks.css',
@@ -128,7 +128,7 @@ check('the labels that carry meaning are 12px and in the readable grey, not the 
     assert(i >= 0, `${sel} not found in ${file}`)
     const body = css.slice(i, css.indexOf('}', i))
     const size = Number(/font-size:\s*([\d.]+)px/.exec(body)?.[1])
-    assert(size >= 12, `${sel} is ${size}px`)
+    assert(size >= 15, `${sel} is ${size}px`)
     assert(!/--fg-faint/.test(body), `${sel} is still in the faint grey`)
   }
 })

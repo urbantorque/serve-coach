@@ -22,7 +22,7 @@
 }
 
 .analyzing-file {
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--fg-faint);
   max-width: 30ch;
   overflow: hidden;
@@ -122,7 +122,7 @@
 }
 
 .analyzing-detail {
-  font-size: 13.5px;
+  font-size: 15px;
   color: var(--fg-muted);
   min-height: 1.4em;
 }
@@ -139,7 +139,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 13.5px;
+  font-size: 15px;
   color: var(--fg-faint);
   transition: color var(--base) var(--ease);
 }
@@ -171,7 +171,7 @@
 /* The screen could not be kept on (L6.4): the caution colour, at the notes' size. */
 
 .analyzing-aside {
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--fg-faint);
   max-width: 34ch;
   line-height: 1.55;
@@ -224,14 +224,14 @@
 }
 
 .session-meta {
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.5;
   color: var(--fg-muted);
   margin-top: -6px;
 }
 
 .session-note {
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: 1.55;
   color: var(--fg-faint);
 }
@@ -279,7 +279,7 @@
   gap: 3px;
   flex: 1;
   min-width: 0;
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: 1.45;
 }
 
@@ -290,7 +290,7 @@
 }
 
 .session-choice-time {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--lime);
   white-space: nowrap;
 }
@@ -317,7 +317,7 @@
 }
 
 .session-serve-at {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--fg-faint);
 }
 
@@ -376,7 +376,7 @@
 }
 
 .session-figures dt {
-  font-size: 11.5px;
+  font-size: 14px;
   color: var(--fg-faint);
 }
 
@@ -415,7 +415,7 @@
 }
 
 .session-picks-title {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--fg-muted);
 }
@@ -459,7 +459,7 @@ button.session-pick:active {
 .session-watch-again {
   align-self: flex-start;
   min-height: 44px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--lime);
 }
@@ -485,7 +485,7 @@ button.session-pick:active {
 }
 
 .session-pick-at {
-  font-size: 11.5px;
+  font-size: 14px;
   color: var(--fg-faint);
 }
 
@@ -506,7 +506,7 @@ button.session-pick:active {
   justify-content: space-between;
   min-height: 44px;
   padding: 0 4px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--fg-muted);
   cursor: pointer;
@@ -534,7 +534,7 @@ button.session-pick:active {
 }
 
 .session-strip .chart-readout strong {
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -577,7 +577,7 @@ button.session-pick:hover .session-pick-play {
   border-radius: var(--r-pill);
   background: var(--glass);
   box-shadow: inset 0 0 0 1px var(--glass-edge);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--fg);
 }
@@ -600,13 +600,13 @@ button.session-pick:hover .session-pick-play {
 }
 
 .wait-note {
-  font-size: 13.5px;
+  font-size: 15px;
   line-height: 1.35;
   color: var(--fg-faint);
 }
 
 .wait-keep {
-  font-size: 14.5px;
+  font-size: 15px;
   line-height: 1.35;
   color: var(--fair-ink);
 }
@@ -649,7 +649,7 @@ button.session-pick:hover .session-pick-play {
   border-radius: var(--r-md);
   background: var(--panel);
   box-shadow: var(--panel-edge);
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--fg-faint);
   transition: color var(--base) var(--ease);
 }

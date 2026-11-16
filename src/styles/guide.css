@@ -27,19 +27,19 @@
   border-radius: 50%;
   background: var(--lime-glow);
   color: var(--lime);
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 700;
   flex: none;
 }
 
 .guide-list h3 {
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 620;
   margin-bottom: 5px;
 }
 
 .guide-list p {
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.62;
   color: var(--fg-muted);
 }
@@ -52,7 +52,7 @@
 }
 
 .guide-avoid h3 {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -63,7 +63,7 @@
 .guide-avoid li {
   position: relative;
   padding-left: 16px;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.7;
   color: var(--fg-muted);
 }
@@ -80,7 +80,7 @@
 }
 
 .guide-note {
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: 1.62;
   color: var(--fg-faint);
 }
@@ -121,7 +121,7 @@
 
 .guide-diagram-label {
   font-family: var(--font);
-  font-size: 11px;
+  font-size: 14px;
   font-weight: var(--wt-label);
   letter-spacing: 0.02em;
   fill: var(--fg-faint);
@@ -145,7 +145,7 @@
   min-height: 48px;
   list-style: none;
   cursor: pointer;
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: var(--wt-key);
   color: var(--fg);
 }

@@ -3,7 +3,7 @@
    ========================================================================= */
 
 .progress-foot {
-  font-size: 11.5px;
+  font-size: 14px;
   color: var(--fg-faint);
 }
 
@@ -28,7 +28,7 @@
   margin-top: 10px;
   padding-left: 11px;
   border-left: 2px solid var(--work);
-  font-size: 13.5px;
+  font-size: 15px;
   line-height: 1.5;
   color: var(--fg);
 }
@@ -50,7 +50,7 @@
   gap: 3px;
   padding: 3px 8px;
   border-radius: var(--r-pill);
-  font-size: 11.5px;
+  font-size: 14px;
   font-weight: 640;
   line-height: 1;
   white-space: nowrap;
@@ -66,7 +66,7 @@
 
 .delta--compact {
   padding: 2px 6px;
-  font-size: 11px;
+  font-size: 14px;
 }
 
 /* --- score trend ----------------------------------------------------------- */
@@ -87,7 +87,7 @@
 
 .chart-axis {
   fill: var(--fg-faint);
-  font-size: 11px;
+  font-size: 14px;
   font-family: var(--font);
   font-variant-numeric: tabular-nums;
 }
@@ -97,7 +97,7 @@
   align-items: baseline;
   gap: 7px;
   min-height: 1.6em;
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--fg-muted);
 }
 
@@ -127,7 +127,7 @@
 }
 
 .dbar-label {
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--fg-muted);
 }
 
@@ -164,13 +164,13 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 620;
   justify-content: flex-end;
 }
 
 .dbars-note {
-  font-size: 11.5px;
+  font-size: 14px;
   line-height: 1.55;
   color: var(--fg-faint);
   margin-top: 3px;
@@ -202,7 +202,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -215,7 +215,7 @@
   gap: 5px;
   padding: 3px 9px;
   border-radius: var(--r-pill);
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 620;
 }
 
@@ -232,7 +232,7 @@
 
 .practice-lead {
   max-width: var(--measure);
-  font-size: 13.5px;
+  font-size: 15px;
   line-height: var(--lh-copy);
   color: var(--fg-muted);
   text-wrap: pretty;
@@ -263,7 +263,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-size: 11.5px;
+  font-size: 14px;
   color: var(--fg-faint);
   line-height: 1.4;
 }
@@ -281,7 +281,7 @@
   border-radius: var(--r-sm);
   background: var(--ink-3);
   border-left: 2px solid var(--lime);
-  font-size: 13.5px;
+  font-size: 15px;
   line-height: var(--lh-snug);
   text-wrap: pretty;
 }
@@ -292,7 +292,7 @@
    things at once. */
 .practice-groove {
   margin: -6px 0 16px;
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: var(--lh-snug);
   color: var(--fg-muted);
   text-wrap: pretty;
@@ -316,7 +316,7 @@
 
 .drill-logged p {
   margin: 0;
-  font-size: 12px;
+  font-size: 14px;
   line-height: var(--lh-snug);
   color: var(--fg-faint);
 }
@@ -326,7 +326,7 @@
 /* The serve path (L3.5): a part a row, its state as the report's own tags. */
 .path-headline {
   margin: 0 0 10px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 620;
   color: var(--fg);
 }
@@ -350,13 +350,13 @@
 }
 
 .path-name {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--fg-muted);
 }
 
 .path-slipped {
   flex-basis: 100%;
-  font-size: 12px;
+  font-size: 14px;
   line-height: var(--lh-snug);
   color: var(--fg-faint);
 }
@@ -381,7 +381,7 @@
 }
 
 .profile-tag {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--fg);
 }
 
@@ -389,7 +389,7 @@
   width: 100%;
   border-collapse: collapse;
   margin-top: 8px;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .dtable th,
@@ -400,7 +400,7 @@
 }
 
 .dtable th {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 660;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -415,7 +415,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--fg-faint);
   margin-top: -4px;
 }
@@ -509,7 +509,7 @@ button.tile {
   background: var(--ink-2);
   color: var(--fg);
   font: inherit;
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 560;
   text-align: left;
   cursor: pointer;
@@ -539,7 +539,7 @@ button.tile {
   flex-direction: column;
   gap: 2px;
   min-width: 0;
-  font-size: 14.5px;
+  font-size: 15px;
   line-height: 1.3;
   color: var(--fg-muted);
 }
@@ -558,7 +558,7 @@ button.tile {
 }
 
 .shape-note {
-  font-size: 14.5px;
+  font-size: 15px;
   line-height: 1.4;
   color: var(--fg-muted);
 }
@@ -572,7 +572,7 @@ button.tile {
 
 .ribbon figcaption {
   margin-top: 6px;
-  font-size: 14.5px;
+  font-size: 15px;
   line-height: 1.4;
   color: var(--fg-muted);
 }
@@ -593,7 +593,7 @@ button.tile {
 
 .ribbon-axis {
   fill: var(--fg-faint);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
 }
 
@@ -648,7 +648,7 @@ button.tile {
   border-radius: var(--r-lg);
   background: var(--panel);
   box-shadow: var(--panel-edge);
-  font-size: 13.5px;
+  font-size: 15px;
   line-height: 1.2;
   color: var(--fg-muted);
 }
@@ -668,7 +668,7 @@ button.tile {
   flex-direction: column;
   gap: 1px;
   margin-bottom: 7px;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.3;
   color: var(--fg-muted);
 }
@@ -733,7 +733,7 @@ button.tile {
   left: 0;
   right: 0;
   text-align: center;
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--fg-muted);
 }
 

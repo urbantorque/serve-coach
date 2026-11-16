@@ -60,7 +60,7 @@
 /* Sits under the controls the way `.levelled-note` sits under the picker: the
    one line explaining why this report shows a drawing instead of a clip. */
 .player-note {
-  font-size: 12px;
+  font-size: 14px;
   line-height: var(--lh-snug);
   color: var(--fg-muted);
 }
@@ -267,7 +267,7 @@
 
 .kept-one figcaption {
   margin-top: 6px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--fg-muted);
   text-align: center;
 }
@@ -339,7 +339,7 @@
   padding: 0 14px;
   border-radius: var(--r-pill);
   background: var(--ink-3);
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--fg);
 }
@@ -385,7 +385,7 @@
   padding: 0 14px;
   border-radius: var(--r-pill);
   background: var(--ink-2);
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--fg-muted);
   transition: background var(--fast) var(--ease), color var(--fast) var(--ease);

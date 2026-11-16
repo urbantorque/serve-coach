@@ -36,9 +36,18 @@ Branch `next/premium`, cut from `master` at `e8bf74c` on 2026-11-16.
   B: Daylight (cool off-white, court blue, Geist, footage on dark stages).
   C: Broadcast (off-black, signal orange, condensed type, telemetry on the
   clip). Prices are placeholders; scores and angles are sample values.
-- [ ] **N1.2 Owner picks a direction.** Gate. Then `DESIGN.md` and
-  `tokens.css` are rewritten whole, with `styleTokens.test.ts` and
-  `contrast.test.ts` moved to the new truth.
+- [x] **N1.2 The owner chose A, Floodlit** (2026-11-16). `DESIGN.md` is
+  rewritten whole around it: the identity kept and raised, a laptop grid
+  (rail, `--wide` 1280, two panes with `--aside`), breakpoints at 768, 1024
+  and 1280, the review studio, the landing page, and a type floor. No colour
+  changed, so `styleTokens.test.ts` and `contrast.test.ts` stand as they are.
+- [x] **N1.3 The type floor.** 213 font sizes under 15 px across 16
+  stylesheets moved up: 11 to 13 px to 14, 13.5 to 14.5 px to 15. Three
+  signposts went to 15. `wordsInChrome.test.ts` now fails under 14 px (was
+  11) and holds the tracked signposts at 15 (was 12). Walked all 30 phone
+  states before and after: page heights moved by at most 0.1 screen, no
+  horizontal overflow at 375 px on the live report or Progress, and the
+  console said nothing new.
 
 ## Wave 2. Trust foundations
 

@@ -108,7 +108,7 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
-  font-size: 14.5px;
+  font-size: 15px;
   line-height: 1.38;
   color: var(--fg-muted);
 }
@@ -124,7 +124,7 @@
 }
 
 .programme-week-label {
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -156,6 +156,6 @@
 }
 
 .programme-goal span span {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--fg-muted);
 }

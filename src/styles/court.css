@@ -75,7 +75,7 @@
   min-width: 76px;
   min-height: 56px;
   justify-content: center;
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--fg);
 }
@@ -273,7 +273,7 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  font-size: 14px;
+  font-size: 15px;
   line-height: var(--lh-snug);
   color: var(--fg);
 }
@@ -290,7 +290,7 @@
    things the camera could not read. */
 
 .framer-foot {
-  font-size: 13.5px;
+  font-size: 15px;
   line-height: 1.62;
   color: var(--fg-muted);
 }
@@ -299,7 +299,7 @@
    text and a taller press than the 12px pills the rest of the app uses. */
 .film .seg-item,
 .film .chip--toggle {
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .film .seg-item {

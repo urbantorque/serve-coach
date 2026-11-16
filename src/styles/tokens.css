@@ -164,8 +164,22 @@
   /* An editorial column: past this, the eye loses the start of the next line. */
   --measure: 46ch;
 
+  /*
+   * The type floor (DESIGN.md, "Type"). Stylesheets write these sizes in px so
+   * `wordsInChrome.test.ts` can read them; these name the three steps for
+   * anything set from script or a new rule.
+   */
+  --fs-meta: 14px;
+  --fs-label: 15px;
+  --fs-body: 16px;
+
   /* --- layout ------------------------------------------------------------- */
+  /* The phone column. On a laptop the screens lay out inside --wide instead. */
   --shell: 560px;
+  --wide: 1280px;
+  /* The laptop's side rail, and the right-hand pane of a two-pane screen. */
+  --rail: 84px;
+  --aside: 420px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 
@@ -373,7 +387,7 @@ ol {
  * to read. A label is sentence case at a size a player can read.
  */
 .t-overline {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: 0;
   line-height: 1.25;

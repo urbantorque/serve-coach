@@ -68,7 +68,7 @@ details[open] > summary.block-title svg {
   justify-content: space-between;
   gap: 12px;
   margin: 0 2px 8px;
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--fg-muted);
 }
@@ -101,7 +101,7 @@ details[open] > summary.block-title svg {
 }
 
 .recent-text strong {
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--fg);
   overflow: hidden;
@@ -110,7 +110,7 @@ details[open] > summary.block-title svg {
 }
 
 .recent-text span {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--fg-faint);
 }
 
@@ -125,7 +125,7 @@ details[open] > summary.block-title svg {
 }
 
 .fixed-pair-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--fg);
 }
@@ -151,7 +151,7 @@ details[open] > summary.block-title svg {
 
 .fixed-pair-half figcaption,
 .fixed-pair-line {
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--fg-muted);
 }
 
@@ -177,7 +177,7 @@ details[open] > summary.block-title svg {
   grid-template-columns: 7.5em 1fr auto;
   align-items: center;
   gap: 10px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--fg-muted);
 }
 

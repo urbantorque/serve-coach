@@ -40,7 +40,7 @@
 }
 
 .speed-range {
-  font-size: 13px;
+  font-size: 14px;
 }
 
 /* ============================================================================
@@ -64,7 +64,7 @@
 }
 
 .speed-trips-axis {
-  font-size: 11px;
+  font-size: 14px;
   fill: var(--fg-muted);
   font-variant-numeric: tabular-nums;
 }
@@ -124,6 +124,6 @@
 }
 
 .speed-tag span {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--fg);
 }

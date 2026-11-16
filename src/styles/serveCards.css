@@ -60,7 +60,7 @@
 }
 
 .serve-card-title {
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 620;
   line-height: 1.22;
   color: var(--fg);
@@ -78,7 +78,7 @@
   display: flex;
   align-items: baseline;
   gap: 7px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--fg-muted);
 }
 
@@ -94,7 +94,7 @@
   justify-content: center;
   gap: 4px;
   width: 112px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--fg-muted);
   text-align: center;

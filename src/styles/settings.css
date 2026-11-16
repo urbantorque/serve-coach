@@ -24,7 +24,7 @@
   padding: 11px 13px;
   border-radius: var(--r-sm);
   background: var(--ink-3);
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: 1.58;
   color: var(--fg-muted);
 }
@@ -54,7 +54,7 @@
 
 .storage-outcome {
   margin-top: 11px;
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--fg);
 }
 
@@ -71,7 +71,7 @@
   padding: 11px 13px;
   border-radius: var(--r-sm);
   background: var(--ink-3);
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: 1.58;
   color: var(--fg-muted);
 }
@@ -109,7 +109,7 @@
   gap: 14px;
   padding: 8px 0;
   border-bottom: 1px solid var(--hairline-soft);
-  font-size: 12.5px;
+  font-size: 14px;
 }
 
 .devcheck-label {
@@ -119,7 +119,7 @@
 .devcheck-value {
   flex: none;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 14px;
   color: var(--fg);
   text-align: right;
 }
@@ -138,7 +138,7 @@
   border-radius: var(--r-sm);
   background: var(--ink-3);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1.6;
   color: var(--fg-muted);
   /* Wraps rather than scrolls sideways: the block is here to be selected with a
@@ -179,7 +179,7 @@
   min-height: 44px;
   padding: 0 6px;
   border-radius: var(--r-pill);
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--fg-muted);
   transition: color var(--fast) var(--ease), background var(--fast) var(--ease);
@@ -193,7 +193,7 @@
 
 .hand-pick-note {
   margin-top: 8px;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.38;
   color: var(--fg-muted);
 }
@@ -234,7 +234,7 @@ button.badge[disabled] {
   align-items: flex-start;
   gap: 7px;
   margin: 0 0 10px;
-  font-size: 12.5px;
+  font-size: 14px;
   line-height: var(--lh-snug);
   color: var(--fg-muted);
   text-wrap: pretty;
