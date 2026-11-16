@@ -39,7 +39,7 @@ check('unasked, nothing is isolated: not the dev server, not a static host', () 
 })
 
 check('the shell loads nothing from another origin, which require-corp would block', () => {
-  for (const page of ['index.html', 'bench.html', 'clipbench.html', 'footprint.html']) {
+  for (const page of ['index.html', 'bench.html', 'clipbench.html', 'retest.html', 'footprint.html']) {
     const html = fs.readFileSync(page, 'utf8')
     const foreign = html.match(/(?:src|href)=["'](?:https?:)?\/\/[^"']+/g)
     assert(!foreign, `${page} loads ${foreign?.join(', ')}`)

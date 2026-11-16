@@ -1,0 +1,336 @@
+{
+  "note": "Two runs of scripts/retest.mjs on 2026-11-17; run 1 on Saque_con_pelota only. Moves are |reading - control| in units of CARD_NOISE_SD.",
+  "runs": [
+    {
+      "run": 1,
+      "ranAt": "2026-11-16T13:40:37.686Z",
+      "rows": [
+        {
+          "clip": "Saque_con_pelota.webm",
+          "change": "control",
+          "outcome": "measured",
+          "moves": {},
+          "pastNoise": [],
+          "overall": 83
+        },
+        {
+          "clip": "Saque_con_pelota.webm",
+          "change": "darker",
+          "outcome": "measured",
+          "moves": {
+            "releaseHeight": 3.94,
+            "tossArmHold": 1.95,
+            "kneeBend": 2.35,
+            "shoulderTilt": 0.33,
+            "legDrive": 4.56,
+            "dropDepth": 0.69,
+            "handUnderElbow": 0,
+            "contactHeight": 5.78,
+            "armExtension": 0.22,
+            "loadRatio": 0.15
+          },
+          "pastNoise": [
+            "releaseHeight",
+            "legDrive",
+            "contactHeight"
+          ],
+          "overall": 81,
+          "overallMove": -2,
+          "focusSame": true,
+          "flawsSame": true
+        },
+        {
+          "clip": "Saque_con_pelota.webm",
+          "change": "further",
+          "outcome": "measured",
+          "moves": {
+            "releaseHeight": 2.27,
+            "tossArmHold": 0.09,
+            "kneeBend": 0.35,
+            "shoulderTilt": 0.13,
+            "legDrive": 0.47,
+            "dropDepth": 0.08,
+            "handUnderElbow": 0,
+            "contactHeight": 5.82,
+            "armExtension": 0.08,
+            "loadRatio": 4.45
+          },
+          "pastNoise": [
+            "contactHeight",
+            "loadRatio"
+          ],
+          "overall": 79,
+          "overallMove": -4,
+          "focusSame": true,
+          "flawsSame": true
+        },
+        {
+          "clip": "Saque_con_pelota.webm",
+          "change": "smaller",
+          "outcome": "refused: too_blurry",
+          "moves": {
+            "releaseHeight": 4.6,
+            "tossArmHold": 1.95,
+            "kneeBend": 3.69,
+            "shoulderTilt": 1.47,
+            "legDrive": 4.58,
+            "dropDepth": 2.82,
+            "handUnderElbow": 3.14,
+            "contactHeight": 8.57,
+            "armExtension": 0.17
+          },
+          "pastNoise": [
+            "releaseHeight",
+            "kneeBend",
+            "legDrive",
+            "handUnderElbow",
+            "contactHeight"
+          ],
+          "overall": 74,
+          "overallMove": -9,
+          "focusSame": false,
+          "flawsSame": true
+        },
+        {
+          "clip": "Saque_con_pelota.webm",
+          "change": "late",
+          "outcome": "measured",
+          "moves": {
+            "releaseHeight": 5.83,
+            "tossArmHold": 0.2,
+            "kneeBend": 0.69,
+            "shoulderTilt": 0.14,
+            "legDrive": 1.39,
+            "dropDepth": 1.42,
+            "handUnderElbow": 0,
+            "contactHeight": 4.05,
+            "armExtension": 0.14,
+            "loadRatio": 0.22
+          },
+          "pastNoise": [
+            "releaseHeight",
+            "contactHeight"
+          ],
+          "overall": 82,
+          "overallMove": -1,
+          "focusSame": true,
+          "flawsSame": true
+        }
+      ]
+    },
+    {
+      "run": 2,
+      "ranAt": "2026-11-16T13:56:12.834Z",
+      "rows": [
+        {
+          "clip": "Saque_con_pelota.webm",
+          "change": "control",
+          "outcome": "measured",
+          "moves": {},
+          "pastNoise": [],
+          "overall": 83
+        },
+        {
+          "clip": "Saque_con_pelota.webm",
+          "change": "darker",
+          "outcome": "measured",
+          "moves": {
+            "releaseHeight": 3.52,
+            "tossArmHold": 2.38,
+            "kneeBend": 2.12,
+            "shoulderTilt": 0.22,
+            "legDrive": 2.75,
+            "dropDepth": 1.15,
+            "handUnderElbow": 0,
+            "contactHeight": 4.14,
+            "armExtension": 0.35,
+            "loadRatio": 2.38
+          },
+          "pastNoise": [
+            "releaseHeight",
+            "contactHeight"
+          ],
+          "overall": 80,
+          "overallMove": -3,
+          "focusSame": true,
+          "flawsSame": true
+        },
+        {
+          "clip": "Saque_con_pelota.webm",
+          "change": "further",
+          "outcome": "refused: too_blurry",
+          "moves": {
+            "releaseHeight": 0.97,
+            "tossArmHold": 2.52,
+            "kneeBend": 2.73,
+            "shoulderTilt": 0.3,
+            "legDrive": 6.16,
+            "dropDepth": 1.26,
+            "handUnderElbow": 0,
+            "contactHeight": 2.62,
+            "armExtension": 0.77
+          },
+          "pastNoise": [
+            "legDrive"
+          ],
+          "overall": 74,
+          "overallMove": -9,
+          "focusSame": false,
+          "flawsSame": true
+        },
+        {
+          "clip": "Saque_con_pelota.webm",
+          "change": "smaller",
+          "outcome": "measured",
+          "moves": {
+            "releaseHeight": 4.76,
+            "tossArmHold": 0,
+            "kneeBend": 2.03,
+            "shoulderTilt": 0.06,
+            "legDrive": 1.51,
+            "dropDepth": 0.47,
+            "handUnderElbow": 0,
+            "contactHeight": 2.37,
+            "armExtension": 0.44
+          },
+          "pastNoise": [
+            "releaseHeight"
+          ],
+          "overall": 82,
+          "overallMove": -1,
+          "focusSame": true,
+          "flawsSame": true
+        },
+        {
+          "clip": "Saque_con_pelota.webm",
+          "change": "late",
+          "outcome": "measured",
+          "moves": {
+            "releaseHeight": 0.84,
+            "tossArmHold": 0,
+            "kneeBend": 1.03,
+            "shoulderTilt": 0.22,
+            "legDrive": 8.39,
+            "dropDepth": 0.78,
+            "handUnderElbow": 0,
+            "contactHeight": 20.15,
+            "armExtension": 1.08,
+            "loadRatio": 0.33
+          },
+          "pastNoise": [
+            "legDrive",
+            "contactHeight"
+          ],
+          "overall": 80,
+          "overallMove": -3,
+          "focusSame": false,
+          "flawsSame": true
+        },
+        {
+          "clip": "0SAQUE.webm",
+          "change": "control",
+          "outcome": "refused: too_few_frames",
+          "moves": {},
+          "pastNoise": [],
+          "overall": 85
+        },
+        {
+          "clip": "0SAQUE.webm",
+          "change": "darker",
+          "outcome": "measured",
+          "moves": {
+            "releaseHeight": 1.74,
+            "tossArmHold": 0.56,
+            "kneeBend": 1.05,
+            "shoulderTilt": 0.27,
+            "legDrive": 1.69,
+            "dropDepth": 20.85,
+            "handUnderElbow": 3.97,
+            "contactHeight": 2.42,
+            "armExtension": 0.42
+          },
+          "pastNoise": [
+            "dropDepth",
+            "handUnderElbow"
+          ],
+          "overall": 78,
+          "overallMove": -7,
+          "focusSame": false,
+          "flawsSame": true
+        },
+        {
+          "clip": "0SAQUE.webm",
+          "change": "further",
+          "outcome": "measured",
+          "moves": {
+            "releaseHeight": 2.66,
+            "tossArmHold": 0.56,
+            "kneeBend": 1.1,
+            "shoulderTilt": 0.14,
+            "legDrive": 0.02,
+            "dropDepth": 20.1,
+            "handUnderElbow": 3.97,
+            "contactHeight": 4.6,
+            "armExtension": 0.55
+          },
+          "pastNoise": [
+            "dropDepth",
+            "handUnderElbow",
+            "contactHeight"
+          ],
+          "overall": 80,
+          "overallMove": -5,
+          "focusSame": true,
+          "flawsSame": true
+        },
+        {
+          "clip": "0SAQUE.webm",
+          "change": "smaller",
+          "outcome": "measured",
+          "moves": {
+            "releaseHeight": 1.06,
+            "tossArmHold": 1.58,
+            "kneeBend": 1.6,
+            "shoulderTilt": 0.25,
+            "legDrive": 0.39,
+            "dropDepth": 19.24,
+            "handUnderElbow": 0.2,
+            "contactHeight": 1.2,
+            "armExtension": 1.32
+          },
+          "pastNoise": [
+            "dropDepth"
+          ],
+          "overall": 81,
+          "overallMove": -4,
+          "focusSame": true,
+          "flawsSame": true
+        },
+        {
+          "clip": "0SAQUE.webm",
+          "change": "late",
+          "outcome": "measured",
+          "moves": {
+            "releaseHeight": 0.26,
+            "tossArmHold": 1.58,
+            "kneeBend": 1.06,
+            "shoulderTilt": 0.44,
+            "legDrive": 0.71,
+            "dropDepth": 19.49,
+            "handUnderElbow": 0.2,
+            "contactHeight": 4.46,
+            "armExtension": 0.22
+          },
+          "pastNoise": [
+            "dropDepth",
+            "contactHeight"
+          ],
+          "overall": 81,
+          "overallMove": -4,
+          "focusSame": true,
+          "flawsSame": true
+        }
+      ]
+    }
+  ]
+}

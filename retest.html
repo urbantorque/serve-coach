@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  Dev-only test-retest bench (N2.1). Not part of the app: the production build
+  bundles index.html alone. See src/dev/bench/retest.ts.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Serve Coach · test-retest bench</title>
+    <style>
+      body { font: 13px/1.5 ui-monospace, monospace; background: #0a0c10; color: #eef2f6; padding: 20px; }
+      table { border-collapse: collapse; margin: 16px 0; }
+      th, td { border: 1px solid #232a38; padding: 4px 8px; text-align: right; }
+      th:first-child, td:first-child { text-align: left; }
+      pre { color: #98a2b3; }
+    </style>
+  </head>
+  <body>
+    <h1>Test-retest: the same serve, changed the way real footage changes</h1>
+    <div id="table"></div>
+    <pre id="out"></pre>
+    <script type="module" src="/src/dev/bench/retest.ts"></script>
+  </body>
+</html>

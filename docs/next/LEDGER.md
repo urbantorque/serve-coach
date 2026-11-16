@@ -92,3 +92,73 @@ Not yet wide, and left for wave 5's rebuild: the practice session and the
 glance (a readable column, centred), sheets (centred modals), and charts
 whose SVG labels grow with the column. The first run still says "on this
 phone" on a laptop; the landing page (wave 6) takes that line.
+
+## Wave 2. Trust foundations, first slice
+
+- [x] **N2.1 A test-retest bench on real footage.** `retest.html`,
+  `src/dev/bench/retest.ts`, run by `node scripts/retest.mjs` into
+  `docs/next/bench/retest.json`. It finds the serve's window on an openly
+  licensed amateur clip, re-encodes that stretch through a canvas in the
+  browser (a plain copy as the control, then darker, a step further back, at
+  60% of the pixels and 1/40 s later) and reads every copy whole. Two runs,
+  twelve changed copies of two serves (`Saque_con_pelota`, `0SAQUE`;
+  `Saque_reves` was not taken for a serve). What it found, against the
+  control:
+  - **The faults are stable**: the same set of detected faults on 12 of 12.
+  - **The headline mostly holds, the gates do not**: "Work on this next"
+    named a different fix on 4 of 12, but 3 of those 4 had a refusal on one
+    side (a refused copy takes its headline from a different path). Where
+    both copies were measured, the fix changed on 1 of 9 (`Saque_con_pelota`,
+    1/40 s later).
+  - **The score moves about 5 points** (root mean square), and every changed
+    copy scored lower than the plain one: worse footage reads as a worse serve.
+  - **Heights move far past their stated noise**: per read, racket drop depth
+    8.2 times `CARD_NOISE_SD`, contact height 5.2, leg drive 2.6, release
+    height 2.3. Knee bend, load ratio and hand under elbow 1.3 to 1.6. Arm
+    extension and shoulder tilt stayed inside. The heights share a ruler (the
+    stature read off the same frames), which moves with the picture.
+  - **The gates sit on a knife edge**: the same change to the same stretch,
+    recorded afresh on each run (the canvas recording is not frame-exact), was
+    refused as too blurry on one run and measured on the other, both ways;
+    and a plain re-encode of `0SAQUE` was refused as too short. Both gates
+    are hard thresholds with no margin (`triage.ts` `LIMITS`: three captured
+    samples from drop to contact, a blur score of 0.75), and a 30 fps swing
+    sits right on the first.
+- [x] **N2.2 Real footage's noise, measured and not adopted.** `RETEST_SD` in
+  `cardNoise.ts`. Used as the floor under the player's usual, a basket's
+  wander and a new best, it failed eight checks that prove a real change is
+  still found (a wandering basket, a racket drop's first best, a lower
+  contact). Two 320 x 240 clips overstate a 1080p phone, so it waits for
+  sharper open footage through the same bench. Nothing reads it yet.
+
+Next in this wave, from what N2.1 found, in order:
+1. **Gates with a soft edge.** The blur and frame-count refusals flip between
+   two encodes of the same stretch, and a flipped gate changes whether there
+   is a report and what it leads with. Not by lowering a limit: near the
+   limit, measure and let confidence fall (the rule in
+   `forgiving-to-amateur-footage`), and refuse only well past it.
+2. **A stature ruler that holds.** Heights divide by a stature read off the
+   same frames. Steady it across a clip (or across a player's history, where
+   their height is known once) and re-run the bench.
+3. **A headline that holds.** When the top two causes are close, keep the
+   fix the player is already working on, or say both. Prove it on the bench:
+   the same fix on every pair where both copies were measured.
+4. **Sharper footage.** Find openly licensed 720p or 1080p serve clips for
+   the bench, then decide `RETEST_SD`.
+5. **Other browsers.** WebKit and Firefox are not installed for Playwright
+   here (`npx playwright install webkit firefox`, a download the owner should
+   agree to). Until then, decode is proved in Chrome only.
+
+Sources looked for on 2026-11-17, for items 4 and the wave's "does the score
+know a good serve from a poor one":
+- **THETIS** (Gourgari, Goudelis, Karpouzis and Kollias, 2013): 55 players,
+  beginner to intermediate, 12 shots including flat, kick and slice serves,
+  three takes each, as RGB video with Kinect depth and 2D and 3D skeletons.
+  The skeletons are a truth of sorts for the real pipeline, and the three
+  serve types are a check on `SERVE_TYPE_SHIFT`. Its licence was not found
+  in secondary sources: the owner should confirm it on the dataset's own site
+  before anything is fetched (`docs/next/OWNER-STEPS.md`). Its secondary
+  summaries disagree on whether expert players are included.
+- **Wikimedia Commons**: no HD tennis serve video under CC BY or CC BY-SA
+  turned up in a web search. A direct Commons category search by the owner,
+  or a licensed clip of their own, is the next route.

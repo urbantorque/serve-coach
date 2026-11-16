@@ -121,3 +121,36 @@ export const CHAIN_NOISE_SD: Record<string, number> = {
  * diagnosis with them.
  */
 export const STEADY_ENOUGH = 85
+
+/**
+ * What one read moves on real footage, where it is more than the rig says (N2.1).
+ *
+ * `retest.html` took two openly licensed amateur clips (320 x 240, the worst a
+ * phone gives), re-encoded the serve's own stretch through a canvas, and read it
+ * again darker, from a step further back, at 60% of the pixels and 1/40 s later.
+ * Each row here is the root mean square of its move from the plain re-encode,
+ * divided by 1.41 for the two reads in every difference, over twelve changed
+ * copies in two runs (2026-11-17, `docs/next/bench/retest.json`), rounded up.
+ * Rows that stayed inside `CARD_NOISE_SD` there are not listed.
+ *
+ * The heights move most: the stature they are divided by is read off the same
+ * frames, so a darker or smaller picture moves the ruler as well as the hand.
+ *
+ * MEASURED, NOT ADOPTED. Used as the floor under the player's usual, a basket's
+ * wander and a new best, it cost eight checks that prove a real change is still
+ * found on the rig (a wandering basket, a racket drop's first best, a lower
+ * contact against the usual). Two 320 x 240 clips overstate what a 1080p phone
+ * does, so the table waits for sharper open footage through the same bench
+ * before it moves any claim. Nothing reads it yet; the ledger has the numbers.
+ */
+export const RETEST_SD: Record<string, number> = {
+  dropDepth: 0.081,
+  contactHeight: 0.046,
+  legDrive: 0.019,
+  releaseHeight: 0.018,
+  loadRatio: 3.9,
+  kneeBend: 5.8,
+  handUnderElbow: 3.5,
+  tossArmHold: 2.4,
+}
+
