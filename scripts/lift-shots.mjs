@@ -5,6 +5,10 @@
  *   node scripts/lift-shots.mjs before        every state, into docs/lift/before/
  *   node scripts/lift-shots.mjs after         the same states, into docs/lift/after/
  *   node scripts/lift-shots.mjs after home    only the states whose name holds "home"
+ *   SIZE=laptop node scripts/lift-shots.mjs next-before
+ *                                             the same states at 1440 x 900 with no
+ *                                             touch, into docs/lift/next-before-laptop/
+ *                                             (SIZE=tablet is 820 x 1180, touch)
  *
  * Needs the dev server on 5180 (`?demo` routes are dev-only). One list of
  * states, so the two sets line up name for name and the gallery can pair them.
@@ -23,13 +27,21 @@ const root = process.cwd()
 const set = process.argv[2] ?? 'before'
 const only = process.argv[3]
 const base = process.env.BASE ?? 'http://localhost:5180'
-const out = join(root, 'docs', 'lift', set)
+/** A browser product is judged at a laptop's width too, not only a phone's (N0.3). */
+const SIZES = {
+  phone: { view: { width: 390, height: 844 }, touch: true },
+  tablet: { view: { width: 820, height: 1180 }, touch: true },
+  laptop: { view: { width: 1440, height: 900 }, touch: false },
+}
+const size = process.env.SIZE ?? 'phone'
+if (!SIZES[size]) throw new Error(`SIZE must be one of ${Object.keys(SIZES).join(', ')}`)
+const out = join(root, 'docs', 'lift', size === 'phone' ? set : `${set}-${size}`)
 mkdirSync(out, { recursive: true })
 
 const require = createRequire(join(root, 'package.json'))
 const pw = require(join(process.env.APPDATA ?? '', 'npm/node_modules/@playwright/cli/node_modules/playwright'))
 
-const VIEW = { width: 390, height: 844 }
+const VIEW = SIZES[size].view
 const CLIP = join(root, 'bench-data', 'clips', 'Saque_con_pelota.webm')
 const BACK = { handedness: 'right', seenFilmingGuide: true, serveType: 'flat', askedToPersist: true }
 
@@ -55,7 +67,7 @@ const measure = (page) =>
     return { height, screens: +(height / innerHeight).toFixed(1), controls, firstScreenControls: first, words }
   })
 
-async function shoot(name, { prefs = BACK, url = '/', steps, wait = 700, touch = true, full = true, offline = false, reduced = false } = {}) {
+async function shoot(name, { prefs = BACK, url = '/', steps, wait = 700, touch = SIZES[size].touch, full = true, offline = false, reduced = false } = {}) {
   if (only && !name.includes(only)) return
   const context = await browser.newContext({
     viewport: VIEW,

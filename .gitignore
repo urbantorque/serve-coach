@@ -36,3 +36,9 @@ clips/
 bench-data/
 
 public/ort/
+
+# Wide baseline shots (N0.3) are large. The phone set and the laptop
+# first screens are committed; tablet shots and full-page laptop shots stay
+# local and are regenerated with `SIZE=... node scripts/lift-shots.mjs`.
+docs/lift/*-tablet/
+docs/lift/*-laptop/*-full.png
