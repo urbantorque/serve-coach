@@ -36,7 +36,8 @@ import { remember } from './lib/analysisCache'
 import type { FaultMove } from './lib/analysis/carryForward'
 import type { ServePairFrames } from './lib/analysis/consistency'
 import { SCORING_VERSION, type Analysis, type FailedCapture } from './lib/analysis/types'
-import { getSession, logPractice, safely, saveSession, tagsById, unlogPractice, type Session } from './lib/storage/db'
+import { parsePath, pathFor, titleFor } from './lib/routes'
+import { getPracticeSession, getSession, logPractice, safely, saveSession, tagsById, unlogPractice, type Session } from './lib/storage/db'
 import { downloadBackup, isIOS, isInstalled } from './lib/storage/backup'
 import { storageNudge } from './lib/storage/nudge'
 import { readPrefs, writePrefs, type Prefs } from './lib/storage/prefs'
@@ -164,8 +165,24 @@ export type View =
  */
 const FIXTURE_EXPORT = new URLSearchParams(location.search).has('fixture')
 
+/**
+ * The screen the address asks for, where it can be shown at once (N3.1).
+ *
+ * Progress and every serve need nothing but the history already being loaded,
+ * so a reload or a pasted link opens them without a flash of Today. A stored
+ * serve, the sample and a practice session are read from storage first, in
+ * `App`. A `?demo` route owns the screen in development and is left alone.
+ */
+function initialView(): View {
+  if (typeof location === 'undefined' || new URLSearchParams(location.search).has('demo')) return { kind: 'home' }
+  const route = parsePath(location.pathname, import.meta.env.BASE_URL)
+  if (route.kind === 'progress') return { kind: 'progress' }
+  if (route.kind === 'serves') return { kind: 'progress', serves: true }
+  return { kind: 'home' }
+}
+
 export default function App() {
-  const [view, setView] = useState<View>({ kind: 'home' })
+  const [view, setView] = useState<View>(initialView)
   /**
    * The best serve's keyframes beside the worst serve's, for as long as the clip
    * is open.
@@ -538,6 +555,42 @@ export default function App() {
     goHome()
   })
 
+
+  /*
+   * The rest of what an address can ask for (N3.1): a stored serve, the sample
+   * or a practice session, each read from storage. Declared before the effect
+   * below so it reads the address the page was loaded at, before that effect
+   * writes Today's over it. An id that is not on this device opens Today.
+   */
+  useEffect(() => {
+    if (new URLSearchParams(location.search).has('demo')) return
+    const route = parsePath(location.pathname, import.meta.env.BASE_URL)
+    if (route.kind === 'sample') void showExample()
+    if (route.kind === 'serve') {
+      void safely(() => getSession(route.id), undefined).then((s) => {
+        if (s) openSaved(s)
+      })
+    }
+    if (route.kind === 'practice') {
+      void safely(() => getPracticeSession(route.id), undefined).then((s) => {
+        if (s) openPracticeSession(s)
+      })
+    }
+    // Once, on load: the address is only an instruction when the page opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  /*
+   * The address and the tab's title follow the screen (N3.1). Replaced, never
+   * pushed: `backStack.ts` owns the history entries, one per open layer, and
+   * this only names the entry the player is on, so back still closes what is
+   * on top and the browser shows the address of the place it lands.
+   */
+  useEffect(() => {
+    const want = pathFor(view, import.meta.env.BASE_URL)
+    if (location.pathname !== want) history.replaceState(history.state, '', want + location.search + location.hash)
+    document.title = titleFor(view)
+  }, [view])
 
   /*
    * The session before this one, to set it against (L2.8): finished, the same

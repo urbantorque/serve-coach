@@ -57,3 +57,19 @@ Findings checked against the code before work starts:
   code behind it. No cap exists in `confidence.ts`, `verdict.ts` or
   `analyze.ts`; the only caps are the four-drill cap and the sweep cap. The
   score is shown uncapped. This feeds N2's "rethink the headline number".
+
+## Wave 3. A website, not a phone page
+
+- [x] **N3.1 Every screen has an address.** `lib/routes.ts` names one per
+  screen (`/`, `/progress`, `/serves`, `/serve/<id>`, `/sample`,
+  `/practice/<id>`, and `/report`, `/reading`, `/glance`, `/problem` for the
+  screens that hold a clip) and sets the tab's title. The address is replaced,
+  never pushed, so `backStack.ts` still owns the history and back still closes
+  what is on top. Loading an address opens its screen: Progress and every
+  serve at once, a stored serve, the sample and a practice session from
+  storage, anything unknown on Today. Not a router library: the screen still
+  lives in `App.tsx` state, which kept the change to about 50 lines and left
+  `screenFlow.test.ts` true. `routes.test.ts` walks every screen there and back
+  under `/` and a sub-path base. Walked in the browser: Progress and back,
+  `/serves`, `/sample` and back, a stored serve reloaded at its address, and
+  an unknown id landing on Today.
