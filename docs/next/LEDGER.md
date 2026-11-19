@@ -267,3 +267,17 @@ know a good serve from a poor one":
 - **Wikimedia Commons**: no HD tennis serve video under CC BY or CC BY-SA
   turned up in a web search. A direct Commons category search by the owner,
   or a licensed clip of their own, is the next route.
+
+## Wave 6. The commercial surface, first slice
+
+- [x] **N6.1 What a first-time visitor reads under the promise.**
+  `FirstRunMore.tsx`, loaded lazily after the first-run hero, so a phone's
+  first screen and the entry chunk are what they were. Three steps of how it
+  works, "I tell you what I cannot see" (graded against published serves,
+  shown and never graded, a likely range for speed, hedged or left out where
+  the camera cannot support it), the privacy promise, and the sample report
+  again. Only what the app does today: no prices and no programmes it does not
+  have. Three steps across and the honesty list beside its headline on a
+  laptop; one column on a phone. A line that promised a missed racket drop is
+  never called a fault was cut before commit, because the smeared case
+  (N2.5, KNOWN) still is.

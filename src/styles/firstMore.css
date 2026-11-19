@@ -1,0 +1,142 @@
+/* ============================================================================
+   Under the first run's promise (N6.1): how it works, what I cannot see, and
+   where the video goes. Loaded with the section, never with the first screen.
+   ========================================================================= */
+
+.first-more {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+  padding: 40px 0 calc(64px + var(--safe-bottom));
+}
+
+.first-more-section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.first-more-lede {
+  font-size: 17px;
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
+  max-width: var(--measure);
+}
+
+.first-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.first-steps li {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 18px 20px;
+  border-radius: var(--r-lg);
+  background: var(--panel);
+  box-shadow: var(--panel-edge);
+}
+
+.first-steps li > svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--lime);
+}
+
+.first-steps li div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 16px;
+  line-height: var(--lh-snug);
+}
+
+.first-steps strong {
+  font-weight: var(--wt-key);
+  color: var(--fg);
+}
+
+.first-steps span {
+  color: var(--fg-muted);
+}
+
+.first-honest {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.first-honest li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+  border-radius: var(--r-md);
+  background: var(--panel);
+  box-shadow: var(--panel-edge);
+  font-size: 16px;
+}
+
+.first-honest em {
+  font-style: normal;
+  font-size: 15px;
+  color: var(--fg-muted);
+}
+
+.first-more-privacy {
+  align-items: flex-start;
+}
+
+.first-more-privacy > svg {
+  color: var(--lime);
+}
+
+.first-more-foot {
+  display: flex;
+  justify-content: center;
+}
+
+@media (min-width: 1024px) {
+  .first-more {
+    gap: 88px;
+    padding-top: 72px;
+  }
+
+  /* How it works reads across, three steps side by side. */
+  .first-steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .first-steps li {
+    flex-direction: column;
+    padding: 24px;
+  }
+
+  /* The headline and its promise beside the list. */
+  .first-more-section:has(.first-honest) {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    /* The headline takes its own height and its line sits under it; the
+       list beside them sets the section's height. */
+    grid-template-rows: auto 1fr;
+    align-items: start;
+    column-gap: 56px;
+    row-gap: 16px;
+  }
+
+  .first-more-section:has(.first-honest) > .first-honest {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .first-more-privacy {
+    align-items: center;
+    text-align: center;
+  }
+}

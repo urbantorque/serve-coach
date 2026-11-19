@@ -18,6 +18,7 @@ import { DeltaChip } from '../components/Trend'
 import { deviceNoun } from '../lib/device'
 
 const FirstRunStage = lazy(() => import('../components/FirstRunStage'))
+const FirstRunMore = lazy(() => import('../components/FirstRunMore'))
 const ServeCards = lazy(() => import('../components/ServeCards'))
 const StepPassed = lazy(() => import('../components/StepPassed'))
 const SessionBody = lazy(() => import('../components/ProgrammeSheets').then((m) => ({ default: m.SessionBody })))
@@ -162,6 +163,7 @@ export default function Home({
   // New to the app: nothing to navigate, so one screen and one thing to do.
   if (sessionsLoaded && !known) {
     return (
+      <>
       <div className="screen first-run">
         {restore}
         {cutOff}
@@ -190,6 +192,10 @@ export default function Home({
         </p>
         {storage}
       </div>
+      <Suspense fallback={null}>
+        <FirstRunMore onShowExample={onShowExample} />
+      </Suspense>
+      </>
     )
   }
 
