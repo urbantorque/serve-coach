@@ -255,7 +255,11 @@ async function run() {
       const got = await analyse(copy, `${change.id}-${clip}`)
       // A copy whose swing collapsed, or that could not be read, is kept for
       // `scripts/retest.mjs` to save, so the failure can be replayed exactly.
-      const collapsed = got.error !== undefined || (got.reading?.swingSamples ?? 99) < 6
+      // And a copy whose drop landed on the trophy, which reads as a racket that
+      // never fell (N2.5): kept so the next fix can see what the hand did.
+      const landed = got.reading?.phases
+      const onTrophy = landed !== undefined && landed.drop - landed.trophy < 0.072
+      const collapsed = got.error !== undefined || (got.reading?.swingSamples ?? 99) < 6 || onTrophy
       if (collapsed) cases.push({ name: `${change.id}-${clip}`, url: copy, phases: got.reading?.phases, error: got.error })
       else URL.revokeObjectURL(copy)
       const r = got.reading
@@ -282,7 +286,9 @@ async function run() {
         }
       }
       rows.push(row)
-      log(`  ${change.id}: ${row.outcome} [blur ${row.blur ?? '-'}, swing ${row.swingSamples ?? '-'}], overall ${row.overall ?? '-'}${row.overallMove !== undefined ? ` (${row.overallMove >= 0 ? '+' : ''}${row.overallMove})` : ''}${row.pastNoise.length ? `, past noise: ${row.pastNoise.join(' ')}` : ''}`)
+      const ph = r?.phases
+      const dropAt = ph ? `, drop ${(ph.contact - ph.drop).toFixed(2)} s before contact, ${(ph.drop - ph.trophy).toFixed(2)} after trophy` : ''
+      log(`  ${change.id}: ${row.outcome} [blur ${row.blur ?? '-'}, swing ${row.swingSamples ?? '-'}${dropAt}], overall ${row.overall ?? '-'}${row.overallMove !== undefined ? ` (${row.overallMove >= 0 ? '+' : ''}${row.overallMove})` : ''}${row.pastNoise.length ? `, past noise: ${row.pastNoise.join(' ')}` : ''}`)
     }
   }
   ;(window as unknown as { __retest: RetestRow[] }).__retest = rows

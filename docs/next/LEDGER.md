@@ -162,17 +162,34 @@ phone" on a laptop; the landing page (wave 6) takes that line.
   - The heights still move past `CARD_NOISE_SD` on 0SAQUE's copies; whether
     that is the stature ruler or the misplaced drop is not yet separated.
 
+- [x] **N2.5 On 0SAQUE the app never reports the real drop (KNOWN).** The
+  bench now logs where each copy's drop landed. The copies that saw the dip
+  found it 0.08 to 0.10 s before contact, and sat on or under the
+  frame-count gate (two or three samples). The copies that lost it put the
+  drop **exactly on the trophy**, and a drop on the trophy is read as a
+  racket that never fell: the card says "Racket never falls" at the floor
+  score and the diagnosis names a shallow drop. So on this serve the player is
+  either refused or told a fault that did not happen. The guard
+  (`sawTheDrop` in `diagnose.ts`) asks whether the wrist was visible and
+  whether the swing went into the lens; neither catches a dip one or two
+  frames long. `dropUnseen.test.ts` reproduces it on the rig (the dip erased
+  from the picture, the world motion kept) and pins today's answer as KNOWN,
+  beside two guards: a clean rig serve finds its drop 110 to 230 ms before
+  contact at 25 to 120 fps, and a racket held high is still one that never
+  fell. A first fix, flagging a drop found further than 0.31 s from contact,
+  was built and reverted: the lost drop lands on the trophy, not there.
+
 Next in this wave, in order:
-1. **A drop that was not seen says so.** When the racket hand is below its
-   shoulder for no more than a frame or two before contact, or never, mark
-   the drop as unobserved and withhold what is timed from it, rather than
-   placing it near the trophy. Prove it on 0SAQUE's saved copies (in
-   `bench-data/retest-cases/`, replayed by `retest.html?file=`) and the rig.
-2. **The frame-count gate as a soft edge.** At two swing samples the timing
-   readings already fall to 0.4 confidence (`confidence.ts`). Read the serve,
-   withhold the swing timing and any fault named from it, and refuse only
-   below that. Not before item 1: a soft edge on a misplaced drop would turn
-   a refusal into a confident wrong timing.
+1. **"Never fell" needs evidence a drop could have been seen.** At 30 fps a
+   real dip can be one or two frames. Before calling a drop on the trophy a
+   racket that never fell, ask whether the hand came close to the shoulder
+   line late in the swing, or whether a frame was lost there; if so, withhold
+   the depth rather than grade it. Prove it on the KNOWN check (it should flip),
+   on the rig's no-drop dial (it must not), and on 0SAQUE's copies, which need
+   saving (only refused copies are saved today).
+2. **The frame-count gate as a soft edge**, after item 1: at two swing
+   samples the timing readings already fall to 0.4 confidence. Read the serve,
+   withhold the swing timing and any fault named from it.
 3. **A stature ruler that holds**, then re-run the bench for the heights.
 4. **Sharper footage**, then decide `RETEST_SD`.
 5. **Other browsers**, once the owner agrees to the install.
