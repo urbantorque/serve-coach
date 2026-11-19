@@ -392,3 +392,14 @@ showed was wrong.
   Coach" mark. The figure is now measured with the racket and shrunk until it
   clears the header. Looked at as a 1080 by 1350 card: the exposure, the score,
   the speed with "about" and "no radar", the fix, and nothing touching.
+- [x] **N5.4 Progress charts read against the dataviz checks.** Serves a week
+  printed a number over every bar, drew an empty week as a stub that read as a
+  small count, and had no dates: it now labels only this week and the busiest,
+  draws an empty week flat on the floor, adds a hairline for a usual week with
+  its key in the axis row, dates the axis, gives every bar its count on hover,
+  and lists every week in its text alternative so a hover is never the only way
+  to a number. First and second serves drew one bar on a filled track when only
+  one serve had landings tagged: a one-bar chart, beside a sentence that
+  already says the number, so the bars now need two rows. The score ribbon's
+  markers grew to 8 px and a mouse reads a trip by hovering, not only by
+  pressing.

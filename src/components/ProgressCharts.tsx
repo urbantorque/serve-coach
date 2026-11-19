@@ -78,7 +78,8 @@ export function ScoreRibbon({ points }: { points: TripPoint[] }) {
         role="img"
         aria-label={`Typical score across ${points.length} trips, most recent ${newest.overall}.`}
         onPointerDown={pick}
-        onPointerMove={(e) => e.buttons && pick(e)}
+        // A mouse reads a trip by hovering, a finger by touching (N5.4).
+        onPointerMove={(e) => (e.buttons || e.pointerType === 'mouse') && pick(e)}
       >
         <defs>
           <linearGradient id="ribbon-fill" x1="0" x2="0" y1="0" y2="1">
@@ -119,7 +120,7 @@ export function ScoreRibbon({ points }: { points: TripPoint[] }) {
           <line key={b} className="ribbon-break" x1={b} x2={b} y1={TOP - 8} y2={H - FOOT + 4} />
         ))}
         {points.map((p, i) => (
-          <circle key={p.id} className={`ribbon-dot${i === at ? ' is-on' : ''}`} cx={x(i)} cy={y(p.overall)} r={i === at ? 6 : 2.6} />
+          <circle key={p.id} className={`ribbon-dot${i === at ? ' is-on' : ''}`} cx={x(i)} cy={y(p.overall)} r={i === at ? 6 : 4} />
         ))}
         <text className="ribbon-axis" x={SIDE} y={H - 8}>
           {shortDate(points[0].createdAt)}
@@ -173,7 +174,9 @@ export function FaultGrid({ faults }: { faults: readonly FaultTrend[] }) {
  * the picture never stands alone.
  */
 export function InRateBars({ rows }: { rows: readonly { label: string; inServes: number; outcomes: number }[] }) {
-  if (!rows.length) return null
+  // One row is a one-bar chart, and the sentence under it already says the
+  // number (N5.4): bars only when there are two serves to set against each other.
+  if (rows.length < 2) return null
   return (
     <div className="inrate-bars">
       {rows.map((r) => (
@@ -191,16 +194,44 @@ export function InRateBars({ rows }: { rows: readonly { label: string; inServes:
   )
 }
 
-/** Serves a week, this week the bright one. A count, never a verdict on a body. */
+/**
+ * Serves a week, this week the bright one. A count, never a verdict on a body.
+ *
+ * Labelled selectively (N5.4): this week and the busiest week carry their
+ * numbers, every bar says its own on hover, a usual week is a hairline across,
+ * and the axis says when it starts. A week with nothing filmed is a flat line
+ * on the floor, not a stub that reads as a small number.
+ */
 export function LoadBars({ load }: { load: ServeLoad }) {
   const most = Math.max(1, ...load.weeks.map((w) => w.serves))
+  const last = load.weeks.length - 1
+  const busiest = load.weeks.reduce((b, w, i) => (w.serves > load.weeks[b].serves ? i : b), 0)
+  const usual = load.usual !== undefined && load.usual > 0 ? load.usual : undefined
   return (
-    <div className="load-bars" role="img" aria-label={`Serves a week, this week ${load.thisWeek}${load.usual !== undefined ? `, usually about ${Math.round(load.usual)}` : ''}.`}>
-      {load.weeks.map((w, i) => (
-        <span key={i} className={`load-bar${i === load.weeks.length - 1 ? ' is-now' : ''}`} style={{ height: `${Math.max(4, (w.serves / most) * 100)}%` }}>
-          {w.serves > 0 && <span className="tnum">{w.serves}</span>}
-        </span>
-      ))}
-    </div>
+    <figure className="load">
+      <div
+        className="load-bars"
+        role="img"
+        // Every week's count, so what a hover shows is never the only way to it.
+        aria-label={`Serves a week, this week ${load.thisWeek}${usual !== undefined ? `, usually about ${Math.round(usual)}` : ''}. Week by week from ${shortDate(load.weeks[0].start)}: ${load.weeks.map((w) => w.serves).join(', ')}.`}
+      >
+        {usual !== undefined && <span className="load-usual" style={{ bottom: `${(usual / most) * 100}%` }} />}
+        {load.weeks.map((w, i) => (
+          <span
+            key={w.start}
+            className={`load-bar${i === last ? ' is-now' : ''}${w.serves === 0 ? ' is-empty' : ''}`}
+            style={w.serves ? { height: `${(w.serves / most) * 100}%` } : undefined}
+            title={`${i === last ? 'This week' : `Week of ${shortDate(w.start)}`}: ${w.serves === 1 ? 'one serve' : `${w.serves} serves`}`}
+          >
+            {w.serves > 0 && (i === last || i === busiest) && <span className="tnum">{w.serves}</span>}
+          </span>
+        ))}
+      </div>
+      <figcaption className="load-axis">
+        <span>{shortDate(load.weeks[0].start)}</span>
+        {usual !== undefined && <span className="load-key">A usual week, about {Math.round(usual)}</span>}
+        <span>This week</span>
+      </figcaption>
+    </figure>
   )
 }

@@ -743,11 +743,56 @@ button.tile {
   gap: 12px;
 }
 
+.load {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
 .load-bars {
+  position: relative;
   display: flex;
   align-items: flex-end;
   gap: 6px;
   height: 86px;
+  margin-top: 20px;
+}
+
+/* A usual week, as a hairline across the bars: what a count is read against. */
+.load-usual {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1px solid var(--fg-faint);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* The hairline's key, in the axis row: a short rule, then what it is. */
+.load-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.load-key::before {
+  content: '';
+  width: 14px;
+  border-top: 1px solid var(--fg-faint);
+}
+
+.load-bar.is-empty {
+  height: 2px;
+  border-radius: 1px;
+  background: var(--ink-3);
+}
+
+.load-axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: var(--fg-faint);
 }
 
 .load-bar {
