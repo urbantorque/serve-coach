@@ -503,13 +503,11 @@ check('a model serve to watch: a real serve looped with its moments and checkpoi
   // On the example, and not on a player's own report.
   const example = html(createElement(Report, { analysis: sampleAnalysis(DEMO_DIALS.example), example: true, onBack: noop, onAnalyzeAnother: noop }))
   const own = html(createElement(Report, { analysis: sampleAnalysis(DEMO_DIALS.example), onBack: noop, onAnalyzeAnother: noop }))
-  assert(example.includes('A model serve to watch'), 'the example has no model serve')
+  // The example shows its model serve beside the player's, played phase for
+  // phase (N4.1); the separate looped one would be the same serve twice (N5.1).
+  assert(/side by side/.test(example) && example.includes('>Model<'), 'the example has no model serve beside it')
+  assert(!example.includes('A model serve to watch'), 'the example shows the model serve twice')
   assert(!own.includes('A model serve to watch'), "a player's own report carries the model serve")
-  assert(
-    example.indexOf('A model serve to watch') > example.indexOf('Watch your serve') &&
-      example.indexOf('A model serve to watch') < example.indexOf('Everything I measured'),
-    'the model serve is not between the serve and the fold',
-  )
 })
 
 check('a live report draws the best serve under the video, and says so (L4.8)', () => {

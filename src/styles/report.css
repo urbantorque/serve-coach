@@ -76,19 +76,6 @@
   pointer-events: none;
 }
 
-.hero-tag {
-  position: absolute;
-  top: calc(64px + var(--safe-top));
-  left: 20px;
-  padding: 6px 11px;
-  border-radius: var(--r-pill);
-  background: var(--glass);
-  font-size: 14px;
-  font-weight: 600;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-}
-
 .hero-numbers {
   position: absolute;
   left: 20px;

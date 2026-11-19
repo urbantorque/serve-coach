@@ -1117,55 +1117,60 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
     ctx.stroke()
   }
 
-  const nose = at(LM.nose)
-  const shoulderSpan = Math.abs(at(LM.leftShoulder).x - at(LM.rightShoulder).x)
-  const headR = Math.max(9 * scale, shoulderSpan * 0.42, 11)
-  ctx.beginPath()
-  ctx.arc(nose.x, nose.y - headR * 0.25, headR, 0, Math.PI * 2)
-  ctx.strokeStyle = PALETTE.under
-  ctx.lineWidth = 6.4 * scale
-  ctx.stroke()
-  ctx.strokeStyle = PALETTE.limb
-  ctx.lineWidth = 3 * scale
-  ctx.stroke()
+  // The lit figure has its own head, and its joints sit inside its solids: the
+  // wireframe's ring and dots painted over it are the skeleton DESIGN.md bans
+  // as a main image (N5.1).
+  if (!o.figure) {
+    const nose = at(LM.nose)
+    const shoulderSpan = Math.abs(at(LM.leftShoulder).x - at(LM.rightShoulder).x)
+    const headR = Math.max(9 * scale, shoulderSpan * 0.42, 11)
+    ctx.beginPath()
+    ctx.arc(nose.x, nose.y - headR * 0.25, headR, 0, Math.PI * 2)
+    ctx.strokeStyle = PALETTE.under
+    ctx.lineWidth = 6.4 * scale
+    ctx.stroke()
+    ctx.strokeStyle = PALETTE.limb
+    ctx.lineWidth = 3 * scale
+    ctx.stroke()
 
-  /*
-   * The joint dots: all the ones sharing a colour in a single path, filled and
-   * then ringed in the dark.
-   *
-   * The ring is not decoration — a white dot on a white sleeve is a hole in the
-   * skeleton, and these mark the joints every angle in the report is read from.
-   * `moveTo` before each arc keeps the discs as separate subpaths; without it
-   * the path draws a line from one joint to the next on its way round.
-   */
-  ctx.strokeStyle = PALETTE.under
-  ctx.lineWidth = 1.8 * scale
-  ctx.fillStyle = PALETTE.limb
-  const dotR = 3.2 * scale
-  ctx.beginPath()
-  for (const lm of [
-    LM.leftShoulder, LM.rightShoulder, LM.leftHip, LM.rightHip,
-    LM.leftKnee, LM.rightKnee, LM.leftAnkle, LM.rightAnkle,
-    tossArm.elbow, tossArm.wrist,
-  ]) {
-    const p = at(lm)
-    ctx.moveTo(p.x + dotR, p.y)
-    ctx.arc(p.x, p.y, dotR, 0, Math.PI * 2)
-  }
-  ctx.fill()
-  ctx.stroke()
+    /*
+     * The joint dots: all the ones sharing a colour in a single path, filled and
+     * then ringed in the dark.
+     *
+     * The ring is not decoration — a white dot on a white sleeve is a hole in the
+     * skeleton, and these mark the joints every angle in the report is read from.
+     * `moveTo` before each arc keeps the discs as separate subpaths; without it
+     * the path draws a line from one joint to the next on its way round.
+     */
+    ctx.strokeStyle = PALETTE.under
+    ctx.lineWidth = 1.8 * scale
+    ctx.fillStyle = PALETTE.limb
+    const dotR = 3.2 * scale
+    ctx.beginPath()
+    for (const lm of [
+      LM.leftShoulder, LM.rightShoulder, LM.leftHip, LM.rightHip,
+      LM.leftKnee, LM.rightKnee, LM.leftAnkle, LM.rightAnkle,
+      tossArm.elbow, tossArm.wrist,
+    ]) {
+      const p = at(lm)
+      ctx.moveTo(p.x + dotR, p.y)
+      ctx.arc(p.x, p.y, dotR, 0, Math.PI * 2)
+    }
+    ctx.fill()
+    ctx.stroke()
 
-  ctx.lineWidth = 2.2 * scale
-  ctx.fillStyle = PALETTE.active
-  const armR = 4.6 * scale
-  ctx.beginPath()
-  for (const lm of [arm.elbow, arm.wrist]) {
-    const p = at(lm)
-    ctx.moveTo(p.x + armR, p.y)
-    ctx.arc(p.x, p.y, armR, 0, Math.PI * 2)
+    ctx.lineWidth = 2.2 * scale
+    ctx.fillStyle = PALETTE.active
+    const armR = 4.6 * scale
+    ctx.beginPath()
+    for (const lm of [arm.elbow, arm.wrist]) {
+      const p = at(lm)
+      ctx.moveTo(p.x + armR, p.y)
+      ctx.arc(p.x, p.y, armR, 0, Math.PI * 2)
+    }
+    ctx.fill()
+    ctx.stroke()
   }
-  ctx.fill()
-  ctx.stroke()
 
   if (o.target?.length && o.targetOver) drawTarget(ctx, o.target, rect, aspect, scale)
 

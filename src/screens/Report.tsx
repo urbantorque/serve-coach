@@ -313,6 +313,12 @@ export default function Report({
 
   const focusMoment = faultMoment(analysis.fundamentals, first.flaw)
   const focusPhase = focusMoment ? analysis.phases.find((p) => p.id === focusMoment) : undefined
+  /**
+   * The fix's moment beside a model serve, played phase for phase (N4.1).
+   * Where it shows, the example's separate looped model serve is the same
+   * serve a second time, so it gives way (N5.1).
+   */
+  const besideModel = Boolean(swing && focusMoment && focusPhase)
   const stageMoment: PhaseId = focusMoment ?? 'contact'
   const work = workParts(first.flaw, analysis.handedness)
 
@@ -442,7 +448,6 @@ export default function Report({
             label={stageLabel}
           />
           <div className="hero-veil" aria-hidden="true" />
-          {example && <span className="hero-tag">An example, not your serve</span>}
           <div className="hero-numbers">
             <div className="hero-score">
               <span className="t-score" aria-label={`${analysis.overall} out of 100`}>
@@ -605,14 +610,14 @@ export default function Report({
         </section>
       )}
 
-      {swing && focusMoment && focusPhase && (
+      {besideModel && (
         <SideBySide
-          swing={swing}
-          moment={focusMoment}
-          label={focusPhase.label}
+          swing={swing!}
+          moment={focusMoment!}
+          label={focusPhase!.label}
           work={work}
           racket={analysis.handedness}
-          checks={momentChecks(analysis.fundamentals, focusMoment)}
+          checks={momentChecks(analysis.fundamentals, focusMoment!)}
           best={best}
           last={previous}
         />
@@ -680,7 +685,7 @@ export default function Report({
         </section>
       )}
 
-      {example && (
+      {example && !besideModel && (
         <section className="watch" aria-labelledby="model-title">
           <h2 className="t-headline" id="model-title">
             A model serve to watch

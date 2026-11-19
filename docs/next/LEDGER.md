@@ -354,3 +354,23 @@ know a good serve from a poor one":
   confident nonsense. What already holds: a player who says they hit a kick or
   a slice has every fault goal read against that serve's own bands, and the
   second-serve goal (N4.3) counts what lands, which is what a kick is for.
+
+## Wave 5. The premium rebuild
+
+Audited first: every state shot at 390 by 844 and 1440 by 900
+(`node scripts/lift-shots.mjs`, kept out of the repo at 55 MB) and read against
+DESIGN.md, the taste skill and the dataviz skill. The type floor already held
+(no size under 14 px anywhere) and the report's first screen already answers
+its three questions in one phone screen, so the round went to what the shots
+showed was wrong.
+
+- [x] **N5.1 The lit figure is never a wireframe, and the model serve shows
+  once.** `drawSkeleton` painted the wireframe's head ring and joint dots on
+  top of the lit figure wherever it drew one, so the model serve, the fault
+  demonstrations and the filming guide's model had white dots on their
+  joints: the skeleton DESIGN.md bans as a main image. The figure now paints
+  alone. The example report showed the model serve twice (beside the player's,
+  phase for phase, since N4.1, and again looped further down); the second goes
+  where the first shows (`render.test.ts` holds both). The "An example, not
+  your serve" tag laid over the picture, which sat on the racket, is gone: the
+  title and the note under the headline already say it.
