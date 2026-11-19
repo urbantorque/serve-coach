@@ -283,6 +283,20 @@
     grid-column: 1 / -1;
   }
 
+  /* Side by side here, so each warning is its own card again (N7.8). */
+  .report > .injuries > .injury:has(+ .injury),
+  .report > .injuries > .injury + .injury {
+    margin-top: 0;
+    padding: 18px 18px 19px;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  }
+
+  .report > .injuries > .injury + .injury .injury-label {
+    display: revert;
+  }
+
   /* An injury warning leads the right pane, above the number (N7.1): the
      review studio had pulled the number and the fix up and left the warnings
      below them, under the first screen. */

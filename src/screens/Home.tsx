@@ -11,7 +11,7 @@ import { SAMPLE_PEEK } from '../lib/samplePeek'
 import { practiceHeadline, type PracticeFocus } from '../lib/practice'
 import { faultForMetric } from '../lib/analysis/progressions'
 import { fastestServe } from '../lib/speedTrend'
-import { defaultSpeedUnit, speedFigures } from '../lib/speedCopy'
+import { NBSP, defaultSpeedUnit, speedFigures } from '../lib/speedCopy'
 import type { ServeTag, Session } from '../lib/storage/db'
 import { tagsById } from '../lib/storage/db'
 import type { TripRecord } from '../lib/storage/ledger'
@@ -216,7 +216,7 @@ export default function Home({
         </div>
         <p className="first-foot">
           Your video never leaves this {deviceNoun()}.
-          {offlineReady === false ? ` Your first serve downloads the coach once, ${engineMegabytes()} MB.` : ''}
+          {offlineReady === false ? ` Your first serve downloads the coach once, ${engineMegabytes()}${NBSP}MB.` : ''}
         </p>
         {storage}
       </div>

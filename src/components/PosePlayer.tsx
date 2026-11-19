@@ -6,7 +6,7 @@ import type { RacketEstimate } from '../lib/analysis/racket'
 import type { Analysis, Frame, PhaseId } from '../lib/analysis/types'
 import { levelFlight } from '../lib/vision/ballTrack'
 import { type Ghost, drawSkeleton, drawStruckBall, fitContain, ghostFor } from '../lib/pose/skeleton'
-import { defaultSpeedUnit, speedFigures } from '../lib/speedCopy'
+import { NBSP, defaultSpeedUnit, speedFigures } from '../lib/speedCopy'
 import { readPrefs } from '../lib/storage/prefs'
 import '../styles/speed.css'
 import type { ServeSpeed } from '../lib/vision/serveSpeed'
@@ -802,7 +802,9 @@ function SpeedTag({ speed, at, aspect }: { speed: ServeSpeed; at: { x: number; y
   return (
     <p className="speed-tag" style={{ left: `${left}%`, top: `${top}%` }}>
       <strong>
-        {f.best} {f.unit}
+        {f.best}
+        {NBSP}
+        {f.unit}
       </strong>
       <span>
         likely {f.low}–{f.high}

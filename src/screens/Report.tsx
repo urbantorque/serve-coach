@@ -24,7 +24,7 @@ import type { Moment } from '../lib/moments'
 import { earcon } from '../lib/earcon'
 import MomentCard from '../components/MomentCard'
 import { useCountUp } from '../components/useCountUp'
-import { SPEED_MISS_LINE, defaultSpeedUnit, speedFigures } from '../lib/speedCopy'
+import { NBSP, SPEED_MISS_LINE, defaultSpeedUnit, speedFigures } from '../lib/speedCopy'
 import { SOFT_READ, readQuality, VERDICT } from '../components/statusLabels'
 import ModelServe from '../components/ModelServe'
 import Term from '../components/Term'
@@ -501,7 +501,7 @@ export default function Report({
 
       <section className="hero" data-settled={settled || !fresh ? 'true' : 'false'}>
         <div
-          className={`hero-stage${injuries.length ? ' hero-stage--short' : ''}${studio ? ' hero-stage--panel' : ''}`}
+          className={`hero-stage${injuries.length ? ' hero-stage--short' : ''}${injuries.length > 1 ? ' hero-stage--shorter' : ''}${studio ? ' hero-stage--panel' : ''}`}
           onClick={() => setSettled(true)}
         >
           {fresh && !settled && !studio && (
@@ -539,11 +539,15 @@ export default function Report({
                 <p className="hero-speed-figure">
                   <span className="hero-speed-about">about</span>
                   <span className="hero-speed-line">
-                    <strong>{figures.best}</strong> {figures.unit}
+                    <strong>{figures.best}</strong>
+                    {NBSP}
+                    {figures.unit}
                   </span>
                 </p>
                 <p className="hero-speed-range">
-                  <Term id="likelyRange">Likely</Term> {figures.low}–{figures.high} {figures.unit}. No radar has checked it.
+                  <Term id="likelyRange">Likely</Term> {figures.low}–{figures.high}
+                  {NBSP}
+                  {figures.unit}. No radar has checked it.
                 </p>
               </section>
             )}

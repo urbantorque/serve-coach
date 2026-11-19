@@ -771,7 +771,7 @@ check('before storage answers, a returning player is not invited to see an examp
     }),
   )
   assert(!out.includes('See a sample report'), 'the first run flashed before the history loaded')
-  assert(!out.includes(' MB'), 'a download was mentioned before the cache was asked')
+  assert(!/\d[ \u00a0]MB/.test(out), 'a download was mentioned before the cache was asked')
 })
 
 check('the home screen renders with a history behind it', () => {
@@ -965,7 +965,7 @@ check('the first run says the download with its size, only while it is needed (N
         onShowExample: noop,
       }),
     )
-  assert(/downloads the coach once, \d+ MB/.test(first(false)), 'the download was not said with its size')
+  assert(/downloads the coach once, \d+\u00a0MB/.test(first(false)), 'the download was not said with its size')
   assert(!first(true).includes('downloads the coach'), 'said a download already stored')
   assert(!first(undefined).includes('downloads the coach'), 'said a download before the cache answered')
 })

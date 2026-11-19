@@ -627,6 +627,28 @@
  * document" and "first thing you see" two different orderings.
  */
 /* Under the cards, in plain ink: the one instruction every warning shares. */
+/*
+ * Two warnings read as one block on a phone (N7.8): one label and one edge,
+ * so the fix still reaches the first screen under them. Each keeps its own
+ * title and words. A laptop sets them side by side instead (wide.css).
+ */
+.injuries > .injury:has(+ .injury) {
+  padding-bottom: 10px;
+  border-bottom-width: 0;
+  border-radius: 0 var(--r-sm) 0 0;
+}
+
+.injuries > .injury + .injury {
+  margin-top: -10px;
+  padding-top: 8px;
+  border-top-width: 0;
+  border-radius: 0 0 var(--r-sm) 0;
+}
+
+.injuries > .injury + .injury .injury-label {
+  display: none;
+}
+
 .injury-stop {
   margin: 2px 0 0;
   font-size: 15px;

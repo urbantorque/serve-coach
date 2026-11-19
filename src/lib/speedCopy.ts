@@ -77,9 +77,15 @@ export function speedSpokenLine(f: Pick<SpeedFigures, 'best'>, unit: SpeedUnit):
   return `About ${f.best} ${UNIT_SPOKEN[unit]}.`
 }
 
+/**
+ * The space between a figure and its unit, which never breaks (N7.8): "81" at
+ * the end of one line and "mph" at the start of the next reads as two things.
+ */
+export const NBSP = '\u00a0'
+
 /** The glance's line for a reading. */
 export function speedGlanceLine(f: SpeedFigures): string {
-  return `About ${f.best} ${f.unit} off the racket, likely ${f.low}–${f.high}.`
+  return `About ${f.best}${NBSP}${f.unit} off the racket, likely ${f.low}–${f.high}.`
 }
 
 type Ranged = Pick<ServeSpeed, 'ms' | 'low' | 'high'>
@@ -87,13 +93,13 @@ type Ranged = Pick<ServeSpeed, 'ms' | 'low' | 'high'>
 /** A reading as "about 130 km/h, likely 122–139". */
 export function aboutSpeed(s: Ranged, unit: SpeedUnit): string {
   const f = speedFigures(s, unit)
-  return `about ${f.best} ${f.unit}, likely ${f.low}–${f.high}`
+  return `about ${f.best}${NBSP}${f.unit}, likely ${f.low}–${f.high}`
 }
 
 /** A reading as a short label: "81 mph". */
 export function aboutSpeedShort(s: Ranged, unit: SpeedUnit = defaultSpeedUnit()): string {
   const f = speedFigures(s, unit)
-  return `${f.best} ${f.unit}`
+  return `${f.best}${NBSP}${f.unit}`
 }
 
 /** The fastest serve on record, on Progress (N2.8). */

@@ -134,11 +134,11 @@
   },
   {
     "name": "13-report-injury",
-    "height": 2660,
-    "screens": 3.2,
+    "height": 2517,
+    "screens": 3,
     "controls": 36,
-    "firstScreenControls": 5,
-    "words": 279,
+    "firstScreenControls": 6,
+    "words": 277,
     "said": []
   },
   {

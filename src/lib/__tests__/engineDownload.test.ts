@@ -241,15 +241,15 @@ check('settings says the size, the bar in megabytes, and the warning before the 
   const noop = () => {}
   const row = (ready: boolean, warming?: OfflineWarmup, metered?: 'saveData' | 'cellular') =>
     renderToStaticMarkup(createElement(OfflineRow, { ready, warming, metered, onDownload: noop }))
-  assert(row(false).includes('Download for no signal, 57 MB'), 'the button lost its size')
-  assert(row(false, { stage: 'downloading', ratio: 0.4, loadedMb: 23, totalMb: 57 }).includes('Downloading, 23 of 57 MB'), 'the bar is not in megabytes')
+  assert(row(false).includes('Download for no signal, 57\u00a0MB'), 'the button lost its size')
+  assert(row(false, { stage: 'downloading', ratio: 0.4, loadedMb: 23, totalMb: 57 }).includes('Downloading, 23 of 57\u00a0MB'), 'the bar is not in megabytes')
   assert(row(false, { stage: 'failed', stalled: true }).includes('The download stopped. Try again'), 'a stall reads as a refusal')
   assert(row(false, undefined, 'cellular').includes('wait for Wi-Fi'), 'no warning on mobile data')
   assert(row(true).includes('Ready to use with no signal'), 'a downloaded coach does not say so')
   const first = renderToStaticMarkup(
     createElement(Home, { sessions: [], offlineReady: false, sessionsLoaded: true, prefs: DEFAULTS, onPrefs: noop, onFilm: noop, onOpen: noop, onShowHistory: noop, onShowSettings: noop, onShowProgress: noop, onShowExample: noop }),
   )
-  assert(first.includes('downloads the coach once, 57 MB'), 'a new player is not told the size before the first serve')
+  assert(first.includes('downloads the coach once, 57\u00a0MB'), 'a new player is not told the size before the first serve')
 })
 
 report()

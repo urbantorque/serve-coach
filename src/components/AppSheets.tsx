@@ -4,7 +4,7 @@ import '../styles/blocks.css'
 import HandednessPicker from './HandednessPicker'
 import { Icon, Sheet } from './primitives'
 import { engineMegabytes } from '../lib/engineManifest'
-import { defaultSpeedUnit } from '../lib/speedCopy'
+import { NBSP, defaultSpeedUnit } from '../lib/speedCopy'
 import type { OfflineWarmup } from './useOfflineWarmup'
 import { writePrefs, type Prefs } from '../lib/storage/prefs'
 import { deviceNoun } from '../lib/device'
@@ -51,7 +51,7 @@ export function OfflineRow({ ready, warming, metered, onDownload }: Props['offli
   const label =
     warming?.stage === 'downloading'
       ? warming.totalMb
-        ? `Downloading, ${warming.loadedMb ?? 0} of ${warming.totalMb} MB`
+        ? `Downloading, ${warming.loadedMb ?? 0} of ${warming.totalMb}${NBSP}MB`
         : `Downloading, ${Math.round((warming.ratio ?? 0) * 100)}%`
       : warming?.stage === 'starting'
         ? 'Setting up'
@@ -61,7 +61,7 @@ export function OfflineRow({ ready, warming, metered, onDownload }: Props['offli
             : 'Download failed. Try again'
           : warming?.stage === 'unkept'
             ? 'This browser will not keep the download'
-            : `Download for no signal, ${size} MB`
+            : `Download for no signal, ${size}${NBSP}MB`
   return (
     <>
       <button className="btn btn--ghost btn--full" onClick={onDownload} disabled={busy}>

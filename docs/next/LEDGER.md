@@ -1039,3 +1039,22 @@ Next in this wave, from N2.8:
     and `docs/next/OWNER-STEPS.md` gains the two calls this wave left: real
     serves filmed on a modern phone, and whether the laptop rail adds Studio
     and Pathways.
+
+- [x] **N7.8 The two rough edges left at the close: a fix under two warnings
+  on a phone, and a figure parted from its unit.** Asked for by the owner
+  after the close-out.
+  - **Two warnings on a phone read as one block**: one "Injury risk" label and
+    one edge, each warning keeping its own title and words, and the picture
+    under them gives way further, with the number a size smaller. On
+    `?demo=injury` at 390 by 844 the fix moved from 805 to 692 px, clear of the
+    action bar where it docks (about 765), and at 375 by 812 to 656 px (bar
+    about 733). A laptop keeps the two as separate cards side by side.
+  - **A figure and its unit never break apart**: a non-breaking space joins a
+    speed to its unit wherever the speed copy writes one, on the report's
+    figure and range, the speed on the clip, and the download size in
+    megabytes. `speedCopy.test.ts` fails on a speed line that can break
+    between the two.
+  - Asked about at the same time, and found already there: a player can have
+    speeds in miles or kilometres an hour. Settings has "Speed in: km/h, mph",
+    it starts from the phone's region, and every screen follows it (checked:
+    Today's fastest serve went from about 85 mph to about 136 km/h).
