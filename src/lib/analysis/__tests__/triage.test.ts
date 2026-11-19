@@ -640,26 +640,22 @@ check("no joint warning is raised on real serves from the guide's placement", ()
   assert(raised.length === 0, `${raised.map((r) => r.injuries.join('+')).join(', ')}`)
 })
 
-check("KNOWN: from the back fence, the fold's own noise reaches the lower-back warning", () => {
+check('from the back fence, a real serve that does not fold raises no lower-back warning', () => {
   /*
-   * The warning stands on `posture_collapse`, and that fault's reading moves
-   * about ±10° between takes of one real serve from behind (p10–p90 of 1–24°
-   * on a serve whose median is 12°). It is named at 29°, and the noisiest
-   * takes reach 28–30°. So the fault, and the warning with it, is named on
-   * about one take in thirty-six of a real serve that does not fold. Measured
-   * on 2026-10-09: 4 of 144.
-   *
-   * Not hidden by a threshold of the warning's own, which would be a second,
-   * uncited line above a cited one. The fix belongs to the fault: a floor
-   * re-derived from behind, or a basket verdict that names a fold on how often
-   * it appears (L2.7). Either should flip this.
+   * Was KNOWN until N2.12: the fold's reading moves about ±10° between takes
+   * of one real serve from behind, it was named at 29°, and the noisiest takes
+   * reached 28–30°, so 4 of 144 takes of real serves that do not fold raised
+   * the warning. It closed the way this check asked, through the fault rather
+   * than a second line of the warning's own: the level-5 band these takes are
+   * graded at stopped carrying an uncited step stricter than the club band its
+   * Bath motion was read inside, so the fault is named at 31° and no real take
+   * from behind reaches it. The cost is the next check's.
    */
   const runs = realiseReal(REAL_SERVES, SEEDS, 50, 5, { bearing: 180, distance: 6 }).flat()
   const raised = runs.filter((r) => r.injuries.length)
   note(`the back fence: ${raised.length} of ${runs.length} real takes raised a warning`)
-  assert(raised.every((r) => r.injuries.every((i) => i === 'lumbar_load_posture_collapse')), 'a warning other than the back was raised from behind')
-  assert(raised.length <= 6, `${raised.length} of ${runs.length} real takes raised a warning, worse than the 4 measured`)
-  assert(raised.length > 0, 'KNOWN gap closed: no real take from behind raises the lower-back warning — flip this')
+  assert(runs.length > 100, `only ${runs.length} takes were readable`)
+  assert(raised.length === 0, `${raised.length} of ${runs.length} real takes raised a warning from behind: ${raised.map((r) => r.injuries.join('+')).join(', ')}`)
 })
 
 check('the clean rig serve raises none through the noise', () => {
@@ -673,16 +669,23 @@ check('the clean rig serve raises none through the noise', () => {
 
 check('a dialled tray and a dialled fold are still caught through the noise', () => {
   // Filmed where each can be read: the fold from behind the baseline. A 40°
-  // fold, which reads 31–39° through the noise and clears the 29° line on every
-  // take. Nearer the line it is caught less often, as the noise floor intends: a
-  // 34° fold on 83% of takes, a 30° one on about half.
+  // fold reads 31–39° through the noise. Nearer the line it is caught less
+  // often, as the noise floor intends.
+  //
+  // MEASURED TRADE, N2.12. The line was 29° while the level-5 band carried an
+  // uncited step stricter than the club band, and a 40° fold cleared it on
+  // every take. At the club band the line is 31°, the bottom of that fold's
+  // spread, and it is caught on 88% of takes; in exchange no real serve that
+  // does not fold is warned about from behind (the check above, 4 of 144
+  // before). The fold this warns about is gross, and still caught nearly
+  // nine times in ten.
   const tray = realise({ palmToSky: 80, trophyArmLayOver: 1, trophyForearmDrop: 0.25 })
   const fold = realise({ spineLean: 40, cameraYaw: 8 })
   const trayRate = rate(tray, 'wrist_strain_forced_pronation')
   const foldRate = rate(fold, 'lumbar_load_posture_collapse')
   note(`tray flagged on ${Math.round(trayRate * 100)}%, fold on ${Math.round(foldRate * 100)}%`)
   assert(trayRate >= 0.9, `a dialled tray was flagged on only ${Math.round(trayRate * 100)}% of takes`)
-  assert(foldRate >= 0.9, `a dialled fold was flagged on only ${Math.round(foldRate * 100)}% of takes`)
+  assert(foldRate >= 0.85, `a dialled fold was flagged on only ${Math.round(foldRate * 100)}% of takes, under the 88% measured at the club band (N2.12)`)
 })
 
 check('a joint warning never stands on less than its own fault', () => {

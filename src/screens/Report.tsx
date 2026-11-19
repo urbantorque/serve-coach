@@ -214,6 +214,8 @@ export default function Report({
   /** The last fixture saved from this report, and what it is still missing. */
   const [saved, setSaved] = useState<{ file: string; gaps: string[] }>()
   const [pickingLevel, setPickingLevel] = useState(false)
+  // Answered, either way: "work it out for me" leaves no level stored (N2.12).
+  const [levelAnswered, setLevelAnswered] = useState(false)
   /** Which fix of the plan is open as a lesson. */
   const [lesson, setLesson] = useState<number>()
   const [sharingOpen, setSharingOpen] = useState(false)
@@ -603,6 +605,22 @@ export default function Report({
         <p className="plan-held">
           <Cue text={suppressed} />
         </p>
+      )}
+
+      {/* The level, asked once on the first serve (N2.12): it orders the faults
+          (arm before legs at club level and below), so it is asked where the
+          order first shows, just under the first screen, and gone once told. */}
+      {firstServe && !example && onPickTier && statedTier === undefined && !levelAnswered && isLive(analysis) && (
+        <section className="level-ask" aria-label="Your level">
+          <LevelPicker
+            value={statedTier}
+            estimated={analysis.triage?.tier?.current}
+            onChange={(tier) => {
+              setLevelAnswered(true)
+              onPickTier(tier)
+            }}
+          />
+        </section>
       )}
 
       {againstBest && (

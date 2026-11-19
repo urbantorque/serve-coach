@@ -448,15 +448,15 @@ check('the same serve is asked for more at each level up', () => {
     flagged(nine).length >= flagged(four).length,
     'a stronger player was asked for no more than a beginner',
   )
-  // The palm's turn, which still climbs. The toss's drift carried this check
-  // until L5.1, contact height until D2.3 and the racket drop before that; all
-  // three bands are the same at every rung on purpose now — the drop because
-  // hand depth does not separate levels on real motion, contact and the toss
-  // because each shares its card row's one band (`CARD_SIGNAL` in tiers.ts).
+  // The palm's turn carried this check until N2.12, when its steps between
+  // rungs, hand-set and cited by nothing, went flat under the handover's rule
+  // to cite each band shift or leave it ungraded. So it now holds the rule:
+  // the same grip is asked of a 4 and a 9. What a level does move is the order
+  // the faults are worked in (`levelReal.test.ts`).
   const palmAtFour = findingFor(four, 'waiters_tray')!.target[1]
   const palmAtNine = findingFor(nine, 'waiters_tray')!.target[1]
-  assert(palmAtNine < palmAtFour, 'the grip asked of a 9 was no stricter than for a 4')
-  note(`palm target ${palmAtFour.toFixed(0)}° at tier 4, ${palmAtNine.toFixed(0)}° at tier 9`)
+  assert(palmAtNine === palmAtFour, `an uncited level shift came back: the grip asked of a 9 (${palmAtNine}) differs from a 4 (${palmAtFour})`)
+  note(`palm target ${palmAtFour.toFixed(0)}° at tier 4 and at tier 9`)
   for (const flat of ['shallow_drop', 'low_contact', 'toss_drift'] as FlawId[]) {
     assert(findingFor(nine, flat)!.target[0] === findingFor(four, flat)!.target[0], `the ${flat} band moved with the level again`)
   }

@@ -54,6 +54,16 @@ const stream = { getVideoTracks: () => [{ getSettings: () => ({ width: 1920, hei
 
 heading('Written out as it is recorded')
 
+/**
+ * Waits for the recording to finish its writes, rather than for a fixed 50 ms that
+ * a machine running other suites overruns: the writes are async, and only their
+ * outcome is under test. Gives up after three seconds, which is a failure.
+ */
+const settled = async (done: () => boolean, ms = 3000) => {
+  const t0 = Date.now()
+  while (!done() && Date.now() - t0 < ms) await new Promise((r) => setTimeout(r, 10))
+}
+
 await check('a chunk a second, each written in order, and the file waits for the last write', async () => {
   let clock = 0
   const mem = memorySink()
@@ -74,7 +84,7 @@ await check('a chunk a second, each written in order, and the file waits for the
   assert(rec.slice === PRACTICE_SLICE_MS, `asked for a chunk every ${rec.slice} ms`)
   for (const n of [10, 20, 30, 40]) rec.deliver(n)
   rec.stop()
-  await new Promise((r) => setTimeout(r, 50))
+  await settled(() => file !== undefined)
   assert(file !== undefined, 'no file after the stop')
   assert(mem.got.join() === '10,20,30,40', `written out of order: ${mem.got.join()}`)
   assert(file!.size === 100 && chunks === 4, `${file!.size} bytes from ${chunks} chunks`)
@@ -93,7 +103,7 @@ await check('a write that fails throws the file away rather than hand over a bas
   const rec = FakeRecorder.last
   for (const n of [10, 20, 30]) rec.deliver(n)
   rec.stop()
-  await new Promise((r) => setTimeout(r, 50))
+  await settled(() => failed)
   assert(failed && file === undefined, 'a broken write still produced a file')
   assert(mem.discarded(), 'the broken file was left behind')
 })

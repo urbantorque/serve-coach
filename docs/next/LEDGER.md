@@ -605,3 +605,32 @@ live region, checked in the browser against the stand-in.
   the right edge of a phone. Leading the report with the change against the
   player's usual was considered: it is already the line under the number
   whenever there is a usual to set it against.
+- [x] **N2.12 Level is asked on the first serve, and changes only what a
+  source says it should.** The handover's findings 2 and 3: a picked level
+  moved a few hand-set ladders, and the rung anchors on palm angle, spine lean
+  and elbow lift cite nothing. Its rule is to cite each band shift or leave it
+  ungraded, so those three are now flat at the band every player without a
+  stated level already gets (rung 5, above the default 4): a player who never
+  states a level is graded exactly as before, and the Bath and rig checks that
+  each rests on (clean at every rung, the rig's fault named at every rung)
+  still hold. The two other ladders that move, hip lead and pronation, name
+  no fault at any level. What level does change is cited: the order faults
+  are worked in, arm before legs at club level and below (Whiteside 2013,
+  Reid 2008, L3.9), and through it the first drill. On one serve with stiff
+  legs and a racket that never lays back, a still-learning player is sent to
+  "Let the racket fall" and a strong club player to "Back-leg serves"
+  (`levelReal.test.ts`, which also fails any band that moves with level on no
+  study). The level used to be asked only inside the closed "Everything I
+  measured" fold; on a player's first serve it is now asked just under the
+  first screen, in the picker's own words ("your score is the same at every
+  level"), and goes once answered either way. The goal was already asked on
+  Today's plan after the first serve and already changes the plan
+  (`programme.test.ts`). A UTR 2 and a UTR 6 now get different first fixes
+  and drills, and the same targets, which is what the sources support. One
+  measured trade, recorded in `triage.test.ts`: the test suite grades at level
+  5, which carried an uncited step stricter than the club band, so its
+  lower-back warning now catches a gross 40° fold on 88% of takes rather than
+  every one, and in exchange the known false warning from behind (4 of 144
+  real takes that do not fold) is gone. A first attempt held the three at
+  level 5's band instead; the band test refused it, because a Bath serve
+  reads 18° and the club band its source rests on reaches 19.

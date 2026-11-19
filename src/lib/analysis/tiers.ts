@@ -120,7 +120,13 @@ export const SIGNALS: Record<string, SignalSpec> = {
     // How far the palm has rotated towards facing the sky at the trophy. A
     // continental grip keeps the hand roughly edge-on; a waiter's tray turns it
     // flat under the racket. Nobody is asked for a perfect zero.
-    anchors: { 3: [0, 58], 5: [0, 45], 7: [0, 32], 9: [0, 24] },
+    // FLAT SINCE N2.12, at the club band (rung 5), the one every player without
+    // a stated level already gets and the one the motion below was read inside.
+    // The steps between rungs were
+    // hand-set, and no source gives a palm angle by level; the handover's rule is to
+    // cite each band shift or leave it ungraded. The motion below still holds at
+    // every rung, because it is the boundary between clean and fault it rests on.
+    anchors: { 3: [0, 45], 5: [0, 45], 7: [0, 45], 9: [0, 45] },
     seriousMiss: 22,
     source: {
       motion:
@@ -172,7 +178,13 @@ export const SIGNALS: Record<string, SignalSpec> = {
     direction: 'lower',
     // Sideways collapse of the spine between the trophy and contact. Some lean
     // is the shot; a lot of it is chasing a toss that went somewhere else.
-    anchors: { 3: [0, 24], 5: [0, 19], 7: [0, 15], 9: [0, 12] },
+    // FLAT SINCE N2.12, at the club band (rung 5), the one every player without
+    // a stated level already gets and the one the motion below was read inside.
+    // The steps between rungs were
+    // hand-set, and no source gives a spine lean by level; the handover's rule is to
+    // cite each band shift or leave it ungraded. The motion below still holds at
+    // every rung, because it is the boundary between clean and fault it rests on.
+    anchors: { 3: [0, 19], 5: [0, 19], 7: [0, 19], 9: [0, 19] },
     seriousMiss: 10,
     source: {
       motion:
@@ -272,7 +284,13 @@ export const SIGNALS: Record<string, SignalSpec> = {
     // upper arm has to abduct sideways, and geometry puts the joint a hand's
     // width under the shoulder even on a textbook drop; only the last rung asks
     // for it to be close to level.
-    anchors: { 3: [-0.13, 0.3], 5: [-0.11, 0.3], 7: [-0.08, 0.3], 9: [-0.05, 0.3] },
+    // FLAT SINCE N2.12, at the club band (rung 5), the one every player without
+    // a stated level already gets and the one the motion below was read inside.
+    // The steps between rungs were
+    // hand-set, and no source gives an elbow height by level; the handover's rule is to
+    // cite each band shift or leave it ungraded. The motion below still holds at
+    // every rung, because it is the boundary between clean and fault it rests on.
+    anchors: { 3: [-0.11, 0.3], 5: [-0.11, 0.3], 7: [-0.11, 0.3], 9: [-0.11, 0.3] },
     seriousMiss: 0.05,
     source: {
       motion:
