@@ -106,6 +106,48 @@
     grid-column: 2;
   }
 
+  /* With a goal on the left, the two notes join the numbers on the right
+     rather than trailing under the serves, where they left the right pane a
+     dark field beside the goal (N5.7). Dense, so they come up beside the goal
+     although the serves come first in the page. */
+  .shell > .today:has(> .next-up) {
+    grid-auto-flow: row dense;
+  }
+
+  .today:has(> .next-up) > .next-up {
+    grid-row: span 5;
+  }
+
+  .today:has(> .next-up) > .today-tip,
+  .today:has(> .next-up) > .today-nudge {
+    grid-column: 2;
+  }
+
+  .today:has(> .next-up) > .today-tip {
+    padding-top: 20px;
+    border-top: 1px solid var(--hairline-soft);
+  }
+
+  /* The last serves across the width, not a phone's row of thumbnails. Never
+     narrower than a card's date line needs: at 1024 px seven cards do not fit,
+     and the row scrolls sideways as it does on a phone. */
+  .today .serve-cards {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(148px, 220px);
+    margin: 0;
+    padding: 2px 0 6px;
+    scroll-padding-inline: 0;
+  }
+
+  .today .serve-card {
+    width: auto;
+  }
+
+  .today .serve-card-stage {
+    height: 168px;
+  }
+
   /* ------------------------------------------------- Progress, in two panes */
 
   .shell > .progress-screen {

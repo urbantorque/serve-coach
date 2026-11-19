@@ -425,3 +425,7 @@ showed was wrong.
   the serve was measured on, where the poster said "phone" on a laptop.
   Recorded for real in Chrome: two 720 by 900 MP4s of about 8.5 s, finite and
   seekable, each ending on the poster.
+- [x] **N5.7 Today on a laptop is two full panes.** The right pane was three
+  numbers over a dark field beside the goal, the last serves stopped two
+  thirds of the way across, and two notes trailed at the foot. The notes now
+  sit with the numbers beside the goal, and the serves run the width.
