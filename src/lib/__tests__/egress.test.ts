@@ -52,6 +52,10 @@ function sourceFiles(dir: string): string[] {
     const full = path.join(dir, entry.name)
     if (entry.isDirectory()) {
       if (entry.name === '__tests__') continue
+      // The payment functions run on the host, never in the player's browser
+      // (N6.5), and talk to Stripe about a payment and nothing else.
+      // `serverBoundary.test.ts` holds that no module the app ships imports them.
+      if (full === path.join(SRC, 'server')) continue
       out.push(...sourceFiles(full))
     } else if (/\.(ts|tsx)$/.test(entry.name)) {
       out.push(full)
@@ -83,6 +87,15 @@ interface Site {
  * sitting, which is the point of keeping the list this small.
  */
 const ALLOWED: (Site & { why: string })[] = [
+  {
+    file: 'lib/billing/client.ts',
+    pattern: 'fetch',
+    why:
+      'Paying for Plus (N6.5), and only where the owner has switched payments on: the module ' +
+      'is loaded by a dynamic import behind `PAYMENTS !== "off"`, so a build without payments ' +
+      'never runs it. Every request goes to this site\x27s own `/api/`, and carries a checkout id ' +
+      'coming back from Stripe or the signed pass, never anything about a serve.',
+  },
   {
     file: 'lib/engineDownload.ts',
     pattern: 'fetch',

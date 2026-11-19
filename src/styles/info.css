@@ -242,3 +242,38 @@
   color: var(--fg);
   font-weight: 650;
 }
+
+/* Getting Plus, or holding it (N6.5). */
+.plus-act {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 460px;
+}
+
+.plus-note {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--fg-faint);
+}
+
+.plus-held {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 16px;
+  line-height: var(--lh-copy);
+  color: var(--fg);
+}
+
+.plus-held svg {
+  flex: none;
+  margin-top: 4px;
+  color: var(--lime);
+}
+
+.info-section .plus-problem,
+.plus-problem {
+  font-size: 15px;
+  color: var(--fair);
+}

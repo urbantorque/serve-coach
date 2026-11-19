@@ -166,7 +166,63 @@ const lanTls = lanTlsDir
   ? { key: readFileSync(`${lanTlsDir}/lan-key.pem`), cert: readFileSync(`${lanTlsDir}/lan-cert.pem`) }
   : undefined
 
-export default defineConfig({
+/**
+ * Paying for Plus against a stand-in for Stripe, on the dev server only
+ * (`VITE_PAYMENTS=mock`, N6.5): the same handler the Cloudflare function
+ * runs, a throwaway key pair made for this run, and the stand-in's own
+ * checkout and billing pages. No account, no key and no money. The public
+ * half of the key reaches the app as `VITE_ENTITLEMENT_PUBLIC_JWK`, which Vite
+ * reads from the environment after this file runs.
+ */
+async function mockPayments(): Promise<Plugin> {
+  const { makeKeys } = await import('./src/lib/billing/pass')
+  const { handlePayments } = await import('./src/server/payments')
+  const { stripeMock, mockCheckoutPage, mockPortalPage } = await import('./src/server/stripeMock')
+  const keys = await makeKeys()
+  process.env.VITE_ENTITLEMENT_PUBLIC_JWK = JSON.stringify(keys.publicJwk)
+  let mock: ReturnType<typeof stripeMock> | undefined
+  const env = { STRIPE_SECRET_KEY: 'sk_test_stand_in', STRIPE_PRICE_ID: 'price_stand_in', ENTITLEMENT_PRIVATE_JWK: JSON.stringify(keys.privateJwk) }
+  return {
+    name: 'serve-coach:mock-payments',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`)
+        if (!url.pathname.startsWith('/api/')) return next()
+        mock ??= stripeMock(url.origin)
+        const page = (html: string) => {
+          res.setHeader('content-type', 'text/html; charset=utf-8')
+          res.end(html)
+        }
+        const away = (to: string) => {
+          res.statusCode = 303
+          res.setHeader('location', to)
+          res.end()
+        }
+        const id = url.searchParams.get('session') ?? ''
+        if (url.pathname === '/api/mock/checkout') return page(mockCheckoutPage(id, mock.sessions.get(id)?.cancel_url ?? '/pricing'))
+        if (url.pathname === '/api/mock/pay' && req.method === 'POST') return away(mock.pay(id) ?? '/pricing')
+        if (url.pathname === '/api/mock/portal') return page(mockPortalPage(url.searchParams.get('customer') ?? '', url.searchParams.get('back') ?? '/pricing'))
+        if (url.pathname === '/api/mock/cancel' && req.method === 'POST') {
+          mock.cancel(url.searchParams.get('customer') ?? '')
+          return away(url.searchParams.get('back') ?? '/pricing')
+        }
+        const chunks: Buffer[] = []
+        req.on('data', (c: Buffer) => chunks.push(c))
+        req.on('end', () => {
+          const body = req.method === 'POST' ? Buffer.concat(chunks).toString('utf8') : undefined
+          void handlePayments(new Request(url, { method: req.method, headers: { 'content-type': 'application/json' }, body }), env, mock!.send).then(async (r) => {
+            res.statusCode = r.status
+            res.setHeader('content-type', 'application/json')
+            res.end(await r.text())
+          })
+        })
+      })
+    },
+  }
+}
+
+export default defineConfig(async () => ({
   base,
   ...(lanTls ? { server: { https: lanTls }, preview: { https: lanTls } } : {}),
   // Every engine file and its size, read off `public/` now (L6.1): the one
@@ -182,6 +238,7 @@ export default defineConfig({
     // here abandoned the swing refine, and the one without isolation did not.
     ...(process.env.ISOLATE ? [isolationHeaders()] : []),
     hostHeaders(),
+    ...(process.env.VITE_PAYMENTS === 'mock' ? [await mockPayments()] : []),
     serveOrtRaw(),
     react(),
     VitePWA({
@@ -238,9 +295,11 @@ export default defineConfig({
         // The install-sheet screenshots (M4.2) are for the browser's install
         // prompt, not the app; precaching them would cost 1.3 MB of every install.
         globIgnores: ['**/models/**', '**/wasm/**', '**/ort/**', '**/screenshots/**'],
-        navigateFallbackDenylist: enginePathPrefixes.map(
-          (p) => new RegExp(`^${escapeRegExp(p)}`),
-        ),
+        navigateFallbackDenylist: [
+          ...enginePathPrefixes.map((p) => new RegExp(`^${escapeRegExp(p)}`)),
+          // The payment functions (N6.5) answer for themselves, never with the page.
+          new RegExp(`^${escapeRegExp(base)}api/`),
+        ],
         runtimeCaching: [
           {
             urlPattern: ENGINE_ASSET_RE,
@@ -271,4 +330,4 @@ export default defineConfig({
     target: 'es2022',
     chunkSizeWarningLimit: 900,
   },
-})
+}))

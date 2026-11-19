@@ -131,5 +131,7 @@ export function parsePath(pathname: string, base = '/'): Route {
   if (head === 'serve' && id) return { kind: 'serve', id }
   if (head === 'practice' && id) return { kind: 'practice', id }
   if (!id && (INFO_PAGES as readonly string[]).includes(head)) return { kind: 'page', page: head as InfoPageId }
+  // Back from paying, or Plus brought to another device: the plans say where it stands (N6.5).
+  if (head === 'plus' && !id) return { kind: 'page', page: 'pricing' }
   return { kind: 'home' }
 }

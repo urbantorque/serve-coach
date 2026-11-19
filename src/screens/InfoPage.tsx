@@ -1,4 +1,4 @@
-import type { MouseEvent, ReactNode } from 'react'
+import { useState, type MouseEvent, type ReactNode } from 'react'
 import '../styles/info.css'
 import { Icon } from '../components/primitives'
 import { accuracyRows, unmeasuredRows, wobbleText } from '../lib/accuracy'
@@ -6,9 +6,10 @@ import { deviceNoun } from '../lib/device'
 import { ATTRIBUTION } from '../lib/figure/modelCredit'
 import { INFO_PAGES, INFO_TITLES, pathFor, type InfoPageId } from '../lib/routes'
 import { POLICY_DATE, SITE } from '../lib/site'
-import { FEATURES } from '../lib/plans'
+import { FEATURES, hasPlus } from '../lib/plans'
+import { useEntitlement } from '../components/usePlan'
 import { FEATURE_COPY, FREE_COPY } from '../lib/planCopy'
-import { GATED, PRICE_LINE } from '../lib/billing/config'
+import { GATED, PAYMENTS, PRICE_LINE } from '../lib/billing/config'
 
 interface Props {
   page: InfoPageId
@@ -83,6 +84,8 @@ type Go = (p: InfoPageId) => (e: MouseEvent<HTMLAnchorElement>) => void
 /* ----------------------------------------------------------------- pricing */
 
 function Pricing() {
+  const entitlement = useEntitlement()
+  const plus = hasPlus(entitlement)
   return (
     <>
       {!GATED && (
@@ -90,6 +93,7 @@ function Pricing() {
           <p>Every feature on this page is free while Plus is not on sale. When it starts, the free column is what stays free.</p>
         </Section>
       )}
+      {PAYMENTS !== 'off' && (plus ? <YourPlus until={entitlement.until} /> : <GetPlus />)}
       <div className="tiers">
         <section className="tier" aria-labelledby="plan-free">
           <h2 className="t-headline" id="plan-free">
@@ -126,6 +130,75 @@ function Pricing() {
         <p>Your video never leaves your device, and nothing about your serve leaves unless you send it.</p>
       </Section>
     </>
+  )
+}
+
+/** Plus on sale and not held: the price, and the way to Stripe's checkout (N6.5). */
+function GetPlus() {
+  const [state, setState] = useState<'idle' | 'going' | string>('idle')
+  const go = async () => {
+    setState('going')
+    const { startCheckout } = await import('../lib/billing/client')
+    const problem = await startCheckout()
+    setState(problem ?? 'going')
+  }
+  return (
+    <section className="plus-act" aria-label="Get Plus">
+      {PRICE_LINE && <p className="tier-price">{PRICE_LINE}</p>}
+      <button className="btn btn--primary btn--big btn--full" onClick={() => void go()} disabled={state === 'going'}>
+        <Icon name="lightning" size={20} />
+        {state === 'going' ? 'Opening the checkout…' : 'Get Plus'}
+      </button>
+      <p className="plus-note">Stripe takes the payment on its own page. Cancel any time, and Plus runs to the end of what you paid for.</p>
+      {state !== 'idle' && state !== 'going' && (
+        <p className="plus-problem" role="alert">
+          {state}
+        </p>
+      )}
+    </section>
+  )
+}
+
+/** Plus held: until when, Stripe's page to change it, and a way to bring it to another device. */
+function YourPlus({ until }: { until?: number }) {
+  const [problem, setProblem] = useState<string>()
+  const [copied, setCopied] = useState(false)
+  const manage = async () => {
+    const { manage } = await import('../lib/billing/client')
+    setProblem(await manage())
+  }
+  const share = async () => {
+    const { anotherDevice } = await import('../lib/billing/client')
+    const link = anotherDevice()
+    if (!link) return
+    try {
+      await navigator.clipboard.writeText(link)
+      setCopied(true)
+    } catch {
+      setProblem('Copying was refused here. Open this page on the other device after paying there instead.')
+    }
+  }
+  return (
+    <section className="plus-act plus-act--held" aria-label="Your Plus">
+      <p className="plus-held">
+        <Icon name="check" size={18} />
+        <span>
+          You have Plus{until ? `, until ${new Date(until).toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}` : ''}. It renews
+          by itself until you cancel.
+        </span>
+      </p>
+      <button className="btn btn--ghost btn--full" onClick={() => void manage()}>
+        Change your card or cancel
+      </button>
+      <button className="btn btn--quiet btn--full" onClick={() => void share()}>
+        {copied ? 'Link copied. Open it on the other device.' : 'Use Plus on another device'}
+      </button>
+      {problem && (
+        <p className="plus-problem" role="alert">
+          {problem}
+        </p>
+      )}
+    </section>
   )
 }
 
@@ -236,6 +309,12 @@ function Privacy() {
       <Section title="No tracking">
         <p>No analytics, no advertising and no cookies that follow you. I do not know who you are.</p>
       </Section>
+      {PAYMENTS !== 'off' && (
+        <Section title="If you buy Plus">
+          <p>Stripe takes the payment on its own page and keeps your card and email. I never see either.</p>
+          <p>This {here} keeps a signed pass saying Plus runs until a date. It holds no name, no email and nothing about a serve.</p>
+        </Section>
+      )}
       <Section title="Questions">
         {SITE.contact && <p>Write to {SITE.contact} about anything on this page.</p>}
         <p className="info-date">Last changed {POLICY_DATE}.</p>
@@ -272,6 +351,12 @@ function Terms({ onPage }: { onPage: Go }) {
       <Section title="Fair use">
         <p>Use the app for your own serve, or for someone else's with their permission. Do not try to break, copy or resell it.</p>
       </Section>
+      {PAYMENTS !== 'off' && (
+        <Section title="Plus">
+          <p>Plus renews each period until you cancel, at the price the plans page shows before you pay.</p>
+          <p>Cancel any time from the plans page. Plus then runs to the end of the period you paid for.</p>
+        </Section>
+      )}
       <Section title="As it is">
         <p>The app comes as it is, with no promise that it suits your purpose.</p>
         <p>As far as the law allows, liability goes no further than what you paid.</p>

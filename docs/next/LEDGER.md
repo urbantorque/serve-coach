@@ -495,3 +495,33 @@ showed was wrong.
   129.91 kB, inside by 0.09 kB, so the payment client (N6.5) loads lazily too.
   The pricing page's classes were renamed after a check found `.plan` already
   styled the report's drill list.
+- [x] **N6.5 Paying for Plus, built to be switched on.** Stripe Checkout for
+  a subscription, and no database or account: when a payment goes through,
+  the server signs a small Plus pass (which subscription, and until when) with
+  a key only it holds, and the app checks it on the device against the public
+  half built into it (`lib/billing/pass.ts`, ECDSA through Web Crypto, so one
+  module signs on the host and verifies in the browser). Four routes in
+  `src/server/payments.ts`: a checkout, claiming the pass on the way back,
+  renewing it near its end against what Stripe says now, and Stripe's own
+  billing page to change a card or cancel. They run unchanged as a
+  Cloudflare Pages function (`functions/api/[[route]].ts`), under test, and on
+  the dev server against a stand-in for Stripe (`VITE_PAYMENTS=mock`,
+  `server/stripeMock.ts`: its own checkout and billing pages, a throwaway key
+  pair per run, no account, no key and no money). Plus reaches another device
+  through a link whose pass rides in the address's fragment, which no server
+  sees. Walked in a browser against the stand-in: Today's paywall, the plans,
+  the checkout, paying, back on the plans with Plus to 19 December, every gate
+  on Today and a report open, a reload, the billing page and cancelling (Plus
+  runs to the period's end), the link on a second device, and a forged pass
+  refused with Get Plus offered. `payments.test.ts` runs the same flow and
+  every refusal; `pass.test.ts` holds that a pass cannot be forged or
+  stretched; `serverBoundary.test.ts` that nothing the app ships imports the
+  server, names its secrets, or loads the payment client unless payments are
+  on. The egress scan lists the client's one same-origin call and leaves the
+  server out with its reason. Privacy and the terms gain a section each, shown
+  only with payments on. Stripe's test mode needs an account and keys, which
+  are the owner's (`OWNER-STEPS.md`). The payment start-up reads the build
+  setting itself, so a build without payments folds it away: the entry chunk
+  is 129.98 kB of its 130, with 0.02 kB left, and the next screen that adds
+  to it either takes something off or spends the one re-baseline the
+  handover allows.

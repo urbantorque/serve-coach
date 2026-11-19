@@ -4,6 +4,7 @@ import AppSheets, { type AppSheet } from './components/AppSheets'
 import TabBar from './components/TabBar'
 import { useBackLayer } from './components/useBackLayer'
 import { PageNav } from './components/pageNav'
+import { PAYMENTS } from './lib/billing/config'
 import { useWakeLock, wakeLockLine } from './components/useWakeLock'
 import { useHistory } from './components/useHistory'
 import { useOfflineWarmup } from './components/useOfflineWarmup'
@@ -169,6 +170,13 @@ export type View =
  * about which mode the app is in.
  */
 const FIXTURE_EXPORT = new URLSearchParams(location.search).has('fixture')
+
+/**
+ * Arrived back from paying, or with Plus brought from another device (N6.5).
+ * Read once at load, because the address effect renames `/plus` to the plans
+ * page on the first paint.
+ */
+const ARRIVED_FOR_PLUS = /\/plus\/?$/.test(location.pathname)
 
 /**
  * The screen the address asks for, where it can be shown at once (N3.1).
@@ -604,6 +612,26 @@ export default function App() {
     if (location.pathname !== want) history.replaceState(history.state, '', want + location.search + location.hash)
     document.title = titleFor(view)
   }, [view])
+
+  /*
+   * Plus, where the owner has switched payments on (N6.5): the pass kept on
+   * this device is checked and renewed near its end, or claimed on the way back
+   * from paying. Off, which is how the app ships, this loads nothing and asks
+   * no server anything.
+   */
+  useEffect(() => {
+    // Read straight from the build, so a build without payments folds this
+    // whole step away, the client's import with it (the entry chunk's budget).
+    if (!import.meta.env.VITE_PAYMENTS || PAYMENTS === 'off') return
+    void import('./lib/billing/client').then(async (pay) => {
+      const arrived = ARRIVED_FOR_PLUS ? await pay.arrive(new URL(location.href)) : 'none'
+      // A plain reload of `/plus` brought nothing new: the pass kept here stands.
+      if (arrived === 'none') await pay.restore()
+      // The checkout id and any pass leave the address once they are used, and
+      // the address names the page the player is on.
+      if (ARRIVED_FOR_PLUS) history.replaceState(history.state, '', pathFor({ kind: 'page', page: 'pricing' }, import.meta.env.BASE_URL))
+    })
+  }, [])
 
   /*
    * The session before this one, to set it against (L2.8): finished, the same
