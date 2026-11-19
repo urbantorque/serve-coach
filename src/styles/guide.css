@@ -52,10 +52,8 @@
 }
 
 .guide-avoid h3 {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
   color: var(--fg-faint);
   margin-bottom: 10px;
 }

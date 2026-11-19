@@ -42,7 +42,7 @@
 .first-steps li > svg {
   flex: none;
   margin-top: 2px;
-  color: var(--lime);
+  color: var(--fg-muted);
 }
 
 .first-steps li div {
@@ -92,7 +92,7 @@
 }
 
 .first-more-privacy > svg {
-  color: var(--lime);
+  color: var(--fg-muted);
 }
 
 .first-more-foot {
@@ -238,7 +238,7 @@
 .first-tiers li > svg {
   flex: none;
   margin-top: 2px;
-  color: var(--lime);
+  color: var(--fg-muted);
 }
 
 @media (min-width: 1024px) {

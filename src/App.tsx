@@ -1025,7 +1025,7 @@ export default function App() {
             />
           )}
 
-          {view.kind === 'page' && <InfoPage page={view.page} onBack={goHome} onPage={showPage} />}
+          {view.kind === 'page' && <InfoPage page={view.page} onBack={goHome} onPage={showPage} onFilm={startFilming} />}
 
           {view.kind === 'saved' && view.example && (
             <Report
@@ -1059,14 +1059,22 @@ export default function App() {
                     Film it again
                   </button>
                 )}
-                <button className="btn btn--quiet btn--full" onClick={() => captureAgain('pick')}>
-                  Pick another video
-                </button>
-                {!view.again && (
-                  <button className="btn btn--quiet btn--full" onClick={() => setSheet('guide')}>
-                    How to film it
+                {/* One action (DESIGN.md): the other ways out are a line, not two more buttons (N7.6). */}
+                <p className="problem-also">
+                  Or{' '}
+                  <button type="button" className="link-btn" onClick={() => captureAgain('pick')}>
+                    pick another video
                   </button>
-                )}
+                  {!view.again && (
+                    <>
+                      , or read{' '}
+                      <button type="button" className="link-btn" onClick={() => setSheet('guide')}>
+                        how to film it
+                      </button>
+                    </>
+                  )}
+                  .
+                </p>
                 {/* Dev-only: file this refusal as a ground-truth fixture. The
                     import is dynamic so none of it reaches the production bundle. */}
                 {import.meta.env.DEV && view.capture && (

@@ -718,7 +718,7 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired }: Props) 
           }}
           onClick={toggle}
         />
-        <canvas ref={canvasRef} onClick={toggle} />
+        <canvas ref={canvasRef} onClick={toggle} aria-hidden="true" />
         {/* The reading where the ball left the racket (C6), in the DOM so it
             stays crisp and readable. Parked on contact or the finish only: in
             between, the picture is still on its way there. */}

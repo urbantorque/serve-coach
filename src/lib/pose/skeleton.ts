@@ -44,13 +44,15 @@ const PALETTE = {
   limb: '#eef2f6',
 
   /**
-   * The tossing arm, in blue.
+   * The tossing arm, in the body's own ink held back (N7.6).
    *
    * It is the other arm doing the other job, and it is deliberately not the
    * accent: the accent answers "which arm am I meant to be watching", and if
-   * both arms carry it the answer is gone.
+   * both arms carry it the answer is gone. It was blue, which made a third
+   * colour on a picture that has two: coral for what I saw, lime for where to
+   * get to (DESIGN.md). Dimmer than the body, so it still reads as the other arm.
    */
-  toss: 'rgba(120, 200, 255, 0.95)',
+  toss: 'rgba(238, 242, 246, 0.56)',
 
   /**
    * The app's one accent, in the one place it is allowed to be bright.
@@ -100,8 +102,8 @@ const PALETTE = {
   ballOld: [152, 162, 179] as const,
   ballNew: [205, 249, 74] as const,
 
-  /** Any text on the picture sits on this. Near-black ink — never bare video. */
-  plate: 'rgba(10, 12, 16, 0.82)',
+  /** Any text on the picture sits on this: the app's glass (N7.6), never bare video. */
+  plate: 'rgba(14, 17, 24, 0.72)',
   plateLabel: 'rgba(238, 242, 246, 0.72)',
 
   /**
@@ -687,7 +689,7 @@ export interface TossMark {
 }
 
 /** The overline on the toss marker's plate. */
-const TOSS_OVERLINE = 'TOSS PEAK'
+const TOSS_OVERLINE = 'Toss peak'
 
 /**
  * The toss mark for a still, or nothing.
@@ -1495,11 +1497,11 @@ function drawGhost(
  * The overline on the ghost's plate, in the report's own words.
  *
  * Literally the string `FundamentalCard` prints above the same target phrase, so
- * the picture and the card are not two different ways of saying it. Upper-cased
- * once here rather than at the call site because it is also measured, and
+ * the picture and the card are not two different ways of saying it. Written in
+ * its drawn case here, sentence case since N7.6, because it is also measured, and
  * measuring one casing while drawing another is how a plate comes out too narrow.
  */
-const GHOST_OVERLINE = 'AIM FOR'
+const GHOST_OVERLINE = 'Aim for'
 
 /**
  * An arc at the joint, a hairline out to a plate, and the position in words.
@@ -1712,7 +1714,7 @@ function drawAngle(
   // forty degrees from the reading separated from it by about five pixels.
   const dialR = 15 * scale
   const dialGap = judged ? dialR * 2 + 10 * scale : 0
-  const w = Math.max(valueW, ctx.measureText(label.toUpperCase()).width) + 22 * scale + dialGap
+  const w = Math.max(valueW, ctx.measureText(label).width) + 22 * scale + dialGap
   const h = 38 * scale
 
   // Hairline from the arc to the plate, so the words stay attached to the joint.
@@ -1742,7 +1744,7 @@ function drawAngle(
   ctx.fillText(value, textX, ly - 6 * scale)
   ctx.font = `500 ${labelSize}px ${UI_FONT}`
   ctx.fillStyle = PALETTE.plateLabel
-  ctx.fillText(label.toUpperCase(), textX, ly + 9 * scale)
+  ctx.fillText(label, textX, ly + 9 * scale)
 
   if (judged) {
     drawShapeDial(

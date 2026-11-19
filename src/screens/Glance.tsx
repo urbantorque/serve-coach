@@ -477,7 +477,7 @@ export default function Glance({
         closed elsewhere in this app, applied here while writing rather than in a
         later accessibility pass.
       */}
-      {onTagServe && (
+      {onTagServe && !refusal && (
         <div className="glance-actions">
           <span className="t-overline">Which serve was it?</span>
           {/* One row of chips since Q8, as the landing below has always been:
@@ -520,7 +520,7 @@ export default function Glance({
         points — so this round stores the tap and draws nothing from it. The
         claim is a later round's problem and it starts blocked.
       */}
-      {onTagOutcome && (
+      {onTagOutcome && !refusal && (
         <div className="glance-actions">
           <span className="t-overline">Where did it land?</span>
           <div className="reading-chips">
@@ -559,7 +559,7 @@ export default function Glance({
           )}
         </div>
       )}
-      {onTagOutcome && onStartSet && !set?.running && (
+      {onTagOutcome && onStartSet && !set?.running && !refusal && (
         <details className="glance-more">
           <summary>Start a set of 10</summary>
           <div className="reading-chips">

@@ -7,6 +7,7 @@ import { buildProgress, currentRubricEra, streakLine, tripDay, deltaStatus } fro
 import { momentsFor, weekRecap } from '../lib/moments'
 import MomentCard from '../components/MomentCard'
 import { programmeFor } from '../lib/programme'
+import { SAMPLE_PEEK } from '../lib/samplePeek'
 import { practiceHeadline, type PracticeFocus } from '../lib/practice'
 import { faultForMetric } from '../lib/analysis/progressions'
 import { fastestServe } from '../lib/speedTrend'
@@ -185,9 +186,23 @@ export default function Home({
             <FirstRunStage racket={prefs.handedness} />
           </Suspense>
           <div className="hero-veil" aria-hidden="true" />
+          {/* What a report says, on the picture (N7.6): the landing shows
+              rather than promises. The sample report's own words. */}
+          <div className="first-peek">
+            <span className="first-peek-score">
+              <strong className="tnum">{SAMPLE_PEEK.score}</strong>/100
+            </span>
+            <span className="first-peek-text">
+              <span className="first-peek-label">Sample report: work on this next</span>
+              <strong>{SAMPLE_PEEK.fix}</strong>
+              <span>
+                {SAMPLE_PEEK.drill}, {SAMPLE_PEEK.reps}
+              </span>
+            </span>
+          </div>
         </div>
         <div className="first-copy">
-          <h1 className="t-display">Film one serve. See the one thing to fix.</h1>
+          <h1 className="t-display">Film one serve. See what to fix first.</h1>
           <p>I read your toss, legs, swing and contact on this {deviceNoun()}, then draw the fix on your own serve.</p>
         </div>
         <div className="first-actions">

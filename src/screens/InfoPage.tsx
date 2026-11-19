@@ -15,6 +15,8 @@ interface Props {
   page: InfoPageId
   onBack: () => void
   onPage: (page: InfoPageId) => void
+  /** To the camera, from the pricing page while nothing is on sale (N7.6). */
+  onFilm?: () => void
 }
 
 const LEDES: Record<InfoPageId, string> = {
@@ -33,7 +35,7 @@ const LEDES: Record<InfoPageId, string> = {
  * the title and the list of pages hold the left pane while the page scrolls on
  * the right, the same pattern as the report; on a phone they stack.
  */
-export default function InfoPage({ page, onBack, onPage }: Props) {
+export default function InfoPage({ page, onBack, onPage, onFilm }: Props) {
   // What a search engine reads for this page, while it shows (N6.6): its own
   // description, and its own address as the canonical one where the site has one.
   useEffect(() => {
@@ -76,7 +78,7 @@ export default function InfoPage({ page, onBack, onPage }: Props) {
         </nav>
       </div>
       <article className="info-body" aria-label={INFO_TITLES[page]}>
-        {page === 'pricing' && <Pricing />}
+        {page === 'pricing' && <Pricing onFilm={onFilm} />}
         {page === 'accuracy' && <Accuracy onPage={go} />}
         {page === 'privacy' && <Privacy />}
         {page === 'terms' && <Terms onPage={go} />}
@@ -99,7 +101,7 @@ type Go = (p: InfoPageId) => (e: MouseEvent<HTMLAnchorElement>) => void
 
 /* ----------------------------------------------------------------- pricing */
 
-function Pricing() {
+function Pricing({ onFilm }: { onFilm?: () => void }) {
   const entitlement = useEntitlement()
   const plus = hasPlus(entitlement)
   return (
@@ -142,6 +144,13 @@ function Pricing() {
           </ul>
         </section>
       </div>
+      {/* One action when there is nothing to buy: the free plan starts by filming. */}
+      {onFilm && (PAYMENTS === 'off' || plus) && (
+        <button className="btn btn--primary btn--big pricing-film" onClick={onFilm}>
+          <Icon name="camera" size={20} />
+          Film my serve
+        </button>
+      )}
       <Section title="On either plan">
         <p>Your video never leaves your device, and nothing about your serve leaves unless you send it.</p>
       </Section>

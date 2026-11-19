@@ -226,6 +226,8 @@ export default function Report({
   const [pickingLevel, setPickingLevel] = useState(false)
   // Answered, either way: "work it out for me" leaves no level stored (N2.12).
   const [levelAnswered, setLevelAnswered] = useState(false)
+  /** The first serve's level guess, opened to correct it (N7.6). */
+  const [asking, setAsking] = useState(false)
   /** Which fix of the plan is open as a lesson. */
   const [lesson, setLesson] = useState<number>()
   const [sharingOpen, setSharingOpen] = useState(false)
@@ -261,6 +263,18 @@ export default function Report({
       ? 'A good score. Fix the warnings first.'
       : VERDICT[analysis.overallStatus]
   const live = isLive(analysis) && Boolean(videoUrl)
+  // A laptop that shows the clip in its left pane (N7.6). The right pane's
+  // picture would be a second copy of it, 300 px tall, between the warnings and
+  // the fix; there the number sits on a panel and nothing replays.
+  const [studio] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(min-width: 1024px)').matches === true &&
+      (live || Boolean(kept) || Boolean(analysis.track)),
+  )
+  useEffect(() => {
+    if (studio) setSettled(true)
+  }, [studio])
   // Which rubric these numbers were computed under: this build's for a fresh
   // report, and an unstamped saved one predates stamping.
   const rubric = isLive(analysis) ? (analysis.scoringVersion ?? SCORING_VERSION) : scoringVersionOf(analysis)
@@ -486,12 +500,16 @@ export default function Report({
       )}
 
       <section className="hero" data-settled={settled || !fresh ? 'true' : 'false'}>
-        <div className={`hero-stage${injuries.length ? ' hero-stage--short' : ''}`} onClick={() => setSettled(true)}>
-          {fresh && !settled && (
+        <div
+          className={`hero-stage${injuries.length ? ' hero-stage--short' : ''}${studio ? ' hero-stage--panel' : ''}`}
+          onClick={() => setSettled(true)}
+        >
+          {fresh && !settled && !studio && (
             <button type="button" className="sr-only" onClick={() => setSettled(true)}>
               Skip the replay
             </button>
           )}
+          {!studio && (
           <RevealStage
             analysis={analysis}
             swing={swing}
@@ -502,7 +520,8 @@ export default function Report({
             onSettled={() => setSettled(true)}
             label={stageLabel}
           />
-          <div className="hero-veil" aria-hidden="true" />
+          )}
+          {!studio && <div className="hero-veil" aria-hidden="true" />}
           <div className="hero-numbers">
             <div className="hero-score">
               <span className="hero-scoreline">
@@ -532,7 +551,6 @@ export default function Report({
         </div>
 
         <div className="hero-fix">
-          {moment && (settled || !fresh) && <MomentCard moment={moment} />}
           {previous &&
             (comparable ? (
               <p className="hero-delta">
@@ -608,6 +626,8 @@ export default function Report({
           </span>
           <Icon name="chevron" size={20} />
         </button>
+        {/* After the four answers, not between the number and the fix (N7.6). */}
+        {moment && (settled || !fresh) && <MomentCard moment={moment} />}
       </section>
 
       {/* The drills after the first are part of the full breakdown (N6.4). */}
@@ -651,14 +671,23 @@ export default function Report({
           order first shows, just under the first screen, and gone once told. */}
       {firstServe && !example && onPickTier && statedTier === undefined && !levelAnswered && isLive(analysis) && (
         <section className="level-ask" aria-label="Your level">
-          <LevelPicker
-            value={statedTier}
-            estimated={analysis.triage?.tier?.current}
-            onChange={(tier) => {
-              setLevelAnswered(true)
-              onPickTier(tier)
-            }}
-          />
+          <div className="levelled levelled--ask">
+            <span className="levelled-text">{levelled ?? 'Fixes ordered for club level'}. Not your level?</span>
+            <button className="levelled-btn" onClick={() => setAsking((v) => !v)} aria-expanded={asking}>
+              {asking ? 'Close' : 'Change'}
+              <Icon name="chevron" size={13} />
+            </button>
+          </div>
+          {asking && (
+            <LevelPicker
+              value={statedTier}
+              estimated={analysis.triage?.tier?.current}
+              onChange={(tier) => {
+                setLevelAnswered(true)
+                onPickTier(tier)
+              }}
+            />
+          )}
         </section>
       )}
 

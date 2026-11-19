@@ -20,7 +20,8 @@ export default function FirstRunStage({ racket = 'right' }: { racket?: 'left' | 
       mode="loop"
       at={swing.moments.contact ?? 0}
       rate={0.4}
-      fit={{ height: 0.54, feet: 0.84, across: 0.44 }}
+      // Feet at 70%, not 84% (N7.6): the sample report's peek sits under the serve.
+      fit={{ height: 0.48, feet: 0.7, across: 0.44 }}
       label="A real serve from a motion capture lab, playing slowly."
       className="stage-canvas"
     />

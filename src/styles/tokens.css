@@ -63,8 +63,10 @@
   /* --- score semantics ---------------------------------------------------- */
   --great: #5fe3a1;
   --great-dim: rgba(95, 227, 161, 0.14);
-  --good: #cdf94a;
-  --good-dim: rgba(205, 249, 74, 0.14);
+  /* Its own hue since N7.6: a quieter step of --great's green. As the accent,
+     a ring graded good read as the main action. */
+  --good: #a3d9bd;
+  --good-dim: rgba(163, 217, 189, 0.14);
   --fair: #ffb648;
   --fair-dim: rgba(255, 182, 72, 0.14);
   --work: #ff7a6b;

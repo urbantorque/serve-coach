@@ -254,6 +254,35 @@
     min-height: 0;
   }
 
+  /* The number on a panel, not over a second copy of the clip (N7.6). */
+  .report .hero-stage--panel {
+    height: auto;
+    min-height: 0;
+    padding: 20px 22px;
+    background: var(--panel);
+    box-shadow: var(--panel-edge);
+  }
+
+  .report .hero-stage--panel .hero-numbers {
+    position: static;
+  }
+
+  /* The number is the panel's whole job here, so it need not fill a phone's
+     width; and two warnings sit side by side, so the fix and the action reach
+     the first screen of a laptop under them (N7.6). */
+  .report .hero-stage--panel .t-score {
+    font-size: 96px;
+  }
+
+  .report > .injuries {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+
+  .report > .injuries > .injury-stop {
+    grid-column: 1 / -1;
+  }
+
   /* An injury warning leads the right pane, above the number (N7.1): the
      review studio had pulled the number and the fix up and left the warnings
      below them, under the first screen. */
@@ -431,16 +460,79 @@
      with nothing between: here the message is one block, its actions under it
      at a button's width, held in the middle of the height (N5.2). */
   .screen.problem {
-    justify-content: center;
-    gap: 36px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    align-content: center;
+    align-items: center;
+    gap: 36px 72px;
   }
 
-  .problem-text {
+  /* The words on the left, the one action beside them (N7.6): a block at
+     the left with the right half dark is a phone column on a wide screen. */
+  .screen.problem > .problem-text {
+    grid-column: 1;
     max-width: 720px;
   }
 
-  .problem-actions {
+  .screen.problem > .problem-actions {
+    grid-column: 2;
     width: 100%;
-    max-width: 420px;
+    max-width: 440px;
+    padding: 28px;
+    border-radius: var(--r-xl);
+    background: var(--panel);
+    box-shadow: var(--panel-edge);
+  }
+
+  /* A refused report, with no clip for the left pane: the picture takes it,
+     and the one action sits under the words, not above the picture. */
+  .report > .refusal {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: 28px 44px;
+    /* The words end where the picture does, so the action under them is
+       the next thing read, not a screen's height further down. */
+    align-items: end;
+  }
+
+  .report > .refusal > .hero-stage {
+    height: min(64vh, 600px);
+    margin: 0;
+  }
+
+  .report:has(> .refusal) > .report-bar {
+    order: 1;
+    grid-column: 2;
+  }
+
+  /* The session's plan: what it is on the left, the two ways to read it and
+     the way out on the right, instead of one column 1,080 px wide. */
+  .session .session-inner:has(> .session-choices) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 14px 56px;
+    align-content: center;
+    min-height: calc(100dvh - 120px);
+  }
+
+  .session-inner:has(> .session-choices) > * {
+    grid-column: 1;
+  }
+
+  .session-inner:has(> .session-choices) > .session-choices {
+    grid-column: 2;
+    grid-row: 1 / span 5;
+    align-self: center;
+  }
+
+  .session-inner:has(> .session-choices) > .session-choices ~ .session-note {
+    grid-column: 2;
+    grid-row: 6;
+  }
+
+  .session-inner:has(> .session-choices) > .session-choices ~ .btn {
+    grid-column: 2;
+    grid-row: 7;
   }
 }

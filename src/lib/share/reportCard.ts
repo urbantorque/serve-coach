@@ -22,7 +22,7 @@ const LIME = '#cdf94a'
 
 const STATUS_COLOR: Record<string, string> = {
   great: '#5fe3a1',
-  good: '#cdf94a',
+  good: '#a3d9bd',
   fair: '#ffb648',
   work: '#ff7a6b',
 }
@@ -381,7 +381,7 @@ export async function renderBasketCard(
   /* --- headline -------------------------------------------------------------- */
   ctx.font = font(700, 16)
   ctx.fillStyle = LIME
-  ctx.fillText('HOW REPEATABLE', textX, cy - 58)
+  ctx.fillText('How repeatable', textX, cy - 58)
   ctx.font = font(640, 34)
   ctx.fillStyle = FG
   ctx.fillText(`Across ${c.serves} serves`, textX, cy - 16)
@@ -470,7 +470,7 @@ export async function renderBasketCard(
 
     ctx.font = font(700, 15)
     ctx.fillStyle = isWeakest ? STATUS_COLOR.work : STATUS_COLOR.great
-    ctx.fillText(isWeakest ? 'WANDERS MOST' : 'HOLDS STEADIEST', PAD + 24, noteY + 30)
+    ctx.fillText(isWeakest ? 'Wanders most' : 'Holds steadiest', PAD + 24, noteY + 30)
     ctx.font = font(560, 21)
     ctx.fillStyle = FG
     ctx.fillText(m.label, PAD + 24, noteY + 58)
@@ -766,7 +766,7 @@ export async function renderTripCard(
   if (focusLines.length) {
     ctx.fillStyle = FAINT
     ctx.font = font(700, 22)
-    ctx.fillText('WORKING ON', PAD, focusTop - 14)
+    ctx.fillText('Working on', PAD, focusTop - 14)
     ctx.fillStyle = FG
     ctx.font = font(400, 30)
     drawLines(ctx, focusLines, PAD, focusTop + 24, 42)

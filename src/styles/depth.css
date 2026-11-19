@@ -92,7 +92,8 @@
   font-weight: 620;
   font-variant-numeric: tabular-nums;
   color: var(--fg-muted);
-  transition: all var(--fast) var(--ease);
+  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease), color var(--fast) var(--ease),
+    transform var(--fast) var(--ease);
 }
 
 /*
@@ -237,10 +238,8 @@
 /* The same kicker the block headings use, so a label inside a card and a label
    over a section are not two different sizes of the same idea. */
 .consistency-label {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 660;
-  letter-spacing: var(--tr-kicker);
-  text-transform: uppercase;
   color: var(--fg-faint);
 }
 
@@ -825,10 +824,8 @@
   border-radius: var(--r-pill);
   background: var(--lime-glow);
   color: var(--lime);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .drill-step-how {
@@ -860,10 +857,8 @@
   grid-template-columns: 1fr 1fr;
   margin-top: -4px;
   text-align: center;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
   color: var(--fg-muted);
 }
 
@@ -990,6 +985,13 @@
   border-top: 1px solid var(--hairline);
 }
 
+/* The first serve's level guess: the same row, with no rule above it. */
+.levelled--ask {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
 .levelled-text {
   font-size: 14px;
   line-height: var(--lh-snug);
@@ -1068,10 +1070,8 @@
 
 .level-pick legend {
   padding: 0;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--fg-faint);
 }
 
@@ -1150,12 +1150,6 @@
 
 /* Left-aligned, where the hero's copy of these was centred. In a card with a
    heading over it, centred chips read as a caption to nothing. */
-.reading-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-}
-
 /* What the camera angle could not see (D3.9): a quiet note under the chips,
    in the same ink as the serve-type note below it. */
 .reading-unseen {
@@ -1182,8 +1176,6 @@
   display: block;
   font-size: 15px;
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--fg-muted);
 }
 

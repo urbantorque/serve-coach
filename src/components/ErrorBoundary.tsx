@@ -105,15 +105,17 @@ export function CrashScreen(p: {
           <button className="btn btn--primary btn--big btn--full" onClick={p.onReload}>
             Reload the app
           </button>
-          <button className="btn btn--quiet btn--full" onClick={p.onBackup} disabled={p.backup === 'saving'}>
-            {p.backup === 'saving'
-              ? 'Saving…'
-              : p.backup === 'saved'
-                ? 'Backup saved'
-                : p.backup === 'failed'
-                  ? 'The backup failed. Try again'
-                  : 'Save a backup first'}
-          </button>
+          <p className="problem-also">
+            <button type="button" className="link-btn" onClick={p.onBackup} disabled={p.backup === 'saving'}>
+              {p.backup === 'saving'
+                ? 'Saving…'
+                : p.backup === 'saved'
+                  ? 'Backup saved'
+                  : p.backup === 'failed'
+                    ? 'The backup failed. Try again'
+                    : 'Save a backup first'}
+            </button>
+          </p>
           <details className="problem-more" open={p.confirming}>
             <summary>Still broken?</summary>
             {p.confirming ? (

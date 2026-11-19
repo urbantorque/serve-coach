@@ -217,6 +217,11 @@
   color: var(--fg-muted);
 }
 
+.pricing-film {
+  align-self: flex-start;
+  min-width: 260px;
+}
+
 .tier-list {
   display: flex;
   flex-direction: column;
@@ -235,7 +240,7 @@
 .tier-list li > svg {
   flex: none;
   margin-top: 3px;
-  color: var(--lime);
+  color: var(--fg-muted);
 }
 
 .tier-list strong {
@@ -269,7 +274,7 @@
 .plus-held svg {
   flex: none;
   margin-top: 4px;
-  color: var(--lime);
+  color: var(--fg-muted);
 }
 
 .info-section .plus-problem,

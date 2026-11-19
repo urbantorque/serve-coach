@@ -55,9 +55,11 @@
   background: var(--stage);
 }
 
+/* Under injury warnings the picture gives way (N7.6), so the fix still starts
+   on a phone's first screen under two of them. */
 .hero-stage--short {
-  height: min(38dvh, 320px);
-  min-height: 250px;
+  height: min(30dvh, 260px);
+  min-height: 210px;
   margin-top: 0;
   border-radius: var(--r-xl);
 }
@@ -177,7 +179,7 @@
 }
 
 .hero-kicker {
-  color: var(--lime);
+  color: var(--fg-muted);
 }
 
 .hero h1 {

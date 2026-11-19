@@ -145,7 +145,7 @@ check('a thigh is wider at the hip than the knee, and the racket arm heavier tha
     const upper = op.subs.find((s) => s.closed)!
     return dist(upper.points[0], upper.points[3])
   }
-  assert(width('rgb(205, 249, 74)') > width('rgba(120, 200, 255, 0.95)'), 'the racket arm is no heavier than the tossing arm')
+  assert(width('rgb(205, 249, 74)') > width('rgba(238, 242, 246, 0.56)'), 'the racket arm is no heavier than the tossing arm')
 })
 
 check('each ink is one fill, every band winds one way, so no joint is painted twice or punched out', () => {
@@ -154,7 +154,7 @@ check('each ink is one fill, every band winds one way, so no joint is painted tw
   // The bands of each ink in one fill. The racket arm's joint dots are a fill
   // of the same accent on top, which is the dot, not a second coat of limb.
   const banded = (o: Op) => o.subs.some((s) => s.closed && s.points.length === 4)
-  for (const style of ['rgba(238, 242, 246, 0.82)', 'rgba(120, 200, 255, 0.95)', 'rgb(205, 249, 74)']) {
+  for (const style of ['rgba(238, 242, 246, 0.82)', 'rgba(238, 242, 246, 0.56)', 'rgb(205, 249, 74)']) {
     assert(fills.filter((o) => o.style === style && banded(o)).length === 1, `${style} bands were filled more than once`)
   }
   const bands = fills.filter((o) => o.style !== 'rgba(238, 242, 246, 0.1)').flatMap((o) => o.subs)

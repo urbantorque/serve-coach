@@ -87,11 +87,11 @@ check('every fault either shows its measurement on its still or says why one fra
     if (!dials) continue
     if (evidence.shows === 'target') {
       const { texts } = still(dials, evidence.phase)
-      assert(texts.includes('AIM FOR'), `${flaw}'s ${evidence.phase} still carries no target`)
+      assert(texts.includes('Aim for'), `${flaw}'s ${evidence.phase} still carries no target`)
     } else if (evidence.shows === 'angle') {
       const { texts } = still(dials, evidence.phase)
       const label = ANNOTATIONS[evidence.phase]?.label
-      assert(label !== undefined && texts.includes(label.toUpperCase()), `${flaw}'s ${evidence.phase} still carries no arc`)
+      assert(label !== undefined && texts.includes(label), `${flaw}'s ${evidence.phase} still carries no arc`)
     } else {
       const without = still(dials, evidence.phase).strokes
       const withBall = still(dials, evidence.phase, { ball: true }).strokes
@@ -102,8 +102,8 @@ check('every fault either shows its measurement on its still or says why one fra
 })
 
 check('a contact inside its band carries no target, and a low one does', () => {
-  assert(!still({}, 'contact').texts.includes('AIM FOR'), 'a clean contact was given a target to aim for')
-  assert(still({ contactReach: 1.0 }, 'contact').texts.includes('AIM FOR'), 'a low contact was given none')
+  assert(!still({}, 'contact').texts.includes('Aim for'), 'a clean contact was given a target to aim for')
+  assert(still({ contactReach: 1.0 }, 'contact').texts.includes('Aim for'), 'a low contact was given none')
 })
 
 check('a low contact keeps its target when the ball was tracked, measured at the ball (L4.8)', () => {
@@ -117,7 +117,7 @@ check('a low contact keeps its target when the ball was tracked, measured at the
   assert(metrics.some((m) => m.id === 'ballContactHeight'), 'the ball was not read at contact')
   assert(!metrics.some((m) => m.id === 'contactHeight'), "the hand's row stayed beside the ball's")
   const { texts } = still(dials, 'contact', { ball: true })
-  assert(texts.includes('AIM FOR'), 'a low contact with a tracked ball carries no target')
+  assert(texts.includes('Aim for'), 'a low contact with a tracked ball carries no target')
   const t = frames[skel.keys.contact].t
   const at = ballInFrame(ball, t, 1)!
   const ghost = ghostFor({
@@ -141,9 +141,9 @@ check('the toss still says where the toss peaked, in the toss map\'s words', () 
   assert(p?.ahead !== undefined, 'the rig serve had no toss placement from the side')
   const label = placeLine('ahead', p!.ahead!)
   note(`toss still reads "${label}"`)
-  assert(texts.includes('TOSS PEAK') && texts.includes(label), 'the toss still carries no placement')
-  assert(!still({}, 'contact', { ball: true }).texts.includes('TOSS PEAK'), 'the placement was drawn on another still')
-  assert(!still({}, 'toss', { ball: true, rolled: true }).texts.includes('TOSS PEAK'), 'a levelled clip was given a vertical line')
+  assert(texts.includes('Toss peak') && texts.includes(label), 'the toss still carries no placement')
+  assert(!still({}, 'contact', { ball: true }).texts.includes('Toss peak'), 'the placement was drawn on another still')
+  assert(!still({}, 'toss', { ball: true, rolled: true }).texts.includes('Toss peak'), 'a levelled clip was given a vertical line')
 })
 
 report()

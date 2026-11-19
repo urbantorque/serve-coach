@@ -314,6 +314,8 @@ function ProgressBody({
         <div className="record-tiles" id="progress-records">
           {fig && (
             <div className="record-tile">
+              {/* A speed says "about" wherever it stands (DESIGN.md, N7.6). */}
+              <span className="record-about">about</span>
               <span className="t-figure tnum">{fig.best}</span>
               <span>{fig.unit} fastest</span>
             </div>

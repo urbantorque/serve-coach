@@ -202,10 +202,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
   color: var(--lime);
 }
 
@@ -400,10 +398,8 @@
 }
 
 .dtable th {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 660;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--fg-faint);
 }
 
@@ -689,6 +685,12 @@ button.tile {
 
 .record-tile .t-figure {
   color: var(--fg);
+}
+
+.record-about {
+  margin-bottom: -4px;
+  font-size: 15px;
+  color: var(--fg-muted);
 }
 
 .fault-grid {

@@ -107,6 +107,25 @@ check('every font size in every stylesheet is at least 14px', () => {
   assert(small.length === 0, `text under 14px:\n    ${small.join('\n    ')}`)
 })
 
+check('no stylesheet sets words in capitals, and a chip or a tag reads at 15px (N7.6)', () => {
+  // The copy is sentence case (DESIGN.md); capitals set in a stylesheet undo it
+  // where no copy check can see.
+  const caps: string[] = []
+  for (const file of filesUnder(path.join(process.cwd(), 'src'), '.css')) {
+    const css = fs.readFileSync(file, 'utf8')
+    for (const m of css.matchAll(/([^{}]+)\{[^{}]*text-transform:\s*uppercase/g)) {
+      caps.push(`${file.split(/[\\/]/).pop()}: ${m[1].trim()}`)
+    }
+  }
+  assert(caps.length === 0, `capitals where the copy is sentence case:\n    ${caps.join('\n    ')}`)
+  const controls = fs.readFileSync(path.join(process.cwd(), 'src', 'styles', 'controls.css'), 'utf8')
+  for (const name of ['chip', 'tag']) {
+    const rule = new RegExp(`(^|\\n)\\.${name} \\{([^}]*)\\}`).exec(controls)?.[2] ?? ''
+    const size = Number(/font-size:\s*([\d.]+)px/.exec(rule)?.[1])
+    assert(size >= 15, `.${name} reads at ${size}px`)
+  }
+})
+
 heading('Signposts a player can read (N4.4)')
 
 check('the labels that carry meaning are 15px and in the readable grey, not the faint one', () => {

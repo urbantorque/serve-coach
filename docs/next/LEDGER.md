@@ -946,3 +946,62 @@ Next in this wave, from N2.8:
   Confirmed and left: the triage bar at 0.85 (a measured trade recorded in
   N2.12, with no slack), and the week plan and glance, which never followed
   the report's order or only read its first fix.
+
+- [x] **N7.6 The designer's corrections: the fix above the fold, one action,
+  sentence case, one accent, and a landing that shows.** From the close-out
+  review (a product designer, each finding re-checked by a skeptic):
+  - **The fix above the fold on a laptop.** With the clip in the left pane,
+    the right pane drew it a second time, 300 px tall, between the warnings
+    and the fix, and replayed it there. It is now the number on a panel, and
+    nothing replays on the right, the number is a size smaller, and two
+    warnings sit side by side. On `?demo=injury` at 1440 by 900 the fix moved
+    from 929 to 666 px and the action from 1207 to 812. The moment card
+    follows the fix and its drill instead of sitting between the number and
+    the fix, at both sizes, and on a phone the picture under two warnings is
+    shorter, so the fix starts on the first screen (796 px at 375 by 812).
+  - **The level is a guess with one tap to correct**, as DESIGN.md asks, not a
+    form 485 px tall on a first serve: "Fixes ordered for club level. Not your
+    level?" with Change, which opens the picker.
+  - **The glance's chips.** They touched, because the row's gap lived in the
+    report's stylesheet; it is in the shared controls now. A tapped chip looks
+    chosen, as a toggle does. A refused clip shows the refusal and no tag
+    rows or set of ten, which the component's own comment already said.
+  - **No capitals.** Fifteen stylesheet rules set labels in capitals with
+    letter spacing, against the copy rule's sentence case; all are gone, those
+    labels and the chips and tags read at 15 px, and the callout on the clip
+    keeps its label's own case, as do "Aim for" and "Toss peak" on the
+    stills and the poster's labels. `wordsInChrome.test.ts` now fails on a
+    stylesheet that sets capitals, or a chip or tag under 15 px.
+  - **Lime is the accent again.** `--good` was the accent's own colour, so a
+    history ring graded good read as the main action; it is a quieter step of
+    `--great`'s green. The ticks and bolts that mark a list, and the kicker
+    over the fix, take the text's ink.
+  - **Two colours on a picture.** The tossing arm was blue, a third colour
+    beside coral for what I saw and lime for where to get to; it is the body's
+    own ink held back. Text on the clip sits on the app's glass, and the
+    canvas the lines are drawn on is hidden from screen readers, since the
+    player around it is labelled and keyboard-driven.
+  - **Problem screens.** The error screen had three stacked buttons and the
+    crash screen two plus a fold, which DESIGN.md bans; each has one button
+    now, and the other ways out are one quiet line under it, in plain
+    underlined ink rather than a second lime. On a laptop the
+    words sit on the left and the action on a panel beside them, where the
+    right half was dark.
+  - **A refused report** with no clip for the left pane puts its picture
+    there, and its one action under the words, not above the picture.
+  - **The practice session's plan** splits what it is from the two ways to
+    read it, instead of one column 1,080 px wide.
+  - **The landing** shows the top of the sample report on its picture: the
+    number, the first fix and its drill, in glass. The
+    headline is "See what to fix first", which no longer argues with "two to
+    four drills". `samplePeek.test.ts` builds the sample report and fails if
+    the landing's words drift from it. The fault is not drawn on the moving
+    serve: that is a lab serve, and the fix is the sample's, so drawing it
+    there would claim a fault the serve does not have.
+  - **Pricing** has a way forward while nothing is on sale: Film my serve.
+  - **Every speed says "about"**, Progress's fastest-speed tile included, as
+    DESIGN.md asks; it was the one place a bare speed still stood.
+  Left as they are: the lines on the clip on by default (off, the clip would
+  lose the fault drawn on it too, and the lines no longer carry a third colour
+  or capitals), and the rail's Studio and Pathways, which DESIGN.md names and
+  the app keeps inside the report and Today: the owner's call, in OWNER-STEPS.

@@ -222,10 +222,8 @@
 
 .metric-aim-key {
   flex: none;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: var(--tr-kicker);
-  text-transform: uppercase;
   color: var(--fg-faint);
 }
 
@@ -284,10 +282,8 @@
 
 .unscored-title {
   margin-bottom: 12px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: var(--tr-kicker);
-  text-transform: uppercase;
   color: var(--fg-faint);
 }
 
@@ -344,11 +340,9 @@
   border-radius: 999px;
   background: var(--ink-3);
   border: 1px solid var(--hairline);
-  font-size: 14px;
+  font-size: 15px;
   font-style: normal;
   font-weight: 600;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
   color: var(--fg-muted);
   vertical-align: 1px;
 }
@@ -388,8 +382,6 @@
 .drill-kicker {
   font-size: 15px;
   font-weight: 700;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
   color: var(--fg-muted);
 }
 
@@ -585,10 +577,8 @@
 
 .tshape-key-label {
   flex: none;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: var(--tr-kicker);
-  text-transform: uppercase;
   color: var(--fg-faint);
 }
 
