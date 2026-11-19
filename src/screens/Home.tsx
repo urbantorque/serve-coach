@@ -17,9 +17,12 @@ import type { PracticeSession } from '../lib/session/session'
 import { DeltaChip } from '../components/Trend'
 import { deviceNoun } from '../lib/device'
 import type { InfoPageId } from '../lib/routes'
+import { useCan } from '../components/usePlan'
 
 const FirstRunStage = lazy(() => import('../components/FirstRunStage'))
 const FirstRunMore = lazy(() => import('../components/FirstRunMore'))
+// Only when a gate is shut, which the app never does until paid plans are on (N6.4).
+const Locked = lazy(() => import('../components/Locked'))
 const ServeCards = lazy(() => import('../components/ServeCards'))
 const StepPassed = lazy(() => import('../components/StepPassed'))
 const SessionBody = lazy(() => import('../components/ProgrammeSheets').then((m) => ({ default: m.SessionBody })))
@@ -109,6 +112,7 @@ export default function Home({
   onStartFresh,
 }: Props) {
   const [sheet, setSheet] = useState<'session' | 'programme' | null>(null)
+  const allow = useCan()
   const known = sessionsLoaded && sessions.length > 0
   const evidence = useMemo(() => sessionEvidence(practiceSessions), [practiceSessions])
   const more = useMemo(() => ({ tags, ledger, practice: practiceSessions }), [tags, ledger, practiceSessions])
@@ -228,7 +232,16 @@ export default function Home({
         </Suspense>
       )}
 
-      {programme && current && (
+      {programme && current && !allow('pathway') && (
+        <Suspense fallback={null}>
+          <Locked feature="pathway">
+            <p>
+              Your goal: <strong>{programme.title}</strong>, in {programme.weeks.length} steps.
+            </p>
+          </Locked>
+        </Suspense>
+      )}
+      {programme && current && allow('pathway') && (
         <section className="next-up" aria-labelledby="next-title">
           <button className="next-goal" onClick={() => setSheet('programme')}>
             <span className="next-label">Your goal</span>

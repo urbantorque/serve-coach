@@ -12,6 +12,8 @@ import { PLACEMENT } from '../lib/placement'
 import { SESSION_SAMPLE, costLeft, guessServes, minutesOf, planChoices, speedCostLine, type PlanChoice } from '../lib/session/plan'
 import { toRead, type PracticeSession, type SessionStage } from '../lib/session/session'
 import { deviceNoun } from '../lib/device'
+import Locked from '../components/Locked'
+import { useCan } from '../components/usePlan'
 
 export type { SessionStage }
 
@@ -70,6 +72,7 @@ export default function Session({
   movedAt,
   onLadderStep,
 }: Props) {
+  const allow = useCan()
   const label = clipLabel(session.fileName)
   const length = minutesOf(session.duration).replace(/^about /, '')
   const chosen = session.chosen?.length
@@ -85,8 +88,14 @@ export default function Session({
           <p className="analyzing-file">{label}</p>
           {resuming ? (
             <Resume session={session} perSampleMs={stage.state === 'planning' ? stage.perSampleMs : undefined} />
-          ) : (
+          ) : allow('sessions') ? (
             <Choices session={session} stage={stage} onStart={onStart} />
+          ) : (
+            <Locked feature="sessions">
+              <p>
+                About <strong className="tnum">{guessServes(session.duration)}</strong> serves in {length} of video, each read and set against the rest.
+              </p>
+            </Locked>
           )}
           {resuming &&
             (canRead ? (
@@ -101,9 +110,11 @@ export default function Session({
                 </button>
               </>
             ))}
-          <p className="session-note">
-            Keep the app open while it reads. If you leave, it pauses and keeps its place.
-          </p>
+          {(resuming || allow('sessions')) && (
+            <p className="session-note">
+              Keep the app open while it reads. If you leave, it pauses and keeps its place.
+            </p>
+          )}
           <button className="btn btn--ghost btn--full" onClick={onLeave}>
             {resuming ? 'Not now' : 'Cancel'}
           </button>

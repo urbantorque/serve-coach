@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import '../styles/blocks.css'
 import '../styles/depth.css'
 import '../styles/fundamentals.css'
@@ -10,6 +10,9 @@ import FiringTimeline from '../components/FiringTimeline'
 import KeptVideo from '../components/KeptVideo'
 import type { TossMap as TossMapData } from '../lib/tossMap'
 import FundamentalCard from '../components/FundamentalCard'
+import Locked from '../components/Locked'
+import { PageNav } from '../components/pageNav'
+import { useCan } from '../components/usePlan'
 import LevelPicker from '../components/LevelPicker'
 import PosePlayer from '../components/PosePlayer'
 import PracticeCard from '../components/PracticeCard'
@@ -144,6 +147,8 @@ interface Props {
   fixtureExport?: boolean
   /** This is the example report, not the player's own serve. */
   example?: boolean
+  /** The player's first serve, which any plan reads in full (N6.4). */
+  firstServe?: boolean
 }
 
 /** A saved session has no `frames`, so the player is only offered live. */
@@ -160,6 +165,7 @@ const isLive = (a: Analysis | Session): a is Analysis =>
  * serve side by side and in motion, and one fold for everything measured.
  */
 export default function Report({
+  firstServe,
   analysis,
   videoUrl,
   previous,
@@ -216,6 +222,11 @@ export default function Report({
   const consistency = hidSpreads ? undefined : analysis.consistency
   // One fold, closed, until a basket the player asked for arrives.
   const [moreOpen, setMoreOpen] = useState(false)
+  // The paid gates (N6.4). The sample report is a demonstration, so it is always whole.
+  const allow = useCan()
+  const openPage = useContext(PageNav)
+  const fullRead = example || allow('breakdown', { firstServe })
+  const showCompare = example || allow('compare')
   const hadBasket = useRef(Boolean(consistency))
   useEffect(() => {
     if (consistency && !hadBasket.current) setMoreOpen(true)
@@ -366,7 +377,15 @@ export default function Report({
         card={sharing}
         onCard={() => void share()}
         coach={sendingCoach}
-        onCoach={() => void sendCoach()}
+        onCoach={
+          allow('coachShare')
+            ? () => void sendCoach()
+            : () => {
+                setSharingOpen(false)
+                openPage('pricing')
+              }
+        }
+        coachPlus={!allow('coachShare')}
         clip={clipping}
         onClip={swing && clipsWork() ? () => void makeClip() : undefined}
       />
@@ -551,7 +570,8 @@ export default function Report({
         </button>
       </section>
 
-      {plan.length > 1 && (
+      {/* The drills after the first are part of the full breakdown (N6.4). */}
+      {fullRead && plan.length > 1 && (
         <section className="plan" aria-labelledby="plan-title">
           <h2 className="t-headline" id="plan-title">
             Then, in this order
@@ -579,7 +599,7 @@ export default function Report({
           )}
         </section>
       )}
-      {plan.length === 1 && suppressed && (
+      {(plan.length === 1 || !fullRead) && suppressed && (
         <p className="plan-held">
           <Cue text={suppressed} />
         </p>
@@ -612,7 +632,19 @@ export default function Report({
         </section>
       )}
 
-      {besideModel && (
+      {besideModel && !showCompare && (
+        <Locked feature="compare">
+          <p>
+            Your <strong>{focusPhase!.label.toLowerCase()}</strong>, set beside a model serve's at the same moment.
+          </p>
+          {best && best.id !== analysis.id && (
+            <p>
+              Your best so far scored <strong className="tnum">{best.overall}</strong>.
+            </p>
+          )}
+        </Locked>
+      )}
+      {besideModel && showCompare && (
         <SideBySide
           swing={swing!}
           moment={focusMoment!}
@@ -772,181 +804,199 @@ export default function Report({
         <Term id="racketDrop" />
       </p>
 
-      <details className="report-more" open={moreOpen} onToggle={(e) => setMoreOpen((e.currentTarget as HTMLDetailsElement).open)}>
-        <summary className="report-more-head">
-          <span>Everything I measured</span>
-          <Icon name="chevron" size={18} />
-        </summary>
-        <div className="report-more-body">
-          {analysis.speed && 'miss' in analysis.speed && (
-            <section className="speed-why" aria-label="Serve speed">
-              <h2 className="block-title">Serve speed</h2>
-              <p className="speed-range">{SPEED_MISS_LINE[analysis.speed.miss]}</p>
-            </section>
-          )}
+      {fullRead ? (
+        <details className="report-more" open={moreOpen} onToggle={(e) => setMoreOpen((e.currentTarget as HTMLDetailsElement).open)}>
+          <summary className="report-more-head">
+            <span>Everything I measured</span>
+            <Icon name="chevron" size={18} />
+          </summary>
+          <div className="report-more-body">
+            {analysis.speed && 'miss' in analysis.speed && (
+              <section className="speed-why" aria-label="Serve speed">
+                <h2 className="block-title">Serve speed</h2>
+                <p className="speed-range">{SPEED_MISS_LINE[analysis.speed.miss]}</p>
+              </section>
+            )}
 
-          {analysis.serves && analysis.serves.count > 1 && onCheckConsistency && !consistency && (
-            <section className="serves-compare">
-              <button className="btn btn--ghost btn--full" onClick={onCheckConsistency}>
-                <Icon name="target" size={16} />
-                {analysis.serves.count > MAX_CONSISTENCY_SERVES
-                  ? `Score your last ${MAX_CONSISTENCY_SERVES} serves`
-                  : `Score all ${analysis.serves.count} serves in this clip`}
-              </button>
-            </section>
-          )}
-
-          {consistency && (
-            <ConsistencyPanel
-              consistency={consistency}
-              onDismiss={() => setHidSpreads(true)}
-              pair={servePair}
-              createdAt={analysis.createdAt}
-              bestGap={bestGap}
-              gapDelta={basketGapDelta}
-              clipServes={analysis.serves?.count}
-            />
-          )}
-
-          {tossMap && (
-            <section className="block">
-              <h2 className="block-title">{tossMap.axis === 'ahead' ? 'Your tosses, front to back' : 'Your tosses, side to side'}</h2>
-              <TossMap map={tossMap} />
-            </section>
-          )}
-
-          {!example && analysis.quality.warnings.length > 0 && (
-            <section className="notes">
-              {analysis.quality.warnings.map((w) => (
-                <p key={w} className="note">
-                  {w}
-                </p>
-              ))}
-            </section>
-          )}
-
-          <section className="reading" aria-label="How this clip was read">
-            <h2 className="block-title">How I read this clip</h2>
-            <div className="reading-chips">
-              {onFlipHandedness ? (
-                <button className="chip chip--button" onClick={onFlipHandedness} aria-label={`${analysis.handedness === 'right' ? 'Right-handed' : 'Left-handed'}. Tap if I read the wrong hand`}>
-                  {analysis.handedness === 'right' ? 'Right-handed' : 'Left-handed'}
-                  <Icon name="chevron" size={13} />
+            {analysis.serves && analysis.serves.count > 1 && onCheckConsistency && !consistency && (
+              <section className="serves-compare">
+                <button className="btn btn--ghost btn--full" onClick={onCheckConsistency}>
+                  <Icon name="target" size={16} />
+                  {analysis.serves.count > MAX_CONSISTENCY_SERVES
+                    ? `Score your last ${MAX_CONSISTENCY_SERVES} serves`
+                    : `Score all ${analysis.serves.count} serves in this clip`}
                 </button>
-              ) : (
-                <span className="chip">{analysis.handedness === 'right' ? 'Right-handed' : 'Left-handed'}</span>
-              )}
-              <span className="chip">
-                {analysis.quality.view === 'side' ? 'Side view' : analysis.quality.view === 'front-back' ? 'Front / back view' : 'Angled view'}
-              </span>
-              <span className={`chip${analysis.quality.confidence < SOFT_READ ? ' chip--warn' : ''}`}>
-                {readQuality(analysis.quality.confidence)}
-              </span>
-              {analysis.diagnosis?.stance && (
-                <span className="chip">
-                  <Term id="stance">{analysis.diagnosis.stance.kind === 'pinpoint' ? 'Pinpoint stance' : 'Platform stance'}</Term>
-                </span>
-              )}
-            </div>
+              </section>
+            )}
 
-            {unseenLines(analysis.diagnosis).map((line) => (
-              <p key={line} className="reading-unseen">
-                {line}
-              </p>
-            ))}
+            {consistency && (
+              <ConsistencyPanel
+                consistency={consistency}
+                onDismiss={() => setHidSpreads(true)}
+                pair={servePair}
+                createdAt={analysis.createdAt}
+                bestGap={bestGap}
+                gapDelta={basketGapDelta}
+                clipServes={analysis.serves?.count}
+              />
+            )}
 
-            <div className="judged">
-              <span className="t-overline judged-lead">Judged as</span>
-              <div className="judged-options">
-                {onPickServeType ? (
-                  (Object.keys(SERVE_TYPES) as ServeType[]).map((t) => (
-                    <button
-                      key={t}
-                      className={`serve-chip${analysis.serveType === t ? ' is-on' : ''}`}
-                      aria-pressed={analysis.serveType === t}
-                      disabled={analysis.serveType === t}
-                      onClick={() => onPickServeType(t)}
-                    >
-                      {SERVE_TYPES[t].label}
-                    </button>
-                  ))
-                ) : (
-                  <span className="chip">{SERVE_TYPES[analysis.serveType].label}</span>
-                )}
-              </div>
-              <p className="judged-note">{SERVE_TYPES[analysis.serveType].blurb}</p>
-            </div>
+            {tossMap && (
+              <section className="block">
+                <h2 className="block-title">{tossMap.axis === 'ahead' ? 'Your tosses, front to back' : 'Your tosses, side to side'}</h2>
+                <TossMap map={tossMap} />
+              </section>
+            )}
 
-            {levelled && (
-              <div className="levelled">
-                <span className="levelled-text">{levelled}</span>
-                {onPickTier && (
-                  <button className="levelled-btn" onClick={() => setPickingLevel((v) => !v)} aria-expanded={pickingLevel}>
-                    {pickingLevel ? 'Close' : 'Change'}
+            {!example && analysis.quality.warnings.length > 0 && (
+              <section className="notes">
+                {analysis.quality.warnings.map((w) => (
+                  <p key={w} className="note">
+                    {w}
+                  </p>
+                ))}
+              </section>
+            )}
+
+            <section className="reading" aria-label="How this clip was read">
+              <h2 className="block-title">How I read this clip</h2>
+              <div className="reading-chips">
+                {onFlipHandedness ? (
+                  <button className="chip chip--button" onClick={onFlipHandedness} aria-label={`${analysis.handedness === 'right' ? 'Right-handed' : 'Left-handed'}. Tap if I read the wrong hand`}>
+                    {analysis.handedness === 'right' ? 'Right-handed' : 'Left-handed'}
                     <Icon name="chevron" size={13} />
                   </button>
+                ) : (
+                  <span className="chip">{analysis.handedness === 'right' ? 'Right-handed' : 'Left-handed'}</span>
+                )}
+                <span className="chip">
+                  {analysis.quality.view === 'side' ? 'Side view' : analysis.quality.view === 'front-back' ? 'Front / back view' : 'Angled view'}
+                </span>
+                <span className={`chip${analysis.quality.confidence < SOFT_READ ? ' chip--warn' : ''}`}>
+                  {readQuality(analysis.quality.confidence)}
+                </span>
+                {analysis.diagnosis?.stance && (
+                  <span className="chip">
+                    <Term id="stance">{analysis.diagnosis.stance.kind === 'pinpoint' ? 'Pinpoint stance' : 'Platform stance'}</Term>
+                  </span>
                 )}
               </div>
-            )}
-            {levelled && onPickTier && pickingLevel && (
-              <>
-                <LevelPicker
-                  value={statedTier}
-                  estimated={analysis.triage?.tier?.current}
-                  onChange={(tier) => {
-                    setPickingLevel(false)
-                    onPickTier(tier)
-                  }}
-                />
-                {!isLive(analysis) && (
-                  <p className="levelled-note">
-                    This report has no footage behind it, so its verdict stays as it is. The level applies from your next clip on.
-                  </p>
-                )}
-              </>
-            )}
-            {onGlance && (
-              <button className="link-btn" onClick={onGlance}>
-                At a glance
-                <Icon name="chevron" size={13} />
-              </button>
-            )}
-          </section>
 
-          <section className="block">
-            <h2 className="block-title">Every area I scored</h2>
-            <div className="fcards">
-              {analysis.fundamentals.map((f) => (
-                <FundamentalCard
-                  key={f.id}
-                  fundamental={f}
-                  change={deltas[f.id]}
-                  breakdown={breakdowns.get(f.id)}
-                  onSeek={live ? goToPhase : undefined}
-                />
+              {unseenLines(analysis.diagnosis).map((line) => (
+                <p key={line} className="reading-unseen">
+                  {line}
+                </p>
               ))}
-            </div>
-          </section>
 
-          {!analysis.diagnosis?.firingOrder && analysis.diagnosis?.legLead && (
-            <section className="block">
-              <h2 className="block-title">
-                <Term id="firingOrder">Your legs and your arm</Term>
-              </h2>
-              <p className="reading-unseen">{legLeadLine(analysis.diagnosis.legLead)}</p>
-            </section>
-          )}
+              <div className="judged">
+                <span className="t-overline judged-lead">Judged as</span>
+                <div className="judged-options">
+                  {onPickServeType ? (
+                    (Object.keys(SERVE_TYPES) as ServeType[]).map((t) => (
+                      <button
+                        key={t}
+                        className={`serve-chip${analysis.serveType === t ? ' is-on' : ''}`}
+                        aria-pressed={analysis.serveType === t}
+                        disabled={analysis.serveType === t}
+                        onClick={() => onPickServeType(t)}
+                      >
+                        {SERVE_TYPES[t].label}
+                      </button>
+                    ))
+                  ) : (
+                    <span className="chip">{SERVE_TYPES[analysis.serveType].label}</span>
+                  )}
+                </div>
+                <p className="judged-note">{SERVE_TYPES[analysis.serveType].blurb}</p>
+              </div>
 
-          {analysis.diagnosis?.firingOrder && (
-            <section className="block">
-              <h2 className="block-title">
-                <Term id="firingOrder">The order you fired in</Term>
-              </h2>
-              <FiringTimeline chain={analysis.diagnosis.chain} order={analysis.diagnosis.firingOrder} />
+              {levelled && (
+                <div className="levelled">
+                  <span className="levelled-text">{levelled}</span>
+                  {onPickTier && (
+                    <button className="levelled-btn" onClick={() => setPickingLevel((v) => !v)} aria-expanded={pickingLevel}>
+                      {pickingLevel ? 'Close' : 'Change'}
+                      <Icon name="chevron" size={13} />
+                    </button>
+                  )}
+                </div>
+              )}
+              {levelled && onPickTier && pickingLevel && (
+                <>
+                  <LevelPicker
+                    value={statedTier}
+                    estimated={analysis.triage?.tier?.current}
+                    onChange={(tier) => {
+                      setPickingLevel(false)
+                      onPickTier(tier)
+                    }}
+                  />
+                  {!isLive(analysis) && (
+                    <p className="levelled-note">
+                      This report has no footage behind it, so its verdict stays as it is. The level applies from your next clip on.
+                    </p>
+                  )}
+                </>
+              )}
+              {onGlance && (
+                <button className="link-btn" onClick={onGlance}>
+                  At a glance
+                  <Icon name="chevron" size={13} />
+                </button>
+              )}
             </section>
+
+            <section className="block">
+              <h2 className="block-title">Every area I scored</h2>
+              <div className="fcards">
+                {analysis.fundamentals.map((f) => (
+                  <FundamentalCard
+                    key={f.id}
+                    fundamental={f}
+                    change={deltas[f.id]}
+                    breakdown={breakdowns.get(f.id)}
+                    onSeek={live ? goToPhase : undefined}
+                  />
+                ))}
+              </div>
+            </section>
+
+            {!analysis.diagnosis?.firingOrder && analysis.diagnosis?.legLead && (
+              <section className="block">
+                <h2 className="block-title">
+                  <Term id="firingOrder">Your legs and your arm</Term>
+                </h2>
+                <p className="reading-unseen">{legLeadLine(analysis.diagnosis.legLead)}</p>
+              </section>
+            )}
+
+            {analysis.diagnosis?.firingOrder && (
+              <section className="block">
+                <h2 className="block-title">
+                  <Term id="firingOrder">The order you fired in</Term>
+                </h2>
+                <FiringTimeline chain={analysis.diagnosis.chain} order={analysis.diagnosis.firingOrder} />
+              </section>
+            )}
+          </div>
+        </details>
+      ) : (
+        <Locked feature="breakdown">
+          {plan.length > 1 && (
+            <p>
+              <strong className="tnum">{plan.length - 1}</strong> more {plan.length === 2 ? 'fix' : 'fixes'} after this one, worst first.
+            </p>
           )}
-        </div>
-      </details>
+          <div className="locked-rows">
+            {analysis.fundamentals.map((f) => (
+              <Fragment key={f.id}>
+                <span>{f.label}</span>
+                <span className="tnum">{f.score}</span>
+              </Fragment>
+            ))}
+          </div>
+        </Locked>
+      )}
 
       {/* Ground-truth fixtures, behind `?fixture`: no ordinary player meets this. */}
       {fixtureExport && isLive(analysis) && (

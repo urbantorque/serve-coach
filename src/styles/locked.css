@@ -1,0 +1,70 @@
+/* ============================================================================
+   A paid feature, closed (N6.4): what is behind it on the player's own data,
+   what it does, and the way to the plans. One panel where the feature was.
+   ========================================================================= */
+
+.locked {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border-radius: var(--r-lg);
+  background: var(--panel);
+  box-shadow: var(--panel-edge), inset 0 0 0 1px var(--hairline);
+}
+
+.locked-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--lime);
+}
+
+.locked-title {
+  font-size: 19px;
+  font-weight: 680;
+  letter-spacing: -0.015em;
+  color: var(--fg);
+}
+
+.locked-line {
+  font-size: 15px;
+  line-height: var(--lh-copy);
+  color: var(--fg-muted);
+}
+
+/* The player's own data, as a taste: readable, quieter than the real thing. */
+.locked-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  background: var(--ink-2);
+  font-size: 15px;
+  color: var(--fg-muted);
+}
+
+.locked-preview strong {
+  color: var(--fg);
+  font-weight: 650;
+}
+
+.locked-rows {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 16px;
+}
+
+.locked-rows .tnum {
+  color: var(--fg);
+  font-weight: 650;
+  text-align: right;
+}
+
+/* Under a list in a sheet, it stands apart from the last row. */
+.sheet-body .locked {
+  margin-top: 16px;
+}

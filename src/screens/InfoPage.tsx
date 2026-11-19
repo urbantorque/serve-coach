@@ -6,6 +6,9 @@ import { deviceNoun } from '../lib/device'
 import { ATTRIBUTION } from '../lib/figure/modelCredit'
 import { INFO_PAGES, INFO_TITLES, pathFor, type InfoPageId } from '../lib/routes'
 import { POLICY_DATE, SITE } from '../lib/site'
+import { FEATURES } from '../lib/plans'
+import { FEATURE_COPY, FREE_COPY } from '../lib/planCopy'
+import { GATED, PRICE_LINE } from '../lib/billing/config'
 
 interface Props {
   page: InfoPageId
@@ -14,6 +17,7 @@ interface Props {
 }
 
 const LEDES: Record<InfoPageId, string> = {
+  pricing: 'What stays free, what Plus adds, and what it costs. Your video never leaves your device on either.',
   accuracy: 'What I measure, how steady each reading is, how I know, and what I cannot see. Built from the tables I grade with.',
   privacy: 'Your video never leaves your device. Here is everything I keep, and where it lives.',
   terms: 'What Serve Coach is, what it is not, and what you agree to by using it.',
@@ -55,6 +59,7 @@ export default function InfoPage({ page, onBack, onPage }: Props) {
         </nav>
       </div>
       <article className="info-body" aria-label={INFO_TITLES[page]}>
+        {page === 'pricing' && <Pricing />}
         {page === 'accuracy' && <Accuracy onPage={go} />}
         {page === 'privacy' && <Privacy />}
         {page === 'terms' && <Terms onPage={go} />}
@@ -74,6 +79,55 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 type Go = (p: InfoPageId) => (e: MouseEvent<HTMLAnchorElement>) => void
+
+/* ----------------------------------------------------------------- pricing */
+
+function Pricing() {
+  return (
+    <>
+      {!GATED && (
+        <Section title="Everything is open for now">
+          <p>Every feature on this page is free while Plus is not on sale. When it starts, the free column is what stays free.</p>
+        </Section>
+      )}
+      <div className="tiers">
+        <section className="tier" aria-labelledby="plan-free">
+          <h2 className="t-headline" id="plan-free">
+            Free
+          </h2>
+          <ul className="tier-list">
+            {FREE_COPY.map((line) => (
+              <li key={line}>
+                <Icon name="check" size={16} />
+                {line}
+              </li>
+            ))}
+          </ul>
+        </section>
+        <section className="tier tier--plus" aria-labelledby="plan-plus">
+          <h2 className="t-headline" id="plan-plus">
+            Plus
+          </h2>
+          {PRICE_LINE && <p className="tier-price">{PRICE_LINE}</p>}
+          <p className="tier-lede">Everything in free, and:</p>
+          <ul className="tier-list">
+            {FEATURES.map((f) => (
+              <li key={f}>
+                <Icon name="lightning" size={16} />
+                <span>
+                  <strong>{FEATURE_COPY[f].name}.</strong> {FEATURE_COPY[f].line}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+      <Section title="On either plan">
+        <p>Your video never leaves your device, and nothing about your serve leaves unless you send it.</p>
+      </Section>
+    </>
+  )
+}
 
 /* ---------------------------------------------------------------- accuracy */
 

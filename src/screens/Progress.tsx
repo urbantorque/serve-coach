@@ -50,6 +50,9 @@ import { graduation } from '../lib/graduation'
 import { graduationCard } from '../lib/graduationCard'
 import FixedPair from '../components/FixedPair'
 import HistoryList from '../components/HistoryList'
+import Locked from '../components/Locked'
+import { useCan } from '../components/usePlan'
+import { FREE_HISTORY } from '../lib/plans'
 import { playerBaseline } from '../lib/baseline'
 import { serveLinks } from '../lib/serveLinks'
 import { FaultGrid, InRateBars, LoadBars, ScoreRibbon } from '../components/ProgressCharts'
@@ -222,6 +225,17 @@ function ProgressBody({
     },
   })
   const listed = sessions.filter((s) => s.id !== pendingDelete)
+  // Free reopens the newest few; the rest stay on the device behind Plus (N6.4).
+  const allow = useCan()
+  const open = allow('history') ? listed : listed.slice(0, FREE_HISTORY)
+  const closed = listed.length - open.length
+  const closedRow = closed > 0 && (
+    <Locked feature="history">
+      <p>
+        <strong className="tnum">{closed}</strong> older {closed === 1 ? 'serve' : 'serves'}, still on this device.
+      </p>
+    </Locked>
+  )
   const [servesOpen, setServesOpen] = useState(showServes)
   const [wideScreen] = useState(wide)
 
@@ -257,7 +271,8 @@ function ProgressBody({
             <figcaption>A model serve, drawn as one picture. Not yours.</figcaption>
           </figure>
         )}
-        {sessions.length > 0 && onOpen && <HistoryList sessions={listed} tags={tagMap} onOpen={onOpen} onDelete={remove} />}
+        {sessions.length > 0 && onOpen && <HistoryList sessions={open} tags={tagMap} onOpen={onOpen} onDelete={remove} />}
+        {sessions.length > 0 && onOpen && closedRow}
       </div>
     )
   }
@@ -351,7 +366,17 @@ function ProgressBody({
         </section>
       )}
 
-      {(fastest || quicker || numberSpeeds) && (
+      {(fastest || quicker || numberSpeeds) && !allow('speedTrend') && (
+        <Locked feature="speedTrend">
+          {fastest && <p>{fastestLine(fastest, unit)}</p>}
+          {tripSpeeds.length > 0 && (
+            <p>
+              <strong className="tnum">{tripSpeeds.length}</strong> {tripSpeeds.length === 1 ? 'trip' : 'trips'} with a speed to set side by side.
+            </p>
+          )}
+        </Locked>
+      )}
+      {(fastest || quicker || numberSpeeds) && allow('speedTrend') && (
         <section className="block" id="progress-speed">
           <h2 className="block-title">Serve speed</h2>
           {tripSpeeds.length >= 2 && (
@@ -558,7 +583,7 @@ function ProgressBody({
               </p>
             )}
             <HistoryList
-              sessions={listed}
+              sessions={open}
               tags={tagMap}
               onOpen={(s) => {
                 commitDelete(pendingDelete)
@@ -566,6 +591,7 @@ function ProgressBody({
               }}
               onDelete={remove}
             />
+            {closedRow}
             <p className="sheet-note">Reports stay on this device only.</p>
           </Sheet>
         </>

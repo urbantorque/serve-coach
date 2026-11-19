@@ -3,6 +3,7 @@ import { Icon, Sheet } from './components/primitives'
 import AppSheets, { type AppSheet } from './components/AppSheets'
 import TabBar from './components/TabBar'
 import { useBackLayer } from './components/useBackLayer'
+import { PageNav } from './components/pageNav'
 import { useWakeLock, wakeLockLine } from './components/useWakeLock'
 import { useHistory } from './components/useHistory'
 import { useOfflineWarmup } from './components/useOfflineWarmup'
@@ -664,6 +665,8 @@ export default function App() {
 
   return (
     <div className={(view.kind === 'home' || view.kind === 'progress') && sessions.length > 0 ? 'app has-bar' : 'app'}>
+      {/* Any paywall below opens the plans through this (N6.4). */}
+      <PageNav.Provider value={showPage}>
       <main className="shell">
         <Suspense fallback={null}>
           {view.kind === 'home' && (
@@ -835,6 +838,8 @@ export default function App() {
            */}
           {shownReport && (
             <Report
+              // The first serve is read in full on any plan (N6.4).
+              firstServe={sessions.length === 0 || shownReport.id === sessions[sessions.length - 1]?.id}
               /*
                * Keyed, so the report's own state cannot outlive the report.
                *
@@ -1121,6 +1126,7 @@ export default function App() {
           if (file) void openClip(file)
         }}
       />
+      </PageNav.Provider>
     </div>
   )
 }

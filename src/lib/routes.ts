@@ -33,10 +33,11 @@ export type RoutedView =
  * what it does with their data, the terms, and whose work is in it. Each has
  * an address of its own, so a link from anywhere opens it.
  */
-export const INFO_PAGES = ['accuracy', 'privacy', 'terms', 'credits'] as const
+export const INFO_PAGES = ['pricing', 'accuracy', 'privacy', 'terms', 'credits'] as const
 export type InfoPageId = (typeof INFO_PAGES)[number]
 
 export const INFO_TITLES: Record<InfoPageId, string> = {
+  pricing: 'Plans',
   accuracy: 'How sure I am',
   privacy: 'Privacy',
   terms: 'Terms',

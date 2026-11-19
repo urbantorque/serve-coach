@@ -10,6 +10,8 @@ interface Props {
   /** Offered where the browser can record, and there is a body to play. */
   clip?: SharingState
   onClip?: () => void
+  /** The coach's page is part of Plus, and this player does not have it (N6.4). */
+  coachPlus?: boolean
 }
 
 /**
@@ -19,7 +21,7 @@ interface Props {
  * two became: pick who it is for, and only then does anything get made. Nothing
  * leaves the phone until the player picks where it goes in their own share sheet.
  */
-export default function ShareChoice({ card, onCard, coach, onCoach, clip, onClip }: Props) {
+export default function ShareChoice({ card, onCard, coach, onCoach, clip, onClip, coachPlus }: Props) {
   return (
     <div className="share-choice">
       <button className="share-option" onClick={onCard} disabled={card === 'working'}>
@@ -48,7 +50,7 @@ export default function ShareChoice({ card, onCard, coach, onCoach, clip, onClip
         </span>
         <span>
           <strong>{coach === 'working' ? 'Preparing…' : coach === 'done' ? 'Ready to send' : 'A page for my coach'}</strong>
-          <span>Every measurement, the plan, and what to look at.</span>
+          <span>{coachPlus ? 'Part of Plus: every measurement, the plan, and what to look at.' : 'Every measurement, the plan, and what to look at.'}</span>
         </span>
       </button>
       <p className="sr-only" role="status" aria-live="polite">

@@ -95,7 +95,8 @@
   }
 
   /* The next session on the left, the week's momentum beside it. */
-  .today > .next-up {
+  .today > .next-up,
+  .today > [data-locked='pathway'] {
     grid-column: 1;
     grid-row: span 3;
   }
@@ -110,20 +111,21 @@
      rather than trailing under the serves, where they left the right pane a
      dark field beside the goal (N5.7). Dense, so they come up beside the goal
      although the serves come first in the page. */
-  .shell > .today:has(> .next-up) {
+  .shell > .today:has(> .next-up, > [data-locked='pathway']) {
     grid-auto-flow: row dense;
   }
 
-  .today:has(> .next-up) > .next-up {
+  .today:has(> .next-up, > [data-locked='pathway']) > .next-up,
+  .today > [data-locked='pathway'] {
     grid-row: span 5;
   }
 
-  .today:has(> .next-up) > .today-tip,
-  .today:has(> .next-up) > .today-nudge {
+  .today:has(> .next-up, > [data-locked='pathway']) > .today-tip,
+  .today:has(> .next-up, > [data-locked='pathway']) > .today-nudge {
     grid-column: 2;
   }
 
-  .today:has(> .next-up) > .today-tip {
+  .today:has(> .next-up, > [data-locked='pathway']) > .today-tip {
     padding-top: 20px;
     border-top: 1px solid var(--hairline-soft);
   }
@@ -379,6 +381,11 @@
 
   .info .acc-rows {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .info .tiers {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    align-items: start;
   }
 
   /* ------------------------------------------------------------- the sheets */

@@ -470,3 +470,28 @@ showed was wrong.
   the copy lint; the operator's name and a contact address come from the build
   (`lib/site.ts`) and are left out until the owner sets them. Looked at on a
   phone and at 1440, where the title and the list of pages hold the left pane.
+- [x] **N6.4 Free and Plus behind one gate, shut until paid plans exist.**
+  `lib/plans.ts`: seven paid features (the full breakdown, side by side, the
+  plan in steps, whole practices, speed over time, the coach's page, and the
+  history past the newest five) and one `can(feature)` every screen asks
+  through `useCan`. Free reads every serve, gives the score and the top fix
+  with its drill, the whole breakdown on the first serve, and the five newest
+  serves to reopen; the sample report is always whole. With the gate off,
+  which is how the app ships until the owner sets `VITE_PAYMENTS`, `can` says
+  yes to everything, so nothing locks before there is a way to pay; in
+  development `?paywall` shows the gates and `?plan=plus` the paid side. Each
+  paywall (`components/Locked.tsx`) stands where the feature was and shows
+  what is behind it on the player's own data: their five area scores and how
+  many fixes follow, their moment beside a model's and their best score, their
+  goal and its steps, their fastest serve and how many trips have a speed,
+  how many older serves are still on the device, how many serves a practice
+  holds. A `/pricing` page ("Plans") sets free beside Plus and says plainly
+  that everything is open while Plus is not on sale; a price shows only when
+  the owner sets `VITE_PRICE_LINE`. `plans.test.ts` holds every answer `can`
+  gives and that every feature is gated somewhere. Looked at with the gate on
+  and off, on a phone and at 1440: off, no screen has a paywall.
+  The entry chunk went over its 130 kB budget by 0.38 kB, so the plan copy
+  moved out of the gate's module and Today loads the panel lazily; it is
+  129.91 kB, inside by 0.09 kB, so the payment client (N6.5) loads lazily too.
+  The pricing page's classes were renamed after a check found `.plan` already
+  styled the report's drill list.
