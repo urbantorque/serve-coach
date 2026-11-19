@@ -425,6 +425,13 @@ check('too few frames through the swing is its own refusal', () => {
   assert(rejectionFor(base({ swingSamples: 1 })) === 'too_few_frames', 'a stuttering clip passed')
 })
 
+check('two samples through the swing is read, with the timing left soft (N2.7)', () => {
+  // A quick 30 fps serve whose drop the camera did catch sits here; refusing it
+  // refused the copies that read the drop right. The timing is hedged instead.
+  assert(rejectionFor(base({ swingSamples: 2 })) === undefined, 'a serve with its drop caught was refused')
+  assert(LIMITS.swingSamples === 2, `the limit is ${LIMITS.swingSamples}`)
+})
+
 check('a smeared clip is refused rather than guessed at', () => {
   assert(rejectionFor(base({ blur: 0.9 })) === 'too_blurry', 'a smear was analysed anyway')
 })

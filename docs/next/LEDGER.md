@@ -201,17 +201,39 @@ phone" on a laptop; the landing page (wave 6) takes that line.
   floor 18 to 19 (one and two a side unchanged). A change in the swing area
   now needs one more point before Progress calls it real.
 
+- [x] **N2.7 The frame-count gate refuses at one sample, not two.**
+  `LIMITS.swingSamples` 3 to 2. At two, every reading timed across the swing
+  already sits at 0.4 confidence, under the 0.55 soft line, so it is hedged
+  with "film in slow motion to sharpen this" and never leads, and the
+  sequence's confidence is already nothing; the rest of the card reads as
+  ever. The case for it is the bench: the copies refused at two were the ones
+  that had caught the real drop. Two runs over both clips with N2.6 and this
+  in place: **all 20 copies measured, none refused** (it was 3 to 4 of 10
+  refused or failed a run before). `triage.test.ts` holds two as read and one
+  as refused.
+
+What those 20 copies still show:
+- **Where the drop lands is now the main instability.** 0SAQUE puts it
+  0.09 to 0.14 s before contact on the copies that catch the dip, and on the
+  trophy (0.44 to 0.54 s) on the rest, about half each. Saque_con_pelota
+  spreads from 0.28 to 0.48 s, several on the trophy too. A drop on the
+  trophy with no lost frame still reads as a racket that never fell
+  (the KNOWN case), so this is frequent at 30 fps, not one clip's quirk.
+- The score moved 1 to 9 points between copies (0SAQUE's smaller copy 9),
+  most of it following where the drop landed.
+
 Next in this wave, in order:
-1. **The smeared dip** (`darker`, KNOWN). Nothing was lost, and the hand
-   never reaches the shoulder in the picture. Whether a 30 fps clip can tell
-   that from a racket that never fell is the open question; the honest
-   answer may be to grade drop depth only above about 45 samples a second.
-2. **The frame-count gate as a soft edge**, after item 1: at two swing
-   samples the timing readings already fall to 0.4 confidence. Read the serve,
-   withhold the swing timing and any fault named from it.
-3. **A stature ruler that holds**, then re-run the bench for the heights.
-4. **Sharper footage**, then decide `RETEST_SD`.
-5. **Other browsers**, once the owner agrees to the install.
+1. **The smeared dip, now known to be common.** At 30 fps a drop on the
+   trophy cannot be told from a drop the picture lost unless a frame is
+   missing. Candidates, each to be proved on the rig and on the saved copies:
+   grade "never falls" only above about 45 samples a second (slow motion or
+   60 fps) and withhold it below; or look for the drop in depth as well as
+   height before calling it absent. The first is simple and honest; the
+   second keeps more 30 fps readings.
+2. **A stature ruler that holds**, then re-run the bench for the heights.
+3. **Sharper footage**, then decide `RETEST_SD`.
+4. **Other browsers**, once the owner agrees to the install.
+
 - [x] **N3.4 The app names the device it is on.** `lib/device.ts`: a coarse
   pointer on a small screen is a phone, on a larger one a tablet, anything
   else a computer. Twenty-nine player-facing lines that said "this phone" or

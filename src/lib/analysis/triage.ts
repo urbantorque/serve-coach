@@ -154,14 +154,24 @@ export interface Resilience {
 /**
  * Below these, the clip is not evidence.
  *
- * Set from what the measurements need rather than from what looks bad: three
- * samples across the swing is the point at which the drop and contact can no
- * longer be told apart in time, and a hand seen at less than half confidence
- * through the swing is a hand the model was inventing.
+ * Set from what the measurements need rather than from what looks bad: a hand
+ * seen at less than half confidence through the swing is a hand the model was
+ * inventing.
+ *
+ * Two samples from the drop to contact, not three (N2.7). Three was the point
+ * at which the drop and contact stop being told apart in time, which is a fact
+ * about the timing, not the serve. At two, every reading timed across the swing
+ * already falls to 0.4 (`confidence.ts`), under the soft line, so it is shown
+ * hedged with "film in slow motion to sharpen this" and never leads; the
+ * sequence's confidence is already nothing; and the knees, the toss, the contact
+ * and the drop's own depth are read as well as ever. On the retest bench the
+ * copies refused at two were the ones that had found the real drop, 0.08 to
+ * 0.10 s before contact on a quick 30 fps serve, while the copies that missed it
+ * passed. One sample or none still refuses: there is no swing to read.
  */
 export const LIMITS = {
   visibility: 0.45,
-  swingSamples: 3,
+  swingSamples: 2,
   blur: 0.75,
   spatial: 0.4,
 } as const
