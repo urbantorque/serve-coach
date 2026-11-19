@@ -254,7 +254,12 @@ export default function Report({
     return () => clearTimeout(t)
   }, [])
 
-  const verdict = VERDICT[analysis.overallStatus]
+  // A good score under an injury warning says the warning comes first (N7.4).
+  const warned = injuryNotes(analysis.triage).length > 0
+  const verdict =
+    warned && (analysis.overallStatus === 'great' || analysis.overallStatus === 'good')
+      ? 'A good score. Fix the warnings first.'
+      : VERDICT[analysis.overallStatus]
   const live = isLive(analysis) && Boolean(videoUrl)
   // Which rubric these numbers were computed under: this build's for a fresh
   // report, and an unstamped saved one predates stamping.
@@ -496,8 +501,13 @@ export default function Report({
           <div className="hero-veil" aria-hidden="true" />
           <div className="hero-numbers">
             <div className="hero-score">
-              <span className="t-score" aria-label={`${analysis.overall} out of 100`}>
-                {shown}
+              <span className="hero-scoreline">
+                <span className="t-score" aria-label={`${analysis.overall} out of 100`}>
+                  {shown}
+                </span>
+                <span className="hero-outof" aria-hidden="true">
+                  /100
+                </span>
               </span>
               <p className="hero-band">{verdict}</p>
             </div>
@@ -510,7 +520,7 @@ export default function Report({
                   </span>
                 </p>
                 <p className="hero-speed-range">
-                  <Term id="likelyRange">Likely</Term> {figures.low}–{figures.high} {figures.unit}
+                  <Term id="likelyRange">Likely</Term> {figures.low}–{figures.high} {figures.unit}. No radar has checked it.
                 </p>
               </section>
             )}

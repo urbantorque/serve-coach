@@ -316,10 +316,10 @@ const CLAIMED: Record<string, Claimed> = {
     stamp: '921ad28a',
     insight: {
       low: ['Legs straight', 'Legs barely bent'],
-      ok: ['Athletic load'],
+      ok: ['Knees well bent'],
       high: ['Deep squat'],
     },
-    aim: { low: 'Athletic load', high: 'Athletic load' },
+    aim: { low: 'Knees well bent', high: 'Knees well bent' },
   },
   shoulderTilt: {
     stamp: '731bd272',

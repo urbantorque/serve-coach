@@ -125,7 +125,7 @@ check('the usual is the median, the spread a scaled MAD, the noise never under t
   const flat = base!.rows.find((r) => r.metricId === 'contactHeight')!
   assert(flat.spread === 0 && flat.noise === CARD_NOISE_SD.contactHeight, 'a dead steady row went under the camera')
   assert(base!.serves === 12 && base!.trips === 3 && base!.ids.length === 12, JSON.stringify(base))
-  assert(knee!.readout === 'Athletic load', `the usual read "${knee!.readout}"`)
+  assert(knee!.readout === 'Knees well bent', `the usual read "${knee!.readout}"`)
 })
 
 check('one wild take moves neither the usual nor the spread by much', () => {

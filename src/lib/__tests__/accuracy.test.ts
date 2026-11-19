@@ -2,7 +2,7 @@
  * The public accuracy page (N6.3) says what the engine does, because it is
  * built from the engine's own tables. These hold the page to them.
  */
-import { SCORE_STEADY, accuracyRows, gradedIds, unmeasuredRows, wobbleText } from '../accuracy'
+import { SCORE_STEADY, accuracyRows, gradedIds, plainSource, unmeasuredRows, wobbleText } from '../accuracy'
 import { REAL_CHANGE } from '../analysis/realChange'
 import { CARD_NOISE_SD, RETEST_SD } from '../analysis/cardNoise'
 import { METRICS } from '../analysis/coaching'
@@ -43,7 +43,10 @@ check('every wobble reads in a unit a player knows, and every row names what it 
   for (const r of rows) {
     const t = wobbleText(r.unit, r.wobble)
     assert(/(% of your height| points|°| ms| cm)$/.test(t), `${r.id}: "${t}"`)
-    assert(r.against.length > 10 && r.against === ('study' in METRICS[r.id].source ? (METRICS[r.id].source as { study: string }).study : (METRICS[r.id].source as { motion: string }).motion), `${r.id} has no source`)
+    const raw = 'study' in METRICS[r.id].source ? (METRICS[r.id].source as { study: string }).study : (METRICS[r.id].source as { motion: string }).motion
+    assert(r.against.length > 10 && r.against === plainSource(raw), `${r.id} has no source`)
+    // In the page's words (N7.4): lab serves and my test serve, which the page explains.
+    assert(!/\bBath\b|\brig\b/.test(r.against), `${r.id} still says Bath or rig: "${r.against}"`)
   }
   assert(wobbleText('×', 0.00766) === '0.77% of your height', wobbleText('×', 0.00766))
 })

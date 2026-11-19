@@ -20,6 +20,6 @@ export const FEATURE_COPY: Record<Feature, { name: string; line: string }> = {
 export const FREE_COPY: string[] = [
   'Every serve read, on your own device',
   'Your score and the one thing to fix first, with its drill',
-  'The whole breakdown on your first serve',
+  'The whole breakdown on the first serve you film',
   'Your latest serves to reopen',
 ]

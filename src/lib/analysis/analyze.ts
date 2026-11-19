@@ -1101,7 +1101,7 @@ export function pickFocus(fundamentals: Fundamental[]): Analysis['focus'] {
   if (!worst) {
     const unmeasured = all.some(({ metric }) => metric.fix)
     return {
-      title: 'Keep grooving this serve',
+      title: 'Keep serving like this',
       why: cue(
         unmeasured
           ? 'Nothing I can check against a study holds you back. Film again in a few sessions and check it held.'

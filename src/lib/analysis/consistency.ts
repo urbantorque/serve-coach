@@ -910,7 +910,7 @@ export function consistencyHeadline(c: Consistency): string {
    * "Your", for the reason `repeatabilityNote` gives.
    */
   if (dropOut) return cue(`${c.weakest.label} changes most across ${c.serves} serves.${dropOut}`)
-  return cue(`${c.weakest.label} changes most from serve to serve. Groove it once your first fix holds.`)
+  return cue(`${c.weakest.label} changes most from serve to serve. Make it steady once your first fix holds.`)
 }
 
 /**

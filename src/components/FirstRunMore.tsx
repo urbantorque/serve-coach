@@ -2,6 +2,7 @@ import type { MouseEvent } from 'react'
 import '../styles/firstMore.css'
 import { Icon } from './primitives'
 import { deviceNoun } from '../lib/device'
+import { PLACEMENT } from '../lib/placement'
 import { INFO_PAGES, INFO_TITLES, pathFor, type InfoPageId } from '../lib/routes'
 import { GATED, PRICE_LINE } from '../lib/billing/config'
 import { FEATURES } from '../lib/plans'
@@ -45,7 +46,7 @@ export default function FirstRunMore({ onFilm, onShowExample, onShowPage }: Prop
           <li>
             <Icon name="camera" size={22} />
             <div>
-              <strong>Prop your phone on the fence.</strong>
+              <strong>Prop your phone on a bag, {PLACEMENT.distance} to your side.</strong>
               <span>I check the framing out loud before you serve.</span>
             </div>
           </li>

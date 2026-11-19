@@ -333,6 +333,46 @@ check('today names one goal and one thing to do next (lift)', () => {
   assert(!out.includes('Practise this') && !out.includes('Working on'), 'today named a second thing to work on')
 })
 
+check('a drill that has stopped moving says so on the goal it is about, and only there (N7.4)', () => {
+  const DAY = 86_400_000
+  const now = Date.now()
+  const sessions = [0, 2].map((d) => ({
+    ...stored(sampleAnalysis(DEMO_DIALS.injury)),
+    id: `serve-stuck-${d}-0`,
+    createdAt: now - d * DAY,
+  }))
+  const prefs = { ...DEFAULTS, goal: { kind: 'fault' as const, flaw: 'shallow_drop' as const, startedAt: now - 3 * DAY } }
+  const stuck = (metricId: string) =>
+    ({
+      metricId,
+      label: 'Racket drop',
+      verdict: 'stuck',
+      drilled: 2,
+      rungsLeft: 3,
+      timesWeakest: 2,
+      sessionsConsidered: 2,
+      serveType: 'flat',
+    }) as unknown as PracticeFocus
+  const props = (practice: PracticeFocus) => ({
+    sessions,
+    practice,
+    offlineReady: true,
+    sessionsLoaded: true,
+    prefs,
+    onPrefs: noop,
+    onFilm: noop,
+    onOpen: noop,
+    onShowHistory: noop,
+    onShowSettings: noop,
+    onShowProgress: noop,
+    onShowExample: noop,
+  })
+  const on = html(createElement(Home, props(stuck('dropDepth'))))
+  assert(on.includes('class="next-stuck"') && on.includes('has not moved'), 'a stuck drill on the goal said nothing on the goal')
+  const off = html(createElement(Home, props(stuck('kneeBend'))))
+  assert(!off.includes('class="next-stuck"'), 'a stuck drill on another row spoke on the goal')
+})
+
 check('the refusal screen renders instead of a score', () => {
   const refused: Analysis = {
     ...sampleAnalysis(),

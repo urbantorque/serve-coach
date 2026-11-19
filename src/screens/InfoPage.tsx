@@ -18,7 +18,9 @@ interface Props {
 }
 
 const LEDES: Record<InfoPageId, string> = {
-  pricing: 'What stays free, what Plus adds, and what it costs. Your video never leaves your device on either.',
+  pricing: PRICE_LINE
+    ? 'What stays free, what Plus adds, and what it costs. Your video never leaves your device on either.'
+    : 'What stays free and what Plus adds. Your video never leaves your device on either.',
   accuracy: 'What I measure, how steady each reading is, how I know, and what I cannot see. Built from the tables I grade with.',
   privacy: 'Your video never leaves your device. Here is everything I keep, and where it lives.',
   terms: 'What Serve Coach is, what it is not, and what you agree to by using it.',
@@ -287,7 +289,7 @@ function Accuracy({ onPage }: { onPage: Go }) {
       <Section title="How I know">
         <p>I read six serves recorded in a motion capture lab, 240 times each, adding a phone camera's noise every time.</p>
         <p>Every take goes through the same steps as your clip. That shows how far a reading wobbles on one serve.</p>
-        <p>Where a source above names the rig, it means my own serve, built to make each fault on purpose.</p>
+        <p>Lab serves come from a motion capture lab. My test serve is one I build to make each fault on purpose.</p>
         <p>It does not prove a reading matches the lab. One camera cannot reach that, and I do not claim it.</p>
         <p>A real camera can wobble more than the noise I add, so every figure here is the least it moves.</p>
         <p>I also re-read two small public clips darker, further away, smaller and a frame later.</p>
@@ -297,7 +299,7 @@ function Accuracy({ onPage }: { onPage: Go }) {
       <Section title="What I cannot see">
         <ul className="info-list">
           <li>Depth. One camera sees a flat picture, so a part moving toward it or away reads less well.</li>
-          <li>Slow motion. My tests cover video filmed at normal speed, and a slow-motion file sits outside them.</li>
+          <li>Slow motion: my figures come from normal-speed video. Slow motion gives me more frames of the swing, which is why I suggest it.</li>
           <li>A racket drop the camera blurs. I can miss one entirely, and that gap is still open.</li>
           <li>Your real height. I measure heights against your own body in the picture, never in metres.</li>
         </ul>

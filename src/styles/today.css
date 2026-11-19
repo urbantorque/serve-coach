@@ -212,6 +212,17 @@
   color: var(--fg-muted);
 }
 
+/* A goal whose drill has stopped moving says so on the goal (N7.4). */
+.next-stuck {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--r-sm);
+  background: var(--fair-dim);
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--fg);
+}
+
 .next-today {
   display: flex;
   flex-direction: column;

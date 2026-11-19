@@ -703,6 +703,7 @@ export default function App() {
               ledger={tripLedger}
               tags={serveTags}
               practiceSessions={practiceSessions}
+              practice={practice}
               prefs={prefs}
               onPrefs={(patch) => setPrefs(writePrefs(patch))}
               sessionsLoaded={sessionsLoaded}

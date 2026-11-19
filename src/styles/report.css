@@ -92,6 +92,19 @@
   color: var(--fg);
 }
 
+/* The scale beside the number (N7.4): a bare 78 read as a percentage. */
+.hero-scoreline {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.hero-outof {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--fg-muted);
+}
+
 .hero-band {
   margin-top: 9px;
   max-width: 21ch;
@@ -102,7 +115,11 @@
 }
 
 .hero-speed {
-  flex: none;
+  flex: 0 1 auto;
+  min-width: 0;
+  /* The range says no radar has checked it (N7.4), so it wraps under the
+     figure rather than pushing the figure off the screen. */
+  max-width: 50%;
   text-align: right;
 }
 

@@ -78,7 +78,7 @@ const LADDERS: Record<string, Stop[]> = {
   kneeBend: [
     { under: 18, tag: 'Legs straight' },
     { under: 35, tag: 'Legs barely bent' },
-    { under: 80, tag: 'Athletic load' },
+    { under: 80, tag: 'Knees well bent' },
     { under: Infinity, tag: 'Deep squat' },
   ],
   // The bottom two rungs of each of these are the reverse of the fault above

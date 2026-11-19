@@ -7,6 +7,8 @@ import { buildProgress, currentRubricEra, streakLine, tripDay, deltaStatus } fro
 import { momentsFor, weekRecap } from '../lib/moments'
 import MomentCard from '../components/MomentCard'
 import { programmeFor } from '../lib/programme'
+import { practiceHeadline, type PracticeFocus } from '../lib/practice'
+import { faultForMetric } from '../lib/analysis/progressions'
 import { fastestServe } from '../lib/speedTrend'
 import { defaultSpeedUnit, speedFigures } from '../lib/speedCopy'
 import type { ServeTag, Session } from '../lib/storage/db'
@@ -41,6 +43,8 @@ interface Props {
   ledger?: TripRecord[]
   tags?: ServeTag[]
   practiceSessions?: PracticeSession[]
+  /** The season's weakest spot, so a stuck drill shows on the goal it is about (N7.4). */
+  practice?: PracticeFocus
   prefs: Prefs
   onPrefs: (patch: Partial<Prefs>) => void
   /** Whether storage has answered; until then `sessions` being empty means nothing. */
@@ -89,6 +93,7 @@ export default function Home({
   ledger = NO_TRIPS,
   tags = NO_TAGS,
   practiceSessions = NO_SESSIONS,
+  practice,
   prefs,
   onPrefs,
   sessionsLoaded,
@@ -210,6 +215,13 @@ export default function Home({
   const stepDone = moments.some((m) => m.kind === 'step')
   const recapFresh = recap && Date.now() - recap.to < RECAP_FRESH_MS
   const current = programme?.current
+  // The practice card's stuck line, on the goal it is about (N7.4): a drill
+  // that has not moved after its rounds was said only under Go deeper.
+  const goal = programme?.goal
+  const stuck =
+    goal?.kind === 'fault' && practice?.verdict === 'stuck' && practice.drilled && faultForMetric(practice.metricId) === goal.flaw
+      ? practiceHeadline(practice)
+      : undefined
 
   return (
     <div className="screen today">
@@ -255,6 +267,7 @@ export default function Home({
             </span>
             <span className="next-pace">{programme.pace}</span>
           </button>
+          {stuck && <p className="next-stuck">{stuck}</p>}
           <div className="next-today">
             <span className="next-label">Next on court</span>
             <strong>{current.drill.name}</strong>

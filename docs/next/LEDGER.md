@@ -892,3 +892,28 @@ Next in this wave, from N2.8:
     serve in and one camera cannot show me spin.
   Not done: halving the plan while a joint warning is live. The skeptic held
   the stop line and the throw cap, not a second volume rule.
+
+- [x] **N7.4 The player's corrections: plain words, and nothing promised that
+  is not there.** From the close-out review (a UTR 3 player, each finding
+  re-checked by a skeptic):
+  - The accuracy page called slow motion untested while the guide asks for
+    it; it now says my figures come from normal-speed video and slow motion
+    gives me more frames. Lab serves and my test serve replace "the forty
+    Bath serves" and "the rig" on that page, and the page says what each is.
+  - The landing's first step said to prop the phone on the fence; it says a
+    bag, four to five metres to your side, as the guide does.
+  - The pricing lede promised "what it costs" with no price set; it says so
+    only once there is one. Free's line reads "The whole breakdown on the
+    first serve you film".
+  - The score shows "/100" beside it (the speed range wraps under its figure
+    now that it says more), a good score under an injury warning
+    says "A good score. Fix the warnings first.", and the report's speed range
+    says no radar has checked it.
+  - A drill that has stopped moving says so on Today's goal, where the goal
+    is that fault, not only under Go deeper.
+  - "Groove" joins the coach-jargon list ("Make it steady"; the clean serve's
+    headline is "Keep serving like this"), "Athletic load" is "Knees well
+    bent", and a serve type's in-rate on Progress reads "Flat serves: in on 18
+    of 27 tagged".
+  Not done: "trophy" on the jargon list. It is a glossary word with a tap to
+  explain it everywhere it leads, which is what the copy rule asks.

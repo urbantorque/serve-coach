@@ -48,7 +48,21 @@ function erf(x: number): number {
   return s * y
 }
 
-const sourceText = (s: BandSource): string => ('study' in s ? s.study : s.motion)
+/**
+ * A source in the page's words (N7.4): the forty Bath serves are "lab serves"
+ * and the rig is "my test serve", the names the page explains, so a reader is
+ * not left to work out what Bath or a rig is. The engine keeps its own words.
+ */
+export const plainSource = (text: string): string =>
+  text
+    .replace(/\bThe forty Bath serves\b/g, 'Forty lab serves')
+    .replace(/\bthe forty Bath serves\b/g, 'forty lab serves')
+    .replace(/\bThe rig's\b/g, 'My test serve\'s')
+    .replace(/\bthe rig's\b/g, 'my test serve\'s')
+    .replace(/\bthe rig\b/g, 'my test serve')
+    .replace(/\(Bath\)/g, '(the lab serves)')
+
+const sourceText = (s: BandSource): string => plainSource('study' in s ? s.study : s.motion)
 
 /** The graded readings with a measured wobble, in the card's order. */
 export function accuracyRows(): AccuracyRow[] {

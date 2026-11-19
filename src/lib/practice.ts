@@ -415,7 +415,7 @@ export function repeatabilityNote(f: PracticeFocus): string {
    * either way: "Racket drop scores fine…" and "Hitting the ball at its peak
    * scores fine…".
    */
-  return cue(`${r.label} scores fine but varies most, across ${baskets}. Groove it after you fix the one above.`)
+  return cue(`${r.label} scores fine but varies most, across ${baskets}. Make it steady after you fix the one above.`)
 }
 
 /**

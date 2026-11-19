@@ -435,7 +435,7 @@ function ProgressBody({
           ))}
           {inRates.map((r) => (
             <p key={r.serveType} className="progress-foot">
-              {SERVE_TYPES[r.serveType].label}: in on {r.inServes} of {r.outcomes} tagged.
+              {SERVE_TYPES[r.serveType].word.charAt(0).toUpperCase() + SERVE_TYPES[r.serveType].word.slice(1)} serves: in on {r.inServes} of {r.outcomes} tagged.
             </p>
           ))}
           {slowSecond && (

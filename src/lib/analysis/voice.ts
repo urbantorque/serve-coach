@@ -62,7 +62,7 @@ const JARGON =
  * passing every check above.
  */
 const COACH_JARGON =
-  /\b(windmill\w*|cartwheel\w*|back[- ]?scratch\w*|kinetic chain|the chain|head speed|the brake)\b/i
+  /\b(windmill\w*|cartwheel\w*|back[- ]?scratch\w*|kinetic chain|the chain|head speed|the brake|groov\w*)\b/i
 
 /**
  * "Drop" is the racket drop and nothing else (LOOP.md §4), which is the only
