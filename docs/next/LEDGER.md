@@ -230,6 +230,13 @@ Next in this wave, in order:
    60 fps) and withhold it below; or look for the drop in depth as well as
    height before calling it absent. The first is simple and honest; the
    second keeps more 30 fps readings.
+   Checked and set aside on 2026-11-19: the hand hanging under the elbow as
+   evidence of a drop. On the saved 320 x 240 copies the hand reads above the
+   elbow almost throughout, drop or not, so it separates nothing here. With
+   N2.6 in place, 0SAQUE's trophy-landed copies now withhold the depth (a
+   frame lost, or the wrist seen poorly); Saque_con_pelota's still says the
+   racket never falls, and nothing on hand says whether that player keeps it
+   up. Ground truth, not another heuristic, is what decides this one.
 2. **A stature ruler that holds**, then re-run the bench for the heights.
 3. **Sharper footage**, then decide `RETEST_SD`.
 4. **Other browsers**, once the owner agrees to the install.
