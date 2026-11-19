@@ -254,6 +254,14 @@
     min-height: 0;
   }
 
+  /* An injury warning leads the right pane, above the number (N7.1): the
+     review studio had pulled the number and the fix up and left the warnings
+     below them, under the first screen. */
+  .report > .injuries {
+    order: -3;
+    margin-top: 0;
+  }
+
   /* The one action sits under the fix, in the right pane, not at the foot of the window. */
   .report > .hero {
     order: -2;

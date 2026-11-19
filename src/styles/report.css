@@ -869,3 +869,9 @@
   font-size: 15px;
   color: var(--fg-muted);
 }
+
+/* An injury warning leads the report, so it starts below the floating top bar
+   rather than under it: the back button sat on its "Injury risk" (N7.1). */
+.report > .injuries {
+  margin-top: calc(64px + var(--safe-top));
+}

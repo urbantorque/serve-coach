@@ -712,3 +712,15 @@ live region, checked in the browser against the stand-in.
   Four different quantities in four tables is not duplication, and folding
   them would hide which one a check stands on. The card and diagnosis bands
   already share one source where they read one number (`cardBand`, L5.1).
+
+## Wave 7. Close-out
+
+- [x] **N7.1 An injury warning leads the report at both sizes again.** Found
+  building the before-and-after gallery: on a laptop the report's warnings
+  ("Watch your elbow and wrist", "Watch your lower back") had fallen below
+  the first screen, because the review studio (N3.3) pulled the number, the
+  fix and the action up the right pane and left them after; on a phone they
+  led, but the floating top bar sat on the first card's "Injury risk". They
+  now lead the right pane on a laptop and start below the bar on a phone,
+  measured on `?demo=injury` (phone: the bar ends at 54 px and the warnings
+  begin at 82; laptop: the warnings sit at 148 to 448 px, the number below).
