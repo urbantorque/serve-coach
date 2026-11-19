@@ -269,7 +269,9 @@ export default function Report({
   const { sharing, trigger: share } = useShareState(() =>
     shareReportCard(analysis, streak, bestScore && bestTripLine(bestScore, analysis.createdAt)),
   )
-  const { sharing: clipping, trigger: makeClip } = useShareState(() => shareServeClip(analysis))
+  const { sharing: clipping, trigger: makeClip } = useShareState(() =>
+    shareServeClip(analysis, streak, bestScore && bestTripLine(bestScore, analysis.createdAt)),
+  )
   const { sharing: sendingCoach, trigger: sendCoach } = useShareState(() =>
     import('../lib/share/coachShare').then(async ({ sendCoachReport }) => sendCoachReport(analysis, await coachContext?.())),
   )

@@ -13,8 +13,9 @@
 import { SERVE_TYPES } from '../analysis/coaching'
 import { plain } from '../analysis/voice'
 import { SOFT_READ, VERDICT, readQuality } from '../../components/statusLabels'
-import { paintExposure, placeSwing } from '../figure/stage'
-import { swingOf } from '../figure/swing'
+import { paintExposure, placeSwing, type Placement } from '../figure/stage'
+import { swingOf, type Swing } from '../figure/swing'
+import { deviceNoun } from '../device'
 import { defaultSpeedUnit, speedFigures } from '../speedCopy'
 import type { Analysis } from '../analysis/types'
 import type { Session } from '../storage/db'
@@ -89,61 +90,97 @@ function linesOf(ctx: CanvasRenderingContext2D, text: string, width: number, mos
 
 const speedOf = (r: Report) => (r.speed && 'speed' in r.speed ? r.speed.speed : undefined)
 
-export async function renderReportCard(report: Report, streak?: string, bestScore?: string): Promise<Blob | undefined> {
-  const W = 1080
-  const H = 1350
-  const PAD = 72
-  const canvas = document.createElement('canvas')
-  canvas.width = W
-  canvas.height = H
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return undefined
-  await cardFonts()
+/** The poster's own size. The clip is the same picture at two thirds. */
+export const POSTER_W = 1080
+export const POSTER_H = 1350
+const PAD = 72
+/** Where the brand mark and the date end; nothing of the swing comes above it. */
+const HEADER = PAD + 64
+const STAGE_H = POSTER_H * 0.66
 
-  stageBackground(ctx, W, H)
+/**
+ * Where the swing sits on the poster, laid down to the ball. Sized to the body,
+ * then shrunk until the racket clears the header (N5.3): at contact the racket
+ * head sits about 0.42 of a body above the hand, and a tall reach used to swing
+ * it through the brand mark. Shared with the clip, which builds this picture.
+ */
+export function posterSwing(swing: Swing): { at: Placement; to: number } {
+  const to = swing.moments.contact ?? swing.frames.length - 1
+  const sized = (height: number) => placeSwing(swing.frames, POSTER_W, STAGE_H, { height, feet: 0.97, across: 0.52 })
+  let at = sized(0.72)
+  const top = Math.min(...swing.frames.slice(0, to + 1).flatMap((f) => f.image.map((p) => at.place(p).y))) - 0.42 * at.stature
+  const feetY = STAGE_H * 0.97
+  if (top < HEADER) at = sized((0.72 * (feetY - HEADER)) / (feetY - top))
+  return { at, to }
+}
 
-  /* --- the swing --------------------------------------------------------- */
-  const swing = swingOf(report)
-  const stageH = H * 0.66
-  if (swing) {
-    const to = swing.moments.contact ?? swing.frames.length - 1
-    // Sized to the body, then shrunk until the racket clears the header (N5.3):
-    // at contact the racket head sits about 0.42 of a body above the hand, and a
-    // tall reach used to swing it through the brand mark.
-    const HEADER = PAD + 64
-    const sized = (height: number) => placeSwing(swing.frames, W, stageH, { height, feet: 0.97, across: 0.52 })
-    let at = sized(0.72)
-    const top = Math.min(...swing.frames.slice(0, to + 1).flatMap((f) => f.image.map((p) => at.place(p).y))) - 0.42 * at.stature
-    const feetY = stageH * 0.97
-    if (top < HEADER) at = sized((0.72 * (feetY - HEADER)) / (feetY - top))
-    paintExposure(ctx, swing.frames, at, { racket: swing.racket, bodyHeight: swing.bodyHeight, from: 0, to })
-    const veil = ctx.createLinearGradient(0, stageH * 0.72, 0, stageH * 1.04)
-    veil.addColorStop(0, 'rgba(10,12,16,0)')
-    veil.addColorStop(1, INK)
-    ctx.fillStyle = veil
-    ctx.fillRect(0, stageH * 0.72, W, stageH * 0.4)
-  }
+/** The floor of the stage falling into the page, under the feet. */
+export function stageVeil(ctx: CanvasRenderingContext2D, w = POSTER_W, stageH = STAGE_H) {
+  const veil = ctx.createLinearGradient(0, stageH * 0.72, 0, stageH * 1.04)
+  veil.addColorStop(0, 'rgba(10,12,16,0)')
+  veil.addColorStop(1, INK)
+  ctx.fillStyle = veil
+  ctx.fillRect(0, stageH * 0.72, w, stageH * 0.4)
+}
 
-  /* --- header ------------------------------------------------------------ */
+/** The brand on the left, and on the right whatever dates the picture. */
+export function posterHeader(ctx: CanvasRenderingContext2D, right: string) {
   ctx.textBaseline = 'alphabetic'
   ctx.textAlign = 'left'
   brandMark(ctx, PAD, PAD + 28, 34)
   ctx.font = textType(30)
   ctx.fillStyle = MUTED
   ctx.textAlign = 'right'
-  ctx.fillText(new Date(report.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }), W - PAD, PAD + 26)
+  ctx.fillText(right, POSTER_W - PAD, PAD + 26)
   ctx.textAlign = 'left'
+}
+
+export const longDate = (t: number) => new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })
+
+/**
+ * The line every shared picture ends on: what was read, how well, and where.
+ * A soft read says so in amber, because the picture outlives the report.
+ */
+export function honestFoot(report: Report, device: string): { text: string; soft: boolean } {
+  const soft = report.quality.confidence < SOFT_READ
+  const kind = SERVE_TYPES[report.serveType ?? 'flat']?.word ?? 'flat'
+  const read = soft ? 'a rough read' : readQuality(report.quality.confidence).toLowerCase()
+  return { text: `${kind.charAt(0).toUpperCase()}${kind.slice(1)} serve, ${read}. Measured on a ${device}. The video never left it.`, soft }
+}
+
+const ease = (x: number) => {
+  const t = Math.max(0, Math.min(1, x))
+  return t * t * (3 - 2 * t)
+}
+
+/**
+ * The poster's words: the number and the words for it, the speed with its
+ * honesty, the one thing being worked on, and the foot. `land` runs nought to
+ * one as they arrive in the clip, the number counting up and each group a beat
+ * after the last; the poster is drawn landed.
+ */
+export function posterWords(
+  ctx: CanvasRenderingContext2D,
+  report: Report,
+  o: { streak?: string; bestScore?: string; device?: string; land?: number } = {},
+) {
+  const W = POSTER_W
+  const H = POSTER_H
+  const land = o.land ?? 1
+  const beat = (k: number) => ease((land - k * 0.14) / 0.44)
 
   /* --- the number -------------------------------------------------------- */
   const base = H - 404
+  ctx.globalAlpha = beat(0)
   ctx.font = figureType(286)
   ctx.fillStyle = FG
-  ctx.fillText(String(report.overall), PAD - 6, base)
+  ctx.fillText(String(Math.round(report.overall * ease(land / 0.7))), PAD - 6, base)
   ctx.font = textType(38, 620)
   ctx.fillText(VERDICT[report.overallStatus], PAD, base + 56)
 
   const speed = speedOf(report)
   if (speed) {
+    ctx.globalAlpha = beat(1)
     const unit = readPrefs().speedUnit ?? defaultSpeedUnit()
     const fig = speedFigures(speed, unit)
     ctx.textAlign = 'right'
@@ -164,6 +201,7 @@ export async function renderReportCard(report: Report, streak?: string, bestScor
   }
 
   /* --- the one thing ----------------------------------------------------- */
+  ctx.globalAlpha = beat(2)
   const fixY = base + 136
   ctx.font = textType(32, 660)
   ctx.fillStyle = LIME
@@ -174,17 +212,36 @@ export async function renderReportCard(report: Report, streak?: string, bestScor
   lines.forEach((l, i) => ctx.fillText(l, PAD, fixY + 58 + i * 56))
 
   /* --- the foot ---------------------------------------------------------- */
-  const record = bestScore ?? streak
+  ctx.globalAlpha = beat(3)
+  const record = o.bestScore ?? o.streak
   ctx.font = textType(28)
   if (record) {
     ctx.fillStyle = LIME
     ctx.fillText(record, PAD, H - 84, W - PAD * 2)
   }
-  const soft = report.quality.confidence < SOFT_READ
-  const kind = SERVE_TYPES[report.serveType ?? 'flat']?.word ?? 'flat'
-  const read = soft ? 'a rough read' : readQuality(report.quality.confidence).toLowerCase()
-  ctx.fillStyle = soft ? AMBER : FAINT
-  ctx.fillText(`${kind.charAt(0).toUpperCase()}${kind.slice(1)} serve, ${read}. Measured on a phone. The video never left it.`, PAD, H - 46, W - PAD * 2)
+  const foot = honestFoot(report, o.device ?? 'phone')
+  ctx.fillStyle = foot.soft ? AMBER : FAINT
+  ctx.fillText(foot.text, PAD, H - 46, W - PAD * 2)
+  ctx.globalAlpha = 1
+}
+
+export async function renderReportCard(report: Report, streak?: string, bestScore?: string): Promise<Blob | undefined> {
+  const canvas = document.createElement('canvas')
+  canvas.width = POSTER_W
+  canvas.height = POSTER_H
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return undefined
+  await cardFonts()
+
+  stageBackground(ctx, POSTER_W, POSTER_H)
+  const swing = swingOf(report)
+  if (swing) {
+    const { at, to } = posterSwing(swing)
+    paintExposure(ctx, swing.frames, at, { racket: swing.racket, bodyHeight: swing.bodyHeight, from: 0, to })
+    stageVeil(ctx)
+  }
+  posterHeader(ctx, longDate(report.createdAt))
+  posterWords(ctx, report, { streak, bestScore, device: deviceNoun() })
 
   return new Promise((resolve) => canvas.toBlob((b) => resolve(b ?? undefined), 'image/png'))
 }

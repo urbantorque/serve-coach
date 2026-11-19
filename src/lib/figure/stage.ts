@@ -130,6 +130,57 @@ export interface ExposureOptions {
   material?: Material
   /** Paint these instead of the last frame's body, for a thumbnail. */
   bare?: boolean
+  /**
+   * How far the swing has got, for a picture still being laid down: the traces
+   * and the racket's path up to this frame, and the body moving at it. The
+   * shared clip builds the poster this way, so the two cannot drift apart.
+   */
+  now?: number
+  /** The racket's path from `racketPath`, for a swing painted many times over. */
+  path?: readonly (Pt | undefined)[]
+}
+
+type Gear = Pick<ExposureOptions, 'racket' | 'bodyHeight'>
+
+/** The racket head on one frame, in the frame's units: known on a rig, else estimated. */
+const headOf = (frames: readonly Frame[], i: number, o: Gear) =>
+  frames[i].racket?.head ?? (o.bodyHeight ? smoothedRacket(frames as Frame[], i, o.racket, o.bodyHeight)?.head : undefined)
+
+/** Where the racket head was on each frame from `from` to `to`, on this canvas. */
+export function racketPath(frames: readonly Frame[], at: Placement, o: Gear & Pick<ExposureOptions, 'from' | 'to'>): (Pt | undefined)[] {
+  const path: (Pt | undefined)[] = []
+  for (let i = o.from; i <= o.to; i++) {
+    const head = headOf(frames, i, o)
+    path.push(head ? at.place(head) : undefined)
+  }
+  return path
+}
+
+/**
+ * A body a share `f` of the way from frame `i` to the next, racket too. Slow
+ * motion holds each tracked frame for several of the clip's, and at the ball,
+ * where the racket moves furthest between frames, that read as a stutter.
+ */
+export function frameBetween(frames: readonly Frame[], i: number, f: number, o: Gear): Frame {
+  const a = frames[i]
+  const b = frames[i + 1]
+  if (!b || f <= 0) return a
+  const mix = <P extends { x: number; y: number; z?: number }>(p: P, q: P): P => ({
+    ...p,
+    x: p.x + (q.x - p.x) * f,
+    y: p.y + (q.y - p.y) * f,
+    ...(p.z !== undefined && q.z !== undefined ? { z: p.z + (q.z - p.z) * f } : {}),
+  })
+  const ha = headOf(frames, i, o)
+  const hb = headOf(frames, i + 1, o)
+  const head = ha && hb ? mix(ha, hb) : undefined
+  return {
+    ...a,
+    t: a.t + (b.t - a.t) * f,
+    image: a.image.map((p, k) => (b.image[k] ? mix(p, b.image[k]) : p)),
+    world: a.world.length === b.world.length ? a.world.map((p, k) => mix(p, b.world[k])) : a.world,
+    racket: head ? { grip: a.racket?.grip ?? head, head } : a.racket,
+  }
 }
 
 /**
@@ -143,7 +194,12 @@ export function paintExposure(ctx: CanvasRenderingContext2D, frames: readonly Fr
   const span = Math.max(1, o.to - o.from)
   const traces = o.traces ?? 10
   const every = Math.max(1, Math.floor(span / traces))
-  for (let i = o.from; i < o.to; i += every) {
+  // `now` may fall between two frames: the body is drawn partway, and the
+  // racket's path runs to where its head is at that instant.
+  const end = Math.max(o.from, Math.min(o.to, o.now ?? o.to))
+  const now = Math.floor(end)
+  const body = end > now ? frameBetween(frames, now, end - now, o) : frames[now]
+  for (let i = o.from; i < o.to && i <= now; i += every) {
     const placed = frames[i].image.map(at.place)
     paintTrace(ctx, placed, {
       racket: o.racket,
@@ -152,22 +208,19 @@ export function paintExposure(ctx: CanvasRenderingContext2D, frames: readonly Fr
       alpha: 0.05 + 0.1 * ((i - o.from) / span),
     })
   }
-  const path: Pt[] = []
-  for (let i = o.from; i <= o.to; i++) {
-    const known = frames[i].racket
-    const head = known?.head ?? (o.bodyHeight ? smoothedRacket(frames as Frame[], i, o.racket, o.bodyHeight)?.head : undefined)
-    if (head) path.push(at.place(head))
-  }
-  paintRibbon(ctx, path, at.stature * 0.026)
+  const path = (o.path ?? racketPath(frames, at, o)).slice(0, now - o.from + 1).filter((p): p is Pt => p !== undefined)
+  if (body !== frames[now] && body.racket) path.push(at.place(body.racket.head))
+  if (path.length > 1) paintRibbon(ctx, path, at.stature * 0.026)
   if (!o.bare) {
-    paintPose(ctx, frames[o.to], at, {
+    paintPose(ctx, body, at, {
       racket: o.racket,
       swing: frames,
-      index: o.to,
+      index: now,
       bodyHeight: o.bodyHeight,
       material: o.material,
       ground: 1,
-      still: true,
+      // A still gets the soft rim, motion the cheap one (DESIGN.md).
+      still: end === o.to,
     })
   }
 }

@@ -4,6 +4,7 @@ import { useShareState } from './useShareState'
 import { clipsWork, shareGraduationCard, shareSeasonCard, shareThenNowClip, shareTripCard, type SeasonRecords } from '../lib/share/reportCard'
 import type { GraduationCard } from '../lib/graduationCard'
 import { swingOf } from '../lib/figure/swing'
+import { SOFT_READ } from './statusLabels'
 import { shortDate, tripsOf, tripSummary } from '../lib/progress'
 import type { Session } from '../lib/storage/db'
 
@@ -25,8 +26,8 @@ function shareBothSwings({ then, now }: { then: Session; now: Session }) {
   if (!a || !b) return Promise.resolve('failed' as const)
   const weeks = Math.round((now.createdAt - then.createdAt) / WEEK)
   return shareThenNowClip(
-    { swing: a, caption: shortDate(then.createdAt), score: then.overall },
-    { swing: b, caption: shortDate(now.createdAt), score: now.overall },
+    { swing: a, caption: shortDate(then.createdAt), score: then.overall, soft: then.quality.confidence < SOFT_READ },
+    { swing: b, caption: shortDate(now.createdAt), score: now.overall, soft: now.quality.confidence < SOFT_READ },
     weeks > 1 ? `${weeks} weeks apart` : 'Then, and now',
   )
 }

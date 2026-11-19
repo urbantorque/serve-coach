@@ -1,47 +1,79 @@
 /**
- * A slow-motion clip of a serve, made on the phone.
+ * A slow-motion clip of a serve, made on the device.
  *
- * The figure plays through the swing, leaves its racket's path behind it, and
- * lands on the number. Two bodies side by side make a then-and-now, aligned on
- * the moment each met the ball, so the eye can compare one instant.
+ * It builds the poster (N5.6). The swing plays slowing into the ball, laying
+ * down its traces and the racket's path as it goes, and stops at contact as the
+ * same single exposure the poster is; then the number counts up and the words
+ * land where the poster has them. Its last frame is the poster at two thirds,
+ * drawn by the same functions, so the clip and the picture cannot drift apart.
+ *
+ * Two bodies side by side make a then-and-now, on one clock with nought at the
+ * ball, so the eye compares one instant. Each is sized, racket and all, to stay
+ * inside its own half and under the header.
  *
  * Drawn onto a canvas and recorded by the browser's own `MediaRecorder`, so it
- * uses no library and no network, and nothing leaves the phone unless the player
- * sends the file from their own share sheet. It records in real time, so it takes
- * as long as it plays.
+ * uses no library and no network, and nothing leaves the device unless the
+ * player sends the file from their own share sheet. It records in real time, so
+ * it takes as long as it plays.
  *
  * Only the figure is in it: never the player's video. A browser without a recorder
  * is simply not offered this.
  */
-import { smoothedRacket } from '../analysis/racket'
-import { paintRibbon } from '../figure/athlete'
-import { paintPose, placeSwing, type Placement } from '../figure/stage'
-import type { Swing } from '../figure/swing'
-import { brandMark, cardFonts, figureType, headType, stageBackground, textType } from './serveCard'
+import { PHASE_COPY } from '../analysis/phases'
+import type { Analysis, PhaseId } from '../analysis/types'
+import { paintExposure, placeSwing, racketPath, type Placement } from '../figure/stage'
+import { swingOf, type Swing } from '../figure/swing'
+import type { Session } from '../storage/db'
+import { deviceNoun } from '../device'
+import {
+  POSTER_H,
+  POSTER_W,
+  cardFonts,
+  figureType,
+  headType,
+  posterHeader,
+  posterSwing,
+  posterWords,
+  longDate,
+  stageBackground,
+  stageVeil,
+  textType,
+} from './serveCard'
 
 export interface ClipBody {
   swing: Swing
-  /** Under the body at the end: a date, or "Then". */
+  /** Under the body at the end: a date. */
   caption: string
   score: number
+  /** A rough read, said in the foot because the clip outlives the report. */
+  soft?: boolean
 }
 
-export interface ClipOptions {
-  bodies: ClipBody[]
-  headline: string
-  foot: string
-}
-
-const W = 720
-const H = 900
+/** The poster at two thirds: 4:5, what a feed shows without cropping. */
+export const CLIP_W = 720
+export const CLIP_H = 900
+const K = CLIP_W / POSTER_W
 const FPS = 30
-/** Share of real speed. A second and a half of swing becomes about five. */
-const SLOW = 0.3
-const LAND_S = 2.4
-const LEAD_IN_S = 0.4
-const LIME = '#cdf94a'
+const PAD = 72
+
+/* The timeline, in seconds of clip. */
+const LEAD_S = 0.5
+/** Share of real speed at the start of the swing and at the ball: steady through
+ *  the wind-up, slowing into contact, so the fast part is the slow part. */
+const FAST = 0.42
+const SLOWEST = 0.16
+/** Held at the ball before the words come. */
+const BEAT_S = 0.35
+const LAND_S = 1.3
+const HOLD_S = 2.2
+
 const FG = '#eef2f6'
 const MUTED = '#a7b1c2'
+const FAINT = '#7b8799'
+const LIME = '#cdf94a'
+const AMBER = '#ffb648'
+
+const clamp01 = (x: number) => Math.max(0, Math.min(1, x))
 
 /** MP4 first: it is what every phone's share sheet opens without asking. */
 const TYPES = ['video/mp4;codecs=avc1.42E01E', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm']
@@ -58,109 +90,245 @@ export function clipsWork(): boolean {
   )
 }
 
-interface Player {
-  body: ClipBody
-  at: Placement
-  /** The frames to play, and where the ball was met among them. */
-  from: number
-  to: number
-  contact: number
-  x: number
-  path: { x: number; y: number }[]
+export interface Painter {
+  draw: (s: number) => void
+  total: number
+}
+
+/**
+ * When things happen, from how long the longest swing takes to reach the ball.
+ * `clock` is the swing's own time, nought at contact; `land` runs nought to one
+ * as the words arrive.
+ */
+export function timeline(before: number) {
+  const play = (2 * before) / (FAST + SLOWEST)
+  const landAt = LEAD_S + play + BEAT_S
+  return {
+    play,
+    total: landAt + LAND_S + HOLD_S,
+    clock: (s: number) => {
+      const t = Math.max(0, Math.min(play, s - LEAD_S))
+      return play ? FAST * t + ((SLOWEST - FAST) * t * t) / (2 * play) - before : 0
+    },
+    land: (s: number) => clamp01((s - landAt) / LAND_S),
+  }
 }
 
 const firstOf = (s: Swing) => s.moments.ready ?? s.moments.toss ?? 0
+const contactOf = (s: Swing) => s.moments.contact ?? s.frames.length - 1
 
-function indexAt(p: Player, clock: number) {
-  const { frames } = p.body.swing
-  const t = frames[p.contact].t + clock
-  let i = p.from
-  while (i < p.to && frames[i + 1].t <= t) i++
-  return i
+/**
+ * Where a swing has got at `clock`, as a frame and a share of the way to the
+ * next, so slow motion glides rather than steps. Never past the ball.
+ */
+export function frameAt(s: Swing, from: number, to: number, clock: number) {
+  const t = s.frames[to].t + clock
+  let i = from
+  while (i < to && s.frames[i + 1].t <= t) i++
+  if (i >= to) return to
+  const span = s.frames[i + 1].t - s.frames[i].t
+  return span > 0 ? i + Math.max(0, Math.min(1, (t - s.frames[i].t) / span)) : i
 }
 
-export async function recordSwingClip(o: ClipOptions): Promise<{ blob: Blob; extension: 'mp4' | 'webm' } | undefined> {
+const ORDER: PhaseId[] = ['ready', 'toss', 'trophy', 'drop', 'contact']
+
+/** The last moment this swing has passed, in the app's own words. */
+function phaseAt(s: Swing, i: number): string | undefined {
+  let id: PhaseId | undefined
+  for (const p of ORDER) if (s.moments[p] !== undefined && s.moments[p]! <= i) id = p
+  return id ? PHASE_COPY[id].label : undefined
+}
+
+/** The moment's name, where the words will land, until they do. */
+function phaseLabel(ctx: CanvasRenderingContext2D, label: string | undefined, y: number, land: number) {
+  const a = clamp01(1 - land * 4)
+  if (!label || a <= 0) return
+  ctx.globalAlpha = a
+  ctx.textAlign = 'left'
+  ctx.font = textType(38, 620)
+  ctx.fillStyle = MUTED
+  ctx.fillText(label, PAD, y)
+  ctx.globalAlpha = 1
+}
+
+/**
+ * One serve: the poster, built. Undefined when the report carries no swing to
+ * draw, which is the one case the poster draws without a figure.
+ */
+export function serveClipPainter(
+  ctx: CanvasRenderingContext2D,
+  report: Analysis | Session,
+  o: { streak?: string; bestScore?: string; device?: string } = {},
+): Painter | undefined {
+  const swing = swingOf(report)
+  if (!swing) return undefined
+  const { at, to } = posterSwing(swing)
+  const from = 0
+  const path = racketPath(swing.frames, at, { racket: swing.racket, bodyHeight: swing.bodyHeight, from, to })
+  const time = timeline(swing.frames[to].t - swing.frames[from].t)
+  const date = longDate(report.createdAt)
+  const draw = (s: number) => {
+    ctx.setTransform(K, 0, 0, K, 0, 0)
+    stageBackground(ctx, POSTER_W, POSTER_H)
+    const i = frameAt(swing, from, to, time.clock(s))
+    paintExposure(ctx, swing.frames, at, { racket: swing.racket, bodyHeight: swing.bodyHeight, from, to, now: i, path })
+    stageVeil(ctx)
+    posterHeader(ctx, date)
+    const land = time.land(s)
+    phaseLabel(ctx, phaseAt(swing, i), POSTER_H - 404 + 56, land)
+    if (land > 0) posterWords(ctx, report, { ...o, land })
+  }
+  return { draw, total: time.total }
+}
+
+/* ------------------------------------------------------------ then and now */
+
+/** Where the two stand, as a poster's height: the words take the rest. */
+const PAIR_FEET = POSTER_H * 0.62
+const PAIR_TOP = PAD + 64 + 24
+const CELL = POSTER_W / 2
+const SIDE = 28
+
+export interface PairPlacement {
+  at: Placement
+  from: number
+  to: number
+  path: ReturnType<typeof racketPath>
+}
+
+/**
+ * Two swings at one size, each with all of its motion to the ball, racket
+ * included, inside its own half and under the header. Each is centred on its
+ * motion rather than its body, because the racket goes further to one side
+ * than the other, and the pair share the smaller of the two sizes that fit, so
+ * neither looks bigger for being taller in the picture.
+ */
+export function pairLayout(swings: readonly Swing[]): PairPlacement[] {
+  const fit = (s: Swing, height: number, across: number) => {
+    const from = firstOf(s)
+    const to = contactOf(s)
+    const at = placeSwing(s.frames, CELL, PAIR_FEET / 0.97, { height, feet: 0.97, across })
+    const path = racketPath(s.frames, at, { racket: s.racket, bodyHeight: s.bodyHeight, from, to })
+    const pad = at.stature * 0.1
+    let x0 = Infinity
+    let x1 = -Infinity
+    let y0 = Infinity
+    for (let i = from; i <= to; i++) {
+      for (const p of s.frames[i].image) {
+        const q = at.place(p)
+        x0 = Math.min(x0, q.x)
+        x1 = Math.max(x1, q.x)
+        y0 = Math.min(y0, q.y)
+      }
+    }
+    for (const q of path) {
+      if (!q) continue
+      x0 = Math.min(x0, q.x - pad)
+      x1 = Math.max(x1, q.x + pad)
+      y0 = Math.min(y0, q.y - pad)
+    }
+    return { at, from, to, path, x0, x1, y0 }
+  }
+  const TRY = 0.6
+  const shares = swings.map((s) => {
+    const f = fit(s, TRY, 0.5)
+    const floor = f.at.floor
+    const across = Math.min(1, (CELL - 2 * SIDE) / Math.max(1, f.x1 - f.x0))
+    const up = Math.min(1, (floor - PAIR_TOP) / Math.max(1, floor - f.y0))
+    return { shrink: Math.min(across, up, 0.72 / TRY), centre: (f.x0 + f.x1) / 2 - CELL / 2 }
+  })
+  const height = TRY * Math.min(...shares.map((x) => x.shrink))
+  return swings.map((s, n) => {
+    // Shift so the motion, not the body, is centred in the half.
+    const k = height / TRY
+    const across = 0.5 - (shares[n].centre * k) / CELL
+    const f = fit(s, height, across)
+    return { at: f.at, from: f.from, to: f.to, path: f.path }
+  })
+}
+
+export function thenNowPainter(
+  ctx: CanvasRenderingContext2D,
+  o: { then: ClipBody; now: ClipBody; headline: string; device?: string },
+): Painter {
+  const bodies = [o.then, o.now]
+  const placed = pairLayout(bodies.map((b) => b.swing))
+  const before = Math.max(...bodies.map((b, n) => b.swing.frames[placed[n].to].t - b.swing.frames[placed[n].from].t))
+  const time = timeline(before)
+  const soft = bodies.some((b) => b.soft)
+  const foot = `Two serves, measured on a ${o.device ?? 'phone'}. The video never left it.${soft ? ' One is a rough read.' : ''}`
+  const draw = (s: number) => {
+    ctx.setTransform(K, 0, 0, K, 0, 0)
+    stageBackground(ctx, POSTER_W, POSTER_H)
+    const clock = time.clock(s)
+    let label: string | undefined
+    bodies.forEach((b, n) => {
+      const p = placed[n]
+      const i = frameAt(b.swing, p.from, p.to, clock)
+      if (n === 1) label = phaseAt(b.swing, i)
+      ctx.save()
+      // A safety net under the fit: neither swing ever reaches the other's half.
+      ctx.beginPath()
+      ctx.rect(n * CELL, 0, CELL, POSTER_H)
+      ctx.clip()
+      ctx.translate(n * CELL, 0)
+      paintExposure(ctx, b.swing.frames, p.at, {
+        racket: b.swing.racket,
+        bodyHeight: b.swing.bodyHeight,
+        from: p.from,
+        to: p.to,
+        now: i,
+        path: p.path,
+      })
+      ctx.restore()
+    })
+    stageVeil(ctx, POSTER_W, PAIR_FEET / 0.97)
+    posterHeader(ctx, 'Then and now')
+
+    const land = time.land(s)
+    phaseLabel(ctx, label, POSTER_H - 150, land)
+    if (land <= 0) return
+    const beat = (k: number) => {
+      const t = clamp01((land - k * 0.14) / 0.44)
+      return t * t * (3 - 2 * t)
+    }
+    ctx.textAlign = 'left'
+    ctx.globalAlpha = beat(0)
+    bodies.forEach((b, n) => {
+      const x = n * CELL + PAD
+      ctx.font = figureType(200)
+      ctx.fillStyle = n === 1 ? LIME : FG
+      ctx.fillText(String(Math.round(b.score * clamp01(land / 0.7))), x - 4, POSTER_H - 290)
+      ctx.font = textType(32, 600)
+      ctx.fillStyle = MUTED
+      ctx.fillText(b.caption, x, POSTER_H - 236)
+    })
+    ctx.globalAlpha = beat(1)
+    ctx.font = headType(52)
+    ctx.fillStyle = FG
+    ctx.fillText(o.headline, PAD, POSTER_H - 132, POSTER_W - PAD * 2)
+    ctx.globalAlpha = beat(2)
+    ctx.font = textType(28)
+    ctx.fillStyle = soft ? AMBER : FAINT
+    ctx.fillText(foot, PAD, POSTER_H - 46, POSTER_W - PAD * 2)
+    ctx.globalAlpha = 1
+  }
+  return { draw, total: time.total }
+}
+
+/* -------------------------------------------------------------- recording */
+
+async function record(paint: (ctx: CanvasRenderingContext2D) => Painter | undefined): Promise<{ blob: Blob; extension: 'mp4' | 'webm' } | undefined> {
   const type = clipType()
   const canvas = document.createElement('canvas')
-  canvas.width = W
-  canvas.height = H
+  canvas.width = CLIP_W
+  canvas.height = CLIP_H
   const ctx = canvas.getContext('2d')
-  if (!ctx || !type || !o.bodies.length) return undefined
+  if (!ctx || !type) return undefined
   await cardFonts()
-
-  const cell = W / o.bodies.length
-  const stageH = H * 0.8
-  const players: Player[] = o.bodies.map((body, n) => {
-    const s = body.swing
-    const from = firstOf(s)
-    const to = s.moments.finish ?? s.frames.length - 1
-    const contact = s.moments.contact ?? to
-    const at = placeSwing(s.frames, cell, stageH, { height: o.bodies.length > 1 ? 0.56 : 0.66, feet: 0.95 })
-    const path: { x: number; y: number }[] = []
-    for (let i = from; i <= to; i++) {
-      const head = s.frames[i].racket?.head ?? (s.bodyHeight ? smoothedRacket(s.frames, i, s.racket, s.bodyHeight)?.head : undefined)
-      if (head) path.push(at.place(head))
-    }
-    return { body, at, from, to, contact, x: n * cell, path }
-  })
-
-  // Every swing runs on one clock, nought at the ball.
-  const before = Math.max(...players.map((p) => p.body.swing.frames[p.contact].t - p.body.swing.frames[p.from].t))
-  const after = Math.max(...players.map((p) => p.body.swing.frames[p.to].t - p.body.swing.frames[p.contact].t))
-  const play = LEAD_IN_S + (before + after) / SLOW
-  const total = play + LAND_S
-
-  const draw = (s: number) => {
-    stageBackground(ctx, W, H)
-    const clock = Math.min(s - LEAD_IN_S, play - LEAD_IN_S) * SLOW - before
-    for (const p of players) {
-      const { frames, racket, bodyHeight } = p.body.swing
-      const i = indexAt(p, clock)
-      const trail = p.path.slice(0, i - p.from + 1)
-      ctx.save()
-      ctx.translate(p.x, 0)
-      if (trail.length > 1) paintRibbon(ctx, trail, p.at.stature * 0.022)
-      paintPose(ctx, frames[i], p.at, { racket, swing: frames, index: i, bodyHeight, ground: 1, still: false })
-      ctx.restore()
-    }
-
-    // Faint until the swing lands, so the body stays the subject.
-    ctx.textBaseline = 'alphabetic'
-    ctx.textAlign = 'left'
-    brandMark(ctx, 40, 66, 26)
-
-    const land = Math.max(0, Math.min(1, (s - play) / 0.5))
-    if (land > 0) {
-      ctx.globalAlpha = land * land * (3 - 2 * land)
-      const veil = ctx.createLinearGradient(0, H * 0.46, 0, H * 0.84)
-      veil.addColorStop(0, 'rgba(10,12,16,0)')
-      veil.addColorStop(1, 'rgba(10,12,16,0.96)')
-      ctx.fillStyle = veil
-      ctx.fillRect(0, H * 0.46, W, H * 0.54)
-      if (o.bodies.length === 1) {
-        ctx.font = figureType(200)
-        ctx.fillStyle = FG
-        ctx.fillText(String(o.bodies[0].score), 40, H - 170)
-      } else {
-        o.bodies.forEach((b, n) => {
-          const x = n * cell + 40
-          ctx.font = figureType(150)
-          ctx.fillStyle = n === o.bodies.length - 1 ? LIME : FG
-          ctx.fillText(String(b.score), x, H - 190)
-          ctx.font = textType(26, 600)
-          ctx.fillStyle = MUTED
-          ctx.fillText(b.caption, x, H - 150)
-        })
-      }
-      ctx.font = headType(36)
-      ctx.fillStyle = FG
-      ctx.fillText(o.headline, 40, H - 96, W - 80)
-      ctx.font = textType(23)
-      ctx.fillStyle = MUTED
-      ctx.fillText(o.foot, 40, H - 52, W - 80)
-      ctx.globalAlpha = 1
-    }
-  }
+  const painter = paint(ctx)
+  if (!painter) return undefined
+  const { draw, total } = painter
 
   draw(0)
   const stream = canvas.captureStream(FPS)
@@ -194,4 +362,14 @@ export async function recordSwingClip(o: ClipOptions): Promise<{ blob: Blob; ext
   stream.getTracks().forEach((t) => t.stop())
   const blob = new Blob(chunks, { type: type.split(';')[0] })
   return blob.size ? { blob, extension: type.includes('mp4') ? 'mp4' : 'webm' } : undefined
+}
+
+/** The serve's clip: the poster, built. */
+export function recordServeClip(report: Analysis | Session, o: { streak?: string; bestScore?: string } = {}) {
+  return record((ctx) => serveClipPainter(ctx, report, { ...o, device: deviceNoun() }))
+}
+
+/** Then and now, side by side, the two bodies aligned on the ball. */
+export function recordThenNowClip(then: ClipBody, now: ClipBody, headline: string) {
+  return record((ctx) => thenNowPainter(ctx, { then, now, headline, device: deviceNoun() }))
 }

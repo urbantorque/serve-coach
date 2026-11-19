@@ -7,8 +7,7 @@ import type { Session } from '../storage/db'
 import type { TripSummary } from '../progress'
 import { drawSkeleton, type DrawRect } from '../pose/skeleton'
 import { cardFonts, renderReportCard, textType } from './serveCard'
-import { clipsWork, recordSwingClip, type ClipBody } from './swingClip'
-import { swingOf } from '../figure/swing'
+import { clipsWork, recordServeClip, recordThenNowClip, type ClipBody } from './swingClip'
 import type { CardPose, GraduationCard } from '../graduationCard'
 import { deviceNoun } from '../device'
 
@@ -184,22 +183,17 @@ export async function attemptShare(
  */
 export { clipsWork, renderReportCard }
 
-/** The serve as a slow clip, made here and sent only from the player's own sheet. */
-export async function shareServeClip(report: Report): Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'> {
-  const swing = swingOf(report)
-  if (!swing) return 'failed'
-  const made = await recordSwingClip({
-    bodies: [{ swing, caption: '', score: report.overall }],
-    headline: plain(report.focus.title),
-    foot: 'Serve Coach, measured on a phone.',
-  })
+/** The serve as a slow clip that builds the poster, made here and sent only
+ *  from the player's own sheet. The same words as the poster, record line too. */
+export async function shareServeClip(report: Report, streak?: string, bestScore?: string): Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'> {
+  const made = await recordServeClip(report, { streak, bestScore })
   if (!made) return 'failed'
   return shareBlob(made.blob, `serve-${dateStamp(report.createdAt)}.${made.extension}`, 'My serve', made.blob.type)
 }
 
 /** Then and now, side by side, the two bodies aligned on the ball. */
 export async function shareThenNowClip(then: ClipBody, now: ClipBody, headline: string): Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'> {
-  const made = await recordSwingClip({ bodies: [then, now], headline, foot: 'Serve Coach, measured on a phone.' })
+  const made = await recordThenNowClip(then, now, headline)
   if (!made) return 'failed'
   return shareBlob(made.blob, `then-and-now.${made.extension}`, 'Then and now', made.blob.type)
 }

@@ -409,3 +409,19 @@ showed was wrong.
   between. The crash screen and "I could not read that one" now hold the
   message and its actions together in the middle of the height, the button at
   a button's width.
+- [x] **N5.6 The shared clip builds the poster.** The clip played a small
+  figure high in an empty frame, swung its racket off the edge (and, in a
+  then-and-now, into the other body's half), landed its number on the racket,
+  and ended on a frozen pose rather than the exposure the poster is. It now
+  plays the swing slowing into the ball (four tenths of real speed at the
+  start, a sixth at contact, the body blended between tracked frames so the
+  slow part glides rather than steps), lays down its traces and the racket's
+  path as it goes, names each moment as it passes, stops at contact as the
+  poster's exposure, and counts the number up as the poster's words land. Its
+  last frame is the poster at two thirds, drawn by the same functions
+  (`swingClip.test.ts` holds the words identical). A then-and-now sizes the
+  pair, racket and all, inside their own halves and under the header, at one
+  size, and says when either is a rough read. Both feet now name the device
+  the serve was measured on, where the poster said "phone" on a laptop.
+  Recorded for real in Chrome: two 720 by 900 MP4s of about 8.5 s, finite and
+  seekable, each ending on the poster.
