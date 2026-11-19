@@ -546,3 +546,18 @@ showed was wrong.
   serve from the motion capture and offers the sample report, but reading a
   real video on the landing page would download the 57 MB coach before the
   visitor has asked for anything, so it waits for the visitor's own serve.
+- [x] **N6.7 The owner's steps to a paid launch, in order.**
+  `docs/next/OWNER-STEPS.md` rewritten around what this wave built: agree
+  the free and paid split and the price, a Stripe product and price with the
+  customer portal on, the pass key pair (`scripts/pass-keys.mjs`, which prints
+  and writes nothing), a domain and a git remote, the Cloudflare Pages project
+  with each build setting and secret named, Stripe's test mode before live,
+  the privacy page and terms read by someone qualified, then live. With the
+  two things to know first: a Plus pass is a bearer token, and a cancellation
+  reaches the app at renewal. The open measurements (isolation, WebKit and
+  Firefox, THETIS, sharper footage, a radar) keep their places.
+
+Wave 6 shipped N6.2 to N6.7 on top of N6.1. Not built, and why: accounts and
+synced numbers, which nothing needs yet and which would change the promise
+the pages make; a live read of a real video on the landing page (N6.6). The
+entry chunk sits at its budget, 0.02 kB inside.
