@@ -386,3 +386,9 @@ showed was wrong.
   name for the sample report; it now ends on the same two choices it opens
   with, under the same names, and its privacy section says what the top line
   does not.
+- [x] **N5.3 The shared poster's racket clears its header.** The poster sized
+  the body to the stage and forgot the racket, which at contact sits about
+  0.42 of a body above the hand, so a tall reach swung it through the "Serve
+  Coach" mark. The figure is now measured with the racket and shrunk until it
+  clears the header. Looked at as a 1080 by 1350 card: the exposure, the score,
+  the speed with "about" and "no radar", the fix, and nothing touching.

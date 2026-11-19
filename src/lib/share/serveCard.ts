@@ -106,8 +106,16 @@ export async function renderReportCard(report: Report, streak?: string, bestScor
   const swing = swingOf(report)
   const stageH = H * 0.66
   if (swing) {
-    const at = placeSwing(swing.frames, W, stageH, { height: 0.72, feet: 0.97, across: 0.52 })
     const to = swing.moments.contact ?? swing.frames.length - 1
+    // Sized to the body, then shrunk until the racket clears the header (N5.3):
+    // at contact the racket head sits about 0.42 of a body above the hand, and a
+    // tall reach used to swing it through the brand mark.
+    const HEADER = PAD + 64
+    const sized = (height: number) => placeSwing(swing.frames, W, stageH, { height, feet: 0.97, across: 0.52 })
+    let at = sized(0.72)
+    const top = Math.min(...swing.frames.slice(0, to + 1).flatMap((f) => f.image.map((p) => at.place(p).y))) - 0.42 * at.stature
+    const feetY = stageH * 0.97
+    if (top < HEADER) at = sized((0.72 * (feetY - HEADER)) / (feetY - top))
     paintExposure(ctx, swing.frames, at, { racket: swing.racket, bodyHeight: swing.bodyHeight, from: 0, to })
     const veil = ctx.createLinearGradient(0, stageH * 0.72, 0, stageH * 1.04)
     veil.addColorStop(0, 'rgba(10,12,16,0)')
