@@ -374,3 +374,15 @@ showed was wrong.
   where the first shows (`render.test.ts` holds both). The "An example, not
   your serve" tag laid over the picture, which sat on the racket, is gone: the
   title and the note under the headline already say it.
+- [x] **N5.2 No screen is a phone column on a dark field.** The glance on a
+  laptop centred its reading, pushed its taps to the left edge and stretched
+  "Record another" across the screen; it now has two panes, the reading on
+  the left and the taps and the one action on the right. An empty Progress was
+  one sentence floating a third of the way down: it now says what a second
+  serve unlocks (each line a section the full screen has) and, on a laptop,
+  sets the model serve beside it as one exposure, labelled "Not yours", a still
+  because nothing loops off the first run and the waiting screen. The first
+  run said "your video never leaves this phone" twice and ended on a second
+  name for the sample report; it now ends on the same two choices it opens
+  with, under the same names, and its privacy section says what the top line
+  does not.

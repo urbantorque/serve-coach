@@ -96,8 +96,11 @@
 }
 
 .first-more-foot {
-  display: flex;
-  justify-content: center;
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
 }
 
 @media (min-width: 1024px) {

@@ -61,6 +61,10 @@ import { replayFrom } from '../lib/storage/poseTrack'
 import { usePendingDelete } from '../components/usePendingDelete'
 
 const ThenNow = lazy(() => import('../components/ThenNow'))
+const ModelExposure = lazy(() => import('../components/ModelExposure'))
+
+/** A laptop's width, where an empty Progress gets a picture beside its words (N5.2). */
+const wide = () => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(min-width: 1024px)').matches
 
 /** One empty ledger for every render, so a memo keyed on it holds. */
 const NO_TRIPS: TripRecord[] = []
@@ -219,6 +223,7 @@ function ProgressBody({
   })
   const listed = sessions.filter((s) => s.id !== pendingDelete)
   const [servesOpen, setServesOpen] = useState(showServes)
+  const [wideScreen] = useState(wide)
 
   if (!form || form.points.length < 2) {
     return (
@@ -229,11 +234,29 @@ function ProgressBody({
         {views}
         <div className="progress-empty">
           <p className="t-headline">Film two serves and this shows whether your changes are working.</p>
+          {/* What a second serve unlocks, plainly, so the screen is not one
+              sentence on an empty field (N5.2). Each line is a section the
+              full screen has: the ribbon, Fixed lately, then and now. */}
+          <ul className="progress-promise">
+            <li>Your usual score, trip by trip, as a range rather than one lucky serve.</li>
+            <li>The faults you have fixed, and any that keep coming back.</li>
+            <li>Your serve then and now, set at the same moment.</li>
+          </ul>
           <button className="btn btn--primary btn--big btn--full" onClick={onBack}>
             <Icon name="camera" size={20} />
             Film a serve
           </button>
         </div>
+        {wideScreen && (
+          <figure className="progress-empty-stage">
+            <div className="progress-empty-pic">
+              <Suspense fallback={null}>
+                <ModelExposure racket={readPrefs().handedness === 'left' ? 'left' : 'right'} />
+              </Suspense>
+            </div>
+            <figcaption>A model serve, drawn as one picture. Not yours.</figcaption>
+          </figure>
+        )}
         {sessions.length > 0 && onOpen && <HistoryList sessions={listed} tags={tagMap} onOpen={onOpen} onDelete={remove} />}
       </div>
     )

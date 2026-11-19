@@ -3,6 +3,7 @@ import { Icon } from './primitives'
 import { deviceNoun } from '../lib/device'
 
 interface Props {
+  onFilm: () => void
   onShowExample: () => void
 }
 
@@ -12,13 +13,14 @@ interface Props {
  * The first run used to be one screen and one action, which is right on a phone
  * a player has already chosen to open, and thin on a website someone has just
  * landed on. This says how it works, what I can and cannot see, and where the
- * video goes, and offers the sample report again at the foot. Only what the app
+ * video goes, and ends on the same two choices the promise offered, under the
+ * same names (N5.2): one label for one intent. Only what the app
  * does today: no prices, no programmes it does not have yet.
  *
  * Lazily loaded below the fold, so the first screen and the entry chunk are
  * exactly what they were.
  */
-export default function FirstRunMore({ onShowExample }: Props) {
+export default function FirstRunMore({ onFilm, onShowExample }: Props) {
   const here = deviceNoun()
   return (
     <div className="first-more">
@@ -82,14 +84,18 @@ export default function FirstRunMore({ onShowExample }: Props) {
       <section className="first-more-section first-more-privacy" aria-labelledby="first-private">
         <Icon name="shield" size={26} />
         <h2 id="first-private" className="t-headline">
-          Your video never leaves this {here}.
+          No account, and no upload.
         </h2>
-        <p className="first-more-lede">No account and no upload. I read everything in the browser, even with no signal.</p>
+        <p className="first-more-lede">I read your serve in the browser on this {here}, even with no signal. The video stays where you filmed it.</p>
       </section>
 
       <div className="first-more-foot">
-        <button className="btn btn--ghost" onClick={onShowExample}>
-          See a sample report
+        <button className="btn btn--primary btn--big btn--full" onClick={onFilm}>
+          <Icon name="camera" size={21} />
+          Film my serve
+        </button>
+        <button className="btn btn--quiet btn--full" onClick={onShowExample}>
+          See a sample report first
         </button>
       </div>
     </div>

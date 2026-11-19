@@ -134,6 +134,39 @@
     grid-column: 2;
   }
 
+  /* Empty: the words and the one action on the left, the model serve as one
+     picture on the right, so the width is used rather than left dark (N5.2). */
+  .progress-screen > .progress-empty {
+    grid-column: 1;
+    align-self: center;
+    padding-top: 0;
+  }
+
+  .progress-empty .btn {
+    max-width: 420px;
+  }
+
+  .progress-screen > .progress-empty-stage {
+    grid-column: 2;
+    display: grid;
+    gap: 12px;
+    margin: 0;
+  }
+
+  .progress-empty-pic {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    max-height: 72vh;
+    border-radius: var(--r-xl);
+    background: var(--stage);
+    overflow: hidden;
+  }
+
+  .progress-empty-stage figcaption {
+    font-size: 14px;
+    color: var(--fg-faint);
+  }
+
 
   /* ------------------------------------------- the report, as a review studio */
 
@@ -253,5 +286,35 @@
     grid-row: 1 / span 8;
     position: sticky;
     top: 24px;
+  }
+
+  /* ------------------------------------------------------------- the glance */
+
+  /* The reading on the left, where it was centred in a phone's width; the taps
+     and the one action on the right, in a column of their own rather than
+     stretched across the screen (N5.2). */
+  .shell > .glance {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: 28px 72px;
+    align-content: start;
+  }
+
+  .glance > .glance-top {
+    grid-column: 1 / -1;
+  }
+
+  .glance > .glance-body {
+    grid-column: 1;
+    grid-row: 2 / span 8;
+    align-self: start;
+  }
+
+  .glance > :not(.glance-top):not(.glance-body) {
+    grid-column: 2;
+  }
+
+  .glance > .glance-actions:first-of-type {
+    margin-top: 0;
   }
 }

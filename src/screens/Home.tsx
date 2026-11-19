@@ -193,7 +193,7 @@ export default function Home({
         {storage}
       </div>
       <Suspense fallback={null}>
-        <FirstRunMore onShowExample={onShowExample} />
+        <FirstRunMore onFilm={onFilm} onShowExample={onShowExample} />
       </Suspense>
       </>
     )
