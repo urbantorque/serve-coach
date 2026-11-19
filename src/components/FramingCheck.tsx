@@ -15,6 +15,7 @@ import {
   type Placement,
 } from '../lib/framing/judge'
 import { MAX_RECORDING_SECONDS, recordClip, recordingOutcome, recordingType } from '../lib/framing/record'
+import { MAX_PRACTICE_SECONDS, canRecordPractice, privateFileSink, recordPractice } from '../lib/framing/practice'
 import { loadEngine, nextVideoTimestamp } from '../lib/pose/poseEngine'
 import { recordingConstraints } from '../lib/framing/camera'
 import { primeSpeech, speakLocally } from '../lib/speech'
@@ -179,6 +180,15 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
    * otherwise keep reading whatever `recording` was when the effect ran.
    */
   const recordingRef = useRef(false)
+  /*
+   * A whole practice (N4.4): recorded until the player stops it, a chunk a
+   * second written out to the browser's own storage so memory stays flat, and
+   * read afterwards as a session. Offered only where that storage can be written.
+   */
+  const [canPractice] = useState(canRecordPractice)
+  const [practice, setPractice] = useState(false)
+  const practiceRef = useRef(false)
+  practiceRef.current = practice
   const [recording, setRecording] = useState(false)
   /**
    * Whether the preview is still running, in a place the recorder's callbacks
@@ -265,8 +275,13 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
     liveRef.current = true
 
     const stop = () => {
+      // Only a run that was still live speaks for the sheet. Under React's
+      // development double-invoke the first run's camera request resolves after
+      // its cleanup, finds itself dead and stops again: clearing the shared flag
+      // then would tell the second, live run that its sheet had closed, and every
+      // press of record returned without recording.
+      if (live) liveRef.current = false
       live = false
-      liveRef.current = false
       cancelAnimationFrame(frame)
       // A recorder still running when the sheet closes holds the encoder open
       // and keeps accumulating chunks for a clip nobody will ever be handed.
@@ -407,7 +422,7 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
             setServed(read.serves)
             if (!read.stop) earcon('served')
           }
-          if (read.stop && recorderRef.current?.state === 'recording') {
+          if (read.stop && !practiceRef.current && recorderRef.current?.state === 'recording') {
             recorderRef.current.stop()
           }
           return
@@ -557,6 +572,10 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
       recordingRef.current = false
       setRecording(false)
     }
+    if (practiceRef.current) {
+      void startPractice(stream, type, settle)
+      return
+    }
     let recorder: MediaRecorder
     try {
       recorder = recordClip(stream, type, MediaRecorder as never, {
@@ -594,6 +613,48 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
     capped = setTimeout(() => {
       if (recorderRef.current?.state === 'recording') recorderRef.current.stop()
     }, MAX_RECORDING_SECONDS * 1000) as unknown as number
+  }
+
+  /** A whole practice, written out as it records (N4.4). The same handing over as one serve. */
+  const startPractice = async (stream: MediaStream, type: string, settle: () => void) => {
+    const sink = await privateFileSink()
+    if (!sink || !liveRef.current || !onRecorded) {
+      settle()
+      return
+    }
+    let capped = 0
+    let recorder: MediaRecorder
+    try {
+      recorder = recordPractice(stream, type, MediaRecorder as never, sink, {
+        stopped: (file, chunks) => {
+          clearTimeout(capped)
+          settle()
+          if (recordingOutcome({ previewLive: liveRef.current, chunks }) !== 'analyse') {
+            void sink.discard()
+            return
+          }
+          if (handsFreeRef.current) earcon('stopped')
+          say('Stopped')
+          onRecorded(file)
+        },
+        failed: () => {
+          clearTimeout(capped)
+          settle()
+        },
+      }) as unknown as MediaRecorder
+    } catch {
+      void sink.discard()
+      settle()
+      return
+    }
+    recorderRef.current = recorder
+    recordingRef.current = true
+    setRecording(true)
+    if (handsFreeRef.current) earcon('recording')
+    else say('Recording')
+    capped = setTimeout(() => {
+      if (recorderRef.current?.state === 'recording') recorderRef.current.stop()
+    }, MAX_PRACTICE_SECONDS * 1000) as unknown as number
   }
 
   // Said with the camera or without it (N1.4): a blocked viewfinder still
@@ -776,7 +837,17 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
             >
               Read it aloud
             </button>
-            {handsFree && (
+            {canPractice && (
+              <button
+                type="button"
+                className={`chip chip--button chip--toggle${practice ? ' is-on' : ''}`}
+                aria-pressed={practice}
+                onClick={() => setPractice(!practice)}
+              >
+                Whole practice
+              </button>
+            )}
+            {handsFree && !practice && (
               <div className="seg" role="group" aria-label="Stop after">
                 {SERVE_COUNTS.map((n) => (
                   <button
@@ -804,7 +875,7 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
               type="button"
               className={`film-record${recording ? ' is-recording' : ''}${countdown !== null ? ' is-counting' : ''}`}
               onClick={toggleRecording}
-              aria-label={recording ? 'Stop and read this serve' : countdown !== null ? 'Cancel the countdown' : handsFree ? 'Start hands-free' : 'Record the serve'}
+              aria-label={recording ? (practice ? 'Stop and read this practice' : 'Stop and read this serve') : countdown !== null ? 'Cancel the countdown' : practice ? 'Record a whole practice' : handsFree ? 'Start hands-free' : 'Record the serve'}
             >
               <span />
             </button>
@@ -830,7 +901,9 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
         <p className="framer-foot">
           {warming !== null
             ? 'The same download an analysis needs, so it only happens once.'
-            : recording && handsFree
+            : recording && practice
+              ? `Recording your practice. Serve as many as you like, then stop. Up to ${MAX_PRACTICE_SECONDS / 60} minutes.`
+              : recording && handsFree
               ? `Recording. Serve, and I stop by myself once ${serveCount === 1 ? 'the serve is' : `${serveCount} serves are`} over.`
               : recording
                 ? 'Recording. Serve, then stop.'

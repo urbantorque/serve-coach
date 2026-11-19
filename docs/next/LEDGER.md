@@ -320,3 +320,25 @@ know a good serve from a poor one":
   Today's check asks for the same; its note says the counts are the player's
   own; reaching it is a moment ("9 of 10 second serves in, from 3 of 10. By
   your own tags."). 3 of 10 to 9 of 10 reaches it; 5 of 10 to 7 of 10 does not.
+- [x] **N4.4 Record a whole practice in the app (the old N1.10).** A single
+  serve is recorded into memory and capped at 90 s; a basket is ten or twenty
+  minutes, several hundred megabytes, which a phone cannot hold. A "Whole
+  practice" switch in the viewfinder's options records a chunk a second
+  straight to a file in the browser's private storage (`framing/practice.ts`),
+  waits for the last write before closing it, and hands the session reader
+  that file, read from disk; a write that fails throws the file away rather
+  than hand over a basket with a hole. Capped at 20 minutes, stopped by hand,
+  never by the one-serve auto-stop. Offered only where the browser can write
+  such a file: an in-memory fallback is the thing this exists to avoid. A WebM
+  recorded a chunk at a time says it is infinitely long, which the session
+  path refuses, so `webmDuration.ts` writes the recorded length into its
+  header (only where there is no seek index to shift; only the header passes
+  through memory); Chrome's MP4 already carries it (a 14.7 s practice read
+  14.7 s and seeked to the second). `practice.test.ts` and
+  `webmDuration.test.ts` hold the order, the timing, the hole and the files it
+  must not touch. Walking it found a real bug in the viewfinder: under React's
+  development double-mount the first camera request's late `stop()` cleared
+  the second mount's "live" flag, so record did nothing in development; only
+  a run that was still live clears it now. Not walked past the 150 s session
+  line in a browser: what happens after the stop is the existing path for a
+  long clip.
