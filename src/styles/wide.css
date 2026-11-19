@@ -317,4 +317,24 @@
   .glance > .glance-actions:first-of-type {
     margin-top: 0;
   }
+
+  /* ------------------------------------------------- when something goes wrong */
+
+  /* On a phone the actions sit at the foot, under the thumb. On a laptop that
+     put the words at the top of the screen and a 1,200 px button at the bottom
+     with nothing between: here the message is one block, its actions under it
+     at a button's width, held in the middle of the height (N5.2). */
+  .screen.problem {
+    justify-content: center;
+    gap: 36px;
+  }
+
+  .problem-text {
+    max-width: 720px;
+  }
+
+  .problem-actions {
+    width: 100%;
+    max-width: 420px;
+  }
 }

@@ -403,3 +403,9 @@ showed was wrong.
   already says the number, so the bars now need two rows. The score ribbon's
   markers grew to 8 px and a mouse reads a trip by hovering, not only by
   pressing.
+- [x] **N5.5 Error screens on a laptop are one block.** A phone keeps a
+  problem screen's actions at its foot, under the thumb; on a laptop that left
+  the words at the top and a 1,200 px button at the bottom with nothing
+  between. The crash screen and "I could not read that one" now hold the
+  message and its actions together in the middle of the height, the button at
+  a button's width.
