@@ -43,7 +43,7 @@ import { drawSkeleton, fitContain, ghostFor, tossMarkFor } from '../pose/skeleto
 import { placeLine } from '../tossPlaceCopy'
 import type { TossPlacement } from './tossPlacement'
 import { racketFromBox, type DetectedBox, type RacketEstimate } from './racket'
-import { overallOf } from './coaching'
+import { METRICS, overallOf } from './coaching'
 import { SOFT_MEASUREMENT } from './confidence'
 import {
   IMPLAUSIBLE_JUMP,
@@ -1086,23 +1086,28 @@ export function pickFocus(fundamentals: Fundamental[]): Analysis['focus'] {
   // flagged as approximate is worse than saying nothing about it — so soft
   // measurements are set aside here, and only considered if nothing else is
   // left to talk about.
-  const trusted = all.filter(({ metric }) => (metric.confidence ?? 1) >= SOFT_MEASUREMENT)
-  const ranked = (trusted.length ? trusted : all).sort((a, b) => a.metric.score - b.metric.score)
+  //
+  // Only a row that needs work can lead (N7.2). Ranking every row by score put
+  // a clean serve's weakest in-band row at the top, with its praise as the
+  // reason to work on it. And only a row a study measures can lead: a band
+  // re-derived on motion (`BandSource`) says where real serves sit, not that a
+  // player outside it is losing anything, so it stays a row on the card and
+  // the diagnosis names it only through its own ladder.
+  const needsWork = all.filter(({ metric }) => metric.fix && 'study' in (METRICS[metric.id]?.source ?? {}))
+  const trusted = needsWork.filter(({ metric }) => (metric.confidence ?? 1) >= SOFT_MEASUREMENT)
+  const ranked = (trusted.length ? trusted : needsWork).sort((a, b) => a.metric.score - b.metric.score)
 
   const worst = ranked[0]
   if (!worst) {
+    const unmeasured = all.some(({ metric }) => metric.fix)
     return {
       title: 'Keep grooving this serve',
-      why: cue('Nothing here holds you back.'),
-      drill: fundamentals[0].drill,
-    }
-  }
-
-  if (worst.metric.score >= 85) {
-    return {
-      title: 'Keep grooving this serve',
-      why: cue('Nothing here holds you back. Film again in a few sessions and check it held.'),
-      drill: worst.area.drill,
+      why: cue(
+        unmeasured
+          ? 'Nothing I can check against a study holds you back. Film again in a few sessions and check it held.'
+          : 'Nothing here holds you back. Film again in a few sessions and check it held.',
+      ),
+      drill: (all.find(({ metric }) => metric.fix)?.area ?? [...fundamentals].sort((x, y) => x.score - y.score)[0]).drill,
     }
   }
 

@@ -2268,11 +2268,12 @@ check('confidence always lands between 0 and 1', () => {
   }
 })
 
-check('the focus is the weakest measurement, with its fix and a drill', () => {
+check('the focus is the weakest measurement that needs work and rests on a study, with its fix and a drill', () => {
   const { fundamentals } = run({ trophyKneeAngle: 177 })
   const focus = pickFocus(fundamentals)
   const weakest = fundamentals
     .flatMap((f) => f.metrics)
+    .filter((m) => m.fix && 'study' in METRICS[m.id].source)
     .sort((a, b) => a.score - b.score)[0]
   assert(focus.title === weakest.label, `focus was ${focus.title}, weakest is ${weakest.label}`)
   assert(focus.why.length > 20, 'focus has no explanation')
@@ -2286,6 +2287,27 @@ check('a serve with nothing wrong is told to keep going, not given a fault', () 
   }))
   const focus = pickFocus(perfect)
   assert(/keep/i.test(focus.title), `invented a fault on a flawless serve: "${focus.title}"`)
+})
+
+check('a clean serve never leads with a row that needs no work, or one no study measures (N7.2)', () => {
+  const { fundamentals } = run()
+  const focus = pickFocus(fundamentals)
+  const rows = fundamentals.flatMap((f) => f.metrics)
+  const led = rows.find((m) => m.label === focus.title)
+  note(`clean serve leads with "${focus.title}"`)
+  assert(!led || Boolean(led.fix), `led with "${focus.title}", a row with nothing to fix`)
+  assert(!led || 'study' in METRICS[led.id].source, `led with "${focus.title}", a row no study measures`)
+  const unstudied = fundamentals.map((f) => ({
+    ...f,
+    metrics: f.metrics.map((m) =>
+      'study' in METRICS[m.id].source
+        ? { ...m, score: 95, status: 'great' as const, fix: undefined }
+        : { ...m, score: 20, status: 'work' as const, fix: m.fix ?? 'Fix it.' },
+    ),
+  }))
+  const quiet = pickFocus(unstudied)
+  assert(/keep/i.test(quiet.title), `a row no study measures led the report: "${quiet.title}"`)
+  assert(/study/.test(quiet.why), `the quiet headline claims nothing holds the player back: "${quiet.why}"`)
 })
 
 /* -------------------------------------------------------------- progress --- */

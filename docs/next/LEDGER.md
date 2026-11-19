@@ -724,3 +724,18 @@ live region, checked in the browser against the stand-in.
   now lead the right pane on a laptop and start below the bar on a phone,
   measured on `?demo=injury` (phone: the bar ends at 54 px and the warnings
   begin at 82; laptop: the warnings sit at 148 to 448 px, the number below).
+
+- [x] **N7.2 The headline names a fault, and only one a study measures.**
+  From the close-out review (coach and player, both confirmed by a skeptic):
+  `pickFocus` ranked every card row by score, so on a clean serve the report
+  led with its weakest in-band row, "Hand under the elbow", and gave that
+  row's praise as the reason to work on it. The headline now ranks only rows
+  that carry a fix and whose band rests on a study. A band re-derived on
+  motion (`tossArmHold`, `tossPathWobble`, `handUnderElbow`, all "No study
+  measures it") stays a row on the card, and the diagnosis still names its
+  fault through its own ladder. With nothing left to lead, the report says
+  "Keep grooving this serve", and where an unstudied row needs work it says
+  so honestly: "Nothing I can check against a study holds you back." The
+  clean serve on the rig now leads with "Keep grooving this serve"
+  (`engine.test.ts`). The comment that said weight kept that row "from being
+  more than a note" is corrected: weight only shrinks its vote in the score.

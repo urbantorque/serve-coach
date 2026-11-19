@@ -581,7 +581,9 @@ export const METRICS: Record<string, MetricCopy> = {
      * loudly off a rig would be doing precisely what the rest of this file
      * refuses to do. The other consequence is that a clean serve's Swing card
      * will often name this its weakest row. That is true — it is the weakest row
-     * — and `weight` above is what keeps it from being more than a note.
+     * — and `weight` above keeps its vote in the score small. Weight does not
+     * keep it off the headline: `pickFocus` does, because only a row with a fix
+     * and a study under it can lead the report (N7.2).
      */
     ideal: [4, 100],
     range: [0, 100],
