@@ -131,23 +131,59 @@ phone" on a laptop; the landing page (wave 6) takes that line.
   contact). Two 320 x 240 clips overstate a 1080p phone, so it waits for
   sharper open footage through the same bench. Nothing reads it yet.
 
-Next in this wave, from what N2.1 found, in order:
-1. **Gates with a soft edge.** The blur and frame-count refusals flip between
-   two encodes of the same stretch, and a flipped gate changes whether there
-   is a report and what it leads with. Not by lowering a limit: near the
-   limit, measure and let confidence fall (the rule in
-   `forgiving-to-amateur-footage`), and refuse only well past it.
-2. **A stature ruler that holds.** Heights divide by a stature read off the
-   same frames. Steady it across a clip (or across a player's history, where
-   their height is known once) and re-run the bench.
-3. **A headline that holds.** When the top two causes are close, keep the
-   fix the player is already working on, or say both. Prove it on the bench:
-   the same fix on every pair where both copies were measured.
-4. **Sharper footage.** Find openly licensed 720p or 1080p serve clips for
-   the bench, then decide `RETEST_SD`.
-5. **Other browsers.** WebKit and Firefox are not installed for Playwright
-   here (`npx playwright install webkit firefox`, a download the owner should
-   agree to). Until then, decode is proved in Chrome only.
+- [x] **N2.3 Correction: a third of the bench's copies were broken, and two
+  "findings" were the bench's own.** On 2026-11-19 the copies the bench had
+  saved as failures turned out to be about 0.17 s long (18 KB): the canvas
+  recording had stopped early on a machine busy with other work. Every
+  refused and collapsed copy in N2.1's runs was one of those, so **N2.1's
+  claims about the gates flipping and the headline changing are withdrawn**.
+  The bench now reads every copy back, retries a short one up to three times,
+  and reports it as short rather than reading it. A second wrong turn, kept
+  here so nobody repeats it: a fresh page once read a saved copy as measured
+  and a page that had read another clip first read it as "not a serve", which
+  looked like the pose tracker carrying one clip into the next. A blank-frame
+  reset was built for it, then reverted when a fresh page without it gave the
+  same "not a serve": three reads a page had not been enough to tell.
+- [x] **N2.4 What the whole copies show (two more runs, 2026-11-19).** With
+  every copy whole:
+  - **Saque_con_pelota is stable**: measured on all ten copies, the same
+    faults, the score within 3 points of the control.
+  - **0SAQUE sits exactly on the frame-count gate.** On the original file its
+    racket drop and contact are three captured frames apart at 30 fps (36.28
+    and 36.37 s), and `LIMITS.swingSamples` is three. Copies that lose one
+    frame at the drop (the hand is below the shoulder for one or two frames
+    only) fall to two and are refused, deterministically: one saved copy gave
+    the same refusal on two fresh pages, three reads each.
+  - **When the dip is smeared away, the drop is put in the wrong place and
+    nothing says so.** The copies that "passed" with 13 to 15 swing samples
+    had their drop near the trophy instead, so their drop-to-contact timing
+    is several times too long, with full confidence. That is the honesty
+    finding of this wave.
+  - The heights still move past `CARD_NOISE_SD` on 0SAQUE's copies; whether
+    that is the stature ruler or the misplaced drop is not yet separated.
+
+Next in this wave, in order:
+1. **A drop that was not seen says so.** When the racket hand is below its
+   shoulder for no more than a frame or two before contact, or never, mark
+   the drop as unobserved and withhold what is timed from it, rather than
+   placing it near the trophy. Prove it on 0SAQUE's saved copies (in
+   `bench-data/retest-cases/`, replayed by `retest.html?file=`) and the rig.
+2. **The frame-count gate as a soft edge.** At two swing samples the timing
+   readings already fall to 0.4 confidence (`confidence.ts`). Read the serve,
+   withhold the swing timing and any fault named from it, and refuse only
+   below that. Not before item 1: a soft edge on a misplaced drop would turn
+   a refusal into a confident wrong timing.
+3. **A stature ruler that holds**, then re-run the bench for the heights.
+4. **Sharper footage**, then decide `RETEST_SD`.
+5. **Other browsers**, once the owner agrees to the install.
+- [x] **N3.4 The app names the device it is on.** `lib/device.ts`: a coarse
+  pointer on a small screen is a phone, on a larger one a tablet, anything
+  else a computer. Twenty-nine player-facing lines that said "this phone" or
+  "your phone" now say the right thing on a laptop ("Your video never leaves
+  this computer"); the three filming instructions keep "phone", because the
+  camera is a phone whatever the reader holds. In Node it answers phone, so
+  every locked line reads as before; `cardCopy.test.ts` now reads template
+  strings too. Checked in the browser on the first run.
 
 Sources looked for on 2026-11-17, for items 4 and the wave's "does the score
 know a good serve from a poor one":
