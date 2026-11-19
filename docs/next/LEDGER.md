@@ -429,3 +429,8 @@ showed was wrong.
   numbers over a dark field beside the goal, the last serves stopped two
   thirds of the way across, and two notes trailed at the foot. The notes now
   sit with the numbers beside the goal, and the serves run the width.
+- [x] **N5.8 A sheet on a laptop is a dialog.** Settings and every other sheet
+  rose from the bottom edge with a grip a mouse cannot drag and ran off the
+  foot of the window. On a laptop they now sit in the middle, every corner
+  rounded, scrolling inside. Settings told a laptop that "only a file survives
+  a lost phone"; the line names the device it is on.

@@ -33,6 +33,7 @@
  * cheap as the prune was rewritten to keep it. A copy that cannot be made is left
  * unmade, and `storageNudge` notices it has stopped keeping up.
  */
+import { deviceNoun } from '../device'
 import { REAL_STORE, buildBackup, importBackup, isIOS, isInstalled, isPersisted, requestPersistence, type Backup, type ImportResult } from './backup'
 import { clipStoreAvailable } from './clipStore'
 import { compactSession, countFiledSince, countRows, firstFiledAt, listSummaries, safely } from './db'
@@ -271,12 +272,16 @@ export async function protectAfterSave(o: { practiceServes?: number } = {}, deps
   }
 }
 
-/** The honest sentence. Every path says what only a file protects from. */
-export function protectionLine(o: { available: boolean; serves?: number; persisted: boolean; mayClear: boolean }): string {
+/**
+ * The honest sentence. Every path says what only a file protects from, and
+ * names the device the history is on: a laptop was told about a lost phone (N5.8).
+ */
+export function protectionLine(o: { available: boolean; serves?: number; persisted: boolean; mayClear: boolean; device?: string }): string {
+  const lost = `a lost ${o.device ?? 'phone'}`
   if (!o.available) return 'This browser gives me nowhere to keep a safety copy. A backup file is your one safeguard.'
-  if (!o.serves) return 'No safety copy yet. I make one here once you have filmed a serve, and only a file survives a lost phone.'
+  if (!o.serves) return `No safety copy yet. I make one here once you have filmed a serve, and only a file survives ${lost}.`
   const what = o.serves === 1 ? '1 serve' : `${o.serves} serves`
-  const beyond = o.mayClear ? 'a lost phone or Safari clearing this site' : o.persisted ? 'a lost phone' : 'a lost phone or a cleared browser'
+  const beyond = o.mayClear ? `${lost} or Safari clearing this site` : o.persisted ? lost : `${lost} or a cleared browser`
   return cue(`My copy of ${what} covers a damaged history or a mistaken clear; only a file survives ${beyond}.`)
 }
 
@@ -289,7 +294,7 @@ export async function protectionStatus(deps: ProtectDeps = REAL_DEPS): Promise<P
     persisted,
     mayClear,
     ...(newest ? { lastSnapshotAt: newest.at, lastSnapshotServes: newest.serves } : {}),
-    line: protectionLine({ available: !!shelf, serves: newest?.serves, persisted, mayClear }),
+    line: protectionLine({ available: !!shelf, serves: newest?.serves, persisted, mayClear, device: deviceNoun() }),
   }
 }
 

@@ -360,6 +360,34 @@
     margin-top: 0;
   }
 
+  /* ------------------------------------------------------------- the sheets */
+
+  /* A sheet on a laptop is a dialog in the middle of the window, not a phone's
+     panel up from the bottom: no grip, which a mouse cannot drag and which drags
+     nothing anyway, every corner rounded, and its foot on screen rather than
+     running off the bottom edge (N5.8). The camera's full sheet is unchanged. */
+  .sheet-backdrop {
+    align-items: center;
+  }
+
+  .sheet:not(.sheet--full) {
+    max-height: 86vh;
+    border-bottom: 1px solid var(--hairline);
+    border-radius: var(--r-xl);
+  }
+
+  .sheet-grip {
+    display: none;
+  }
+
+  .sheet:not(.sheet--full) .sheet-head {
+    padding: 18px 18px 10px 24px;
+  }
+
+  .sheet:not(.sheet--full) .sheet-body {
+    padding: 4px 24px 28px;
+  }
+
   /* ------------------------------------------------- when something goes wrong */
 
   /* On a phone the actions sit at the foot, under the thumb. On a laptop that

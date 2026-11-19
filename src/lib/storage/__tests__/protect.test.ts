@@ -347,6 +347,11 @@ check('every line says what a copy covers and what only a file does, in the voic
     }
   }
   assert(/Safari/.test(protectionLine(variants[2])), 'iOS not installed did not name Safari')
+  // A laptop is not told about a lost phone (N5.8).
+  for (const v of variants.filter((x) => x.available)) {
+    const line = protectionLine({ ...v, device: 'computer' })
+    assert(/lost computer/.test(line) && !/phone/.test(line), `a computer was told about a phone: "${line}"`)
+  }
   assert(/1 serve /.test(protectionLine(variants[3])), 'one serve read as serves')
 })
 
