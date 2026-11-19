@@ -15,6 +15,7 @@ import type { TripRecord } from '../lib/storage/ledger'
 import { readPrefs, type Prefs } from '../lib/storage/prefs'
 import type { PracticeSession } from '../lib/session/session'
 import { DeltaChip } from '../components/Trend'
+import { deviceNoun } from '../lib/device'
 
 const FirstRunStage = lazy(() => import('../components/FirstRunStage'))
 const ServeCards = lazy(() => import('../components/ServeCards'))
@@ -172,7 +173,7 @@ export default function Home({
         </div>
         <div className="first-copy">
           <h1 className="t-display">Film one serve. See the one thing to fix.</h1>
-          <p>I read your toss, legs, swing and contact on this phone, then draw the fix on your own serve.</p>
+          <p>I read your toss, legs, swing and contact on this {deviceNoun()}, then draw the fix on your own serve.</p>
         </div>
         <div className="first-actions">
           <button className="btn btn--primary btn--big btn--full" onClick={onFilm}>
@@ -184,7 +185,7 @@ export default function Home({
           </button>
         </div>
         <p className="first-foot">
-          Your video never leaves this phone.
+          Your video never leaves this {deviceNoun()}.
           {offlineReady === false ? ` Your first serve downloads the coach once, ${engineMegabytes()} MB.` : ''}
         </p>
         {storage}

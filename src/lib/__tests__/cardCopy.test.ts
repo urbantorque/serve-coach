@@ -45,7 +45,15 @@ const src = fs.readFileSync(path.join(process.cwd(), 'src/lib/share/reportCard.t
  * heuristic, for its reasons. It over-matches a comment and under-matches
  * anything interpolated, and both directions are named rather than tuned away.
  */
-const LITERALS = [...src.matchAll(/'([A-Z][^']{11,})'/g)].map((m) => m[1])
+const LITERALS = [
+  ...[...src.matchAll(/'([A-Z][^']{11,})'/g)].map((m) => m[1]),
+  // A template whose only hole is the device's name (N3.4), read the way the
+  // suite's own device reads it: as a phone.
+  ...[...src.matchAll(/`([A-Z][^`]{11,})`/g)]
+    .map((m) => m[1])
+    .filter((t) => (t.match(/\$\{/g) ?? []).length === (t.match(/\$\{deviceNoun\(\)\}/g) ?? []).length)
+    .map((t) => t.replace(/\$\{deviceNoun\(\)\}/g, 'phone')),
+]
 
 /**
  * Drawn strings the editor is wrong about.

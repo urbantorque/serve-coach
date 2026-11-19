@@ -35,6 +35,7 @@ import {
 } from '../lib/framing/handsFree'
 import { readPrefs, writePrefs } from '../lib/storage/prefs'
 import type { Frame } from '../lib/analysis/types'
+import { deviceNoun } from '../lib/device'
 
 /**
  * A viewfinder that says what the engine will be able to read, before the serve.
@@ -612,7 +613,7 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
     </button>
   )
   const pickButton = onPick && (
-    <button type="button" className="film-side" onClick={onPick} aria-label="Pick a video from this phone">
+    <button type="button" className="film-side" onClick={onPick} aria-label={`Pick a video from this ${deviceNoun()}`}>
       <Icon name="gallery" size={26} />
       <span>Videos</span>
     </button>
@@ -638,10 +639,10 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
           {onPick && (
             <button type="button" className="btn btn--ghost btn--full" onClick={onPick}>
               <Icon name="gallery" size={19} />
-              Pick a video from this phone
+              Pick a video from this {deviceNoun()}
             </button>
           )}
-          <p className="framer-foot">Your video stays on this phone either way.</p>
+          <p className="framer-foot">Your video stays on this {deviceNoun()} either way.</p>
         </div>
       </div>
     )
@@ -833,7 +834,7 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
               ? `Recording. Serve, and I stop by myself once ${serveCount === 1 ? 'the serve is' : `${serveCount} serves are`} over.`
               : recording
                 ? 'Recording. Serve, then stop.'
-                : 'Nothing is recorded until you press record, and a clip stays on this phone.'}
+                : `Nothing is recorded until you press record, and a clip stays on this ${deviceNoun()}.`}
         </p>
       </div>
     </div>

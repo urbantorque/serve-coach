@@ -10,6 +10,7 @@ import { cardFonts, renderReportCard, textType } from './serveCard'
 import { clipsWork, recordSwingClip, type ClipBody } from './swingClip'
 import { swingOf } from '../figure/swing'
 import type { CardPose, GraduationCard } from '../graduationCard'
+import { deviceNoun } from '../device'
 
 type Report = Analysis | Session
 
@@ -517,7 +518,7 @@ export async function renderBasketCard(
   ctx.font = font(400, 15)
   ctx.fillStyle = FAINT
   ctx.textAlign = 'center'
-  ctx.fillText('Measured on your phone · the video never left it', W / 2, H - 22)
+  ctx.fillText(`Measured on your ${deviceNoun()} · the video never left it`, W / 2, H - 22)
   ctx.textAlign = 'left'
 
   return new Promise((resolve) => canvas.toBlob((b) => resolve(b ?? undefined), 'image/png'))
@@ -655,7 +656,7 @@ export async function renderSeasonCard(records: SeasonRecords, asOf: number): Pr
   ctx.font = font(400, 15)
   ctx.fillStyle = FAINT
   ctx.textAlign = 'center'
-  ctx.fillText('Measured on your phone · the video never left it', W / 2, H - 22)
+  ctx.fillText(`Measured on your ${deviceNoun()} · the video never left it`, W / 2, H - 22)
   ctx.textAlign = 'left'
 
   return new Promise((resolve) => canvas.toBlob((b) => resolve(b ?? undefined), 'image/png'))

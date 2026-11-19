@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { MAX_KEPT_CLIPS, clipStoreAvailable, forgetAllClips, keptClips } from '../lib/storage/clipStore'
 import { Icon } from './primitives'
+import { deviceNoun } from '../lib/device'
 
 interface Props {
   keep: boolean
@@ -36,14 +37,14 @@ export default function KeepClipsPanel({ keep, onChange }: Props) {
     <section className="storage">
       <h3 className="block-title">Your videos</h3>
       <p className="sheet-note">
-        Keep each clip you analyse on this phone, so an old report plays your real video. Nothing
-        leaves the phone. I keep the newest {MAX_KEPT_CLIPS}, and clear them before any report
+        Keep each clip you analyse on this {deviceNoun()}, so an old report plays your real video. Nothing
+        leaves the {deviceNoun()}. I keep the newest {MAX_KEPT_CLIPS}, and clear them before any report
         when space runs short.
       </p>
       <div className="storage-actions">
         <button className="btn btn--ghost btn--full" aria-pressed={keep} onClick={() => onChange(!keep)}>
           <Icon name={keep ? 'check' : 'film'} size={17} />
-          {keep ? 'Keeping videos on this phone' : 'Keep videos on this phone'}
+          {keep ? `Keeping videos on this ${deviceNoun()}` : `Keep videos on this ${deviceNoun()}`}
         </button>
         {kept && kept.count > 0 && (
           <button className="btn btn--ghost btn--full" onClick={() => void clear()} disabled={busy}>

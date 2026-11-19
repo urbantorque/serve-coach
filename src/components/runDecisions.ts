@@ -5,6 +5,7 @@
  */
 import type { View } from '../App'
 import { looksLikeNonVideo } from '../lib/pose/errors'
+import { deviceNoun } from '../lib/device'
 
 /**
  * Whether a waiting new version may take over now. Only on the home screen,
@@ -88,7 +89,7 @@ export function readFailure(online: boolean): { title: string; hints: string[] }
         hints: ['Try a clip straight from your camera roll, not a shared link.', 'MP4 or MOV clips from a phone camera work best.'],
       }
     : {
-        title: 'The coach is not on this phone yet',
+        title: `The coach is not on this ${deviceNoun()} yet`,
         hints: ['Connect to the internet once, on Wi-Fi if you can, and the coach downloads.', 'After that it works with no signal at all.'],
       }
 }

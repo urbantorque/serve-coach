@@ -47,6 +47,7 @@ import { clipFor } from './lib/storage/clipStore'
 import { guessServeNumber } from './lib/serveGuess'
 import type { ProtectionStatus, RecoveryOffer } from './lib/storage/protect'
 import Home from './screens/Home'
+import { deviceNoun } from './lib/device'
 
 /*
  * Split off the entry chunk. The progress screen, with its charts, share cards
@@ -329,7 +330,7 @@ export default function App() {
         await saveSession(analysis)
       } catch {
         setSaveWarning(
-          'This report could not be saved, because your phone has run out of storage. Export your history from Settings, or free up space and read it again.',
+          `This report could not be saved, because your ${deviceNoun()} has run out of storage. Export your history from Settings, or free up space and read it again.`,
         )
       }
       refreshSessions()

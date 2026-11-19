@@ -7,6 +7,7 @@ import { engineMegabytes } from '../lib/engineManifest'
 import { defaultSpeedUnit } from '../lib/speedCopy'
 import type { OfflineWarmup } from './useOfflineWarmup'
 import { writePrefs, type Prefs } from '../lib/storage/prefs'
+import { deviceNoun } from '../lib/device'
 
 const FilmingGuide = lazy(() => import('./FilmingGuide'))
 const StoragePanel = lazy(() => import('./StoragePanel'))
@@ -127,14 +128,14 @@ export default function AppSheets({ sheet, onSheet, prefs, onPrefs, serves, onIm
         </button>
         <button className="btn btn--ghost btn--full" onClick={() => onSheet('check')}>
           <Icon name="gauge" size={18} />
-          What this phone can do
+          What this {deviceNoun()} can do
         </button>
         <Suspense fallback={null}>
           <Credits />
         </Suspense>
       </Sheet>
 
-      <Sheet open={sheet === 'check'} onClose={() => onSheet(null)} title="What this phone can do">
+      <Sheet open={sheet === 'check'} onClose={() => onSheet(null)} title={`What this ${deviceNoun()} can do`}>
         <Suspense fallback={null}>
           <DeviceCheck />
         </Suspense>

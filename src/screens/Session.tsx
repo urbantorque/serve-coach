@@ -11,6 +11,7 @@ import { clipLabel } from '../lib/clipLabel'
 import { PLACEMENT } from '../lib/placement'
 import { SESSION_SAMPLE, costLeft, guessServes, minutesOf, planChoices, speedCostLine, type PlanChoice } from '../lib/session/plan'
 import { toRead, type PracticeSession, type SessionStage } from '../lib/session/session'
+import { deviceNoun } from '../lib/device'
 
 export type { SessionStage }
 
@@ -94,7 +95,7 @@ export default function Session({
               </button>
             ) : (
               <>
-                <p className="session-note">The video is not kept on your phone. Pick the same one to carry on.</p>
+                <p className="session-note">The video is not kept on your {deviceNoun()}. Pick the same one to carry on.</p>
                 <button className="btn btn--primary btn--full" onClick={onPickAgain}>
                   Pick the video
                 </button>
@@ -238,10 +239,10 @@ function Choices({
       </p>
       <p className="session-meta" role="status" aria-live="polite">
         {!timed
-          ? 'Timing your phone on this video…'
+          ? `Timing your ${deviceNoun()} on this video…`
           : perSampleMs === undefined
-            ? 'I could not time your phone on this video, so I cannot say how long it will take.'
-            : 'Times are from your phone, on this video.'}
+            ? `I could not time your ${deviceNoun()} on this video, so I cannot say how long it will take.`
+            : `Times are from your ${deviceNoun()}, on this video.`}
       </p>
       {/* Off by default: a speed costs the ball's pass on every serve. */}
       <div className="seg" role="group" aria-label="Serve speeds" style={{ width: 'fit-content' }}>

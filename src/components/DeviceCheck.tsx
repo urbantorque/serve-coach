@@ -4,6 +4,7 @@ import { deviceReportText, readDeviceReport, type DeviceReport, type Playback } 
 import { coldTimingLine, timingLine, timingsOf } from '../lib/analysis/timings'
 import { listSummaries, safely, type Session } from '../lib/storage/db'
 import { Icon } from './primitives'
+import { deviceNoun } from '../lib/device'
 
 /**
  * What this phone will actually do, shown on the phone.
@@ -52,7 +53,7 @@ export default function DeviceCheck() {
     void safely(listSummaries, []).then(setHistory)
   }, [])
 
-  if (!report) return <p className="sheet-note">Asking this phone about itself…</p>
+  if (!report) return <p className="sheet-note">Asking this {deviceNoun()} about itself…</p>
 
   const { recording, decode, camera, storage, hardware, offline } = report
   const verdict = recording.chosen ? YES : NO

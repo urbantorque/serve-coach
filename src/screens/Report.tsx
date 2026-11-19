@@ -62,6 +62,7 @@ import DrillCard from './report/DrillCard'
 import RevealStage from './report/RevealStage'
 import ShareChoice from './report/ShareChoice'
 import SideBySide from './report/SideBySide'
+import { deviceNoun } from '../lib/device'
 
 /*
  * The band in words, as a caption to the score. Said once, and short: the fix
@@ -648,7 +649,7 @@ export default function Report({
                 : undefined
             }
           />
-          <p className="player-note">You kept this clip on this phone. It goes when you delete this report, or first when space runs short.</p>
+          <p className="player-note">You kept this clip on this {deviceNoun()}. It goes when you delete this report, or first when space runs short.</p>
         </section>
       )}
 
@@ -668,8 +669,8 @@ export default function Report({
           />
           <p className="player-note">
             {keepsClips
-              ? 'This clip was not kept on your phone, so this is your tracked body, moving as you filmed it.'
-              : 'Your clip never left your phone, so this is your tracked body, moving as you filmed it.'}
+              ? `This clip was not kept on your ${deviceNoun()}, so this is your tracked body, moving as you filmed it.`
+              : `Your clip never left your ${deviceNoun()}, so this is your tracked body, moving as you filmed it.`}
             {ghost
               ? ghost.who === 'best'
                 ? ' The dashed body is your best serve so far, lined up at the moment you hit the ball.'
@@ -981,9 +982,9 @@ export default function Report({
           ? 'Built from a simulated serve. Nothing on this page was measured from a video.'
           : isLive(analysis)
             ? `Measured on this device from ${analysis.frames.length} tracked frames. Nothing was uploaded.` +
-              (keepFailed ? ' I could not keep this video on the phone, so it will not play here later.' : '')
+              (keepFailed ? ` I could not keep this video on the ${deviceNoun()}, so it will not play here later.` : '')
             : kept
-              ? 'Measured on this device. Nothing was uploaded, and the video is kept on this phone only.'
+              ? `Measured on this device. Nothing was uploaded, and the video is kept on this ${deviceNoun()} only.`
               : keepsClips
                 ? 'Measured on this device. Nothing was uploaded, and this video was not kept.'
                 : 'Measured on this device. Nothing was uploaded, and the video itself was never saved.'}

@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { clearSessions, safely } from '../lib/storage/db'
+import { deviceNoun } from '../lib/device'
 
 interface Props {
   children: ReactNode
@@ -98,7 +99,7 @@ export function CrashScreen(p: {
         <div className="problem-text">
           <span className="next-label problem-kicker">Sorry about this</span>
           <h1 className="t-display">Something in the app broke</h1>
-          <p>Your serves are safe on this phone, and nothing was sent anywhere. Reloading usually fixes it.</p>
+          <p>Your serves are safe on this {deviceNoun()}, and nothing was sent anywhere. Reloading usually fixes it.</p>
         </div>
         <div className="problem-actions">
           <button className="btn btn--primary btn--big btn--full" onClick={p.onReload}>
@@ -118,7 +119,7 @@ export function CrashScreen(p: {
             {p.confirming ? (
               <>
                 <p role="alert">
-                  This deletes every saved report on this phone, and any videos kept with them.
+                  This deletes every saved report on this {deviceNoun()}, and any videos kept with them.
                   {p.backup === 'saved' ? ' Your backup file can bring them back.' : ' Save a backup first if you can.'}
                 </p>
                 <button className="btn btn--quiet btn--full" onClick={p.onConfirmClear} disabled={p.clearing}>

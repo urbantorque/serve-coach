@@ -1,5 +1,6 @@
 import type { SharingState } from '../../components/useShareState'
 import { Icon } from '../../components/primitives'
+import { deviceNoun } from '../../lib/device'
 
 interface Props {
   card: SharingState
@@ -53,7 +54,7 @@ export default function ShareChoice({ card, onCard, coach, onCoach, clip, onClip
       <p className="sr-only" role="status" aria-live="polite">
         {[card, clip, coach].includes('working') ? 'Preparing' : [card, clip, coach].includes('done') ? 'Ready' : ''}
       </p>
-      <p className="sheet-note">Nothing leaves your phone until you choose where it goes.</p>
+      <p className="sheet-note">Nothing leaves your {deviceNoun()} until you choose where it goes.</p>
     </div>
   )
 }

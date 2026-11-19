@@ -13,6 +13,7 @@
  * with fake streams and fake timers.
  */
 import type { EngineFile } from './engineManifest'
+import { deviceNoun } from './device'
 
 /** A download that has delivered nothing for this long is stalled. */
 export const STALL_MS = 30_000
@@ -177,7 +178,7 @@ export function engineFailureOf(cause: unknown, online: boolean): EngineFailure 
 
 const FAILURE_COPY: Record<EngineFailure, (mb: number) => { title: string; hints: string[] }> = {
   offline: (mb) => ({
-    title: 'The coach is not on this phone yet',
+    title: `The coach is not on this ${deviceNoun()} yet`,
     hints: [
       `Connect to the internet once, on Wi-Fi if you can, and the coach downloads (${mb} MB).`,
       'After that it works with no signal at all.',
