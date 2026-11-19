@@ -1,0 +1,303 @@
+[
+  {
+    "name": "01-first-run-home",
+    "height": 3171,
+    "screens": 3.8,
+    "controls": 11,
+    "firstScreenControls": 2,
+    "words": 347,
+    "said": []
+  },
+  {
+    "name": "02-first-run-guide",
+    "height": 3171,
+    "screens": 3.8,
+    "controls": 19,
+    "firstScreenControls": 10,
+    "words": 347,
+    "said": [
+      "warning: W1119 23:03:12.856000 1905760 gl_context.cc:1060] OpenGL error checking is disabled",
+      "warning: W1119 23:03:13.106000 1905760 gl_context.cc:1060] OpenGL error checking is disabled"
+    ]
+  },
+  {
+    "name": "03-film-guide",
+    "height": 3171,
+    "screens": 3.8,
+    "controls": 13,
+    "firstScreenControls": 3,
+    "words": 347,
+    "said": []
+  },
+  {
+    "name": "04-example-report",
+    "height": 2479,
+    "screens": 2.9,
+    "controls": 34,
+    "firstScreenControls": 5,
+    "words": 244,
+    "said": []
+  },
+  {
+    "name": "05-empty-progress",
+    "height": 844,
+    "screens": 1,
+    "controls": 1,
+    "firstScreenControls": 1,
+    "words": 50,
+    "said": []
+  },
+  {
+    "name": "06-empty-history",
+    "height": 844,
+    "screens": 1,
+    "controls": 1,
+    "firstScreenControls": 1,
+    "words": 50,
+    "said": []
+  },
+  {
+    "name": "07-viewfinder",
+    "height": 3171,
+    "screens": 3.8,
+    "controls": 18,
+    "firstScreenControls": 9,
+    "words": 347,
+    "said": [
+      "warning: W1119 23:03:30.783000 1905760 gl_context.cc:1060] OpenGL error checking is disabled",
+      "warning: W1119 23:03:31.502000 1905760 gl_context.cc:1060] OpenGL error checking is disabled"
+    ]
+  },
+  {
+    "name": "08-waiting",
+    "height": 844,
+    "screens": 1,
+    "controls": 1,
+    "firstScreenControls": 1,
+    "words": 42,
+    "said": [
+      "warning: W1119 23:03:35.607000 1905760 gl_context.cc:1060] OpenGL error checking is disabled",
+      "warning: W1119 23:03:35.792000 1905760 gl_context.cc:1060] OpenGL error checking is disabled",
+      "error: INFO: Created TensorFlow Lite XNNPACK delegate for CPU.",
+      "warning: W1119 23:03:37.112000 1905760 landmark_projection_calculator.cc:189] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAG"
+    ]
+  },
+  {
+    "name": "09-report-real-clip",
+    "height": 2119,
+    "screens": 2.5,
+    "controls": 44,
+    "firstScreenControls": 6,
+    "words": 176,
+    "said": [
+      "warning: W1119 23:03:45.832000 1905760 gl_context.cc:1060] OpenGL error checking is disabled",
+      "warning: W1119 23:03:46.005000 1905760 gl_context.cc:1060] OpenGL error checking is disabled",
+      "error: INFO: Created TensorFlow Lite XNNPACK delegate for CPU.",
+      "warning: W1119 23:03:47.413000 1905760 landmark_projection_calculator.cc:189] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAG"
+    ]
+  },
+  {
+    "name": "10-report-live",
+    "height": 2601,
+    "screens": 3.1,
+    "controls": 48,
+    "firstScreenControls": 6,
+    "words": 234,
+    "said": []
+  },
+  {
+    "name": "11-report-basket",
+    "height": 2742,
+    "screens": 3.2,
+    "controls": 50,
+    "firstScreenControls": 6,
+    "words": 261,
+    "said": []
+  },
+  {
+    "name": "12-report-reopened",
+    "height": 2602,
+    "screens": 3.1,
+    "controls": 42,
+    "firstScreenControls": 6,
+    "words": 243,
+    "said": []
+  },
+  {
+    "name": "12b-report-own-serve",
+    "height": 2697,
+    "screens": 3.2,
+    "controls": 43,
+    "firstScreenControls": 6,
+    "words": 281,
+    "said": []
+  },
+  {
+    "name": "13-report-injury",
+    "height": 2660,
+    "screens": 3.2,
+    "controls": 36,
+    "firstScreenControls": 5,
+    "words": 279,
+    "said": []
+  },
+  {
+    "name": "14-report-soft",
+    "height": 2670,
+    "screens": 3.2,
+    "controls": 43,
+    "firstScreenControls": 6,
+    "words": 255,
+    "said": []
+  },
+  {
+    "name": "15-report-refused",
+    "height": 844,
+    "screens": 1,
+    "controls": 4,
+    "firstScreenControls": 4,
+    "words": 75,
+    "said": []
+  },
+  {
+    "name": "16-error-turned",
+    "height": 844,
+    "screens": 1,
+    "controls": 3,
+    "firstScreenControls": 3,
+    "words": 52,
+    "said": []
+  },
+  {
+    "name": "17-crash",
+    "height": 844,
+    "screens": 1,
+    "controls": 4,
+    "firstScreenControls": 4,
+    "words": 33,
+    "said": [
+      "pageerror: TypeError: Cannot read properties of undefined (reading 'filter')",
+      "pageerror: TypeError: Cannot read properties of undefined (reading 'filter')",
+      "error: The above error occurred in the <App> component:\n\n    at App (http://localhost:5180/src/App.tsx?t=1795129233817:85:27)\n    at ErrorBoundary (http://localhost:51",
+      "error: Serve Coach hit an unrecoverable render error: TypeError: Cannot read properties of undefined (reading 'filter')\n    at http://localhost:5180/src/lib/progress.t"
+    ]
+  },
+  {
+    "name": "18-home-history",
+    "height": 1240,
+    "screens": 1.5,
+    "controls": 14,
+    "firstScreenControls": 13,
+    "words": 167,
+    "said": []
+  },
+  {
+    "name": "19-history-sheet",
+    "height": 3032,
+    "screens": 3.6,
+    "controls": 83,
+    "firstScreenControls": 23,
+    "words": 292,
+    "said": []
+  },
+  {
+    "name": "20-settings",
+    "height": 1240,
+    "screens": 1.5,
+    "controls": 36,
+    "firstScreenControls": 24,
+    "words": 167,
+    "said": []
+  },
+  {
+    "name": "21-progress",
+    "height": 3032,
+    "screens": 3.6,
+    "controls": 24,
+    "firstScreenControls": 6,
+    "words": 292,
+    "said": []
+  },
+  {
+    "name": "22-session-done",
+    "height": 1698,
+    "screens": 2,
+    "controls": 4,
+    "firstScreenControls": 1,
+    "words": 181,
+    "said": []
+  },
+  {
+    "name": "23-session-plan",
+    "height": 844,
+    "screens": 1,
+    "controls": 5,
+    "firstScreenControls": 5,
+    "words": 102,
+    "said": []
+  },
+  {
+    "name": "24-glance",
+    "height": 844,
+    "screens": 1,
+    "controls": 14,
+    "firstScreenControls": 14,
+    "words": 86,
+    "said": []
+  },
+  {
+    "name": "25-glance-moved",
+    "height": 844,
+    "screens": 1,
+    "controls": 14,
+    "firstScreenControls": 14,
+    "words": 97,
+    "said": []
+  },
+  {
+    "name": "26-glance-refused",
+    "height": 844,
+    "screens": 1,
+    "controls": 5,
+    "firstScreenControls": 5,
+    "words": 54,
+    "said": []
+  },
+  {
+    "name": "27-offline-first-open",
+    "height": 3171,
+    "screens": 3.8,
+    "controls": 11,
+    "firstScreenControls": 2,
+    "words": 347,
+    "said": []
+  },
+  {
+    "name": "28-offline-no-engine",
+    "height": 844,
+    "screens": 1,
+    "controls": 2,
+    "firstScreenControls": 2,
+    "words": 43,
+    "said": [
+      "error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+      "error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+      "error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+      "error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+      "error: TypeError: Failed to fetch dynamically imported module: http://localhost:5180/src/lib/analysis/analyze.ts?t=1795129233817",
+      "pageerror: TypeError: Failed to fetch dynamically imported module: http://localhost:5180/src/screens/Analyzing.tsx",
+      "pageerror: TypeError: Failed to fetch dynamically imported module: http://localhost:5180/src/screens/Report.tsx?t=1795129233817",
+      "pageerror: TypeError: Failed to fetch dynamically imported module: http://localhost:5180/src/screens/Glance.tsx?t=1795129233817",
+      "error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED"
+    ]
+  },
+  {
+    "name": "29-reduced-motion-report",
+    "height": 2600,
+    "screens": 3.1,
+    "controls": 47,
+    "firstScreenControls": 6,
+    "words": 234,
+    "said": []
+  }
+]

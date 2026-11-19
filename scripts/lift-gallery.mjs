@@ -2,6 +2,11 @@
 /**
  * The before and after sets, side by side: `node scripts/lift-gallery.mjs`.
  *
+ *   BEFORE=next-before AFTER=next-after OUT=next-gallery.html node scripts/lift-gallery.mjs
+ *
+ * pairs any two sets the same way (the Next programme's, N7), with
+ * SIZE_LABEL naming the screen size in the heading.
+ *
  * Reads each set's log.json and writes docs/lift/gallery.html, one self-contained
  * page beside the pictures, opened from disk. Nothing here ships.
  */
@@ -10,14 +15,18 @@ import { join } from 'node:path'
 
 const dir = join(process.cwd(), 'docs', 'lift')
 const logOf = (set) => JSON.parse(readFileSync(join(dir, set, 'log.json'), 'utf8'))
-const before = new Map(logOf('before').map((s) => [s.name, s]))
-const after = logOf('after')
+const BEFORE = process.env.BEFORE ?? 'before'
+const AFTER = process.env.AFTER ?? 'after'
+const OUT = process.env.OUT ?? 'gallery.html'
+const SIZE = process.env.SIZE_LABEL ?? '390 by 844'
+const before = new Map(logOf(BEFORE).map((s) => [s.name, s]))
+const after = logOf(AFTER)
 
 const GROUPS = [
   ['First run', ['01', '02', '03', '04']],
   ['Filming', ['07']],
   ['Waiting', ['08']],
-  ['The report', ['09', '10', '11', '12', '13', '14', '29']],
+  ['The report', ['09', '10', '11', '12', '12b', '13', '14', '29']],
   ['When a clip is refused, or something fails', ['15', '16', '17', '26', '27', '28']],
   ['Today', ['18']],
   ['Progress', ['05', '06', '19', '21']],
@@ -68,8 +77,8 @@ const shot = (set, name) => {
 function card(state) {
   const key = state.name.slice(0, 3).replace(/-$/, '')
   const was = before.get(state.name)
-  const a = shot('after', state.name)
-  const b = was ? shot('before', state.name) : undefined
+  const a = shot(AFTER, state.name)
+  const b = was ? shot(BEFORE, state.name) : undefined
   return `<article>
   <h3>${NAMES[key] ?? state.name}</h3>
   <div class="pair">
@@ -89,7 +98,7 @@ const sections = GROUPS.map(([title, keys]) => {
 }).join('\n')
 
 writeFileSync(
-  join(dir, 'gallery.html'),
+  join(dir, OUT),
   `<!doctype html>
 <html lang="en">
 <head>
@@ -118,7 +127,7 @@ a:focus-visible { outline: 2px solid #cdf94a; outline-offset: 2px; border-radius
 <main>
 <header>
 <h1>Serve Coach, before and after</h1>
-<p>Every state at 390 by 844, with the demo data the app ships for looking at these screens. Tap a picture for the whole page. Serves in the demo come from the synthetic rig, so their numbers are the rig's, not anybody's serve.</p>
+<p>Every state at ${SIZE}, with the demo data the app ships for looking at these screens. Tap a picture for the whole page. Serves in the demo come from the synthetic rig, so their numbers are the rig's, not anybody's serve.</p>
 </header>
 ${sections}
 </main>
@@ -126,4 +135,4 @@ ${sections}
 </html>
 `,
 )
-console.log(`wrote docs/lift/gallery.html, ${after.length} states`)
+console.log(`wrote docs/lift/${OUT}, ${after.length} states`)

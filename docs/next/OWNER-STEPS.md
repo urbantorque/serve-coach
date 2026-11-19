@@ -74,6 +74,17 @@ Two things to know before step 8:
   accuracy page shows as measured and not used.
 - **A radar-checked serve**, to put a measured error on the speed range, which
   the app and the accuracy page say no radar has checked.
+- **Real serves on a modern phone, above all.** Scored against truth on a drawn
+  body, the pose models read the raised arm at contact as hanging down and the
+  app refused 37 of 40 serves (N2.8). A drawn figure is not a player, so this
+  may not hold on real footage; a few of your own serves, filmed by the guide,
+  would say.
+
+## A design question
+
+- **The laptop rail.** `DESIGN.md` names Today, Studio, Progress and Pathways;
+  the app has Film, Today and Progress, and Studio and Pathways are inside the
+  report and Today. Either add them to the rail or change `DESIGN.md`.
 
 ## Later
 

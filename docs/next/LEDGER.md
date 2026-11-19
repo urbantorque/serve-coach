@@ -958,7 +958,9 @@ Next in this wave, from N2.8:
     from 929 to 666 px and the action from 1207 to 812. The moment card
     follows the fix and its drill instead of sitting between the number and
     the fix, at both sizes, and on a phone the picture under two warnings is
-    shorter, so the fix starts on the first screen (796 px at 375 by 812).
+    shorter, which lifts the fix 64 px. Under two warnings on a phone it still
+    starts just behind the action bar, at the foot of the first screen: the
+    warnings come first by design, and the bar carries the action.
   - **The level is a guess with one tap to correct**, as DESIGN.md asks, not a
     form 485 px tall on a first serve: "Fixes ordered for club level. Not your
     level?" with Change, which opens the picker.
@@ -1005,3 +1007,35 @@ Next in this wave, from N2.8:
   lose the fault drawn on it too, and the lines no longer carry a third colour
   or capitals), and the rail's Studio and Pathways, which DESIGN.md names and
   the app keeps inside the report and Today: the owner's call, in OWNER-STEPS.
+
+- [x] **N7.7 The close-out checks: accessibility, a throttled phone, reduced
+  motion, offline, and the release.**
+  - **Accessibility**, walked in the browser on the sample report at phone
+    size: one `main`, one `h1`, headings in order, every control named
+    (`a11y.test.ts` holds that on every screen), the tab order following the
+    page from top to bottom, and focus a 2 px lime ring. The one finding, the
+    unlabelled canvas over the clip, is hidden from screen readers in N7.6.
+  - **A throttled phone** (slow 4G, a CPU four times slower, 390 by 844, the
+    built app): the landing paints its largest element in 1.8 to 2.9 s, the
+    accuracy page in 2.5 s, and the sample report in 4.0 s, since it builds the
+    sample on the device; under 0.2 s of blocking on each, no errors. Layout
+    shift is 0 except 0.089 on one landing run, under the 0.1 line, and none
+    without throttling, which points at the font arriving late. Measured on a
+    loaded machine, so read the times as an upper bound.
+  - **Reduced motion**: the report's score is final on the first frame and no
+    animation runs; with motion allowed, one does (`motion.test.ts` holds the
+    rule per component).
+  - **Offline and the release**: `npm run release` is green: the gate and its
+    size budgets (2,360 checks, the entry chunk at 130.43 of 132 kB gzip),
+    then `dist/` served as a static host would, the manifest and its icons,
+    the service worker taking control, and with the network cut a reload opens
+    home and the example report.
+  - **The record.** The shots were taken again as `next-after` (phone) and
+    `next-after-laptop`, and `docs/lift/next-gallery.html` and
+    `next-gallery-laptop.html` set them beside `next-before`. `STATUS.md` is
+    rewritten for where the programme ends; `README.md` is cut from 2,674
+    lines to about 120, with the full design record kept unchanged as
+    `docs/history/README-design-record.md`, which source comments still cite;
+    and `docs/next/OWNER-STEPS.md` gains the two calls this wave left: real
+    serves filmed on a modern phone, and whether the laptop rail adds Studio
+    and Pathways.
