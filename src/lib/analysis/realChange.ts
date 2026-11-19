@@ -77,15 +77,21 @@ export type ChangeScope = 'overall' | 'trip' | FundamentalId
  * What the back fence does raise is two rows: shoulder tilt's floors are 19, 15
  * and 12 with it against 16, 11 and 9 without, and contact height's two a side 3
  * against 2 (H45).
+ *
+ * When "Racket never falls" began asking whether a drop could have been seen
+ * (N2.5, `dropEvidence.ts`), a take of the modal club serve that loses a frame
+ * where a drop lives withholds the row instead of grading it, so the swing is
+ * averaged over one row fewer on some takes: the swing rose from 5 to 6 and the
+ * trip from 8 to 9, each one past a 90th percentile that moved by a point.
  */
 export const REAL_CHANGE: Record<ChangeScope, number> = {
   overall: 5,
   toss: 5,
   loading: 9,
-  swing: 5,
+  swing: 6,
   contact: 13,
   rhythm: 31,
-  trip: 8,
+  trip: 9,
 }
 
 /**
@@ -149,6 +155,10 @@ export function bestWorstGap(serves: number): number {
  * drive) shrinks far more slowly than √n says when averaged, and the √n rule
  * under-covered both. Past three a side the three-a-side floor holds, which is
  * wider than the noise there and so errs towards "not moving".
+ *
+ * Load ratio's three a side rose from 18 to 19 with N2.5, its mean of three
+ * moving 18 on the modal serve at 60 fps against 17 before; one and two a side
+ * held at 30 and 21.
  */
 export const ROW_CHANGE: Record<string, readonly [number, number, number]> = {
   releaseHeight: [3, 3, 2],
@@ -164,7 +174,7 @@ export const ROW_CHANGE: Record<string, readonly [number, number, number]> = {
   contactHeight: [4, 4, 3],
   armExtension: [26, 18, 15],
   contactAhead: [16, 12, 10],
-  loadRatio: [31, 22, 18],
+  loadRatio: [31, 22, 19],
 }
 
 /**

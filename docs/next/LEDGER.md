@@ -179,14 +179,33 @@ phone" on a laptop; the landing page (wave 6) takes that line.
   fell. A first fix, flagging a drop found further than 0.31 s from contact,
   was built and reverted: the lost drop lands on the trophy, not there.
 
+- [x] **N2.6 "Never fell" now needs a camera that could have seen a drop.**
+  The saved trophy-landed copies showed two ways the dip goes: `smaller`
+  lost the one frame that held it (wrist visibility 0.00), `darker` lost
+  none and the hand simply rises to contact. `dropEvidence.ts` now holds the
+  one question both the card and the diagnosis ask, and adds a third test to
+  the two the diagnosis had: no frame lost in the last 0.31 s before contact.
+  Where the drop sits on the trophy and could not have been seen, the card
+  withholds the depth (it used to say "Racket never falls" without asking)
+  and the diagnosis gives the depth and elbow-lift signals no weight, so no
+  shallow drop is named. On the real copies: `smaller` withholds the depth and
+  names nothing, the control reads its real drop ("Hand below the shoulder"),
+  and `darker` still says the racket never falls, pinned as KNOWN. On the rig:
+  a lost frame withholds, a racket held high and seen in every frame is still
+  told it never falls, and every clean serve finds its drop 110 to 230 ms
+  before contact at 25 to 120 fps.
+  The cost, measured: on the modal club serve, takes that lose a frame where
+  a drop lives now withhold the row, so the swing moves a point further
+  between takes. `REAL_CHANGE` re-derived from the suite's own 90th
+  percentiles: swing 5 to 6, trip 8 to 9, and load ratio's three-a-side
+  floor 18 to 19 (one and two a side unchanged). A change in the swing area
+  now needs one more point before Progress calls it real.
+
 Next in this wave, in order:
-1. **"Never fell" needs evidence a drop could have been seen.** At 30 fps a
-   real dip can be one or two frames. Before calling a drop on the trophy a
-   racket that never fell, ask whether the hand came close to the shoulder
-   line late in the swing, or whether a frame was lost there; if so, withhold
-   the depth rather than grade it. Prove it on the KNOWN check (it should flip),
-   on the rig's no-drop dial (it must not), and on 0SAQUE's copies, which need
-   saving (only refused copies are saved today).
+1. **The smeared dip** (`darker`, KNOWN). Nothing was lost, and the hand
+   never reaches the shoulder in the picture. Whether a 30 fps clip can tell
+   that from a racket that never fell is the open question; the honest
+   answer may be to grade drop depth only above about 45 samples a second.
 2. **The frame-count gate as a soft edge**, after item 1: at two swing
    samples the timing readings already fall to 0.4 confidence. Read the serve,
    withhold the swing timing and any fault named from it.

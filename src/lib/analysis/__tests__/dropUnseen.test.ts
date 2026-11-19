@@ -64,6 +64,42 @@ check('a racket held high through the swing is a racket that never fell', () => 
   assert(detectServe(frames, 30).derivation.dropOnTrophy, 'a racket that never fell was given a drop')
 })
 
+heading('A drop that may have fallen into a lost frame is not called absent (N2.5)')
+
+/** The lost dip, with the frame where it would have been lost too, as the bench's smaller copy read. */
+function withALostFrame(fps: number): Frame[] {
+  const frames = withoutTheDip(fps)
+  const skel = detectServe(frames, fps)
+  const R = skel.racket === 'left' ? LM.leftWrist : LM.rightWrist
+  const at = frames[skel.keys.contact].t - 0.1
+  let lost = 0
+  for (let i = 1; i < frames.length; i++) if (Math.abs(frames[i].t - at) < Math.abs(frames[lost].t - at)) lost = i
+  return frames.map((f, i) => {
+    if (i !== lost) return f
+    const image = f.image.map((p) => ({ ...p }))
+    image[R].visibility = 0
+    return { ...f, image }
+  })
+}
+
+check('a frame lost in the drop stretch withholds the drop depth and names no shallow drop', () => {
+  const frames = withALostFrame(30)
+  const skel = detectServe(frames, 30)
+  const drop = measure(frames, skel, true).flatMap((f) => f.metrics).find((m) => m.id === 'dropDepth')
+  const named = diagnose(frames, skel).flaws.filter((f) => f.detected).map((f) => f.flaw)
+  note(`drop on trophy ${skel.derivation.dropOnTrophy}; card: ${drop ? drop.readout : 'withheld'}; diagnosis: ${named.join(', ') || 'no faults'}`)
+  assert(drop?.readout !== 'Racket never falls', 'a drop that may sit in a lost frame was called absent on the card')
+  assert(!named.includes('shallow_drop'), 'a drop that may sit in a lost frame was named a shallow drop')
+})
+
+check('a racket held high, seen in every frame, is still told it never falls', () => {
+  const frames = buildServe({ dropBelowShoulder: -0.3 }, 30)
+  const skel = detectServe(frames, 30)
+  const drop = measure(frames, skel, true).flatMap((f) => f.metrics).find((m) => m.id === 'dropDepth')
+  note(`card: ${drop ? drop.readout : 'withheld'}`)
+  assert(drop?.readout === 'Racket never falls', `a real "never falls" became ${drop ? drop.readout : 'withheld'}`)
+})
+
 heading('KNOWN: a drop lost from the picture is called absent (N2.5)')
 
 check('KNOWN: with the dip erased, the card says the racket never falls and the diagnosis names a shallow drop', () => {

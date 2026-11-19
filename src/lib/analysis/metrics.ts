@@ -35,6 +35,7 @@ import {
 import type { Skeleton } from './phases'
 import { ballFallMetres, flightHeightAt, type BallFlight } from '../vision/ballTrack'
 import type { Frame, Fundamental, FundamentalId, Metric, Reading } from './types'
+import { couldSeeTheDrop } from './dropEvidence'
 
 /** Measurements that only exist when the ball was found in the pixels. */
 const BALL_METRICS = new Set(['tossPeakHeight', 'contactBelowPeak', 'ballContactHeight'])
@@ -724,6 +725,11 @@ export function measure(
       // card then carried both orders at once: "let the racket fall" from
       // `dropDepth` directly above "give the racket room" from here.
       .filter((m) => (m === 'elbowAtDrop' ? !skel.derivation.dropOnTrophy : true))
+      // And the drop's depth, when the drop landed on the trophy where the
+      // camera could not have seen one (N2.5, `couldSeeTheDrop`): "Racket never
+      // falls" is a claim about the player only where a drop could have shown.
+      // Withheld, as the diagnosis withholds the same fault.
+      .filter((m) => (m === 'dropDepth' ? !(skel.derivation.dropOnTrophy && !couldSeeTheDrop(frames, skel)) : true))
       // And the share of the motion spent after the trophy needs a trophy that
       // happened somewhere. When it lands on the toss (`trophyOnToss`) this stops
       // being "how much of the serve is the explosive half" and becomes "how much
