@@ -1,7 +1,7 @@
 import { useEffect, useState, type MouseEvent, type ReactNode } from 'react'
 import '../styles/info.css'
 import { Icon } from '../components/primitives'
-import { accuracyRows, unmeasuredRows, wobbleText } from '../lib/accuracy'
+import { SCORE_STEADY, accuracyRows, unmeasuredRows, wobbleText } from '../lib/accuracy'
 import { deviceNoun } from '../lib/device'
 import { ATTRIBUTION } from '../lib/figure/modelCredit'
 import { INFO_PAGES, INFO_TITLES, pathFor, type InfoPageId } from '../lib/routes'
@@ -226,6 +226,15 @@ function Accuracy({ onPage }: { onPage: Go }) {
   const ball = unmeasuredRows()
   return (
     <>
+      <Section title="The number at the top">
+        <p>It sets every graded reading of your serve against its band, then weighs the areas into one number out of 100.</p>
+        <p>
+          Read again, the same serve moves it <strong className="tnum">{SCORE_STEADY}</strong> points or fewer, nine times in ten.
+          A bigger change is your serve, not my camera.
+        </p>
+        <p>No coach and no ranking has checked what a number means for a real player. Set it against your own serves, not anyone else&apos;s.</p>
+      </Section>
+
       <Section title="What I grade, and how steady it is">
         <p>
           For each reading: how far it moves when I read the same serve again, and how often a steady serve keeps its

@@ -13,6 +13,14 @@
  */
 import { FUNDAMENTALS, METRICS, type BandSource } from './analysis/coaching'
 import { CARD_NOISE_SD, RETEST_SD } from './analysis/cardNoise'
+import { REAL_CHANGE } from './analysis/realChange'
+
+/**
+ * How far the headline number moves when the same serve is read again, nine
+ * times in ten (N2.11). `REAL_CHANGE.overall` is one past that 90th
+ * percentile, the smallest change the app calls the serve rather than the camera.
+ */
+export const SCORE_STEADY = REAL_CHANGE.overall - 1
 
 export interface AccuracyRow {
   id: string

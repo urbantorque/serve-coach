@@ -802,6 +802,7 @@ export default function Report({
         <span>Tap a word:</span>
         <Term id="trophy" />
         <Term id="racketDrop" />
+        <Term id="score" />
       </p>
 
       {fullRead ? (

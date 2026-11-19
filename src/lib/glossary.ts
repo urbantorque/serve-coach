@@ -20,6 +20,12 @@ export const GLOSSARY = {
     word: 'Firing order',
     meaning: 'Which parts of your body reach their top speed first, from the legs up through the hips and shoulders to the racket arm.',
   },
+  // What the headline number is and is not (N2.11): built from published
+  // serves, steady to a few points, and never checked against a coach.
+  score: {
+    word: 'Your score',
+    meaning: 'Every area of your serve against published serves, in one number. Set it against your own serves; no coach has checked it.',
+  },
   likelyRange: {
     word: 'Likely range',
     meaning: 'Where I am sure your speed off the racket sits, as a radar gun reads it. Test serves fell inside nineteen times in twenty.',

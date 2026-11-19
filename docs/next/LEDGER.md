@@ -587,3 +587,21 @@ live region, checked in the browser against the stand-in.
   130.06 kB: the coaching tables Today reads carry the new lines. Its budget
   was re-baselined to 132 kB, the one move the handover allows, with the
   reason in `bundle.test.ts`; the next move is off the critical path, not up.
+- [x] **N2.11 The headline number says what it is, and what nobody has checked.**
+  The handover's finding 4: one score whose meaning is unvalidated, and
+  STATUS's claim that every score is capped until real players are read has
+  no code behind it (the Wave 2 note above). Kept, because it is the one
+  figure a player tracks and the report's first screen and the poster are
+  built on it; said for what it is instead. The accuracy page opens on it:
+  every graded reading against its band, weighed by area into one number;
+  read again, the same serve moves it 4 points or fewer nine times in ten,
+  so a bigger change is the serve and not the camera (generated from
+  `REAL_CHANGE.overall`, one past that 90th percentile, and tested against
+  it); and no coach and no ranking has checked what a number means for a real
+  player, so it is for setting against the player's own serves, not anyone
+  else's. The report's "Tap a word" row gains "Your score", with the same
+  facts in one line. Its definition, and every other one in that row, now
+  opens against the row, after a look found the last word's box running off
+  the right edge of a phone. Leading the report with the change against the
+  player's usual was considered: it is already the line under the number
+  whenever there is a usual to set it against.

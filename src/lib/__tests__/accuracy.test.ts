@@ -2,7 +2,8 @@
  * The public accuracy page (N6.3) says what the engine does, because it is
  * built from the engine's own tables. These hold the page to them.
  */
-import { accuracyRows, gradedIds, unmeasuredRows, wobbleText } from '../accuracy'
+import { SCORE_STEADY, accuracyRows, gradedIds, unmeasuredRows, wobbleText } from '../accuracy'
+import { REAL_CHANGE } from '../analysis/realChange'
 import { CARD_NOISE_SD, RETEST_SD } from '../analysis/cardNoise'
 import { METRICS } from '../analysis/coaching'
 import { assert, check, heading, note, report } from '../analysis/__tests__/harness'
@@ -45,6 +46,10 @@ check('every wobble reads in a unit a player knows, and every row names what it 
     assert(r.against.length > 10 && r.against === ('study' in METRICS[r.id].source ? (METRICS[r.id].source as { study: string }).study : (METRICS[r.id].source as { motion: string }).motion), `${r.id} has no source`)
   }
   assert(wobbleText('×', 0.00766) === '0.77% of your height', wobbleText('×', 0.00766))
+})
+
+check('the headline number is as steady as the change the app calls real, less one', () => {
+  assert(SCORE_STEADY === REAL_CHANGE.overall - 1 && SCORE_STEADY > 0, `${SCORE_STEADY} against ${REAL_CHANGE.overall}`)
 })
 
 report()
