@@ -35,7 +35,14 @@ check('asked for, the dev server and vite preview send the two headers, ahead of
 check('unasked, nothing is isolated: not the dev server, not a static host', () => {
   const config = fs.readFileSync('vite.config.ts', 'utf8')
   assert(config.includes('process.env.ISOLATE ? [isolationHeaders()] : []'), 'the headers are on by default')
-  assert(!fs.existsSync('public/_headers'), 'public/_headers would isolate every static host')
+  // The host's header file exists since N6.2, for its policy and caching. It
+  // carries the two isolation lines switched off, word for word what the dev
+  // server sends when asked, so switching on is removing a comment mark.
+  const host = fs.readFileSync('public/_headers', 'utf8')
+  const live = host.split(/\r?\n/).filter((l) => !l.trim().startsWith('#'))
+  assert(!live.some((l) => /Cross-Origin-(Opener|Embedder)-Policy/i.test(l)), 'public/_headers isolates every static host')
+  assert(/^#\s+Cross-Origin-Opener-Policy: same-origin$/m.test(host), 'the opener line is not ready in public/_headers')
+  assert(/^#\s+Cross-Origin-Embedder-Policy: require-corp$/m.test(host), 'the embedder line is not ready in public/_headers')
 })
 
 check('the shell loads nothing from another origin, which require-corp would block', () => {

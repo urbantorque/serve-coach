@@ -5,6 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath } from 'node:url'
 // @ts-expect-error - a plain .mjs helper shared with the test runner
 import { engineCacheName, engineManifest } from './scripts/engine-manifest.mjs'
+import { headersFor, parseHeaders } from './src/lib/hostHeaders'
 
 /**
  * The wasm runtimes must match the JavaScript that drives them. That JS is
@@ -130,6 +131,31 @@ function serveOrtRaw(): Plugin {
 }
 
 /**
+ * `vite preview` answers with the static host's own headers (N6.2): the rules
+ * in the built `_headers` (from `public/_headers`), content security policy
+ * included, so a policy that would break the app on the host breaks it here
+ * first. The dev server is left alone: Vite's own inline refresh script and
+ * socket would be refused by the policy, and neither ships.
+ */
+function hostHeaders(): Plugin {
+  return {
+    name: 'serve-coach:host-headers',
+    configurePreviewServer(server) {
+      const file = new URL('./dist/_headers', import.meta.url)
+      const rules = existsSync(file) ? parseHeaders(readFileSync(file, 'utf8')) : []
+      server.middlewares.use((req, res, next) => {
+        const path = (req.url ?? '/').split('?')[0]
+        const local = path.startsWith(base) ? '/' + path.slice(base.length) : path
+        // An app address is answered with the page, and gets the page's rules.
+        const asked = /\.[\w]+$/.test(local) ? local : '/index.html'
+        for (const [k, v] of Object.entries(headersFor(rules, asked))) res.setHeader(k, v)
+        next()
+      })
+    },
+  }
+}
+
+/**
  * HTTPS for a phone on the same network, set only by `npm run preview:lan`
  * (`scripts/lan-preview.mjs`), which issues the certificate and says how the
  * phone comes to trust it. Without it a phone gets plain HTTP, and plain HTTP
@@ -155,6 +181,7 @@ export default defineConfig({
     // each RTMPose read 1.7x faster, but every isolated whole analysis timed
     // here abandoned the swing refine, and the one without isolation did not.
     ...(process.env.ISOLATE ? [isolationHeaders()] : []),
+    hostHeaders(),
     serveOrtRaw(),
     react(),
     VitePWA({

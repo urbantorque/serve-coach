@@ -434,3 +434,20 @@ showed was wrong.
   foot of the window. On a laptop they now sit in the middle, every corner
   rounded, scrolling inside. Settings told a laptop that "only a file survives
   a lost phone"; the line names the device it is on.
+
+## Wave 6. The commercial surface, the rest
+
+- [x] **N6.2 The static host's headers, proved on a real read.**
+  `public/_headers`, in the format Cloudflare Pages and Netlify both read: a
+  content security policy that lets a page load only from its own origin
+  ('wasm-unsafe-eval' so the pose models compile, no JavaScript eval, no
+  framing), the camera as the one device feature a page may ask for, nosniff,
+  hashed builds kept for a year and the page and service worker always asked
+  for. `vite preview` now answers with the same file (`lib/hostHeaders.ts`),
+  so a preview of a build is the host. Proved there: the bench clip read to a
+  report and then read in full with the sharper swing model, and the browser
+  refused nothing. Cross-origin isolation is in the file ready and switched
+  off, word for word what the dev server sends when asked, because M1.1's
+  measurement still stands; `isolation.test.ts` now holds that instead of the
+  file not existing. Cloudflare Pages is the host the rest of the wave is
+  written for: static files, this header file, and small functions beside them.

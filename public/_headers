@@ -1,0 +1,43 @@
+# Response headers for the static host (N6.2). Cloudflare Pages and Netlify
+# both read this file from the site's root. `vite preview` applies it too
+# (`src/lib/hostHeaders.ts`), so a local preview of a build is the host.
+#
+# Every asset is the app's own, on its own origin: the video, the landmarks
+# and the scores never leave the device, and nothing here lets a page load
+# from anywhere else. 'wasm-unsafe-eval' is how a browser lets the pose models'
+# WebAssembly compile; it allows no JavaScript eval.
+
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; connect-src 'self' blob: data:; img-src 'self' blob: data:; media-src 'self' blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: same-origin
+  Permissions-Policy: camera=(self), microphone=(), geolocation=(), usb=()
+  X-Frame-Options: DENY
+
+# Built files carry a hash in their names, so they never change in place.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# The models and runtimes keep their names across builds: a day, then ask.
+/models/*
+  Cache-Control: public, max-age=86400, must-revalidate
+/wasm/*
+  Cache-Control: public, max-age=86400, must-revalidate
+/ort/*
+  Cache-Control: public, max-age=86400, must-revalidate
+
+# The page and the service worker are how an update arrives: always asked for.
+/index.html
+  Cache-Control: no-cache
+/sw.js
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Cache-Control: no-cache
+
+# Cross-origin isolation, ready and switched off (M1.1, `isolation.test.ts`).
+# Threads for the swing refine need it; on a loaded machine every isolated
+# whole read abandoned the refine, so nothing ships isolated until a quiet
+# machine settles it. To switch it on, remove "# " from the three lines below.
+# /*
+#   Cross-Origin-Opener-Policy: same-origin
+#   Cross-Origin-Embedder-Policy: require-corp
