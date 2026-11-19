@@ -126,6 +126,14 @@ const ALLOWED: (Site & { why: string })[] = [
       '`npm run setup:bench`. Not part of the app a player downloads.',
   },
   {
+    file: 'dev/bench/pipeline.ts',
+    pattern: 'fetch',
+    why:
+      'The dev-only pipeline bench (N2.8), reached through `pipeline.html`, which the production ' +
+      'build never bundles. Reads the Bath motion capture from `bench-data/` on the dev server, ' +
+      'same origin, fetched to disk beforehand by `npm run setup:bench`. Not part of the app.',
+  },
+  {
     file: 'dev/footprint/main.ts',
     pattern: 'fetch',
     why:

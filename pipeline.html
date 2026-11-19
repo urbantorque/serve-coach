@@ -1,0 +1,22 @@
+<!doctype html>
+<!--
+  Dev-only pipeline bench (N2.8). Not part of the app: the production build
+  bundles index.html alone. See src/dev/bench/pipeline.ts and scripts/pipeline.mjs.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Serve Coach · the real pipeline against truth</title>
+    <style>
+      body { font: 13px/1.5 ui-monospace, monospace; background: #0a0c10; color: #eef2f6; padding: 20px; }
+      pre { color: #98a2b3; white-space: pre-wrap; }
+      #still canvas { max-width: 100%; display: block; margin: 12px 0; }
+    </style>
+  </head>
+  <body>
+    <h1>The Bath serves, drawn, filmed and read by the app, against the true markers</h1>
+    <div id="still"></div>
+    <pre id="out"></pre>
+    <script type="module" src="/src/dev/bench/pipeline.ts"></script>
+  </body>
+</html>

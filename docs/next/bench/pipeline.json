@@ -1,0 +1,7219 @@
+{
+ "ranAt": "2026-11-19T13:52:54.641Z",
+ "about": "docs/next/LEDGER.md, N2.8",
+ "look": "court",
+ "fps": 30,
+ "placement": "the filming guide: 4.5 m to the left, lens at 1 m, upright 9:16",
+ "complete": true,
+ "summary": {
+  "serves": 42,
+  "framingCheck": {
+   "passed": 34,
+   "You stand too far from the camera to measure.": 6
+  },
+  "outcomes": {
+   "refused": 37,
+   "measured": 3,
+   "not a swing": 2
+  },
+  "frames": 3720,
+  "found": 3571,
+  "onFigure": 3010,
+  "wristSeen": 2173,
+  "refinedServes": 6,
+  "tailRun": 40,
+  "tailAgrees": 40,
+  "laterRefusals": 8,
+  "angles": {
+   "elbowWorld": 10.6,
+   "elbowImage": -4.4,
+   "shoulderTiltWorld": -2,
+   "kneeTrueAtLoad": 108.4,
+   "kneeWorldAtLoad": 55.1,
+   "kneeImageAtLoad": 3.7
+  },
+  "pipeline": {
+   "measured": 3,
+   "outcomes": {
+    "refused: too_few_frames": 3,
+    "measured": 3,
+    "refused: The clip ends before the racket reaches the ball.": 34
+   },
+   "sameHand": 3,
+   "sameView": 3,
+   "sameFaults": 3,
+   "sameFocus": 2,
+   "overall": {
+    "bias": -8,
+    "rms": 8.5
+   },
+   "metrics": [
+    {
+     "id": "releaseHeight",
+     "unit": "×",
+     "n": 3,
+     "bias": 0.0259,
+     "rms": 0.0266,
+     "medianAbs": 0.0271,
+     "p90Abs": 0.0318,
+     "noise": 0.00766,
+     "rmsOverNoise": 3.48,
+     "pastTwoNoise": 1
+    },
+    {
+     "id": "tossArmHold",
+     "unit": "%",
+     "n": 3,
+     "bias": 7.7299,
+     "rms": 8.9792,
+     "medianAbs": 5,
+     "p90Abs": 12.3333,
+     "noise": 2.33,
+     "rmsOverNoise": 3.85,
+     "pastTwoNoise": 0.67
+    },
+    {
+     "id": "tossPathWobble",
+     "unit": "%",
+     "n": 3,
+     "bias": 0.2354,
+     "rms": 0.5158,
+     "medianAbs": 0.1146,
+     "p90Abs": 0.7299,
+     "noise": 0.3,
+     "rmsOverNoise": 1.72,
+     "pastTwoNoise": 0.33
+    },
+    {
+     "id": "kneeBend",
+     "unit": "°",
+     "n": 3,
+     "bias": -41.4421,
+     "rms": 41.9612,
+     "medianAbs": 41.4299,
+     "p90Abs": 47.8917,
+     "noise": 4.27,
+     "rmsOverNoise": 9.83,
+     "pastTwoNoise": 1
+    },
+    {
+     "id": "shoulderTilt",
+     "unit": "°",
+     "n": 3,
+     "bias": -24.5445,
+     "rms": 25.4919,
+     "medianAbs": 28.028,
+     "p90Abs": 30.1474,
+     "noise": 3.04,
+     "rmsOverNoise": 8.39,
+     "pastTwoNoise": 1
+    },
+    {
+     "id": "legDrive",
+     "unit": "×",
+     "n": 3,
+     "bias": -0.0514,
+     "rms": 0.0755,
+     "medianAbs": 0.0197,
+     "p90Abs": 0.1072,
+     "noise": 0.00723,
+     "rmsOverNoise": 10.44,
+     "pastTwoNoise": 0.67
+    },
+    {
+     "id": "dropDepth",
+     "unit": "×",
+     "n": 3,
+     "bias": 0.077,
+     "rms": 0.077,
+     "medianAbs": 0.0772,
+     "p90Abs": 0.0781,
+     "noise": 0.00985,
+     "rmsOverNoise": 7.82,
+     "pastTwoNoise": 1
+    },
+    {
+     "id": "elbowAtDrop",
+     "unit": "°",
+     "n": 1,
+     "bias": 36.3562,
+     "rms": 36.3562,
+     "medianAbs": 36.3562,
+     "p90Abs": 36.3562,
+     "noise": 5.81,
+     "rmsOverNoise": 6.26,
+     "pastTwoNoise": 1
+    },
+    {
+     "id": "handUnderElbow",
+     "unit": "%",
+     "n": 3,
+     "bias": -10.0249,
+     "rms": 10.177,
+     "medianAbs": 8.908,
+     "p90Abs": 11.7816,
+     "noise": 2.65,
+     "rmsOverNoise": 3.84,
+     "pastTwoNoise": 1
+    },
+    {
+     "id": "dropToContact",
+     "unit": "ms",
+     "n": 1,
+     "bias": -48.2152,
+     "rms": 48.2152,
+     "medianAbs": 48.2152,
+     "p90Abs": 48.2152,
+     "noise": 16.4,
+     "rmsOverNoise": 2.94,
+     "pastTwoNoise": 1
+    },
+    {
+     "id": "contactHeight",
+     "unit": "×",
+     "n": 3,
+     "bias": -0.0429,
+     "rms": 0.0617,
+     "medianAbs": 0.0195,
+     "p90Abs": 0.0879,
+     "noise": 0.00874,
+     "rmsOverNoise": 7.06,
+     "pastTwoNoise": 0.67
+    },
+    {
+     "id": "armExtension",
+     "unit": "°",
+     "n": 3,
+     "bias": 12.6355,
+     "rms": 20.1625,
+     "medianAbs": 18.1097,
+     "p90Abs": 26.4608,
+     "noise": 10,
+     "rmsOverNoise": 2.02,
+     "pastTwoNoise": 0.33
+    },
+    {
+     "id": "contactAhead",
+     "unit": "%",
+     "n": 3,
+     "bias": -16.1496,
+     "rms": 20.6164,
+     "medianAbs": 22.1261,
+     "p90Abs": 26.8081,
+     "noise": 3.46,
+     "rmsOverNoise": 5.96,
+     "pastTwoNoise": 0.67
+    },
+    {
+     "id": "loadRatio",
+     "unit": "%",
+     "n": 3,
+     "bias": -3.5308,
+     "rms": 3.6756,
+     "medianAbs": 4.0574,
+     "p90Abs": 4.3575,
+     "noise": 2.38,
+     "rmsOverNoise": 1.54,
+     "pastTwoNoise": 0
+    }
+   ]
+  },
+  "whatIf": {
+   "RTMPose on every frame, its own box": {
+    "measured": 4,
+    "outcomes": {
+     "measured": 4,
+     "The clip ends before the racket reaches the ball.": 33,
+     "refused: too_few_frames": 2,
+     "refused: too_blurry": 1
+    },
+    "sameHand": 4,
+    "sameView": 3,
+    "sameFaults": 4,
+    "sameFocus": 1,
+    "overall": {
+     "bias": -13.7,
+     "rms": 16.1
+    },
+    "metrics": [
+     {
+      "id": "releaseHeight",
+      "unit": "×",
+      "n": 4,
+      "bias": -0.1405,
+      "rms": 0.3216,
+      "medianAbs": 0.0311,
+      "p90Abs": 0.4593,
+      "noise": 0.00766,
+      "rmsOverNoise": 41.99,
+      "pastTwoNoise": 1
+     },
+     {
+      "id": "tossArmHold",
+      "unit": "%",
+      "n": 4,
+      "bias": 2.7811,
+      "rms": 6.6168,
+      "medianAbs": 6.0326,
+      "p90Abs": 8.5362,
+      "noise": 2.33,
+      "rmsOverNoise": 2.84,
+      "pastTwoNoise": 0.75
+     },
+     {
+      "id": "tossPathWobble",
+      "unit": "%",
+      "n": 3,
+      "bias": 0.233,
+      "rms": 0.486,
+      "medianAbs": 0.1017,
+      "p90Abs": 0.6882,
+      "noise": 0.3,
+      "rmsOverNoise": 1.62,
+      "pastTwoNoise": 0.33
+     },
+     {
+      "id": "kneeBend",
+      "unit": "°",
+      "n": 4,
+      "bias": -44.5212,
+      "rms": 44.6476,
+      "medianAbs": 43.5739,
+      "p90Abs": 48.3593,
+      "noise": 4.27,
+      "rmsOverNoise": 10.46,
+      "pastTwoNoise": 1
+     },
+     {
+      "id": "shoulderTilt",
+      "unit": "°",
+      "n": 4,
+      "bias": -25.8971,
+      "rms": 26.7455,
+      "medianAbs": 27.8147,
+      "p90Abs": 31.5299,
+      "noise": 3.04,
+      "rmsOverNoise": 8.8,
+      "pastTwoNoise": 1
+     },
+     {
+      "id": "legDrive",
+      "unit": "×",
+      "n": 4,
+      "bias": -0.0366,
+      "rms": 0.0464,
+      "medianAbs": 0.031,
+      "p90Abs": 0.0689,
+      "noise": 0.00723,
+      "rmsOverNoise": 6.42,
+      "pastTwoNoise": 0.75
+     },
+     {
+      "id": "dropDepth",
+      "unit": "×",
+      "n": 4,
+      "bias": 0.154,
+      "rms": 0.2036,
+      "medianAbs": 0.0778,
+      "p90Abs": 0.2929,
+      "noise": 0.00985,
+      "rmsOverNoise": 20.67,
+      "pastTwoNoise": 1
+     },
+     {
+      "id": "elbowAtDrop",
+      "unit": "°",
+      "n": 2,
+      "bias": 76.8914,
+      "rms": 86.9218,
+      "medianAbs": 76.8914,
+      "p90Abs": 109.3196,
+      "noise": 5.81,
+      "rmsOverNoise": 14.96,
+      "pastTwoNoise": 1
+     },
+     {
+      "id": "handUnderElbow",
+      "unit": "%",
+      "n": 4,
+      "bias": 1.0955,
+      "rms": 19.3518,
+      "medianAbs": 10.704,
+      "p90Abs": 27.8696,
+      "noise": 2.65,
+      "rmsOverNoise": 7.3,
+      "pastTwoNoise": 1
+     },
+     {
+      "id": "dropToContact",
+      "unit": "ms",
+      "n": 2,
+      "bias": 414.0834,
+      "rms": 620.6329,
+      "medianAbs": 462.2987,
+      "p90Abs": 793.5654,
+      "noise": 16.4,
+      "rmsOverNoise": 37.84,
+      "pastTwoNoise": 1
+     },
+     {
+      "id": "contactHeight",
+      "unit": "×",
+      "n": 4,
+      "bias": -0.0642,
+      "rms": 0.0825,
+      "medianAbs": 0.0624,
+      "p90Abs": 0.1197,
+      "noise": 0.00874,
+      "rmsOverNoise": 9.44,
+      "pastTwoNoise": 0.75
+     },
+     {
+      "id": "armExtension",
+      "unit": "°",
+      "n": 4,
+      "bias": 6.7365,
+      "rms": 18.2975,
+      "medianAbs": 14.4733,
+      "p90Abs": 25.4169,
+      "noise": 10,
+      "rmsOverNoise": 1.83,
+      "pastTwoNoise": 0.25
+     },
+     {
+      "id": "contactAhead",
+      "unit": "%",
+      "n": 3,
+      "bias": -18.256,
+      "rms": 23.6109,
+      "medianAbs": 22.1158,
+      "p90Abs": 31.9088,
+      "noise": 3.46,
+      "rmsOverNoise": 6.82,
+      "pastTwoNoise": 0.67
+     },
+     {
+      "id": "loadRatio",
+      "unit": "%",
+      "n": 3,
+      "bias": -3.5218,
+      "rms": 3.6705,
+      "medianAbs": 4.0574,
+      "p90Abs": 4.3575,
+      "noise": 2.38,
+      "rmsOverNoise": 1.54,
+      "pastTwoNoise": 0
+     }
+    ],
+    "joints": {
+     "shoulder": 0.0149,
+     "elbow": 0.0201,
+     "wrist": 0.0273,
+     "hip": 0.0513,
+     "knee": 0.0154,
+     "ankle": 0.0124
+    },
+    "contactWrist": 0.6305
+   },
+   "RTMPose on every frame, one box for the whole read": {
+    "measured": 17,
+    "outcomes": {
+     "measured": 17,
+     "refused: too_few_frames": 14,
+     "The clip ends before the racket reaches the ball.": 9
+    },
+    "sameHand": 16,
+    "sameView": 14,
+    "sameFaults": 16,
+    "sameFocus": 2,
+    "overall": {
+     "bias": -15.4,
+     "rms": 16.4
+    },
+    "metrics": [
+     {
+      "id": "releaseHeight",
+      "unit": "×",
+      "n": 17,
+      "bias": -0.0164,
+      "rms": 0.1593,
+      "medianAbs": 0.0235,
+      "p90Abs": 0.0419,
+      "noise": 0.00766,
+      "rmsOverNoise": 20.8,
+      "pastTwoNoise": 0.71
+     },
+     {
+      "id": "tossArmHold",
+      "unit": "%",
+      "n": 17,
+      "bias": 2.5035,
+      "rms": 21.9144,
+      "medianAbs": 8.8567,
+      "p90Abs": 26.7556,
+      "noise": 2.33,
+      "rmsOverNoise": 9.41,
+      "pastTwoNoise": 0.59
+     },
+     {
+      "id": "tossPathWobble",
+      "unit": "%",
+      "n": 13,
+      "bias": 0.2411,
+      "rms": 0.4682,
+      "medianAbs": 0.1074,
+      "p90Abs": 0.862,
+      "noise": 0.3,
+      "rmsOverNoise": 1.56,
+      "pastTwoNoise": 0.23
+     },
+     {
+      "id": "kneeBend",
+      "unit": "°",
+      "n": 17,
+      "bias": -51.0344,
+      "rms": 51.8321,
+      "medianAbs": 51.3929,
+      "p90Abs": 62.9027,
+      "noise": 4.27,
+      "rmsOverNoise": 12.14,
+      "pastTwoNoise": 1
+     },
+     {
+      "id": "shoulderTilt",
+      "unit": "°",
+      "n": 17,
+      "bias": -26.0139,
+      "rms": 34.84,
+      "medianAbs": 24.3377,
+      "p90Abs": 38.722,
+      "noise": 3.04,
+      "rmsOverNoise": 11.46,
+      "pastTwoNoise": 1
+     },
+     {
+      "id": "legDrive",
+      "unit": "×",
+      "n": 17,
+      "bias": -0.1312,
+      "rms": 0.1985,
+      "medianAbs": 0.0248,
+      "p90Abs": 0.3435,
+      "noise": 0.00723,
+      "rmsOverNoise": 27.46,
+      "pastTwoNoise": 0.71
+     },
+     {
+      "id": "dropDepth",
+      "unit": "×",
+      "n": 12,
+      "bias": 0.1038,
+      "rms": 0.1424,
+      "medianAbs": 0.0983,
+      "p90Abs": 0.1281,
+      "noise": 0.00985,
+      "rmsOverNoise": 14.46,
+      "pastTwoNoise": 0.92
+     },
+     {
+      "id": "elbowAtDrop",
+      "unit": "°",
+      "n": 4,
+      "bias": 78.7102,
+      "rms": 80.9402,
+      "medianAbs": 75.0311,
+      "p90Abs": 100.0717,
+      "noise": 5.81,
+      "rmsOverNoise": 13.93,
+      "pastTwoNoise": 1
+     },
+     {
+      "id": "handUnderElbow",
+      "unit": "%",
+      "n": 17,
+      "bias": -2.8924,
+      "rms": 12.2892,
+      "medianAbs": 8.6667,
+      "p90Abs": 14.9902,
+      "noise": 2.65,
+      "rmsOverNoise": 4.64,
+      "pastTwoNoise": 0.65
+     },
+     {
+      "id": "dropToContact",
+      "unit": "ms",
+      "n": 4,
+      "bias": 60.9154,
+      "rms": 170.1484,
+      "medianAbs": 54.6535,
+      "p90Abs": 254.085,
+      "noise": 16.4,
+      "rmsOverNoise": 10.37,
+      "pastTwoNoise": 0.5
+     },
+     {
+      "id": "contactHeight",
+      "unit": "×",
+      "n": 17,
+      "bias": -0.3269,
+      "rms": 0.3867,
+      "medianAbs": 0.3762,
+      "p90Abs": 0.5951,
+      "noise": 0.00874,
+      "rmsOverNoise": 44.24,
+      "pastTwoNoise": 0.94
+     },
+     {
+      "id": "armExtension",
+      "unit": "°",
+      "n": 17,
+      "bias": -0.4793,
+      "rms": 13.5083,
+      "medianAbs": 5.2355,
+      "p90Abs": 24.8536,
+      "noise": 10,
+      "rmsOverNoise": 1.35,
+      "pastTwoNoise": 0.24
+     },
+     {
+      "id": "contactAhead",
+      "unit": "%",
+      "n": 14,
+      "bias": 0.1896,
+      "rms": 12.2434,
+      "medianAbs": 5.4811,
+      "p90Abs": 21.9035,
+      "noise": 3.46,
+      "rmsOverNoise": 3.54,
+      "pastTwoNoise": 0.43
+     },
+     {
+      "id": "loadRatio",
+      "unit": "%",
+      "n": 10,
+      "bias": -1.8417,
+      "rms": 3.2665,
+      "medianAbs": 1.5968,
+      "p90Abs": 6.1572,
+      "noise": 2.38,
+      "rmsOverNoise": 1.37,
+      "pastTwoNoise": 0.2
+     }
+    ],
+    "joints": {
+     "shoulder": 0.027,
+     "elbow": 0.0344,
+     "wrist": 0.0317,
+     "hip": 0.0512,
+     "knee": 0.0221,
+     "ankle": 0.0223
+    },
+    "contactWrist": 0.5991
+   }
+  },
+  "joints": {
+   "shoulder": 0.0248,
+   "elbow": 0.0289,
+   "wrist": 0.0376,
+   "hip": 0.0436,
+   "knee": 0.0351,
+   "ankle": 0.0354
+  },
+  "jointsFinal": {
+   "shoulder": 0.0261,
+   "elbow": 0.0245,
+   "wrist": 0.0369,
+   "hip": 0.0366,
+   "knee": 0.0206,
+   "ankle": 0.0284
+  },
+  "contactWrist": 0.6343
+ },
+ "rows": [
+  {
+   "serve": "bath-1",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 66,
+   "onFigure": 43,
+   "wristSeen": 52,
+   "refined": 32,
+   "framingCheck": "passed",
+   "firstSearch": "passed",
+   "joints": {
+    "shoulder": 0.036,
+    "elbow": 0.038,
+    "wrist": 0.0421,
+    "hip": 0.0321,
+    "knee": 0.0148,
+    "ankle": 0.0198
+   },
+   "angles": {
+    "elbowWorld": 18.4,
+    "elbowImage": -4.2,
+    "shoulderTiltWorld": -5,
+    "kneeTrueAtLoad": 127.7,
+    "kneeWorldAtLoad": 39.9,
+    "kneeImageAtLoad": -4.8
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 83,
+    "focus": "Shoulder tilt",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1353037067831053,
+     "tossArmHold": 69.56521739130434,
+     "tossPathWobble": 0.31591223491448933,
+     "kneeBend": 51.190975584351804,
+     "shoulderTilt": 35.30428172894038,
+     "legDrive": 0.1429660634762758,
+     "dropDepth": -0.026037003780607925,
+     "elbowAtDrop": 50.79135291847953,
+     "dropToContact": 190.88663373846026,
+     "handUnderElbow": 13.043478260869565,
+     "contactHeight": 1.2132762713999323,
+     "armExtension": 152.30094665338558,
+     "contactAhead": 14.673178771984047,
+     "loadRatio": 33.43780634615572
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 6,
+    "phases": {
+     "ready": 1.35,
+     "toss": 1.75,
+     "trophy": 2.084,
+     "drop": 2.294,
+     "contact": 2.485,
+     "finish": 2.884
+    }
+   },
+   "pipeline": {
+    "outcome": "refused: too_few_frames",
+    "overall": 79,
+    "focus": "Knee bend at trophy",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.2501686903627327,
+     "tossArmHold": 70,
+     "tossPathWobble": 0.6582298015043039,
+     "kneeBend": 35.04815340558693,
+     "shoulderTilt": -16.331579576584055,
+     "legDrive": -0.01959784644063936,
+     "handUnderElbow": 40,
+     "contactHeight": 1.309787491493938,
+     "armExtension": 165.10425638010793,
+     "loadRatio": 39.21003833591499
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 1,
+    "phases": {
+     "ready": 1.35,
+     "toss": 1.65,
+     "trophy": 2.584,
+     "drop": 2.584,
+     "contact": 2.612,
+     "finish": 2.65
+    }
+   },
+   "levelled": true,
+   "detail": "refused: too_few_frames",
+   "contactWrist": 0.684,
+   "tail": "refused: too_few_frames",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "measured",
+     "reading": {
+      "outcome": "measured",
+      "overall": 57,
+      "focus": "Drop to contact",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 0.4938363042932462,
+       "tossArmHold": 62.5,
+       "kneeBend": 9.724144572783473,
+       "shoulderTilt": 2.273538411230855,
+       "legDrive": 0.10002021551259237,
+       "dropDepth": 0.35864172373693065,
+       "elbowAtDrop": 168.2180240147667,
+       "dropToContact": 1067.2687367107146,
+       "handUnderElbow": 47.5,
+       "contactHeight": 1.0867072247857728,
+       "armExtension": 141.4640421073775
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "elbowAtDrop": "°",
+       "dropToContact": "ms",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°"
+      },
+      "hand": "right",
+      "view": "angled",
+      "swingSamples": 32,
+      "phases": {
+       "ready": 1.084,
+       "toss": 1.084,
+       "trophy": 1.084,
+       "drop": 1.335,
+       "contact": 2.403,
+       "finish": 3.084
+      }
+     },
+     "joints": {
+      "shoulder": 0.0246,
+      "elbow": 0.0167,
+      "wrist": 0.0204,
+      "hip": 0.0341,
+      "knee": 0.0109,
+      "ankle": 0.011
+     },
+     "contactWrist": 0.6834,
+     "errors": {
+      "releaseHeight": -0.6414674024898591,
+      "tossArmHold": -7.065217391304344,
+      "kneeBend": -41.46683101156833,
+      "shoulderTilt": -33.03074331770953,
+      "legDrive": -0.042945847963683434,
+      "dropDepth": 0.38467872751753857,
+      "elbowAtDrop": 117.42667109628718,
+      "handUnderElbow": 34.45652173913044,
+      "dropToContact": 876.3821029722544,
+      "contactHeight": -0.12656904661415957,
+      "armExtension": -10.836904546008071
+     }
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "measured",
+     "reading": {
+      "outcome": "measured",
+      "overall": 51,
+      "focus": "Your tossing arm comes down early",
+      "flaws": [
+       "toss_arm_drops"
+      ],
+      "metrics": {
+       "releaseHeight": 0.486348831741155,
+       "tossArmHold": 4.761904761904762,
+       "kneeBend": 9.724144572783473,
+       "shoulderTilt": -2.273538411230855,
+       "legDrive": 0.013108581878592547,
+       "dropDepth": 0.3558453937535183,
+       "elbowAtDrop": 156.51523344147176,
+       "dropToContact": 519.3487120419542,
+       "handUnderElbow": 47.61904761904761,
+       "contactHeight": 1.1367255849581395,
+       "armExtension": 157.53641692517465,
+       "contactAhead": 9.055006287098976
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "elbowAtDrop": "°",
+       "dropToContact": "ms",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "contactAhead": "%"
+      },
+      "hand": "left",
+      "view": "side",
+      "swingSamples": 16,
+      "phases": {
+       "ready": 1.084,
+       "toss": 1.084,
+       "trophy": 1.084,
+       "drop": 1.231,
+       "contact": 1.75,
+       "finish": 2.45
+      }
+     },
+     "joints": {
+      "shoulder": 0.0382,
+      "elbow": 0.0338,
+      "wrist": 0.0274,
+      "hip": 0.0326,
+      "knee": 0.0191,
+      "ankle": 0.016
+     },
+     "contactWrist": 0.6713,
+     "errors": {
+      "releaseHeight": -0.6489548750419503,
+      "tossArmHold": -64.80331262939958,
+      "kneeBend": -41.46683101156833,
+      "shoulderTilt": -37.577820140171234,
+      "legDrive": -0.12985748159768326,
+      "dropDepth": 0.38188239753412623,
+      "elbowAtDrop": 105.72388052299223,
+      "handUnderElbow": 34.57556935817805,
+      "dropToContact": 328.4620783034939,
+      "contactHeight": -0.07655068644179286,
+      "armExtension": 5.235470271789069,
+      "contactAhead": -5.61817248488507
+     }
+    }
+   },
+   "ms": 39870
+  },
+  {
+   "serve": "bath-2",
+   "look": "court",
+   "gate": "on",
+   "outcome": "measured",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 91,
+   "wristSeen": 52,
+   "refined": 31,
+   "framingCheck": "passed",
+   "firstSearch": "passed",
+   "joints": {
+    "shoulder": 0.0228,
+    "elbow": 0.025,
+    "wrist": 0.029,
+    "hip": 0.0384,
+    "knee": 0.0241,
+    "ankle": 0.0272
+   },
+   "angles": {
+    "elbowWorld": 10,
+    "elbowImage": -4.6,
+    "shoulderTiltWorld": -3.3,
+    "kneeTrueAtLoad": 114.3,
+    "kneeWorldAtLoad": 57.3,
+    "kneeImageAtLoad": 1.4
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 83,
+    "focus": "Shoulder tilt",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1458140132085521,
+     "tossArmHold": 75,
+     "tossPathWobble": 0.6411788468309373,
+     "kneeBend": 64.94551404526797,
+     "shoulderTilt": 37.7110949259494,
+     "legDrive": 0.18564161932257062,
+     "dropDepth": -0.01906583911913019,
+     "elbowAtDrop": 50.85641522805275,
+     "dropToContact": 157.25991085963375,
+     "handUnderElbow": 16.666666666666664,
+     "contactHeight": 1.2267154351952798,
+     "armExtension": 149.62725527240372,
+     "contactAhead": 12.234379029444305,
+     "loadRatio": 30.99319758738775
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.35,
+     "toss": 1.717,
+     "trophy": 2.117,
+     "drop": 2.331,
+     "contact": 2.489,
+     "finish": 2.85
+    }
+   },
+   "pipeline": {
+    "outcome": "measured",
+    "overall": 77,
+    "focus": "Knee bend at trophy",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1728751793809633,
+     "tossArmHold": 80,
+     "tossPathWobble": 1.5249153610980313,
+     "kneeBend": 23.51558127728805,
+     "shoulderTilt": 9.683066646558856,
+     "legDrive": 0.16597168561652365,
+     "dropDepth": 0.05641858051069392,
+     "handUnderElbow": 8,
+     "contactHeight": 1.2224876557418474,
+     "armExtension": 178.17584081611216,
+     "contactAhead": 13.89010942309841,
+     "loadRatio": 26.93577906797836
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 4,
+    "phases": {
+     "ready": 1.35,
+     "toss": 1.684,
+     "trophy": 2.284,
+     "drop": 2.354,
+     "contact": 2.485,
+     "finish": 2.684
+    }
+   },
+   "levelled": false,
+   "jointsFinal": {
+    "shoulder": 0.0209,
+    "elbow": 0.023,
+    "wrist": 0.0264,
+    "hip": 0.0384,
+    "knee": 0.0169,
+    "ankle": 0.0203
+   },
+   "errors": {
+    "releaseHeight": 0.027061166172411166,
+    "tossArmHold": 5,
+    "tossPathWobble": 0.883736514267094,
+    "kneeBend": -41.42993276797992,
+    "shoulderTilt": -28.028028279390547,
+    "legDrive": -0.01966993370604697,
+    "dropDepth": 0.0754844196298241,
+    "handUnderElbow": -8.666666666666664,
+    "contactHeight": -0.004227779453432445,
+    "armExtension": 28.54858554370844,
+    "contactAhead": 1.655730393654105,
+    "loadRatio": -4.057418519409392
+   },
+   "contactWrist": 0.0828,
+   "tail": "measured",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "measured",
+     "reading": {
+      "outcome": "measured",
+      "overall": 77,
+      "focus": "Knee bend at trophy",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.1737326022204728,
+       "tossArmHold": 80,
+       "tossPathWobble": 1.4760175520681553,
+       "kneeBend": 23.51558127728805,
+       "shoulderTilt": 9.683066646558856,
+       "legDrive": 0.16655761586399556,
+       "dropDepth": 0.05661775516339356,
+       "handUnderElbow": 8,
+       "contactHeight": 1.221319554008999,
+       "armExtension": 178.17584081611216,
+       "contactAhead": 13.939145710350997,
+       "loadRatio": 26.93577906797836
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "contactAhead": "%",
+       "loadRatio": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 4,
+      "phases": {
+       "ready": 1.35,
+       "toss": 1.684,
+       "trophy": 2.284,
+       "drop": 2.354,
+       "contact": 2.485,
+       "finish": 2.684
+      }
+     },
+     "joints": {
+      "shoulder": 0.0157,
+      "elbow": 0.016,
+      "wrist": 0.0165,
+      "hip": 0.0384,
+      "knee": 0.0142,
+      "ankle": 0.0082
+     },
+     "contactWrist": 0.0315,
+     "errors": {
+      "releaseHeight": 0.02791858901192068,
+      "tossArmHold": 5,
+      "tossPathWobble": 0.834838705237218,
+      "kneeBend": -41.42993276797992,
+      "shoulderTilt": -28.028028279390547,
+      "legDrive": -0.019084003458575055,
+      "dropDepth": 0.07568359428252375,
+      "handUnderElbow": -8.666666666666664,
+      "contactHeight": -0.005395881186280871,
+      "armExtension": 28.54858554370844,
+      "contactAhead": 1.7047666809066921,
+      "loadRatio": -4.057418519409392
+     }
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "measured",
+     "reading": {
+      "outcome": "measured",
+      "overall": 74,
+      "focus": "Knee bend at trophy",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.164276604930776,
+       "tossArmHold": 68,
+       "tossPathWobble": 1.4237457017420305,
+       "kneeBend": 23.912467193071052,
+       "shoulderTilt": 9.683066646558856,
+       "legDrive": 0.16732348172173017,
+       "dropDepth": 0.08697327910768088,
+       "handUnderElbow": 8,
+       "contactHeight": 1.2197927378897675,
+       "armExtension": 178.14119275588612,
+       "contactAhead": -11.922707211604525,
+       "loadRatio": 26.92768913867528
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "contactAhead": "%",
+       "loadRatio": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 4,
+      "phases": {
+       "ready": 1.35,
+       "toss": 1.684,
+       "trophy": 2.284,
+       "drop": 2.351,
+       "contact": 2.485,
+       "finish": 2.684
+      }
+     },
+     "joints": {
+      "shoulder": 0.027,
+      "elbow": 0.0346,
+      "wrist": 0.0228,
+      "hip": 0.0397,
+      "knee": 0.0195,
+      "ankle": 0.0223
+     },
+     "contactWrist": 0.0286,
+     "errors": {
+      "releaseHeight": 0.018462591722223864,
+      "tossArmHold": -7,
+      "tossPathWobble": 0.7825668549110932,
+      "kneeBend": -41.03304685219692,
+      "shoulderTilt": -28.028028279390547,
+      "legDrive": -0.018318137600840445,
+      "dropDepth": 0.10603911822681107,
+      "handUnderElbow": -8.666666666666664,
+      "contactHeight": -0.006922697305512315,
+      "armExtension": 28.513937483482408,
+      "contactAhead": -24.15708624104883,
+      "loadRatio": -4.065508448712471
+     }
+    }
+   },
+   "ms": 33182
+  },
+  {
+   "serve": "bath-3",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 93,
+   "onFigure": 77,
+   "wristSeen": 54,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0207,
+    "elbow": 0.0268,
+    "wrist": 0.0311,
+    "hip": 0.0472,
+    "knee": 0.0236,
+    "ankle": 0.0308
+   },
+   "angles": {
+    "elbowWorld": 7.5,
+    "elbowImage": -5.7,
+    "shoulderTiltWorld": -1.7,
+    "kneeTrueAtLoad": 108.3,
+    "kneeWorldAtLoad": 61.3,
+    "kneeImageAtLoad": 5.9
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 84,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1386819965306887,
+     "tossArmHold": 80,
+     "tossPathWobble": 0.30604204625332365,
+     "kneeBend": 71.19663758708242,
+     "shoulderTilt": 33.6128379747492,
+     "legDrive": 0.21214239078066394,
+     "dropDepth": -0.018931794024542477,
+     "elbowAtDrop": 49.44034480651467,
+     "dropToContact": 161.29618348157538,
+     "handUnderElbow": 16,
+     "contactHeight": 1.2310906167918882,
+     "armExtension": 151.64891137940683,
+     "contactAhead": 15.325160437079393,
+     "loadRatio": 29.373461204180007
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.317,
+     "toss": 1.717,
+     "trophy": 2.15,
+     "drop": 2.36,
+     "contact": 2.521,
+     "finish": 2.884
+    }
+   },
+   "contactWrist": 0.645,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0151,
+      "elbow": 0.0156,
+      "wrist": 0.0176,
+      "hip": 0.0512,
+      "knee": 0.0144,
+      "ankle": 0.0079
+     },
+     "contactWrist": 0.6384
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "refused: too_few_frames",
+     "reading": {
+      "outcome": "refused: too_few_frames",
+      "overall": 66,
+      "focus": "Leg drive",
+      "flaws": [
+       "no_leg_drive"
+      ],
+      "metrics": {
+       "releaseHeight": 0.8841018451672493,
+       "tossArmHold": 100,
+       "tossPathWobble": 0.490057279944221,
+       "kneeBend": 8.741888972506786,
+       "shoulderTilt": -22.20319480272984,
+       "legDrive": -0.015547356333742551,
+       "contactHeight": 1.090977392083819,
+       "armExtension": 159.1995967877066
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "contactHeight": "×",
+       "armExtension": "°"
+      },
+      "hand": "left",
+      "view": "side",
+      "swingSamples": 0,
+      "phases": {
+       "ready": 1.45,
+       "toss": 1.95,
+       "trophy": 1.95,
+       "drop": 2.017,
+       "contact": 2.017,
+       "finish": 2.017
+      }
+     },
+     "joints": {
+      "shoulder": 0.0261,
+      "elbow": 0.0315,
+      "wrist": 0.0244,
+      "hip": 0.0512,
+      "knee": 0.0232,
+      "ankle": 0.0279
+     },
+     "contactWrist": 0.6342
+    }
+   },
+   "ms": 32974
+  },
+  {
+   "serve": "bath-4",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 82,
+   "wristSeen": 52,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0227,
+    "elbow": 0.0296,
+    "wrist": 0.0331,
+    "hip": 0.0392,
+    "knee": 0.0276,
+    "ankle": 0.0357
+   },
+   "angles": {
+    "elbowWorld": 8.1,
+    "elbowImage": -2.1,
+    "shoulderTiltWorld": -1.3,
+    "kneeTrueAtLoad": 117.8,
+    "kneeWorldAtLoad": 33.3,
+    "kneeImageAtLoad": 2.9
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 84,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1495359530813312,
+     "tossArmHold": 76,
+     "tossPathWobble": 0.4550695496182236,
+     "kneeBend": 60.93791858400883,
+     "shoulderTilt": 32.83247658627247,
+     "legDrive": 0.17606537221630128,
+     "dropDepth": -0.028024172591561213,
+     "elbowAtDrop": 50.88381864263928,
+     "dropToContact": 157.77275571827954,
+     "handUnderElbow": 12,
+     "contactHeight": 1.2120934342977885,
+     "armExtension": 153.2174347351681,
+     "contactAhead": 14.478521296355265,
+     "loadRatio": 27.736049909706605
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.317,
+     "toss": 1.717,
+     "trophy": 2.184,
+     "drop": 2.362,
+     "contact": 2.52,
+     "finish": 2.85
+    }
+   },
+   "contactWrist": 0.6329,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "refused: too_few_frames",
+     "reading": {
+      "outcome": "refused: too_few_frames",
+      "overall": 66,
+      "focus": "Time from trophy to contact",
+      "flaws": [
+       "low_contact",
+       "no_leg_drive"
+      ],
+      "metrics": {
+       "releaseHeight": 1.1881171867542957,
+       "tossArmHold": 100,
+       "tossPathWobble": 0.482567799840819,
+       "kneeBend": 27.51655107163907,
+       "shoulderTilt": 44.45522348587902,
+       "legDrive": 0.002506157801990563,
+       "handUnderElbow": 0,
+       "contactHeight": 0.9167278589776419,
+       "armExtension": 173.65041087703392,
+       "loadRatio": 4.416442869957997
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "loadRatio": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 1,
+      "phases": {
+       "ready": 1.35,
+       "toss": 1.817,
+       "trophy": 2.217,
+       "drop": 2.217,
+       "contact": 2.245,
+       "finish": 2.284
+      }
+     },
+     "joints": {
+      "shoulder": 0.0129,
+      "elbow": 0.0177,
+      "wrist": 0.0159,
+      "hip": 0.0392,
+      "knee": 0.0144,
+      "ankle": 0.01
+     },
+     "contactWrist": 0.6217
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "measured",
+     "reading": {
+      "outcome": "measured",
+      "overall": 73,
+      "focus": "Knee bend at trophy",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.1637358479290778,
+       "tossArmHold": 100,
+       "tossPathWobble": 0.5794071095282739,
+       "kneeBend": 9.545068181925842,
+       "shoulderTilt": 23.141686401996004,
+       "legDrive": -0.08524649676106667,
+       "handUnderElbow": 0,
+       "contactHeight": 0.8840199873831265,
+       "armExtension": 161.2226811990153,
+       "contactAhead": 18.92722766069258
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "contactAhead": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 11,
+      "phases": {
+       "ready": 1.35,
+       "toss": 1.834,
+       "trophy": 1.817,
+       "drop": 1.817,
+       "contact": 2.187,
+       "finish": 2.55
+      }
+     },
+     "joints": {
+      "shoulder": 0.0252,
+      "elbow": 0.0468,
+      "wrist": 0.0239,
+      "hip": 0.0394,
+      "knee": 0.0199,
+      "ankle": 0.0293
+     },
+     "contactWrist": 0.0515,
+     "errors": {
+      "releaseHeight": 0.014199894847746641,
+      "tossArmHold": 24,
+      "tossPathWobble": 0.1243375599100503,
+      "kneeBend": -51.392850402082985,
+      "shoulderTilt": -9.690790184276466,
+      "legDrive": -0.26131186897736797,
+      "handUnderElbow": -12,
+      "contactHeight": -0.328073446914662,
+      "armExtension": 8.005246463847214,
+      "contactAhead": 4.4487063643373155
+     }
+    }
+   },
+   "ms": 28571
+  },
+  {
+   "serve": "bath-5",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 88,
+   "wristSeen": 53,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0191,
+    "elbow": 0.0323,
+    "wrist": 0.0387,
+    "hip": 0.0516,
+    "knee": 0.0554,
+    "ankle": 0.0419
+   },
+   "angles": {
+    "elbowWorld": 7.1,
+    "elbowImage": -9.7,
+    "shoulderTiltWorld": -0.3,
+    "kneeTrueAtLoad": 112.2,
+    "kneeWorldAtLoad": 50.9,
+    "kneeImageAtLoad": -3.4
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 85,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.158749652563012,
+     "tossArmHold": 76.92307692307693,
+     "tossPathWobble": 0.772544087173074,
+     "kneeBend": 67.13111112720198,
+     "shoulderTilt": 34.355144389733205,
+     "legDrive": 0.1932701998119237,
+     "dropDepth": -0.017056363058294104,
+     "elbowAtDrop": 56.07068865084256,
+     "dropToContact": 156.05633869348122,
+     "handUnderElbow": 11.538461538461538,
+     "contactHeight": 1.228728851659917,
+     "armExtension": 153.4673307979039,
+     "contactAhead": 20.0399863657653,
+     "loadRatio": 29.471284612324066
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.284,
+     "toss": 1.684,
+     "trophy": 2.15,
+     "drop": 2.359,
+     "contact": 2.516,
+     "finish": 2.884
+    }
+   },
+   "contactWrist": 0.6357,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0125,
+      "elbow": 0.0175,
+      "wrist": 0.0257,
+      "hip": 0.0429,
+      "knee": 0.0129,
+      "ankle": 0.0103
+     },
+     "contactWrist": 0.6529
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "measured",
+     "reading": {
+      "outcome": "measured",
+      "overall": 72,
+      "focus": "Knee bend at trophy",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.182452225656995,
+       "tossArmHold": 74.07407407407408,
+       "tossPathWobble": 1.8543823589574417,
+       "kneeBend": 23.10708223834405,
+       "shoulderTilt": 10.017434092132609,
+       "legDrive": 0.17150198014983292,
+       "dropDepth": 0.07371086488474221,
+       "handUnderElbow": 11.11111111111111,
+       "contactHeight": 0.6672443930641333,
+       "armExtension": 156.8379938157751,
+       "contactAhead": 23.87357570349769,
+       "loadRatio": 28.779501991142908
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "contactAhead": "%",
+       "loadRatio": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 5,
+      "phases": {
+       "ready": 1.317,
+       "toss": 1.65,
+       "trophy": 2.284,
+       "drop": 2.349,
+       "contact": 2.522,
+       "finish": 2.75
+      }
+     },
+     "joints": {
+      "shoulder": 0.0263,
+      "elbow": 0.0244,
+      "wrist": 0.0251,
+      "hip": 0.0429,
+      "knee": 0.0187,
+      "ankle": 0.0225
+     },
+     "contactWrist": 0.0303,
+     "errors": {
+      "releaseHeight": 0.023702573093982826,
+      "tossArmHold": -2.849002849002858,
+      "tossPathWobble": 1.0818382717843678,
+      "kneeBend": -44.02402888885793,
+      "shoulderTilt": -24.337710297600594,
+      "legDrive": -0.021768219662090776,
+      "dropDepth": 0.09076722794303632,
+      "handUnderElbow": -0.4273504273504276,
+      "contactHeight": -0.5614844585957838,
+      "armExtension": 3.3706630178711805,
+      "contactAhead": 3.8335893377323877,
+      "loadRatio": -0.691782621181158
+     }
+    }
+   },
+   "ms": 29313
+  },
+  {
+   "serve": "bath-6",
+   "look": "court",
+   "gate": "off",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 93,
+   "onFigure": 74,
+   "wristSeen": 52,
+   "refined": 0,
+   "framingCheck": "You stand too far from the camera to measure.",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0228,
+    "elbow": 0.0274,
+    "wrist": 0.0464,
+    "hip": 0.0382,
+    "knee": 0.0326,
+    "ankle": 0.0343
+   },
+   "angles": {
+    "elbowWorld": 9.2,
+    "elbowImage": -11,
+    "shoulderTiltWorld": 0.6,
+    "kneeTrueAtLoad": 107.3,
+    "kneeWorldAtLoad": 64.6,
+    "kneeImageAtLoad": 7.9
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 83,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1457918285311812,
+     "tossArmHold": 80,
+     "tossPathWobble": 0.1706062418701497,
+     "kneeBend": 71.161718769883,
+     "shoulderTilt": 32.886981310704186,
+     "legDrive": 0.20856070907318455,
+     "dropDepth": -0.036455014689650345,
+     "elbowAtDrop": 49.91397043630244,
+     "dropToContact": 163.2759698211168,
+     "handUnderElbow": 12,
+     "contactHeight": 1.1956651085914363,
+     "armExtension": 148.42007823966244,
+     "contactAhead": 15.344424338669738,
+     "loadRatio": 26.720945357813363
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.25,
+     "toss": 1.684,
+     "trophy": 2.117,
+     "drop": 2.328,
+     "contact": 2.491,
+     "finish": 2.85
+    }
+   },
+   "contactWrist": 0.5717,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0132,
+      "elbow": 0.017,
+      "wrist": 0.0335,
+      "hip": 0.0565,
+      "knee": 0.0158,
+      "ankle": 0.0076
+     },
+     "contactWrist": 0.5786
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "refused: too_few_frames",
+     "reading": {
+      "outcome": "refused: too_few_frames",
+      "overall": 59,
+      "focus": "Leg drive",
+      "flaws": [
+       "no_leg_drive"
+      ],
+      "metrics": {
+       "releaseHeight": 0.8893008873298152,
+       "tossArmHold": 100,
+       "tossPathWobble": 0.24393516211651134,
+       "kneeBend": 8.959416036070223,
+       "shoulderTilt": -23.40488187806977,
+       "legDrive": -0.011223020388974858,
+       "dropDepth": -0.2606177407598944,
+       "contactHeight": 1.1407067592899875,
+       "armExtension": 156.55878601466722
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "contactHeight": "×",
+       "armExtension": "°"
+      },
+      "hand": "left",
+      "view": "side",
+      "swingSamples": 0,
+      "phases": {
+       "ready": 1.35,
+       "toss": 1.817,
+       "trophy": 1.817,
+       "drop": 1.855,
+       "contact": 1.85,
+       "finish": 1.85
+      }
+     },
+     "joints": {
+      "shoulder": 0.0261,
+      "elbow": 0.0336,
+      "wrist": 0.0342,
+      "hip": 0.0567,
+      "knee": 0.0254,
+      "ankle": 0.0158
+     },
+     "contactWrist": 0.5717
+    }
+   },
+   "ms": 28841
+  },
+  {
+   "serve": "bath-29",
+   "look": "court",
+   "gate": "off",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 93,
+   "onFigure": 84,
+   "wristSeen": 53,
+   "refined": 0,
+   "framingCheck": "You stand too far from the camera to measure.",
+   "firstSearch": "passed",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0229,
+    "elbow": 0.0306,
+    "wrist": 0.034,
+    "hip": 0.0427,
+    "knee": 0.0529,
+    "ankle": 0.0427
+   },
+   "angles": {
+    "elbowWorld": 9.3,
+    "elbowImage": -4.2,
+    "shoulderTiltWorld": -3,
+    "kneeTrueAtLoad": 106.6,
+    "kneeWorldAtLoad": 55.1,
+    "kneeImageAtLoad": 3.5
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 84,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.150898774693145,
+     "tossArmHold": 76,
+     "tossPathWobble": 0.45006292731049297,
+     "kneeBend": 72.61055852345436,
+     "shoulderTilt": 28.796233598440203,
+     "legDrive": 0.21602524003704418,
+     "dropDepth": -0.02936992436227228,
+     "elbowAtDrop": 50.27228396792786,
+     "dropToContact": 158.35255343575437,
+     "handUnderElbow": 16,
+     "contactHeight": 1.2244167008713909,
+     "armExtension": 152.84035100516314,
+     "contactAhead": 17.593325447881377,
+     "loadRatio": 28.136085791177745
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.25,
+     "toss": 1.684,
+     "trophy": 2.117,
+     "drop": 2.328,
+     "contact": 2.486,
+     "finish": 2.85
+    }
+   },
+   "contactWrist": 0.6864,
+   "tail": "refused: too_few_frames",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0129,
+      "elbow": 0.0205,
+      "wrist": 0.0338,
+      "hip": 0.044,
+      "knee": 0.0158,
+      "ankle": 0.0156
+     },
+     "contactWrist": 0.6693
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "measured",
+     "reading": {
+      "outcome": "measured",
+      "overall": 74,
+      "focus": "Knee bend at trophy",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.1793495173768092,
+       "tossArmHold": 72,
+       "tossPathWobble": 0.44449447281276055,
+       "kneeBend": 17.493288535177044,
+       "shoulderTilt": 11.749602509797176,
+       "legDrive": 0.21110936541491443,
+       "dropDepth": 0.08998423736178902,
+       "elbowAtDrop": 109.32693802617128,
+       "dropToContact": 182.85889158646108,
+       "handUnderElbow": 12,
+       "contactHeight": 0.6085568863206747,
+       "armExtension": 154.23370605764987,
+       "contactAhead": 32.563106176845196,
+       "loadRatio": 28.882525141260455
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "elbowAtDrop": "°",
+       "dropToContact": "ms",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "contactAhead": "%",
+       "loadRatio": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 5,
+      "phases": {
+       "ready": 1.284,
+       "toss": 1.7,
+       "trophy": 2.25,
+       "drop": 2.337,
+       "contact": 2.52,
+       "finish": 2.784
+      }
+     },
+     "joints": {
+      "shoulder": 0.0277,
+      "elbow": 0.0441,
+      "wrist": 0.0299,
+      "hip": 0.0445,
+      "knee": 0.0285,
+      "ankle": 0.0147
+     },
+     "contactWrist": 0.1361,
+     "errors": {
+      "releaseHeight": 0.02845074268366421,
+      "tossArmHold": -4,
+      "tossPathWobble": -0.005568454497732411,
+      "kneeBend": -55.117269988277314,
+      "shoulderTilt": -17.046631088643025,
+      "legDrive": -0.004915874622129751,
+      "dropDepth": 0.1193541617240613,
+      "elbowAtDrop": 59.054654058243415,
+      "handUnderElbow": -4,
+      "dropToContact": 24.50633815070671,
+      "contactHeight": -0.6158598145507161,
+      "armExtension": 1.3933550524867258,
+      "contactAhead": 14.96978072896382,
+      "loadRatio": 0.74643935008271
+     }
+    }
+   },
+   "ms": 43180
+  },
+  {
+   "serve": "bath-39",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 91,
+   "onFigure": 86,
+   "wristSeen": 56,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "passed",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.024,
+    "elbow": 0.03,
+    "wrist": 0.0401,
+    "hip": 0.053,
+    "knee": 0.0362,
+    "ankle": 0.0416
+   },
+   "angles": {
+    "elbowWorld": 13,
+    "elbowImage": -2.2,
+    "shoulderTiltWorld": -1.5,
+    "kneeTrueAtLoad": 106,
+    "kneeWorldAtLoad": 43.5,
+    "kneeImageAtLoad": 5.7
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 84,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1636363050573209,
+     "tossArmHold": 77.77777777777779,
+     "tossPathWobble": 0.8966329893426257,
+     "kneeBend": 72.83877308976022,
+     "shoulderTilt": 30.467064052967512,
+     "legDrive": 0.22780060297291738,
+     "dropDepth": -0.01870026233155379,
+     "elbowAtDrop": 50.44362890707466,
+     "dropToContact": 158.37407965646167,
+     "handUnderElbow": 14.814814814814813,
+     "contactHeight": 1.251158877559356,
+     "armExtension": 153.45240171437584,
+     "contactAhead": 16.612384902841406,
+     "loadRatio": 26.814965503128857
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.217,
+     "toss": 1.617,
+     "trophy": 2.117,
+     "drop": 2.327,
+     "contact": 2.485,
+     "finish": 2.85
+    }
+   },
+   "contactWrist": 0.7371,
+   "tail": "measured",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0174,
+      "elbow": 0.0226,
+      "wrist": 0.0332,
+      "hip": 0.0532,
+      "knee": 0.0153,
+      "ankle": 0.0085
+     },
+     "contactWrist": 0.7371
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "measured",
+     "reading": {
+      "outcome": "measured",
+      "overall": 75,
+      "focus": "Knee bend at trophy",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.1869260629202867,
+       "tossArmHold": 77.77777777777779,
+       "kneeBend": 35.92304405468332,
+       "shoulderTilt": 10.5619813420565,
+       "legDrive": 0.24838554994587536,
+       "dropDepth": 0.09690248941556084,
+       "handUnderElbow": 11.11111111111111,
+       "contactHeight": 1.2327155837033978,
+       "armExtension": 149.96392446174585,
+       "loadRatio": 26.693637930599856
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "loadRatio": "%"
+      },
+      "hand": "right",
+      "view": "angled",
+      "swingSamples": 5,
+      "phases": {
+       "ready": 1.25,
+       "toss": 1.611,
+       "trophy": 2.25,
+       "drop": 2.325,
+       "contact": 2.511,
+       "finish": 2.717
+      }
+     },
+     "joints": {
+      "shoulder": 0.0275,
+      "elbow": 0.0403,
+      "wrist": 0.0395,
+      "hip": 0.0537,
+      "knee": 0.0249,
+      "ankle": 0.0122
+     },
+     "contactWrist": 0.7025,
+     "errors": {
+      "releaseHeight": 0.023289757862965832,
+      "tossArmHold": 0,
+      "kneeBend": -36.91572903507691,
+      "shoulderTilt": -19.90508271091101,
+      "legDrive": 0.020584946972957985,
+      "dropDepth": 0.11560275174711464,
+      "handUnderElbow": -3.7037037037037024,
+      "contactHeight": -0.01844329385595822,
+      "armExtension": -3.488477252629991,
+      "loadRatio": -0.12132757252900106
+     }
+    }
+   },
+   "ms": 32897
+  },
+  {
+   "serve": "bath-45",
+   "look": "court",
+   "gate": "on",
+   "outcome": "measured",
+   "frames": 93,
+   "found": 58,
+   "onFigure": 41,
+   "wristSeen": 58,
+   "refined": 12,
+   "framingCheck": "passed",
+   "firstSearch": "passed",
+   "joints": {
+    "shoulder": 0.0411,
+    "elbow": 0.0421,
+    "wrist": 0.0444,
+    "hip": 0.0285,
+    "knee": 0.0192,
+    "ankle": 0.0326
+   },
+   "angles": {
+    "elbowWorld": 19.8,
+    "elbowImage": -0.7,
+    "shoulderTiltWorld": -3.2,
+    "kneeTrueAtLoad": 106.8,
+    "kneeWorldAtLoad": 61.9,
+    "kneeImageAtLoad": 6
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 85,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.142770305482075,
+     "tossArmHold": 70.83333333333334,
+     "tossPathWobble": 0.22730864709479814,
+     "kneeBend": 72.0409898496429,
+     "shoulderTilt": 30.727031243176185,
+     "legDrive": 0.2264236645143227,
+     "dropDepth": -0.02604804281414451,
+     "elbowAtDrop": 57.725262281211315,
+     "dropToContact": 153.48685451688394,
+     "handUnderElbow": 12.5,
+     "contactHeight": 1.2262128818823332,
+     "armExtension": 152.40438894458913,
+     "contactAhead": 22.553739986950923,
+     "loadRatio": 29.659684806788743
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.25,
+     "toss": 1.717,
+     "trophy": 2.084,
+     "drop": 2.326,
+     "contact": 2.479,
+     "finish": 2.884
+    }
+   },
+   "pipeline": {
+    "outcome": "measured",
+    "overall": 73,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1603978736073781,
+     "tossArmHold": 85,
+     "tossPathWobble": 0.16435228169424412,
+     "kneeBend": 38.651914553212606,
+     "shoulderTilt": 0.0497857681546721,
+     "legDrive": 0.09732284258574928,
+     "dropDepth": 0.05112241135820688,
+     "handUnderElbow": 0,
+     "contactHeight": 1.1212056029427735,
+     "armExtension": 143.6524550212204,
+     "contactAhead": -5.424789505106373,
+     "loadRatio": 27.557212727992297
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 2,
+    "phases": {
+     "ready": 1.45,
+     "toss": 1.75,
+     "trophy": 2.284,
+     "drop": 2.323,
+     "contact": 2.395,
+     "finish": 2.484
+    }
+   },
+   "levelled": false,
+   "jointsFinal": {
+    "shoulder": 0.0307,
+    "elbow": 0.0381,
+    "wrist": 0.0363,
+    "hip": 0.0267,
+    "knee": 0.0188,
+    "ankle": 0.0313
+   },
+   "errors": {
+    "releaseHeight": 0.017627568125303084,
+    "tossArmHold": 14.166666666666657,
+    "tossPathWobble": -0.06295636540055402,
+    "kneeBend": -33.38907529643029,
+    "shoulderTilt": -30.677245475021515,
+    "legDrive": -0.12910082192857342,
+    "dropDepth": 0.07717045417235138,
+    "handUnderElbow": -12.5,
+    "contactHeight": -0.10500727893955975,
+    "armExtension": -8.751933923368739,
+    "contactAhead": -27.978529492057298,
+    "loadRatio": -2.1024720787964455
+   },
+   "contactWrist": 0.6382,
+   "tail": "measured",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "measured",
+     "reading": {
+      "outcome": "measured",
+      "overall": 68,
+      "focus": "Shoulder tilt",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.1601057679644253,
+       "tossArmHold": 80,
+       "tossPathWobble": 0.193185195309155,
+       "kneeBend": 26.36007137140416,
+       "shoulderTilt": 3.1256513275496176,
+       "legDrive": 0.14641328129008632,
+       "dropDepth": 0.0509755292535398,
+       "handUnderElbow": 0,
+       "contactHeight": 1.1225569019588548,
+       "armExtension": 143.5288859182538,
+       "contactAhead": -11.803261415216166,
+       "loadRatio": 27.584304440330627
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "contactAhead": "%",
+       "loadRatio": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 2,
+      "phases": {
+       "ready": 1.45,
+       "toss": 1.75,
+       "trophy": 2.25,
+       "drop": 2.322,
+       "contact": 2.395,
+       "finish": 2.517
+      }
+     },
+     "joints": {
+      "shoulder": 0.0288,
+      "elbow": 0.0171,
+      "wrist": 0.0223,
+      "hip": 0.0331,
+      "knee": 0.0108,
+      "ankle": 0.0133
+     },
+     "contactWrist": 0.6382,
+     "errors": {
+      "releaseHeight": 0.017335462482350295,
+      "tossArmHold": 9.166666666666657,
+      "tossPathWobble": -0.03412345178564313,
+      "kneeBend": -45.68091847823874,
+      "shoulderTilt": -27.601379915626566,
+      "legDrive": -0.08001038322423637,
+      "dropDepth": 0.07702357206768431,
+      "handUnderElbow": -12.5,
+      "contactHeight": -0.10365597992347841,
+      "armExtension": -8.875503026335338,
+      "contactAhead": -34.357001402167086,
+      "loadRatio": -2.0753803664581163
+     }
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "refused: too_few_frames",
+     "reading": {
+      "outcome": "refused: too_few_frames",
+      "overall": 71,
+      "focus": "Knee bend at trophy",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 0.8822169614698897,
+       "tossArmHold": 100,
+       "tossPathWobble": 0.44364156713101405,
+       "kneeBend": 10.340836584023748,
+       "shoulderTilt": -21.524993113208726,
+       "legDrive": -0.008931853174722344,
+       "contactHeight": 1.136928293631912,
+       "armExtension": 161.7206768234142
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "contactHeight": "×",
+       "armExtension": "°"
+      },
+      "hand": "left",
+      "view": "side",
+      "swingSamples": 0,
+      "phases": {
+       "ready": 1.484,
+       "toss": 1.817,
+       "trophy": 1.817,
+       "drop": 1.85,
+       "contact": 1.85,
+       "finish": 1.85
+      }
+     },
+     "joints": {
+      "shoulder": 0.0459,
+      "elbow": 0.0453,
+      "wrist": 0.0322,
+      "hip": 0.0327,
+      "knee": 0.0246,
+      "ankle": 0.021
+     },
+     "contactWrist": 0.6382
+    }
+   },
+   "ms": 26605
+  },
+  {
+   "serve": "bath-50",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 84,
+   "wristSeen": 56,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0204,
+    "elbow": 0.0275,
+    "wrist": 0.0377,
+    "hip": 0.0494,
+    "knee": 0.0388,
+    "ankle": 0.0436
+   },
+   "angles": {
+    "elbowWorld": 9.5,
+    "elbowImage": -4.3,
+    "shoulderTiltWorld": -2.7,
+    "kneeTrueAtLoad": 108.5,
+    "kneeWorldAtLoad": 61.9,
+    "kneeImageAtLoad": 5.7
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 83,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.156092497291786,
+     "tossArmHold": 76,
+     "tossPathWobble": 0.6443166196901409,
+     "kneeBend": 70.72646978335958,
+     "shoulderTilt": 34.165574617846,
+     "legDrive": 0.2211777657353217,
+     "dropDepth": -0.01622845577126518,
+     "elbowAtDrop": 52.17467490835602,
+     "dropToContact": 155.56003433663656,
+     "handUnderElbow": 16,
+     "contactHeight": 1.233357269966618,
+     "armExtension": 152.4874816237871,
+     "contactAhead": 17.557241300258656,
+     "loadRatio": 27.831832685610454
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.217,
+     "toss": 1.65,
+     "trophy": 2.084,
+     "drop": 2.297,
+     "contact": 2.452,
+     "finish": 2.817
+    }
+   },
+   "contactWrist": 0.6267,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0162,
+      "elbow": 0.0221,
+      "wrist": 0.0323,
+      "hip": 0.0716,
+      "knee": 0.0159,
+      "ankle": 0.013
+     },
+     "contactWrist": 0.6267
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0261,
+      "elbow": 0.0292,
+      "wrist": 0.0358,
+      "hip": 0.0543,
+      "knee": 0.0275,
+      "ankle": 0.0236
+     },
+     "contactWrist": 0.6159
+    }
+   },
+   "ms": 29021
+  },
+  {
+   "serve": "bath-51",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 72,
+   "wristSeen": 53,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0225,
+    "elbow": 0.0289,
+    "wrist": 0.0359,
+    "hip": 0.0446,
+    "knee": 0.0426,
+    "ankle": 0.0333
+   },
+   "angles": {
+    "elbowWorld": 5.3,
+    "elbowImage": -6.3,
+    "shoulderTiltWorld": -0.3,
+    "kneeTrueAtLoad": 107.6,
+    "kneeWorldAtLoad": 63.2,
+    "kneeImageAtLoad": -5.7
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 85,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1393728165887358,
+     "tossArmHold": 76.92307692307693,
+     "tossPathWobble": 0.4537508664455809,
+     "kneeBend": 71.07593482601575,
+     "shoulderTilt": 31.209194017572763,
+     "legDrive": 0.2229268543075348,
+     "dropDepth": -0.03196209137710793,
+     "elbowAtDrop": 54.8559448052517,
+     "dropToContact": 148.92642675112543,
+     "handUnderElbow": 11.538461538461538,
+     "contactHeight": 1.2270149872315042,
+     "armExtension": 155.0286960815952,
+     "contactAhead": 22.187736430544447,
+     "loadRatio": 29.793264727784802
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.284,
+     "toss": 1.684,
+     "trophy": 2.117,
+     "drop": 2.362,
+     "contact": 2.511,
+     "finish": 2.917
+    }
+   },
+   "contactWrist": 0.6156,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0135,
+      "elbow": 0.0162,
+      "wrist": 0.0239,
+      "hip": 0.0554,
+      "knee": 0.0162,
+      "ankle": 0.0119
+     },
+     "contactWrist": 0.5943
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "refused: too_few_frames",
+     "reading": {
+      "outcome": "refused: too_few_frames",
+      "overall": 60,
+      "focus": "Time from trophy to contact",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.1670636536414103,
+       "tossArmHold": 100,
+       "tossPathWobble": 0.5551053788222445,
+       "kneeBend": 14.292699422557376,
+       "shoulderTilt": 31.475087010755164,
+       "legDrive": -0.003172134984483867,
+       "dropDepth": -0.27460321262150833,
+       "handUnderElbow": 0,
+       "contactHeight": 0.9401871129005949,
+       "armExtension": 161.48475608243,
+       "loadRatio": 0
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "loadRatio": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 1,
+      "phases": {
+       "ready": 1.284,
+       "toss": 1.759,
+       "trophy": 2.15,
+       "drop": 2.15,
+       "contact": 2.179,
+       "finish": 2.217
+      }
+     },
+     "joints": {
+      "shoulder": 0.0264,
+      "elbow": 0.0382,
+      "wrist": 0.0266,
+      "hip": 0.0554,
+      "knee": 0.017,
+      "ankle": 0.0191
+     },
+     "contactWrist": 0.6076
+    }
+   },
+   "ms": 29557
+  },
+  {
+   "serve": "bath-52",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 72,
+   "wristSeen": 52,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "passed",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.021,
+    "elbow": 0.0298,
+    "wrist": 0.0342,
+    "hip": 0.0391,
+    "knee": 0.0351,
+    "ankle": 0.0284
+   },
+   "angles": {
+    "elbowWorld": 2.8,
+    "elbowImage": -9.7,
+    "shoulderTiltWorld": -0.5,
+    "kneeTrueAtLoad": 109.7,
+    "kneeWorldAtLoad": 59.1,
+    "kneeImageAtLoad": -0.8
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 85,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1476489321329748,
+     "tossArmHold": 75,
+     "tossPathWobble": 0.6068440777101304,
+     "kneeBend": 69.51785393715733,
+     "shoulderTilt": 27.918279097555736,
+     "legDrive": 0.21343719378050893,
+     "dropDepth": -0.022271647830620734,
+     "elbowAtDrop": 54.17640942325883,
+     "dropToContact": 128.7481370215864,
+     "handUnderElbow": 12.5,
+     "contactHeight": 1.2189550650402514,
+     "armExtension": 153.97186068831886,
+     "contactAhead": 15.353268898905515,
+     "loadRatio": 29.191811161649838
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 4,
+    "phases": {
+     "ready": 1.284,
+     "toss": 1.717,
+     "trophy": 2.117,
+     "drop": 2.358,
+     "contact": 2.487,
+     "finish": 2.85
+    }
+   },
+   "contactWrist": 0.6381,
+   "tail": "measured",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0129,
+      "elbow": 0.0181,
+      "wrist": 0.0206,
+      "hip": 0.042,
+      "knee": 0.0156,
+      "ankle": 0.0091
+     },
+     "contactWrist": 0.6381
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0229,
+      "elbow": 0.0275,
+      "wrist": 0.0329,
+      "hip": 0.078,
+      "knee": 0.017,
+      "ankle": 0.0232
+     },
+     "contactWrist": 0.6381
+    }
+   },
+   "ms": 32935
+  },
+  {
+   "serve": "bath-53",
+   "look": "court",
+   "gate": "off",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 93,
+   "onFigure": 74,
+   "wristSeen": 52,
+   "refined": 0,
+   "framingCheck": "You stand too far from the camera to measure.",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0201,
+    "elbow": 0.0274,
+    "wrist": 0.0453,
+    "hip": 0.054,
+    "knee": 0.0639,
+    "ankle": 0.0399
+   },
+   "angles": {
+    "elbowWorld": 10.1,
+    "elbowImage": -5.1,
+    "shoulderTiltWorld": -1.4,
+    "kneeTrueAtLoad": 106.6,
+    "kneeWorldAtLoad": 61.8,
+    "kneeImageAtLoad": 0.3
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 85,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1560671658883956,
+     "tossArmHold": 74.07407407407408,
+     "tossPathWobble": 0.535226379512074,
+     "kneeBend": 72.47585032574241,
+     "shoulderTilt": 28.916433477552353,
+     "legDrive": 0.2229295894815759,
+     "dropDepth": -0.017451761832710203,
+     "elbowAtDrop": 55.12761282694814,
+     "dropToContact": 153.1918717525147,
+     "handUnderElbow": 11.11111111111111,
+     "contactHeight": 1.2175917250730874,
+     "armExtension": 154.25060098955237,
+     "contactAhead": 23.78398622379684,
+     "loadRatio": 27.672377995218074
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.284,
+     "toss": 1.684,
+     "trophy": 2.184,
+     "drop": 2.394,
+     "contact": 2.547,
+     "finish": 2.917
+    }
+   },
+   "contactWrist": 0.6574,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.014,
+      "elbow": 0.0181,
+      "wrist": 0.0329,
+      "hip": 0.054,
+      "knee": 0.0162,
+      "ankle": 0.0113
+     },
+     "contactWrist": 0.6529
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "measured",
+     "reading": {
+      "outcome": "measured",
+      "overall": 69,
+      "focus": "Hand under the elbow",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.1666139683021084,
+       "tossArmHold": 100,
+       "tossPathWobble": 0.441930193575627,
+       "kneeBend": 9.033322420855654,
+       "shoulderTilt": 21.744907440556204,
+       "legDrive": -0.11967918021338031,
+       "handUnderElbow": 0,
+       "contactHeight": 0.8413596990108154,
+       "armExtension": 150.96151546239028,
+       "contactAhead": 23.784597678581427
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "contactAhead": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 13,
+      "phases": {
+       "ready": 1.284,
+       "toss": 1.784,
+       "trophy": 1.784,
+       "drop": 1.784,
+       "contact": 2.225,
+       "finish": 2.65
+      }
+     },
+     "joints": {
+      "shoulder": 0.0291,
+      "elbow": 0.0265,
+      "wrist": 0.0434,
+      "hip": 0.054,
+      "knee": 0.0246,
+      "ankle": 0.0278
+     },
+     "contactWrist": 0.6574,
+     "errors": {
+      "releaseHeight": 0.010546802413712753,
+      "tossArmHold": 25.925925925925924,
+      "tossPathWobble": -0.09329618593644695,
+      "kneeBend": -63.44252790488676,
+      "shoulderTilt": -7.171526036996148,
+      "legDrive": -0.34260876969495624,
+      "handUnderElbow": -11.11111111111111,
+      "contactHeight": -0.376232026062272,
+      "armExtension": -3.2890855271620865,
+      "contactAhead": 0.0006114547845861296
+     }
+    }
+   },
+   "ms": 40984
+  },
+  {
+   "serve": "bath-54",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 71,
+   "wristSeen": 49,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0238,
+    "elbow": 0.0312,
+    "wrist": 0.0292,
+    "hip": 0.0455,
+    "knee": 0.0485,
+    "ankle": 0.0458
+   },
+   "angles": {
+    "elbowWorld": 7.4,
+    "elbowImage": -2.7,
+    "shoulderTiltWorld": -2.5,
+    "kneeTrueAtLoad": 102.3,
+    "kneeWorldAtLoad": 65.5,
+    "kneeImageAtLoad": 6.5
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 84,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1637066870739483,
+     "tossArmHold": 78.57142857142857,
+     "tossPathWobble": 0.48088037434209785,
+     "kneeBend": 76.06947699920786,
+     "shoulderTilt": 29.260290084367085,
+     "legDrive": 0.22841712562988215,
+     "dropDepth": -0.02496755713785081,
+     "elbowAtDrop": 52.04889900252604,
+     "dropToContact": 156.2803983220875,
+     "handUnderElbow": 14.285714285714285,
+     "contactHeight": 1.2191791290880911,
+     "armExtension": 153.6621502271695,
+     "contactAhead": 21.606505058368057,
+     "loadRatio": 27.50512732059892
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.217,
+     "toss": 1.617,
+     "trophy": 2.117,
+     "drop": 2.361,
+     "contact": 2.518,
+     "finish": 2.917
+    }
+   },
+   "contactWrist": 0.6694,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0161,
+      "elbow": 0.0244,
+      "wrist": 0.0222,
+      "hip": 0.0562,
+      "knee": 0.0146,
+      "ankle": 0.0146
+     },
+     "contactWrist": 0.6334
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "measured",
+     "reading": {
+      "outcome": "measured",
+      "overall": 70,
+      "focus": "Hitting elbow at drop",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.171361637768388,
+       "tossArmHold": 68,
+       "tossPathWobble": 0.5810584960168778,
+       "kneeBend": 20.329114899058936,
+       "shoulderTilt": 4.0604256458973795,
+       "legDrive": 0.21702526602645508,
+       "dropDepth": -0.06492814350106084,
+       "elbowAtDrop": 138.93233064321274,
+       "dropToContact": 127.51187252217777,
+       "handUnderElbow": 20,
+       "contactHeight": 0.9396697108841834,
+       "armExtension": 159.53507026715388,
+       "contactAhead": 47.45484803252897,
+       "loadRatio": 29.756255288224516
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "elbowAtDrop": "°",
+       "dropToContact": "ms",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "contactAhead": "%",
+       "loadRatio": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 3,
+      "phases": {
+       "ready": 1.25,
+       "toss": 1.75,
+       "trophy": 2.284,
+       "drop": 2.45,
+       "contact": 2.578,
+       "finish": 2.817
+      }
+     },
+     "joints": {
+      "shoulder": 0.0286,
+      "elbow": 0.0308,
+      "wrist": 0.0281,
+      "hip": 0.0573,
+      "knee": 0.0267,
+      "ankle": 0.0153
+     },
+     "contactWrist": 0.6315,
+     "errors": {
+      "releaseHeight": 0.007654950694439666,
+      "tossArmHold": -10.57142857142857,
+      "tossPathWobble": 0.10017812167477991,
+      "kneeBend": -55.74036210014893,
+      "shoulderTilt": -25.199864438469707,
+      "legDrive": -0.011391859603427062,
+      "dropDepth": -0.03996058636321003,
+      "elbowAtDrop": 86.8834316406867,
+      "handUnderElbow": 5.714285714285715,
+      "dropToContact": -28.76852579990974,
+      "contactHeight": -0.27950941820390773,
+      "armExtension": 5.872920039984393,
+      "contactAhead": 25.848342974160914,
+      "loadRatio": 2.251127967625596
+     }
+    }
+   },
+   "ms": 30752
+  },
+  {
+   "serve": "bath-55",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 61,
+   "onFigure": 44,
+   "wristSeen": 53,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0329,
+    "elbow": 0.043,
+    "wrist": 0.0482,
+    "hip": 0.0319,
+    "knee": 0.0227,
+    "ankle": 0.0266
+   },
+   "angles": {
+    "elbowWorld": 12.8,
+    "elbowImage": -0.6,
+    "shoulderTiltWorld": -4,
+    "kneeTrueAtLoad": 107.6,
+    "kneeWorldAtLoad": 52.7,
+    "kneeImageAtLoad": 4.2
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 85,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1459376252716191,
+     "tossArmHold": 76.92307692307693,
+     "tossPathWobble": 0.29936248280107636,
+     "kneeBend": 71.6161941095522,
+     "shoulderTilt": 31.2058460387635,
+     "legDrive": 0.22358646864378515,
+     "dropDepth": -0.02088067014349939,
+     "elbowAtDrop": 55.04758447545155,
+     "dropToContact": 155.0142148406901,
+     "handUnderElbow": 11.538461538461538,
+     "contactHeight": 1.2207597510594095,
+     "armExtension": 155.22507966841488,
+     "contactAhead": 22.051258424798164,
+     "loadRatio": 29.980114187188327
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.284,
+     "toss": 1.684,
+     "trophy": 2.117,
+     "drop": 2.359,
+     "contact": 2.514,
+     "finish": 2.917
+    }
+   },
+   "contactWrist": 0.6431,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0328,
+      "elbow": 0.0184,
+      "wrist": 0.0328,
+      "hip": 0.0356,
+      "knee": 0.0103,
+      "ankle": 0.0121
+     },
+     "contactWrist": 0.6431
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "refused: too_few_frames",
+     "reading": {
+      "outcome": "refused: too_few_frames",
+      "overall": 60,
+      "focus": "Time from trophy to contact",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.165273234907945,
+       "tossArmHold": 100,
+       "tossPathWobble": 0.37291215425251917,
+       "kneeBend": 13.499923276040874,
+       "shoulderTilt": 40.336390544517506,
+       "legDrive": -0.0006936491574764812,
+       "dropDepth": -0.2782742053511511,
+       "handUnderElbow": 0,
+       "contactHeight": 0.9214015231659973,
+       "armExtension": 174.71835526358055,
+       "loadRatio": 1.0247399709068854
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "loadRatio": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 1,
+      "phases": {
+       "ready": 1.417,
+       "toss": 1.8,
+       "trophy": 2.15,
+       "drop": 2.15,
+       "contact": 2.181,
+       "finish": 2.217
+      }
+     },
+     "joints": {
+      "shoulder": 0.0437,
+      "elbow": 0.0436,
+      "wrist": 0.0339,
+      "hip": 0.0373,
+      "knee": 0.0201,
+      "ankle": 0.0186
+     },
+     "contactWrist": 0.6147
+    }
+   },
+   "ms": 31685
+  },
+  {
+   "serve": "bath-56",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 72,
+   "wristSeen": 52,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0248,
+    "elbow": 0.0303,
+    "wrist": 0.0376,
+    "hip": 0.0534,
+    "knee": 0.0372,
+    "ankle": 0.0353
+   },
+   "angles": {
+    "elbowWorld": 12.4,
+    "elbowImage": -6,
+    "shoulderTiltWorld": -1.6,
+    "kneeTrueAtLoad": 107.4,
+    "kneeWorldAtLoad": 46.7,
+    "kneeImageAtLoad": 6.4
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 85,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1602020553621302,
+     "tossArmHold": 73.07692307692307,
+     "tossPathWobble": 0.5153819259885288,
+     "kneeBend": 71.78400206617873,
+     "shoulderTilt": 30.404984605316606,
+     "legDrive": 0.21727916432234307,
+     "dropDepth": -0.016741155023820887,
+     "elbowAtDrop": 52.69240079916501,
+     "dropToContact": 186.3062122133261,
+     "handUnderElbow": 11.538461538461538,
+     "contactHeight": 1.2281223354991169,
+     "armExtension": 154.4074479401559,
+     "contactAhead": 21.775079324202213,
+     "loadRatio": 30.105889445583795
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 6,
+    "phases": {
+     "ready": 1.217,
+     "toss": 1.65,
+     "trophy": 2.084,
+     "drop": 2.294,
+     "contact": 2.48,
+     "finish": 2.884
+    }
+   },
+   "contactWrist": 0.7021,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0147,
+      "elbow": 0.0186,
+      "wrist": 0.0256,
+      "hip": 0.0552,
+      "knee": 0.0158,
+      "ankle": 0.0158
+     },
+     "contactWrist": 0.7021
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "refused: too_few_frames",
+     "reading": {
+      "outcome": "refused: too_few_frames",
+      "overall": 65,
+      "focus": "Time from trophy to contact",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.1633754977507018,
+       "tossArmHold": 100,
+       "tossPathWobble": 1.1695659158235165,
+       "kneeBend": 14.46736452367665,
+       "shoulderTilt": 21.58324653733793,
+       "legDrive": 0.0032503465558537097,
+       "handUnderElbow": 0,
+       "contactHeight": 0.8732030110587274,
+       "armExtension": 172.05064897585098,
+       "loadRatio": 4.433766502908424
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "loadRatio": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 1,
+      "phases": {
+       "ready": 1.25,
+       "toss": 1.65,
+       "trophy": 2.117,
+       "drop": 2.117,
+       "contact": 2.163,
+       "finish": 2.184
+      }
+     },
+     "joints": {
+      "shoulder": 0.0264,
+      "elbow": 0.0472,
+      "wrist": 0.0318,
+      "hip": 0.0552,
+      "knee": 0.0281,
+      "ankle": 0.0235
+     },
+     "contactWrist": 0.6451
+    }
+   },
+   "ms": 29925
+  },
+  {
+   "serve": "bath-57",
+   "look": "court",
+   "gate": "on",
+   "outcome": "measured",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 81,
+   "wristSeen": 73,
+   "refined": 29,
+   "framingCheck": "passed",
+   "firstSearch": "passed",
+   "joints": {
+    "shoulder": 0.0301,
+    "elbow": 0.031,
+    "wrist": 0.0496,
+    "hip": 0.0348,
+    "knee": 0.0308,
+    "ankle": 0.0308
+   },
+   "angles": {
+    "elbowWorld": 13.7,
+    "elbowImage": -1.1,
+    "shoulderTiltWorld": -3,
+    "kneeTrueAtLoad": 101,
+    "kneeWorldAtLoad": 58,
+    "kneeImageAtLoad": -0.6
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 85,
+    "focus": "Knee bend at trophy",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1633401198586153,
+     "tossArmHold": 79.3103448275862,
+     "tossPathWobble": 0.5621533233133021,
+     "kneeBend": 77.49399382280377,
+     "shoulderTilt": 26.087016334353425,
+     "legDrive": 0.2523823563186328,
+     "dropDepth": -0.02132050855815,
+     "elbowAtDrop": 47.874294240943144,
+     "dropToContact": 155.88097600309413,
+     "handUnderElbow": 17.24137931034483,
+     "contactHeight": 1.238265074175434,
+     "armExtension": 155.487799481256,
+     "contactAhead": 24.170772953101796,
+     "loadRatio": 27.595649421924023
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.15,
+     "toss": 1.55,
+     "trophy": 2.084,
+     "drop": 2.326,
+     "contact": 2.482,
+     "finish": 2.884
+    }
+   },
+   "pipeline": {
+    "outcome": "measured",
+    "overall": 79,
+    "focus": "Knee bend at trophy",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.196316283735401,
+     "tossArmHold": 83.33333333333334,
+     "tossPathWobble": 0.4475970026841369,
+     "kneeBend": 27.986828518324728,
+     "shoulderTilt": 11.158772522546606,
+     "legDrive": 0.24680922258684046,
+     "dropDepth": 0.05702411205293443,
+     "elbowAtDrop": 84.23048121421093,
+     "dropToContact": 107.66573304082661,
+     "handUnderElbow": 8.333333333333332,
+     "contactHeight": 1.2187489069454838,
+     "armExtension": 173.5975154771819,
+     "contactAhead": 2.0446358547148713,
+     "loadRatio": 23.163170939661196
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 3,
+    "phases": {
+     "ready": 1.184,
+     "toss": 1.676,
+     "trophy": 2.217,
+     "drop": 2.325,
+     "contact": 2.432,
+     "finish": 2.617
+    }
+   },
+   "levelled": false,
+   "jointsFinal": {
+    "shoulder": 0.0263,
+    "elbow": 0.0172,
+    "wrist": 0.0482,
+    "hip": 0.0348,
+    "knee": 0.0223,
+    "ankle": 0.029
+   },
+   "errors": {
+    "releaseHeight": 0.03297616387678581,
+    "tossArmHold": 4.022988505747136,
+    "tossPathWobble": -0.11455632062916526,
+    "kneeBend": -49.507165304479045,
+    "shoulderTilt": -14.92824381180682,
+    "legDrive": -0.005573133731792357,
+    "dropDepth": 0.07834462061108444,
+    "elbowAtDrop": 36.35618697326778,
+    "handUnderElbow": -8.908045977011497,
+    "dropToContact": -48.215242962267524,
+    "contactHeight": -0.0195161672299502,
+    "armExtension": 18.10971599592591,
+    "contactAhead": -22.126137098386923,
+    "loadRatio": -4.432478482262827
+   },
+   "contactWrist": 0.6411,
+   "tail": "measured",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "measured",
+     "reading": {
+      "outcome": "measured",
+      "overall": 79,
+      "focus": "Knee bend at trophy",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.1976636701649923,
+       "tossArmHold": 83.33333333333334,
+       "tossPathWobble": 0.4604616581686062,
+       "kneeBend": 27.986828518324728,
+       "shoulderTilt": 11.158772522546606,
+       "legDrive": 0.24805791602964128,
+       "dropDepth": 0.057312616809992216,
+       "elbowAtDrop": 84.23048121421093,
+       "dropToContact": 107.66573304082661,
+       "handUnderElbow": 8.333333333333332,
+       "contactHeight": 1.2171635439467554,
+       "armExtension": 173.5975154771819,
+       "contactAhead": 2.054980376519763,
+       "loadRatio": 23.163170939661196
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "elbowAtDrop": "°",
+       "dropToContact": "ms",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "contactAhead": "%",
+       "loadRatio": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 3,
+      "phases": {
+       "ready": 1.184,
+       "toss": 1.652,
+       "trophy": 2.217,
+       "drop": 2.325,
+       "contact": 2.432,
+       "finish": 2.617
+      }
+     },
+     "joints": {
+      "shoulder": 0.0172,
+      "elbow": 0.0258,
+      "wrist": 0.0447,
+      "hip": 0.0559,
+      "knee": 0.0121,
+      "ankle": 0.0103
+     },
+     "contactWrist": 0.6411,
+     "errors": {
+      "releaseHeight": 0.034323550306377015,
+      "tossArmHold": 4.022988505747136,
+      "tossPathWobble": -0.10169166514469596,
+      "kneeBend": -49.507165304479045,
+      "shoulderTilt": -14.92824381180682,
+      "legDrive": -0.004324440288991538,
+      "dropDepth": 0.07863312536814221,
+      "elbowAtDrop": 36.35618697326778,
+      "handUnderElbow": -8.908045977011497,
+      "dropToContact": -48.215242962267524,
+      "contactHeight": -0.021101530228678556,
+      "armExtension": 18.10971599592591,
+      "contactAhead": -22.115792576582034,
+      "loadRatio": -4.432478482262827
+     }
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "refused: too_few_frames",
+     "reading": {
+      "outcome": "refused: too_few_frames",
+      "overall": 63,
+      "focus": "Knee bend at trophy",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 0.9150837979926773,
+       "tossArmHold": 100,
+       "tossPathWobble": 0.2263504834449001,
+       "kneeBend": 9.473537715668073,
+       "shoulderTilt": -21.321879127159196,
+       "legDrive": -0.004106721199238704,
+       "dropDepth": -0.25821671527516143,
+       "contactHeight": 1.149129487276511,
+       "armExtension": 162.09009311265103
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "contactHeight": "×",
+       "armExtension": "°"
+      },
+      "hand": "left",
+      "view": "side",
+      "swingSamples": 0,
+      "phases": {
+       "ready": 1.25,
+       "toss": 1.717,
+       "trophy": 1.717,
+       "drop": 1.75,
+       "contact": 1.75,
+       "finish": 1.75
+      }
+     },
+     "joints": {
+      "shoulder": 0.0287,
+      "elbow": 0.0349,
+      "wrist": 0.0555,
+      "hip": 0.0386,
+      "knee": 0.0244,
+      "ankle": 0.0146
+     },
+     "contactWrist": 0.6785
+    }
+   },
+   "ms": 31537
+  },
+  {
+   "serve": "bath-58",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 74,
+   "wristSeen": 54,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0226,
+    "elbow": 0.0319,
+    "wrist": 0.027,
+    "hip": 0.0459,
+    "knee": 0.0528,
+    "ankle": 0.0489
+   },
+   "angles": {
+    "elbowWorld": 9.6,
+    "elbowImage": -0.8,
+    "shoulderTiltWorld": -3.2,
+    "kneeTrueAtLoad": 108.8,
+    "kneeWorldAtLoad": 63.5,
+    "kneeImageAtLoad": 1
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 85,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1532234727104373,
+     "tossArmHold": 74.07407407407408,
+     "tossPathWobble": 0.41332741150423913,
+     "kneeBend": 69.5745555015877,
+     "shoulderTilt": 30.32023285793415,
+     "legDrive": 0.2139903934909195,
+     "dropDepth": -0.014878045535882073,
+     "elbowAtDrop": 53.74235634061591,
+     "dropToContact": 154.91219635889576,
+     "handUnderElbow": 11.11111111111111,
+     "contactHeight": 1.2301811015353157,
+     "armExtension": 158.6437760321878,
+     "contactAhead": 23.91351190893047,
+     "loadRatio": 27.694719421765424
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.217,
+     "toss": 1.65,
+     "trophy": 2.117,
+     "drop": 2.358,
+     "contact": 2.513,
+     "finish": 2.917
+    }
+   },
+   "contactWrist": 0.6587,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0158,
+      "elbow": 0.025,
+      "wrist": 0.022,
+      "hip": 0.0614,
+      "knee": 0.014,
+      "ankle": 0.0113
+     },
+     "contactWrist": 0.6587
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "measured",
+     "reading": {
+      "outcome": "measured",
+      "overall": 69,
+      "focus": "Knee bend at trophy",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.1930386766366683,
+       "tossArmHold": 65.21739130434783,
+       "tossPathWobble": 0.25406085441831533,
+       "kneeBend": 16.997322983811245,
+       "shoulderTilt": -6.260631505460026,
+       "legDrive": 0.14933506584004733,
+       "dropDepth": 0.05591346033571996,
+       "handUnderElbow": 13.043478260869565,
+       "contactHeight": 0.6489100741387624,
+       "armExtension": 154.7740331943127,
+       "contactAhead": 29.257632352247935,
+       "loadRatio": 26.832831236993183
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "contactAhead": "%",
+       "loadRatio": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 5,
+      "phases": {
+       "ready": 1.25,
+       "toss": 1.784,
+       "trophy": 2.317,
+       "drop": 2.358,
+       "contact": 2.522,
+       "finish": 2.717
+      }
+     },
+     "joints": {
+      "shoulder": 0.0267,
+      "elbow": 0.0323,
+      "wrist": 0.0229,
+      "hip": 0.0616,
+      "knee": 0.0202,
+      "ankle": 0.0131
+     },
+     "contactWrist": 0.0704,
+     "errors": {
+      "releaseHeight": 0.039815203926230947,
+      "tossArmHold": -8.856682769726248,
+      "tossPathWobble": -0.1592665570859238,
+      "kneeBend": -52.57723251777645,
+      "shoulderTilt": -36.58086436339418,
+      "legDrive": -0.06465532765087217,
+      "dropDepth": 0.07079150587160203,
+      "handUnderElbow": 1.9323671497584538,
+      "contactHeight": -0.5812710273965532,
+      "armExtension": -3.869742837875094,
+      "contactAhead": 5.344120443317465,
+      "loadRatio": -0.8618881847722406
+     }
+    }
+   },
+   "ms": 33427
+  },
+  {
+   "serve": "bath-59",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 76,
+   "wristSeen": 50,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0266,
+    "elbow": 0.0311,
+    "wrist": 0.0358,
+    "hip": 0.0494,
+    "knee": 0.0228,
+    "ankle": 0.0342
+   },
+   "angles": {
+    "elbowWorld": 10.2,
+    "elbowImage": -7.5,
+    "shoulderTiltWorld": -2.2,
+    "kneeTrueAtLoad": 103.9,
+    "kneeWorldAtLoad": 62.8,
+    "kneeImageAtLoad": 5.6
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 84,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1583065483381405,
+     "tossArmHold": 76.92307692307693,
+     "tossPathWobble": 0.36332569800933534,
+     "kneeBend": 75.16690077377618,
+     "shoulderTilt": 30.205285193648354,
+     "legDrive": 0.2324612858513263,
+     "dropDepth": -0.024530763149079583,
+     "elbowAtDrop": 51.01078253231878,
+     "dropToContact": 153.56946285735606,
+     "handUnderElbow": 11.538461538461538,
+     "contactHeight": 1.2070259891209851,
+     "armExtension": 153.6382131297958,
+     "contactAhead": 24.874424916705863,
+     "loadRatio": 28.17703885277188
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.284,
+     "toss": 1.684,
+     "trophy": 2.15,
+     "drop": 2.362,
+     "contact": 2.515,
+     "finish": 2.884
+    }
+   },
+   "contactWrist": 0.5774,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0133,
+      "elbow": 0.0179,
+      "wrist": 0.0246,
+      "hip": 0.0597,
+      "knee": 0.0162,
+      "ankle": 0.0108
+     },
+     "contactWrist": 0.6121
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "measured",
+     "reading": {
+      "outcome": "measured",
+      "overall": 66,
+      "focus": "Knee bend at trophy",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.1736790692423846,
+       "tossArmHold": 100,
+       "tossPathWobble": 0.2611661452095285,
+       "kneeBend": 9.141600781443856,
+       "shoulderTilt": 23.065099357932155,
+       "legDrive": -0.13230300684997465,
+       "handUnderElbow": 0,
+       "contactHeight": 0.7878346106907018,
+       "armExtension": 128.87623366540143,
+       "contactAhead": 26.73245214003738
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "contactAhead": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 14,
+      "phases": {
+       "ready": 1.284,
+       "toss": 1.75,
+       "trophy": 1.75,
+       "drop": 1.75,
+       "contact": 2.22,
+       "finish": 2.684
+      }
+     },
+     "joints": {
+      "shoulder": 0.0252,
+      "elbow": 0.0307,
+      "wrist": 0.0356,
+      "hip": 0.0642,
+      "knee": 0.0254,
+      "ankle": 0.024
+     },
+     "contactWrist": 0.5774,
+     "errors": {
+      "releaseHeight": 0.015372520904244125,
+      "tossArmHold": 23.076923076923066,
+      "tossPathWobble": -0.10215955279980682,
+      "kneeBend": -66.02529999233232,
+      "shoulderTilt": -7.140185835716199,
+      "legDrive": -0.36476429270130095,
+      "handUnderElbow": -11.538461538461538,
+      "contactHeight": -0.4191913784302833,
+      "armExtension": -24.761979464394358,
+      "contactAhead": 1.8580272233315185
+     }
+    }
+   },
+   "ms": 34199
+  },
+  {
+   "serve": "bath-60",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 78,
+   "wristSeen": 53,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0249,
+    "elbow": 0.0239,
+    "wrist": 0.0331,
+    "hip": 0.0414,
+    "knee": 0.0382,
+    "ankle": 0.0388
+   },
+   "angles": {
+    "elbowWorld": 9,
+    "elbowImage": -4.5,
+    "shoulderTiltWorld": -3.4,
+    "kneeTrueAtLoad": 107.7,
+    "kneeWorldAtLoad": 57.1,
+    "kneeImageAtLoad": 8.6
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 85,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1510877744638066,
+     "tossArmHold": 77.77777777777779,
+     "tossPathWobble": 0.37687590878687754,
+     "kneeBend": 70.96526298966484,
+     "shoulderTilt": 30.187113073957818,
+     "legDrive": 0.22583190463504527,
+     "dropDepth": -0.026389263186852408,
+     "elbowAtDrop": 53.336394111950995,
+     "dropToContact": 154.57878748387532,
+     "handUnderElbow": 11.11111111111111,
+     "contactHeight": 1.2085851259273168,
+     "armExtension": 153.91443779863332,
+     "contactAhead": 23.689592839040017,
+     "loadRatio": 28.382899089427312
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.25,
+     "toss": 1.65,
+     "trophy": 2.117,
+     "drop": 2.361,
+     "contact": 2.515,
+     "finish": 2.917
+    }
+   },
+   "contactWrist": 0.5859,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0175,
+      "elbow": 0.022,
+      "wrist": 0.0268,
+      "hip": 0.0684,
+      "knee": 0.0164,
+      "ankle": 0.0138
+     },
+     "contactWrist": 0.6157
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "refused: too_few_frames",
+     "reading": {
+      "outcome": "refused: too_few_frames",
+      "overall": 56,
+      "focus": "Time from trophy to contact",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.183235727730754,
+       "tossArmHold": 100,
+       "tossPathWobble": 0.3580089511294572,
+       "kneeBend": 19.452947082735392,
+       "shoulderTilt": 19.72844571166909,
+       "legDrive": 0.0018519842999781312,
+       "dropDepth": -0.28892965444588176,
+       "handUnderElbow": 0,
+       "contactHeight": 0.9705271384165988,
+       "armExtension": 71.3126297511905,
+       "loadRatio": 4.382710146198477
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "loadRatio": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 1,
+      "phases": {
+       "ready": 1.284,
+       "toss": 1.784,
+       "trophy": 2.184,
+       "drop": 2.184,
+       "contact": 2.225,
+       "finish": 2.25
+      }
+     },
+     "joints": {
+      "shoulder": 0.0258,
+      "elbow": 0.0421,
+      "wrist": 0.0305,
+      "hip": 0.0691,
+      "knee": 0.0259,
+      "ankle": 0.0238
+     },
+     "contactWrist": 0.5859
+    }
+   },
+   "ms": 26693
+  },
+  {
+   "serve": "bath-61",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 91,
+   "onFigure": 77,
+   "wristSeen": 54,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0253,
+    "elbow": 0.0241,
+    "wrist": 0.0382,
+    "hip": 0.0445,
+    "knee": 0.0391,
+    "ankle": 0.0428
+   },
+   "angles": {
+    "elbowWorld": 12.8,
+    "elbowImage": -1.2,
+    "shoulderTiltWorld": -2.2,
+    "kneeTrueAtLoad": 105.3,
+    "kneeWorldAtLoad": 60.7,
+    "kneeImageAtLoad": 7.9
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 85,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1470071058197449,
+     "tossArmHold": 76,
+     "tossPathWobble": 0.4250296537073082,
+     "kneeBend": 73.95471399911425,
+     "shoulderTilt": 30.7319396961075,
+     "legDrive": 0.23513011887295862,
+     "dropDepth": -0.0164921272597772,
+     "elbowAtDrop": 52.65694942346722,
+     "dropToContact": 153.16099753833834,
+     "handUnderElbow": 12,
+     "contactHeight": 1.2376880568451416,
+     "armExtension": 153.187815747298,
+     "contactAhead": 18.943289447840776,
+     "loadRatio": 28.963797410595106
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.284,
+     "toss": 1.684,
+     "trophy": 2.117,
+     "drop": 2.33,
+     "contact": 2.483,
+     "finish": 2.85
+    }
+   },
+   "contactWrist": 0.6065,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0135,
+      "elbow": 0.0206,
+      "wrist": 0.0316,
+      "hip": 0.0448,
+      "knee": 0.0168,
+      "ankle": 0.0131
+     },
+     "contactWrist": 0.6136
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0259,
+      "elbow": 0.046,
+      "wrist": 0.0368,
+      "hip": 0.0449,
+      "knee": 0.0253,
+      "ankle": 0.0268
+     },
+     "contactWrist": 0.5302
+    }
+   },
+   "ms": 31813
+  },
+  {
+   "serve": "bath-62",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 83,
+   "onFigure": 65,
+   "wristSeen": 53,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0291,
+    "elbow": 0.0286,
+    "wrist": 0.0381,
+    "hip": 0.0431,
+    "knee": 0.0258,
+    "ankle": 0.0327
+   },
+   "angles": {
+    "elbowWorld": 13.8,
+    "elbowImage": -4.1,
+    "shoulderTiltWorld": -2.5,
+    "kneeTrueAtLoad": 105.1,
+    "kneeWorldAtLoad": 59.7,
+    "kneeImageAtLoad": 8.4
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 83,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1613236676730196,
+     "tossArmHold": 76.92307692307693,
+     "tossPathWobble": 0.775093521808968,
+     "kneeBend": 73.84179856131954,
+     "shoulderTilt": 27.8795524183464,
+     "legDrive": 0.21864463803487091,
+     "dropDepth": -0.020986283063261807,
+     "elbowAtDrop": 55.444657269191545,
+     "dropToContact": 129.87645532015213,
+     "handUnderElbow": 11.538461538461538,
+     "contactHeight": 1.2254318960368233,
+     "armExtension": 153.18638434970066,
+     "contactAhead": 13.455968499721191,
+     "loadRatio": 26.360351161590906
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 4,
+    "phases": {
+     "ready": 1.25,
+     "toss": 1.65,
+     "trophy": 2.15,
+     "drop": 2.36,
+     "contact": 2.49,
+     "finish": 2.817
+    }
+   },
+   "contactWrist": 0.6327,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0219,
+      "elbow": 0.0233,
+      "wrist": 0.0282,
+      "hip": 0.0557,
+      "knee": 0.0138,
+      "ankle": 0.0138
+     },
+     "contactWrist": 0.6327
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0314,
+      "elbow": 0.0464,
+      "wrist": 0.0314,
+      "hip": 0.0671,
+      "knee": 0.0283,
+      "ankle": 0.0249
+     },
+     "contactWrist": 0.632
+    }
+   },
+   "ms": 28773
+  },
+  {
+   "serve": "bath-63",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 85,
+   "wristSeen": 56,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0282,
+    "elbow": 0.0298,
+    "wrist": 0.0345,
+    "hip": 0.052,
+    "knee": 0.0243,
+    "ankle": 0.0312
+   },
+   "angles": {
+    "elbowWorld": 11.1,
+    "elbowImage": -3.4,
+    "shoulderTiltWorld": -2.3,
+    "kneeTrueAtLoad": 104.1,
+    "kneeWorldAtLoad": 53.7,
+    "kneeImageAtLoad": 4.3
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 85,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1356114776250812,
+     "tossArmHold": 77.77777777777779,
+     "tossPathWobble": 0.2755285683560136,
+     "kneeBend": 74.95338292600886,
+     "shoulderTilt": 22.751494467097345,
+     "legDrive": 0.22851843817834475,
+     "dropDepth": -0.0321108638477391,
+     "elbowAtDrop": 50.58593078944139,
+     "dropToContact": 158.58788893444142,
+     "handUnderElbow": 7.4074074074074066,
+     "contactHeight": 1.2089858726576623,
+     "armExtension": 154.38399907894947,
+     "contactAhead": 22.13789890464225,
+     "loadRatio": 30.672025777013484
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.217,
+     "toss": 1.617,
+     "trophy": 2.084,
+     "drop": 2.324,
+     "contact": 2.483,
+     "finish": 2.884
+    }
+   },
+   "contactWrist": 0.5794,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0148,
+      "elbow": 0.0244,
+      "wrist": 0.0262,
+      "hip": 0.07,
+      "knee": 0.0157,
+      "ankle": 0.0218
+     },
+     "contactWrist": 0.5794
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0231,
+      "elbow": 0.0256,
+      "wrist": 0.0332,
+      "hip": 0.0705,
+      "knee": 0.0236,
+      "ankle": 0.021
+     },
+     "contactWrist": 0.6072
+    }
+   },
+   "ms": 27959
+  },
+  {
+   "serve": "bath-66",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 89,
+   "onFigure": 78,
+   "wristSeen": 56,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0264,
+    "elbow": 0.0288,
+    "wrist": 0.0425,
+    "hip": 0.0458,
+    "knee": 0.0323,
+    "ankle": 0.0354
+   },
+   "angles": {
+    "elbowWorld": 11,
+    "elbowImage": -3.3,
+    "shoulderTiltWorld": -2.8,
+    "kneeTrueAtLoad": 109.9,
+    "kneeWorldAtLoad": 53.4,
+    "kneeImageAtLoad": -0.2
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 85,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1422332630791723,
+     "tossArmHold": 72,
+     "tossPathWobble": 0.3609227260621989,
+     "kneeBend": 69.2526731317237,
+     "shoulderTilt": 29.949480644936777,
+     "legDrive": 0.2169824148440385,
+     "dropDepth": -0.016919901745373583,
+     "elbowAtDrop": 55.192755200361134,
+     "dropToContact": 152.31017813369263,
+     "handUnderElbow": 12,
+     "contactHeight": 1.2212275567630937,
+     "armExtension": 153.94165191451967,
+     "contactAhead": 22.397163048455205,
+     "loadRatio": 28.788663639775237
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.25,
+     "toss": 1.684,
+     "trophy": 2.117,
+     "drop": 2.327,
+     "contact": 2.479,
+     "finish": 2.85
+    }
+   },
+   "contactWrist": 0.545,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "refused: too_few_frames",
+     "reading": {
+      "outcome": "refused: too_few_frames",
+      "overall": 61,
+      "focus": "Keep grooving this serve",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 0.8887778307680662,
+       "tossArmHold": 100,
+       "tossPathWobble": 0.579947139498855,
+       "kneeBend": 9.402877016932848,
+       "shoulderTilt": -21.455258309014823,
+       "legDrive": -0.0022077418739327587,
+       "dropDepth": -0.28677231918974033,
+       "contactHeight": 1.1495759378274946,
+       "armExtension": 158.39924035102993
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "contactHeight": "×",
+       "armExtension": "°"
+      },
+      "hand": "left",
+      "view": "side",
+      "swingSamples": 0,
+      "phases": {
+       "ready": 1.284,
+       "toss": 1.717,
+       "trophy": 1.717,
+       "drop": 1.723,
+       "contact": 1.75,
+       "finish": 1.75
+      }
+     },
+     "joints": {
+      "shoulder": 0.0181,
+      "elbow": 0.0208,
+      "wrist": 0.0333,
+      "hip": 0.0551,
+      "knee": 0.0147,
+      "ankle": 0.0198
+     },
+     "contactWrist": 0.545
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "measured",
+     "reading": {
+      "outcome": "measured",
+      "overall": 70,
+      "focus": "Hand under the elbow",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.1692044444667975,
+       "tossArmHold": 100,
+       "tossPathWobble": 0.2535025149115635,
+       "kneeBend": 9.355068868784741,
+       "shoulderTilt": 21.19630180032328,
+       "legDrive": -0.10559859913764708,
+       "handUnderElbow": 0,
+       "contactHeight": 0.8183610206101151,
+       "armExtension": 152.65582510663953,
+       "contactAhead": 22.29532542208089
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "contactAhead": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 12,
+      "phases": {
+       "ready": 1.284,
+       "toss": 1.757,
+       "trophy": 1.75,
+       "drop": 1.75,
+       "contact": 2.146,
+       "finish": 2.55
+      }
+     },
+     "joints": {
+      "shoulder": 0.0285,
+      "elbow": 0.0414,
+      "wrist": 0.0356,
+      "hip": 0.0564,
+      "knee": 0.0223,
+      "ankle": 0.0166
+     },
+     "contactWrist": 0.4811,
+     "errors": {
+      "releaseHeight": 0.02697118138762522,
+      "tossArmHold": 28,
+      "tossPathWobble": -0.10742021115063538,
+      "kneeBend": -59.897604262938955,
+      "shoulderTilt": -8.753178844613497,
+      "legDrive": -0.3225810139816856,
+      "handUnderElbow": -12,
+      "contactHeight": -0.4028665361529786,
+      "armExtension": -1.2858268078801416,
+      "contactAhead": -0.1018376263743157
+     }
+    }
+   },
+   "ms": 30784
+  },
+  {
+   "serve": "bath-69",
+   "look": "court",
+   "gate": "off",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 74,
+   "wristSeen": 52,
+   "refined": 0,
+   "framingCheck": "You stand too far from the camera to measure.",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0224,
+    "elbow": 0.0235,
+    "wrist": 0.0462,
+    "hip": 0.0513,
+    "knee": 0.0418,
+    "ankle": 0.039
+   },
+   "angles": {
+    "elbowWorld": 7.9,
+    "elbowImage": -5.9,
+    "shoulderTiltWorld": -1,
+    "kneeTrueAtLoad": 110.4,
+    "kneeWorldAtLoad": 55,
+    "kneeImageAtLoad": 0.5
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 84,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.16273512861028,
+     "tossArmHold": 80,
+     "tossPathWobble": 0.6258331528590787,
+     "kneeBend": 68.22468972388441,
+     "shoulderTilt": 29.52967896708825,
+     "legDrive": 0.20426737091278308,
+     "dropDepth": -0.036167908417989655,
+     "elbowAtDrop": 55.687351070628004,
+     "dropToContact": 127.90268771036529,
+     "handUnderElbow": 12,
+     "contactHeight": 1.214082561934609,
+     "armExtension": 152.63929223177618,
+     "contactAhead": 15.881190455874705,
+     "loadRatio": 26.201157084761295
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 4,
+    "phases": {
+     "ready": 1.284,
+     "toss": 1.684,
+     "trophy": 2.15,
+     "drop": 2.36,
+     "contact": 2.488,
+     "finish": 2.817
+    }
+   },
+   "contactWrist": 0.613,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.014,
+      "elbow": 0.0194,
+      "wrist": 0.0366,
+      "hip": 0.0686,
+      "knee": 0.0145,
+      "ankle": 0.0131
+     },
+     "contactWrist": 0.613
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "refused: too_few_frames",
+     "reading": {
+      "outcome": "refused: too_few_frames",
+      "overall": 69,
+      "focus": "Keep grooving this serve",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 0.9243420763663953,
+       "tossArmHold": 100,
+       "tossPathWobble": 0.3897031602120362,
+       "kneeBend": 10.408407675461717,
+       "shoulderTilt": -22.766119463083783,
+       "legDrive": -0.01340328112703568,
+       "contactHeight": 1.1292149892144052,
+       "armExtension": 155.06361534064553
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "contactHeight": "×",
+       "armExtension": "°"
+      },
+      "hand": "left",
+      "view": "side",
+      "swingSamples": 0,
+      "phases": {
+       "ready": 1.384,
+       "toss": 1.817,
+       "trophy": 1.817,
+       "drop": 1.914,
+       "contact": 1.884,
+       "finish": 1.884
+      }
+     },
+     "joints": {
+      "shoulder": 0.0261,
+      "elbow": 0.031,
+      "wrist": 0.0366,
+      "hip": 0.0686,
+      "knee": 0.0208,
+      "ankle": 0.0134
+     },
+     "contactWrist": 0.613
+    }
+   },
+   "ms": 47638
+  },
+  {
+   "serve": "bath-72",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 93,
+   "onFigure": 81,
+   "wristSeen": 62,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "passed",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.023,
+    "elbow": 0.0246,
+    "wrist": 0.0509,
+    "hip": 0.0402,
+    "knee": 0.0318,
+    "ankle": 0.0315
+   },
+   "angles": {
+    "elbowWorld": 14,
+    "elbowImage": 0.2,
+    "shoulderTiltWorld": -2.4,
+    "kneeTrueAtLoad": 107,
+    "kneeWorldAtLoad": 51,
+    "kneeImageAtLoad": 6.8
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 84,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1609926025850066,
+     "tossArmHold": 76.92307692307693,
+     "tossPathWobble": 0.22802509199231763,
+     "kneeBend": 71.94069352789619,
+     "shoulderTilt": 30.703918879733408,
+     "legDrive": 0.22083599489749797,
+     "dropDepth": -0.024224077788774744,
+     "elbowAtDrop": 53.484844028661755,
+     "dropToContact": 155.842828248959,
+     "handUnderElbow": 15.384615384615385,
+     "contactHeight": 1.2278879585859062,
+     "armExtension": 149.713548884649,
+     "contactAhead": 18.82669803473948,
+     "loadRatio": 26.713098899641313
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.217,
+     "toss": 1.65,
+     "trophy": 2.117,
+     "drop": 2.33,
+     "contact": 2.486,
+     "finish": 2.85
+    }
+   },
+   "contactWrist": 0.6223,
+   "tail": "refused: too_few_frames",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0183,
+      "elbow": 0.0233,
+      "wrist": 0.0457,
+      "hip": 0.0629,
+      "knee": 0.0171,
+      "ankle": 0.0171
+     },
+     "contactWrist": 0.6223
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "measured",
+     "reading": {
+      "outcome": "measured",
+      "overall": 63,
+      "focus": "Arm extension at contact",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.1708962810941674,
+       "tossArmHold": 100,
+       "tossPathWobble": 0.326954099171998,
+       "kneeBend": 9.39794520134052,
+       "shoulderTilt": 21.628938234343423,
+       "legDrive": -0.12401201032151452,
+       "handUnderElbow": 0,
+       "contactHeight": 0.7826627759500187,
+       "armExtension": 124.72246706204777,
+       "contactAhead": 26.14624217006919
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "contactAhead": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 14,
+      "phases": {
+       "ready": 1.25,
+       "toss": 1.717,
+       "trophy": 1.717,
+       "drop": 1.717,
+       "contact": 2.188,
+       "finish": 2.65
+      }
+     },
+     "joints": {
+      "shoulder": 0.0299,
+      "elbow": 0.0421,
+      "wrist": 0.0512,
+      "hip": 0.0615,
+      "knee": 0.0201,
+      "ankle": 0.0236
+     },
+     "contactWrist": 0.6223,
+     "errors": {
+      "releaseHeight": 0.009903678509160851,
+      "tossArmHold": 23.076923076923066,
+      "tossPathWobble": 0.0989290071796804,
+      "kneeBend": -62.54274832655567,
+      "shoulderTilt": -9.074980645389985,
+      "legDrive": -0.3448480052190125,
+      "handUnderElbow": -15.384615384615385,
+      "contactHeight": -0.4452251826358875,
+      "armExtension": -24.991081822601217,
+      "contactAhead": 7.319544135329711
+     }
+    }
+   },
+   "ms": 56982
+  },
+  {
+   "serve": "bath-78",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 89,
+   "wristSeen": 54,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0228,
+    "elbow": 0.0304,
+    "wrist": 0.0423,
+    "hip": 0.0408,
+    "knee": 0.0392,
+    "ankle": 0.0371
+   },
+   "angles": {
+    "elbowWorld": 15.6,
+    "elbowImage": -7.9,
+    "shoulderTiltWorld": -1.7,
+    "kneeTrueAtLoad": 109.2,
+    "kneeWorldAtLoad": 59.4,
+    "kneeImageAtLoad": -0.5
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 85,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.150249219954611,
+     "tossArmHold": 76,
+     "tossPathWobble": 0.5609308862203655,
+     "kneeBend": 70.14733256129077,
+     "shoulderTilt": 31.05093989423834,
+     "legDrive": 0.20991356836646272,
+     "dropDepth": -0.028539454840310095,
+     "elbowAtDrop": 55.43260609929764,
+     "dropToContact": 153.25607258938012,
+     "handUnderElbow": 12,
+     "contactHeight": 1.2355076555874132,
+     "armExtension": 155.3086541871746,
+     "contactAhead": 19.255125860037047,
+     "loadRatio": 28.541097115275875
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.217,
+     "toss": 1.65,
+     "trophy": 2.084,
+     "drop": 2.295,
+     "contact": 2.448,
+     "finish": 2.817
+    }
+   },
+   "contactWrist": 0.6169,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0131,
+      "elbow": 0.0178,
+      "wrist": 0.0281,
+      "hip": 0.0492,
+      "knee": 0.017,
+      "ankle": 0.015
+     },
+     "contactWrist": 0.637
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "measured",
+     "reading": {
+      "outcome": "measured",
+      "overall": 63,
+      "focus": "Knee bend at trophy",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.1737630819530962,
+       "tossArmHold": 100,
+       "tossPathWobble": 0.6589513692336764,
+       "kneeBend": 8.683922998108756,
+       "shoulderTilt": 22.084037884552185,
+       "legDrive": -0.11376977247303902,
+       "dropDepth": -0.040243305666963304,
+       "handUnderElbow": 0,
+       "contactHeight": 0.7835302457590022,
+       "armExtension": 132.05490310933553,
+       "contactAhead": 18.732321387721736
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "contactAhead": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 13,
+      "phases": {
+       "ready": 1.25,
+       "toss": 1.684,
+       "trophy": 1.684,
+       "drop": 1.684,
+       "contact": 2.11,
+       "finish": 2.55
+      }
+     },
+     "joints": {
+      "shoulder": 0.025,
+      "elbow": 0.0419,
+      "wrist": 0.0291,
+      "hip": 0.0508,
+      "knee": 0.0195,
+      "ankle": 0.0252
+     },
+     "contactWrist": 0.6169,
+     "errors": {
+      "releaseHeight": 0.023513861998485153,
+      "tossArmHold": 24,
+      "tossPathWobble": 0.0980204830133109,
+      "kneeBend": -61.46340956318201,
+      "shoulderTilt": -8.966902009686155,
+      "legDrive": -0.32368334083950173,
+      "dropDepth": -0.01170385082665321,
+      "handUnderElbow": -12,
+      "contactHeight": -0.45197740982841095,
+      "armExtension": -23.25375107783907,
+      "contactAhead": -0.5228044723153111
+     }
+    }
+   },
+   "ms": 52719
+  },
+  {
+   "serve": "bath-86",
+   "look": "court",
+   "gate": "on",
+   "outcome": "not a swing",
+   "frames": 0,
+   "found": 0,
+   "onFigure": 0,
+   "wristSeen": 0,
+   "refined": 0,
+   "detail": "the capture stops before the racket comes over"
+  },
+  {
+   "serve": "bath-93",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 75,
+   "wristSeen": 53,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0284,
+    "elbow": 0.0354,
+    "wrist": 0.0267,
+    "hip": 0.044,
+    "knee": 0.0347,
+    "ankle": 0.043
+   },
+   "angles": {
+    "elbowWorld": 8.4,
+    "elbowImage": -4.7,
+    "shoulderTiltWorld": -1.8,
+    "kneeTrueAtLoad": 106.9,
+    "kneeWorldAtLoad": 52.6,
+    "kneeImageAtLoad": 7.6
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 84,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1549998996871615,
+     "tossArmHold": 74.07407407407408,
+     "tossPathWobble": 0.6222980025074827,
+     "kneeBend": 72.43555865583475,
+     "shoulderTilt": 30.812668326868202,
+     "legDrive": 0.22792008984716935,
+     "dropDepth": -0.03121371416664172,
+     "elbowAtDrop": 50.036938348175546,
+     "dropToContact": 153.09350694727675,
+     "handUnderElbow": 11.11111111111111,
+     "contactHeight": 1.2169725235219417,
+     "armExtension": 152.66640916609168,
+     "contactAhead": 25.073170597042683,
+     "loadRatio": 28.901354279709274
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.25,
+     "toss": 1.65,
+     "trophy": 2.117,
+     "drop": 2.36,
+     "contact": 2.513,
+     "finish": 2.917
+    }
+   },
+   "contactWrist": 0.5583,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0144,
+      "elbow": 0.0226,
+      "wrist": 0.0183,
+      "hip": 0.0534,
+      "knee": 0.0171,
+      "ankle": 0.0136
+     },
+     "contactWrist": 0.5583
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0269,
+      "elbow": 0.0402,
+      "wrist": 0.0257,
+      "hip": 0.0539,
+      "knee": 0.0197,
+      "ankle": 0.0187
+     },
+     "contactWrist": 0.5583
+    }
+   },
+   "ms": 42580
+  },
+  {
+   "serve": "bath-94",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 84,
+   "onFigure": 45,
+   "wristSeen": 58,
+   "refined": 19,
+   "framingCheck": "passed",
+   "firstSearch": "passed",
+   "joints": {
+    "shoulder": 0.061,
+    "elbow": 0.1128,
+    "wrist": 0.1337,
+    "hip": 0.0323,
+    "knee": 0.0527,
+    "ankle": 0.0576
+   },
+   "angles": {
+    "elbowWorld": 20.2,
+    "elbowImage": -5.7,
+    "shoulderTiltWorld": -3.1,
+    "kneeTrueAtLoad": 110.6,
+    "kneeWorldAtLoad": 58,
+    "kneeImageAtLoad": 3.9
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 85,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1391844338685657,
+     "tossArmHold": 76.92307692307693,
+     "tossPathWobble": 0.43974084133008634,
+     "kneeBend": 68.65204415878775,
+     "shoulderTilt": 27.249594379330958,
+     "legDrive": 0.20988712631473566,
+     "dropDepth": -0.03787701277246113,
+     "elbowAtDrop": 51.2285876851603,
+     "dropToContact": 155.59952108194386,
+     "handUnderElbow": 7.6923076923076925,
+     "contactHeight": 1.2128997522193796,
+     "armExtension": 154.3812173288214,
+     "contactAhead": 19.139384152104032,
+     "loadRatio": 28.898500746359623
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.25,
+     "toss": 1.65,
+     "trophy": 2.117,
+     "drop": 2.329,
+     "contact": 2.484,
+     "finish": 2.85
+    }
+   },
+   "pipeline": {
+    "outcome": "refused: too_few_frames",
+    "overall": 61,
+    "focus": "Time from trophy to contact",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1532528157119628,
+     "tossArmHold": 100,
+     "tossPathWobble": 0.20288126501294326,
+     "kneeBend": 20.26092272362331,
+     "shoulderTilt": 25.9930790565103,
+     "legDrive": 0.0012169745108745482,
+     "handUnderElbow": 0,
+     "contactHeight": 0.9358820158026125,
+     "armExtension": 116.65526997591819,
+     "loadRatio": 3.7265689711395398
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 1,
+    "phases": {
+     "ready": 1.384,
+     "toss": 1.75,
+     "trophy": 2.15,
+     "drop": 2.15,
+     "contact": 2.192,
+     "finish": 2.217
+    }
+   },
+   "levelled": true,
+   "detail": "refused: too_few_frames",
+   "contactWrist": 0.5903,
+   "tail": "refused: too_few_frames",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "refused: too_blurry",
+     "reading": {
+      "outcome": "refused: too_blurry",
+      "overall": 63,
+      "focus": "Shoulder tilt",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.157721544247338,
+       "tossArmHold": 100,
+       "tossPathWobble": 0.3029197013206587,
+       "kneeBend": 9.194339085513093,
+       "shoulderTilt": 18.73643050008851,
+       "legDrive": -0.013178622180432248,
+       "dropDepth": -0.07689954760899977,
+       "contactHeight": 0.8574133720253188,
+       "armExtension": 158.58656763400836
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "contactHeight": "×",
+       "armExtension": "°"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 3,
+      "phases": {
+       "ready": 1.35,
+       "toss": 1.77,
+       "trophy": 1.75,
+       "drop": 1.75,
+       "contact": 1.836,
+       "finish": 1.95
+      }
+     },
+     "joints": {
+      "shoulder": 0.0427,
+      "elbow": 0.0509,
+      "wrist": 0.1173,
+      "hip": 0.0423,
+      "knee": 0.0187,
+      "ankle": 0.0233
+     },
+     "contactWrist": 0.5903
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0273,
+      "elbow": 0.0789,
+      "wrist": 0.0644,
+      "hip": 0.0426,
+      "knee": 0.0215,
+      "ankle": 0.0158
+     },
+     "contactWrist": 0.5903
+    }
+   },
+   "ms": 44849
+  },
+  {
+   "serve": "bath-95",
+   "look": "court",
+   "gate": "on",
+   "outcome": "not a swing",
+   "frames": 0,
+   "found": 0,
+   "onFigure": 0,
+   "wristSeen": 0,
+   "refined": 0,
+   "detail": "the capture stops before the racket comes over"
+  },
+  {
+   "serve": "bath-97",
+   "look": "court",
+   "gate": "off",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 90,
+   "onFigure": 83,
+   "wristSeen": 56,
+   "refined": 0,
+   "framingCheck": "You stand too far from the camera to measure.",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0224,
+    "elbow": 0.026,
+    "wrist": 0.0333,
+    "hip": 0.0416,
+    "knee": 0.0419,
+    "ankle": 0.0355
+   },
+   "angles": {
+    "elbowWorld": 18.4,
+    "elbowImage": 0.5,
+    "shoulderTiltWorld": -1.2,
+    "kneeTrueAtLoad": 111.3,
+    "kneeWorldAtLoad": 53.9,
+    "kneeImageAtLoad": 5.8
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 86,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.162830553707619,
+     "tossArmHold": 74.07407407407408,
+     "tossPathWobble": 0.5953755013125149,
+     "kneeBend": 67.98821322755305,
+     "shoulderTilt": 29.3496065701365,
+     "legDrive": 0.21879735024321628,
+     "dropDepth": -0.025557268144026247,
+     "elbowAtDrop": 53.7670676037409,
+     "dropToContact": 155.25859566470768,
+     "handUnderElbow": 11.11111111111111,
+     "contactHeight": 1.2507747364921422,
+     "armExtension": 156.2928879284595,
+     "contactAhead": 23.96306408029337,
+     "loadRatio": 27.962322740274637
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.217,
+     "toss": 1.617,
+     "trophy": 2.117,
+     "drop": 2.326,
+     "contact": 2.481,
+     "finish": 2.85
+    }
+   },
+   "contactWrist": 0.7337,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.018,
+      "elbow": 0.0259,
+      "wrist": 0.0322,
+      "hip": 0.0427,
+      "knee": 0.0137,
+      "ankle": 0.0101
+     },
+     "contactWrist": 0.7337
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "measured",
+     "reading": {
+      "outcome": "measured",
+      "overall": 74,
+      "focus": "Knee bend at trophy",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.1770217346743264,
+       "tossArmHold": 74.07407407407408,
+       "kneeBend": 27.31997657993159,
+       "shoulderTilt": 4.768770441171603,
+       "legDrive": 0.1939765793732344,
+       "dropDepth": 0.07620116444929192,
+       "handUnderElbow": 7.4074074074074066,
+       "contactHeight": 1.154698082557427,
+       "armExtension": 160.24041268974116,
+       "loadRatio": 26.75677058621348
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "loadRatio": "%"
+      },
+      "hand": "right",
+      "view": "angled",
+      "swingSamples": 5,
+      "phases": {
+       "ready": 1.25,
+       "toss": 1.617,
+       "trophy": 2.25,
+       "drop": 2.319,
+       "contact": 2.489,
+       "finish": 2.717
+      }
+     },
+     "joints": {
+      "shoulder": 0.0285,
+      "elbow": 0.0236,
+      "wrist": 0.0317,
+      "hip": 0.0435,
+      "knee": 0.0235,
+      "ankle": 0.0161
+     },
+     "contactWrist": 0.1614,
+     "errors": {
+      "releaseHeight": 0.014191180966707462,
+      "tossArmHold": 0,
+      "kneeBend": -40.668236647621455,
+      "shoulderTilt": -24.580836128964897,
+      "legDrive": -0.024820770869981884,
+      "dropDepth": 0.10175843259331817,
+      "handUnderElbow": -3.703703703703704,
+      "contactHeight": -0.09607665393471532,
+      "armExtension": 3.94752476128167,
+      "loadRatio": -1.2055521540611558
+     }
+    }
+   },
+   "ms": 49217
+  },
+  {
+   "serve": "bath-101",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 84,
+   "wristSeen": 55,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0263,
+    "elbow": 0.0261,
+    "wrist": 0.0433,
+    "hip": 0.0466,
+    "knee": 0.0408,
+    "ankle": 0.0375
+   },
+   "angles": {
+    "elbowWorld": 13.8,
+    "elbowImage": -7,
+    "shoulderTiltWorld": 0.3,
+    "kneeTrueAtLoad": 111,
+    "kneeWorldAtLoad": 57.4,
+    "kneeImageAtLoad": 4.1
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 85,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1342744392732451,
+     "tossArmHold": 75,
+     "tossPathWobble": 0.23060314957245615,
+     "kneeBend": 68.22796454255068,
+     "shoulderTilt": 28.140385395984826,
+     "legDrive": 0.21852287532251502,
+     "dropDepth": -0.026873741546203624,
+     "elbowAtDrop": 52.34821629742331,
+     "dropToContact": 159.79507035795714,
+     "handUnderElbow": 8.333333333333332,
+     "contactHeight": 1.218495194991029,
+     "armExtension": 153.54401792028884,
+     "contactAhead": 15.182572177728455,
+     "loadRatio": 29.698250743169364
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.25,
+     "toss": 1.684,
+     "trophy": 2.084,
+     "drop": 2.293,
+     "contact": 2.452,
+     "finish": 2.817
+    }
+   },
+   "contactWrist": 0.605,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0139,
+      "elbow": 0.0178,
+      "wrist": 0.0318,
+      "hip": 0.0518,
+      "knee": 0.0168,
+      "ankle": 0.0119
+     },
+     "contactWrist": 0.605
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "refused: too_few_frames",
+     "reading": {
+      "outcome": "refused: too_few_frames",
+      "overall": 64,
+      "focus": "Time from trophy to contact",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.1627003340972477,
+       "tossArmHold": 100,
+       "tossPathWobble": 0.7882753378691684,
+       "kneeBend": 16.330789021798296,
+       "shoulderTilt": 19.236740275786843,
+       "legDrive": 0.0003205493912456432,
+       "handUnderElbow": 0,
+       "contactHeight": 0.7970262312758567,
+       "armExtension": 143.4604639380325,
+       "contactAhead": 29.048304599474367,
+       "loadRatio": 4.64443737403443
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "contactAhead": "%",
+       "loadRatio": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 0,
+      "phases": {
+       "ready": 1.317,
+       "toss": 1.784,
+       "trophy": 2.084,
+       "drop": 2.15,
+       "contact": 2.159,
+       "finish": 2.15
+      }
+     },
+     "joints": {
+      "shoulder": 0.0253,
+      "elbow": 0.0299,
+      "wrist": 0.0333,
+      "hip": 0.0417,
+      "knee": 0.026,
+      "ankle": 0.0289
+     },
+     "contactWrist": 0.605
+    }
+   },
+   "ms": 41239
+  },
+  {
+   "serve": "bath-103",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 93,
+   "onFigure": 73,
+   "wristSeen": 54,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "passed",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0253,
+    "elbow": 0.0253,
+    "wrist": 0.0387,
+    "hip": 0.0355,
+    "knee": 0.0487,
+    "ankle": 0.046
+   },
+   "angles": {
+    "elbowWorld": 6.7,
+    "elbowImage": -5.3,
+    "shoulderTiltWorld": -0.9,
+    "kneeTrueAtLoad": 107.6,
+    "kneeWorldAtLoad": 49.5,
+    "kneeImageAtLoad": 3.1
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 84,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1622146789729413,
+     "tossArmHold": 76,
+     "tossPathWobble": 0.4234260128459344,
+     "kneeBend": 71.63774400174327,
+     "shoulderTilt": 30.483382026643834,
+     "legDrive": 0.21502900095610933,
+     "dropDepth": -0.03795532163403843,
+     "elbowAtDrop": 51.86151706707056,
+     "dropToContact": 156.34547110972764,
+     "handUnderElbow": 16,
+     "contactHeight": 1.234682079855549,
+     "armExtension": 154.23620809529072,
+     "contactAhead": 16.776834047470583,
+     "loadRatio": 27.835995000698016
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.25,
+     "toss": 1.684,
+     "trophy": 2.117,
+     "drop": 2.329,
+     "contact": 2.486,
+     "finish": 2.85
+    }
+   },
+   "contactWrist": 0.6858,
+   "tail": "refused: too_few_frames",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0126,
+      "elbow": 0.021,
+      "wrist": 0.0314,
+      "hip": 0.0356,
+      "knee": 0.0163,
+      "ankle": 0.0127
+     },
+     "contactWrist": 0.677
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "refused: too_few_frames",
+     "reading": {
+      "outcome": "refused: too_few_frames",
+      "overall": 72,
+      "focus": "Knee bend at trophy",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 0.9156422822953492,
+       "tossArmHold": 100,
+       "tossPathWobble": 0.41815625753065644,
+       "kneeBend": 10.359506848269092,
+       "shoulderTilt": -22.33820348059583,
+       "legDrive": -0.011633352111869413,
+       "contactHeight": 1.1441921024841164,
+       "armExtension": 158.4632858293313
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "contactHeight": "×",
+       "armExtension": "°"
+      },
+      "hand": "left",
+      "view": "side",
+      "swingSamples": 0,
+      "phases": {
+       "ready": 1.35,
+       "toss": 1.817,
+       "trophy": 1.817,
+       "drop": 1.884,
+       "contact": 1.884,
+       "finish": 1.884
+      }
+     },
+     "joints": {
+      "shoulder": 0.0282,
+      "elbow": 0.0425,
+      "wrist": 0.032,
+      "hip": 0.0356,
+      "knee": 0.0218,
+      "ankle": 0.027
+     },
+     "contactWrist": 0.6858
+    }
+   },
+   "ms": 47700
+  },
+  {
+   "serve": "bath-108",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 71,
+   "wristSeen": 56,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0254,
+    "elbow": 0.027,
+    "wrist": 0.0275,
+    "hip": 0.046,
+    "knee": 0.0302,
+    "ankle": 0.0337
+   },
+   "angles": {
+    "elbowWorld": 15.4,
+    "elbowImage": -1.8,
+    "shoulderTiltWorld": -2.8,
+    "kneeTrueAtLoad": 112.5,
+    "kneeWorldAtLoad": 55.9,
+    "kneeImageAtLoad": 1.6
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 85,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.163353126948479,
+     "tossArmHold": 73.07692307692307,
+     "tossPathWobble": 0.6373312865884367,
+     "kneeBend": 66.81919050679764,
+     "shoulderTilt": 27.917250575197656,
+     "legDrive": 0.21229309512292233,
+     "dropDepth": -0.031118939483205797,
+     "elbowAtDrop": 54.41059054432514,
+     "dropToContact": 153.81544963810123,
+     "handUnderElbow": 11.538461538461538,
+     "contactHeight": 1.2303349731796258,
+     "armExtension": 151.7394542294521,
+     "contactAhead": 21.410579812271205,
+     "loadRatio": 28.749543855354826
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.25,
+     "toss": 1.65,
+     "trophy": 2.117,
+     "drop": 2.327,
+     "contact": 2.481,
+     "finish": 2.85
+    }
+   },
+   "contactWrist": 0.6375,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.017,
+      "elbow": 0.021,
+      "wrist": 0.0208,
+      "hip": 0.0448,
+      "knee": 0.015,
+      "ankle": 0.0155
+     },
+     "contactWrist": 0.6283
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "measured",
+     "reading": {
+      "outcome": "measured",
+      "overall": 71,
+      "focus": "Knee bend at trophy",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.1977525065893126,
+       "tossArmHold": 73.07692307692307,
+       "tossPathWobble": 1.5191580847455208,
+       "kneeBend": 22.236198189971304,
+       "shoulderTilt": -79.8346132609137,
+       "legDrive": 0.1987311581338287,
+       "dropDepth": 0.06374822593131997,
+       "handUnderElbow": 7.6923076923076925,
+       "contactHeight": 1.1320089898828019,
+       "armExtension": 166.48369480460894,
+       "contactAhead": 4.765363523075676,
+       "loadRatio": 22.40526133634196
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "contactAhead": "%",
+       "loadRatio": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 4,
+      "phases": {
+       "ready": 1.25,
+       "toss": 1.617,
+       "trophy": 2.25,
+       "drop": 2.319,
+       "contact": 2.42,
+       "finish": 2.65
+      }
+     },
+     "joints": {
+      "shoulder": 0.027,
+      "elbow": 0.0321,
+      "wrist": 0.026,
+      "hip": 0.0449,
+      "knee": 0.0208,
+      "ankle": 0.0145
+     },
+     "contactWrist": 0.0318,
+     "errors": {
+      "releaseHeight": 0.03439937964083373,
+      "tossArmHold": 0,
+      "tossPathWobble": 0.8818267981570841,
+      "kneeBend": -44.582992316826335,
+      "shoulderTilt": -107.75186383611135,
+      "legDrive": -0.013561936989093637,
+      "dropDepth": 0.09486716541452576,
+      "handUnderElbow": -3.846153846153846,
+      "contactHeight": -0.09832598329682396,
+      "armExtension": 14.744240575156851,
+      "contactAhead": -16.64521628919553,
+      "loadRatio": -6.344282519012864
+     }
+    }
+   },
+   "ms": 37234
+  },
+  {
+   "serve": "bath-112",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 85,
+   "wristSeen": 53,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0231,
+    "elbow": 0.0267,
+    "wrist": 0.037,
+    "hip": 0.041,
+    "knee": 0.035,
+    "ankle": 0.0271
+   },
+   "angles": {
+    "elbowWorld": 9.8,
+    "elbowImage": -7.7,
+    "shoulderTiltWorld": 0.9,
+    "kneeTrueAtLoad": 115,
+    "kneeWorldAtLoad": 46.8,
+    "kneeImageAtLoad": -0.5
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 85,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.138479052163955,
+     "tossArmHold": 75,
+     "tossPathWobble": 0.33517602548930053,
+     "kneeBend": 64.29439772700906,
+     "shoulderTilt": 26.46391820652424,
+     "legDrive": 0.20540399194319262,
+     "dropDepth": -0.04276426453273228,
+     "elbowAtDrop": 54.66229718717233,
+     "dropToContact": 155.83027465211342,
+     "handUnderElbow": 8.333333333333332,
+     "contactHeight": 1.2238037501001602,
+     "armExtension": 153.6609518836828,
+     "contactAhead": 18.38995150797923,
+     "loadRatio": 28.77444199919014
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.284,
+     "toss": 1.717,
+     "trophy": 2.117,
+     "drop": 2.329,
+     "contact": 2.484,
+     "finish": 2.85
+    }
+   },
+   "contactWrist": 0.6425,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0151,
+      "elbow": 0.0168,
+      "wrist": 0.0259,
+      "hip": 0.0532,
+      "knee": 0.0156,
+      "ankle": 0.0127
+     },
+     "contactWrist": 0.6425
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "refused: too_few_frames",
+     "reading": {
+      "outcome": "refused: too_few_frames",
+      "overall": 66,
+      "focus": "Knee bend at trophy",
+      "flaws": [
+       "no_leg_drive"
+      ],
+      "metrics": {
+       "releaseHeight": 0.8890320755873947,
+       "tossArmHold": 100,
+       "tossPathWobble": 0.2685885852832612,
+       "kneeBend": 9.077251809434472,
+       "shoulderTilt": -21.474483315828007,
+       "legDrive": -0.007056694154873713,
+       "contactHeight": 1.136911436439285,
+       "armExtension": 159.33714806437737
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "contactHeight": "×",
+       "armExtension": "°"
+      },
+      "hand": "left",
+      "view": "side",
+      "swingSamples": 0,
+      "phases": {
+       "ready": 1.417,
+       "toss": 1.784,
+       "trophy": 1.784,
+       "drop": 1.85,
+       "contact": 1.85,
+       "finish": 1.85
+      }
+     },
+     "joints": {
+      "shoulder": 0.0274,
+      "elbow": 0.0334,
+      "wrist": 0.031,
+      "hip": 0.054,
+      "knee": 0.0177,
+      "ankle": 0.0218
+     },
+     "contactWrist": 0.5932
+    }
+   },
+   "ms": 40652
+  },
+  {
+   "serve": "bath-115",
+   "look": "court",
+   "gate": "off",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 72,
+   "wristSeen": 52,
+   "refined": 7,
+   "framingCheck": "You stand too far from the camera to measure.",
+   "firstSearch": "passed",
+   "joints": {
+    "shoulder": 0.0284,
+    "elbow": 0.0285,
+    "wrist": 0.0375,
+    "hip": 0.0483,
+    "knee": 0.0273,
+    "ankle": 0.0278
+   },
+   "angles": {
+    "elbowWorld": 9.5,
+    "elbowImage": -9.4,
+    "shoulderTiltWorld": 1.3,
+    "kneeTrueAtLoad": 115.3,
+    "kneeWorldAtLoad": 54.9,
+    "kneeImageAtLoad": -3.1
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 85,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1409542839468665,
+     "tossArmHold": 76,
+     "tossPathWobble": 0.412565787508516,
+     "kneeBend": 64.07534692247907,
+     "shoulderTilt": 29.7348945097691,
+     "legDrive": 0.20315245159475961,
+     "dropDepth": -0.03076930736142613,
+     "elbowAtDrop": 51.29393430657434,
+     "dropToContact": 156.58124417178732,
+     "handUnderElbow": 12,
+     "contactHeight": 1.2200114715650163,
+     "armExtension": 151.50384554980124,
+     "contactAhead": 17.205977786421702,
+     "loadRatio": 29.167476867309812
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.284,
+     "toss": 1.684,
+     "trophy": 2.117,
+     "drop": 2.328,
+     "contact": 2.484,
+     "finish": 2.85
+    }
+   },
+   "pipeline": {
+    "outcome": "refused: too_few_frames",
+    "overall": 67,
+    "focus": "Knee bend at trophy",
+    "flaws": [
+     "no_leg_drive"
+    ],
+    "metrics": {
+     "releaseHeight": 0.8958189800126886,
+     "tossArmHold": 100,
+     "tossPathWobble": 1.9383417370902916,
+     "kneeBend": 8.672576820346649,
+     "shoulderTilt": -21.00249773711031,
+     "legDrive": -0.009431970943798431,
+     "contactHeight": 1.1450190826456128,
+     "armExtension": 164.49079892392416
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "contactHeight": "×",
+     "armExtension": "°"
+    },
+    "hand": "left",
+    "view": "side",
+    "swingSamples": 0,
+    "phases": {
+     "ready": 1.35,
+     "toss": 1.784,
+     "trophy": 1.784,
+     "drop": 1.869,
+     "contact": 1.85,
+     "finish": 1.85
+    }
+   },
+   "levelled": false,
+   "jointsFinal": {
+    "shoulder": 0.0258,
+    "elbow": 0.026,
+    "wrist": 0.0375,
+    "hip": 0.0483,
+    "knee": 0.0273,
+    "ankle": 0.0278
+   },
+   "detail": "refused: too_few_frames",
+   "contactWrist": 0.5656,
+   "tail": "refused: too_few_frames",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0141,
+      "elbow": 0.0168,
+      "wrist": 0.0203,
+      "hip": 0.0492,
+      "knee": 0.0152,
+      "ankle": 0.0092
+     },
+     "contactWrist": 0.5656
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "refused: too_few_frames",
+     "reading": {
+      "outcome": "refused: too_few_frames",
+      "overall": 63,
+      "focus": "Time from trophy to contact",
+      "flaws": [
+       "low_contact",
+       "no_leg_drive"
+      ],
+      "metrics": {
+       "releaseHeight": 1.1849984915411944,
+       "tossArmHold": 100,
+       "tossPathWobble": 0.2966952837016198,
+       "kneeBend": 17.993414522733104,
+       "shoulderTilt": 23.271878194097656,
+       "legDrive": 0.0011601224678155682,
+       "handUnderElbow": 0,
+       "contactHeight": 0.8922865986562494,
+       "armExtension": 157.9507040139296,
+       "loadRatio": 2.1213132732899855
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "loadRatio": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 1,
+      "phases": {
+       "ready": 1.317,
+       "toss": 1.767,
+       "trophy": 2.15,
+       "drop": 2.15,
+       "contact": 2.177,
+       "finish": 2.217
+      }
+     },
+     "joints": {
+      "shoulder": 0.0265,
+      "elbow": 0.0339,
+      "wrist": 0.0257,
+      "hip": 0.0486,
+      "knee": 0.0195,
+      "ankle": 0.0225
+     },
+     "contactWrist": 0.5713
+    }
+   },
+   "ms": 68657
+  },
+  {
+   "serve": "bath-116",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 84,
+   "wristSeen": 53,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0273,
+    "elbow": 0.0288,
+    "wrist": 0.0463,
+    "hip": 0.0358,
+    "knee": 0.0338,
+    "ankle": 0.0355
+   },
+   "angles": {
+    "elbowWorld": 11.3,
+    "elbowImage": -6.8,
+    "shoulderTiltWorld": 0.3,
+    "kneeTrueAtLoad": 111.2,
+    "kneeWorldAtLoad": 31.7,
+    "kneeImageAtLoad": 8.5
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 85,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.149131011861877,
+     "tossArmHold": 76,
+     "tossPathWobble": 0.12806290146735788,
+     "kneeBend": 67.71203670101991,
+     "shoulderTilt": 27.94681672438449,
+     "legDrive": 0.22122880104929335,
+     "dropDepth": -0.04296509171237838,
+     "elbowAtDrop": 53.05719215392075,
+     "dropToContact": 156.19653048092763,
+     "handUnderElbow": 8,
+     "contactHeight": 1.2354479228795456,
+     "armExtension": 153.26424667504307,
+     "contactAhead": 19.313179396665095,
+     "loadRatio": 28.162708645080727
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.25,
+     "toss": 1.684,
+     "trophy": 2.117,
+     "drop": 2.328,
+     "contact": 2.484,
+     "finish": 2.85
+    }
+   },
+   "contactWrist": 0.6374,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0145,
+      "elbow": 0.0197,
+      "wrist": 0.034,
+      "hip": 0.0395,
+      "knee": 0.0156,
+      "ankle": 0.0098
+     },
+     "contactWrist": 0.6374
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "measured",
+     "reading": {
+      "outcome": "measured",
+      "overall": 70,
+      "focus": "Hitting elbow at drop",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.194191145412741,
+       "tossArmHold": 72.72727272727273,
+       "tossPathWobble": 0.5617367205450136,
+       "kneeBend": 21.53071715105216,
+       "shoulderTilt": -12.49138246540828,
+       "legDrive": 0.23330301877950338,
+       "dropDepth": 0.08615763012030968,
+       "elbowAtDrop": 116.23602719684054,
+       "dropToContact": 75.65809977969052,
+       "handUnderElbow": 22.727272727272727,
+       "contactHeight": 1.0567843036964102,
+       "armExtension": 149.7012320373169,
+       "contactAhead": 5.390373928932873,
+       "loadRatio": 22.026256572458664
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "elbowAtDrop": "°",
+       "dropToContact": "ms",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "contactAhead": "%",
+       "loadRatio": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 3,
+      "phases": {
+       "ready": 1.284,
+       "toss": 1.75,
+       "trophy": 2.217,
+       "drop": 2.342,
+       "contact": 2.417,
+       "finish": 2.684
+      }
+     },
+     "joints": {
+      "shoulder": 0.0287,
+      "elbow": 0.0342,
+      "wrist": 0.0339,
+      "hip": 0.0511,
+      "knee": 0.0229,
+      "ankle": 0.0215
+     },
+     "contactWrist": 0.0655,
+     "errors": {
+      "releaseHeight": 0.04506013355086402,
+      "tossArmHold": -3.2727272727272663,
+      "tossPathWobble": 0.4336738190776557,
+      "kneeBend": -46.18131954996775,
+      "shoulderTilt": -40.43819918979277,
+      "legDrive": 0.01207421773021003,
+      "dropDepth": 0.12912272183268805,
+      "elbowAtDrop": 63.178835042919786,
+      "handUnderElbow": 14.727272727272727,
+      "dropToContact": -80.53843070123712,
+      "contactHeight": -0.17866361918313545,
+      "armExtension": -3.5630146377261553,
+      "contactAhead": -13.922805467732221,
+      "loadRatio": -6.136452072622063
+     }
+    }
+   },
+   "ms": 44177
+  },
+  {
+   "serve": "bath-134",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 84,
+   "wristSeen": 52,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0252,
+    "elbow": 0.0289,
+    "wrist": 0.0315,
+    "hip": 0.0462,
+    "knee": 0.0298,
+    "ankle": 0.025
+   },
+   "angles": {
+    "elbowWorld": 10.2,
+    "elbowImage": -7.5,
+    "shoulderTiltWorld": 1,
+    "kneeTrueAtLoad": 111.3,
+    "kneeWorldAtLoad": 51.9,
+    "kneeImageAtLoad": -0.2
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 85,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1431186161137161,
+     "tossArmHold": 73.91304347826086,
+     "tossPathWobble": 0.18016632893807652,
+     "kneeBend": 67.6874315624162,
+     "shoulderTilt": 30.674775553924672,
+     "legDrive": 0.20861640269598886,
+     "dropDepth": -0.032451046507137586,
+     "elbowAtDrop": 52.22700004565371,
+     "dropToContact": 155.64147162395247,
+     "handUnderElbow": 13.043478260869565,
+     "contactHeight": 1.2318195870205553,
+     "armExtension": 151.92448722320427,
+     "contactAhead": 14.384358822977822,
+     "loadRatio": 28.938427754423508
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.284,
+     "toss": 1.717,
+     "trophy": 2.084,
+     "drop": 2.298,
+     "contact": 2.454,
+     "finish": 2.817
+    }
+   },
+   "contactWrist": 0.6226,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0149,
+      "elbow": 0.016,
+      "wrist": 0.018,
+      "hip": 0.0498,
+      "knee": 0.0128,
+      "ankle": 0.0101
+     },
+     "contactWrist": 0.6226
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "refused: too_few_frames",
+     "reading": {
+      "outcome": "refused: too_few_frames",
+      "overall": 59,
+      "focus": "Time from trophy to contact",
+      "flaws": [
+       "no_leg_drive"
+      ],
+      "metrics": {
+       "releaseHeight": 1.1592095458698715,
+       "tossArmHold": 100,
+       "tossPathWobble": 0.2780984501704516,
+       "kneeBend": 17.986656176766303,
+       "shoulderTilt": 21.07015819937704,
+       "legDrive": -0.0064367089228919505,
+       "handUnderElbow": 0,
+       "contactHeight": 0.8224092890336472,
+       "armExtension": 129.59262739596406,
+       "loadRatio": 0
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "tossPathWobble": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "loadRatio": "%"
+      },
+      "hand": "right",
+      "view": "side",
+      "swingSamples": 1,
+      "phases": {
+       "ready": 1.317,
+       "toss": 1.817,
+       "trophy": 2.084,
+       "drop": 2.084,
+       "contact": 2.107,
+       "finish": 2.15
+      }
+     },
+     "joints": {
+      "shoulder": 0.0264,
+      "elbow": 0.0402,
+      "wrist": 0.0307,
+      "hip": 0.0511,
+      "knee": 0.0173,
+      "ankle": 0.0298
+     },
+     "contactWrist": 0.5883
+    }
+   },
+   "ms": 50855
+  },
+  {
+   "serve": "bath-164",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 74,
+   "wristSeen": 56,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0273,
+    "elbow": 0.0257,
+    "wrist": 0.037,
+    "hip": 0.0407,
+    "knee": 0.037,
+    "ankle": 0.0423
+   },
+   "angles": {
+    "elbowWorld": 17.5,
+    "elbowImage": -3,
+    "shoulderTiltWorld": -3,
+    "kneeTrueAtLoad": 108.2,
+    "kneeWorldAtLoad": 50.2,
+    "kneeImageAtLoad": 4
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 85,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1492387888279065,
+     "tossArmHold": 72,
+     "tossPathWobble": 0.36188343317580257,
+     "kneeBend": 69.96989122544048,
+     "shoulderTilt": 30.957051586832673,
+     "legDrive": 0.21979936146066595,
+     "dropDepth": -0.03175126965978424,
+     "elbowAtDrop": 52.92290341033758,
+     "dropToContact": 153.6327204902328,
+     "handUnderElbow": 12,
+     "contactHeight": 1.2145854820909106,
+     "armExtension": 152.26751356597157,
+     "contactAhead": 23.277193138381065,
+     "loadRatio": 29.225669959962943
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.25,
+     "toss": 1.684,
+     "trophy": 2.084,
+     "drop": 2.326,
+     "contact": 2.48,
+     "finish": 2.884
+    }
+   },
+   "contactWrist": 0.6392,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0138,
+      "elbow": 0.0206,
+      "wrist": 0.0283,
+      "hip": 0.0514,
+      "knee": 0.0147,
+      "ankle": 0.0133
+     },
+     "contactWrist": 0.6273
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0279,
+      "elbow": 0.0444,
+      "wrist": 0.0317,
+      "hip": 0.0533,
+      "knee": 0.0263,
+      "ankle": 0.0222
+     },
+     "contactWrist": 0.6273
+    }
+   },
+   "ms": 45152
+  },
+  {
+   "serve": "bath-167",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 85,
+   "wristSeen": 54,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0251,
+    "elbow": 0.0295,
+    "wrist": 0.0294,
+    "hip": 0.0351,
+    "knee": 0.0268,
+    "ankle": 0.028
+   },
+   "angles": {
+    "elbowWorld": 12.3,
+    "elbowImage": -3.7,
+    "shoulderTiltWorld": -2,
+    "kneeTrueAtLoad": 111.3,
+    "kneeWorldAtLoad": 44.8,
+    "kneeImageAtLoad": 2.8
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 84,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.1355514429264575,
+     "tossArmHold": 75,
+     "tossPathWobble": 0.14517165722378333,
+     "kneeBend": 66.67918868025984,
+     "shoulderTilt": 30.246791667317147,
+     "legDrive": 0.2047865660717146,
+     "dropDepth": -0.027933379067197842,
+     "elbowAtDrop": 50.6888685941997,
+     "dropToContact": 157.14208450752088,
+     "handUnderElbow": 12.5,
+     "contactHeight": 1.221835361395429,
+     "armExtension": 150.9892610932967,
+     "contactAhead": 16.210622544198188,
+     "loadRatio": 27.94167279334551
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.284,
+     "toss": 1.717,
+     "trophy": 2.117,
+     "drop": 2.329,
+     "contact": 2.486,
+     "finish": 2.85
+    }
+   },
+   "contactWrist": 0.6081,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0135,
+      "elbow": 0.0208,
+      "wrist": 0.0184,
+      "hip": 0.0378,
+      "knee": 0.015,
+      "ankle": 0.0092
+     },
+     "contactWrist": 0.6081
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.026,
+      "elbow": 0.0305,
+      "wrist": 0.0178,
+      "hip": 0.0378,
+      "knee": 0.0174,
+      "ankle": 0.0282
+     },
+     "contactWrist": 0.0895
+    }
+   },
+   "ms": 46985
+  },
+  {
+   "serve": "bath-173",
+   "look": "court",
+   "gate": "on",
+   "outcome": "refused",
+   "frames": 93,
+   "found": 92,
+   "onFigure": 82,
+   "wristSeen": 55,
+   "refined": 0,
+   "framingCheck": "passed",
+   "firstSearch": "refused",
+   "detail": "The clip ends before the racket reaches the ball.",
+   "joints": {
+    "shoulder": 0.0229,
+    "elbow": 0.0278,
+    "wrist": 0.0332,
+    "hip": 0.0499,
+    "knee": 0.0537,
+    "ankle": 0.0482
+   },
+   "angles": {
+    "elbowWorld": 11.7,
+    "elbowImage": -3.1,
+    "shoulderTiltWorld": -2.1,
+    "kneeTrueAtLoad": 111.6,
+    "kneeWorldAtLoad": 54.3,
+    "kneeImageAtLoad": 0.7
+   },
+   "truth": {
+    "outcome": "measured",
+    "overall": 86,
+    "focus": "Hand under the elbow",
+    "flaws": [],
+    "metrics": {
+     "releaseHeight": 1.139017309342218,
+     "tossArmHold": 70.83333333333334,
+     "tossPathWobble": 0.30573481721386403,
+     "kneeBend": 66.70710629017285,
+     "shoulderTilt": 30.71601724730486,
+     "legDrive": 0.21048238998472318,
+     "dropDepth": -0.01979594315100491,
+     "elbowAtDrop": 56.95676846512776,
+     "dropToContact": 158.15034295814544,
+     "handUnderElbow": 12.5,
+     "contactHeight": 1.2449929671536257,
+     "armExtension": 156.46425329859633,
+     "contactAhead": 21.5131819570349,
+     "loadRatio": 30.362459783894057
+    },
+    "units": {
+     "releaseHeight": "×",
+     "tossArmHold": "%",
+     "tossPathWobble": "%",
+     "kneeBend": "°",
+     "shoulderTilt": "°",
+     "legDrive": "×",
+     "dropDepth": "×",
+     "elbowAtDrop": "°",
+     "dropToContact": "ms",
+     "handUnderElbow": "%",
+     "contactHeight": "×",
+     "armExtension": "°",
+     "contactAhead": "%",
+     "loadRatio": "%"
+    },
+    "hand": "right",
+    "view": "side",
+    "swingSamples": 5,
+    "phases": {
+     "ready": 1.25,
+     "toss": 1.684,
+     "trophy": 2.05,
+     "drop": 2.291,
+     "contact": 2.449,
+     "finish": 2.85
+    }
+   },
+   "contactWrist": 0.6923,
+   "tail": "The clip ends before the racket reaches the ball.",
+   "whatIf": {
+    "RTMPose on every frame, its own box": {
+     "outcome": "The clip ends before the racket reaches the ball.",
+     "joints": {
+      "shoulder": 0.0169,
+      "elbow": 0.0255,
+      "wrist": 0.0278,
+      "hip": 0.0475,
+      "knee": 0.0179,
+      "ankle": 0.014
+     },
+     "contactWrist": 0.6979
+    },
+    "RTMPose on every frame, one box for the whole read": {
+     "outcome": "measured",
+     "reading": {
+      "outcome": "measured",
+      "overall": 71,
+      "focus": "Knee bend at trophy",
+      "flaws": [],
+      "metrics": {
+       "releaseHeight": 1.1732383683643555,
+       "tossArmHold": 66.66666666666666,
+       "kneeBend": 22.193181576708184,
+       "shoulderTilt": 0.7247324232980421,
+       "legDrive": 0.19655233580127104,
+       "dropDepth": 0.06771385112635557,
+       "handUnderElbow": 4.761904761904762,
+       "contactHeight": 0.625187423798083,
+       "armExtension": 165.7365729045508,
+       "loadRatio": 28.374364182874945
+      },
+      "units": {
+       "releaseHeight": "×",
+       "tossArmHold": "%",
+       "kneeBend": "°",
+       "shoulderTilt": "°",
+       "legDrive": "×",
+       "dropDepth": "×",
+       "handUnderElbow": "%",
+       "contactHeight": "×",
+       "armExtension": "°",
+       "loadRatio": "%"
+      },
+      "hand": "right",
+      "view": "angled",
+      "swingSamples": 5,
+      "phases": {
+       "ready": 1.25,
+       "toss": 1.784,
+       "trophy": 2.217,
+       "drop": 2.286,
+       "contact": 2.451,
+       "finish": 2.684
+      }
+     },
+     "joints": {
+      "shoulder": 0.0311,
+      "elbow": 0.0248,
+      "wrist": 0.0302,
+      "hip": 0.05,
+      "knee": 0.0186,
+      "ankle": 0.025
+     },
+     "contactWrist": 0.0495,
+     "errors": {
+      "releaseHeight": 0.03422105902213746,
+      "tossArmHold": -4.166666666666686,
+      "kneeBend": -44.51392471346466,
+      "shoulderTilt": -29.991284824006815,
+      "legDrive": -0.01393005418345214,
+      "dropDepth": 0.08750979427736048,
+      "handUnderElbow": -7.738095238095238,
+      "contactHeight": -0.6198055433555427,
+      "armExtension": 9.272319605954465,
+      "loadRatio": -1.9880956010191113
+     }
+    }
+   },
+   "ms": 48820
+  }
+ ]
+}

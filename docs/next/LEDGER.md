@@ -568,6 +568,126 @@ live region, checked in the browser against the stand-in.
 
 ## Wave 2. Trust foundations, the rest
 
+- [x] **N2.8 The real pipeline scored against truth, on a drawn body: it
+  refuses 37 of 40 serves, and two weaknesses showed. Nothing adopted.**
+  `pipeline.html`, `src/dev/bench/pipeline.ts`, run by
+  `node scripts/pipeline.mjs` into `docs/next/bench/pipeline.json`, with
+  `pipeline-figure.jpg`, the picture the models read. Each Bath serve is
+  filmed by the virtual phone at the guide's placement (4.5 m to the left,
+  lens at 1 m, upright 9:16, 30 fps), the app's lit figure is painted on the
+  true landmarks with the captured racket, on a blue court under a green
+  fence, and the frames go through the browser's video encoder on exact
+  timestamps into a WebM (`webm.ts`; a canvas recording stamps the wall clock,
+  N2.3). `analyzeServe` reads it as it reads a player's clip: the framing
+  check, the person crop, MediaPipe, the swap guard, RTMPose's refine,
+  levelling, keyframes, measure, diagnose and triage. The ball, racket boxes,
+  speed and stills are skipped, as there is no ball in the picture or the
+  truth. The truth is the same engine steps run on the true landmarks of
+  exactly the frames the pipeline sampled, filed under the same times, so the
+  two reads differ only in what the pose models made of the picture. A copy of
+  those steps on MediaPipe's own frames came to the pipeline's first keyframe
+  search on 40 of 40 serves, so the truth read is the app's engine. Two full
+  runs gave the same totals and scores within a point.
+  - **The domain gap, plainly.** A painted mannequin is not a person in a
+    phone video: no face, hair, fingers or folding cloth, no motion blur or
+    phone compression, an empty court, and limbs drawn as smooth tapers centred
+    on the joints. This measures the whole path on one kind of picture whose
+    truth is known. It says nothing yet about how the models read a player.
+  - **MediaPipe finds the figure.** A body on 96% of the 3,720 frames the dense
+    read sampled, every key joint within a fifth of a body height on 81%.
+    Median picture error, as a share of body height: shoulder 0.025, elbow
+    0.029, wrist 0.038, hip 0.044, knee 0.035, ankle 0.035. Three backgrounds
+    were piloted on two or three serves each before the run: the court found
+    a body on 97% of frames, the app's own dark stage 81%, plain light grey
+    99%, and all three were refused the same way at contact.
+  - **It loses the racket arm at contact.** The racket wrist's worst error in
+    the 0.1 s around the true contact is a median 0.63 of a body height, past
+    0.5 on 39 of 40 serves: the arm straight up is read hanging down for three
+    to five frames (bath-39: the true wrist at 0.29 of the frame height,
+    MediaPipe's at 0.48). The keyframes then put contact on the toss. The
+    whole read: 34 refused as "The clip ends before the racket reaches the
+    ball" (29 at the first keyframe search on MediaPipe alone, 5 at a later
+    one, after the app's own RTMPose refine), 3 refused by triage as too few
+    frames, 3 measured.
+  - **The framing check sits on its line here.** As shipped it refused 6 of 40
+    as "You stand too far from the camera to measure". On the true landmarks
+    the player spans 0.27 of the frame from nose to ankle at the guide's 4.5 m
+    with a 65 degree lens, under the check's 0.30; that alone only warns, and
+    it refuses when MediaPipe also rates both wrists under half visible (a
+    wrist was seen on 58% of frames). Serves 2 and 39 were refused when read
+    alone in a fresh page, twice each, and passed inside a batch on both runs.
+    Where it refused, the bench read again past it, as a basket sweep reads
+    (`skipFramingCheck`), so the rest of the path is measured on every serve.
+  - **Per reading, on the 3 serves the app measured** (too few to quote as an
+    accuracy; every row is in the JSON). Past twice the stated noise on all
+    three: knee bend 41 degrees short (root mean square 9.8 times
+    `CARD_NOISE_SD`), shoulder tilt 25 degrees (8.4), drop depth 0.077 of a
+    body height deeper (7.8), hand under the elbow 10 points (3.8), release
+    height 0.026 (3.5). On two of three: contact height (0.062 rms, 7.1),
+    contact ahead (21 points, 6.0), leg drive (10.4), toss arm (3.9). Inside
+    or near twice: load ratio (1.5), toss path (1.7), arm extension (20
+    degrees, 2.0). Elbow at the drop and drop to contact were read on one
+    serve. The trophy landed 133 to 200 ms late on all three, contact on time
+    on one and 50 and 84 ms early on two, and the score read 8 points low.
+    The same faults were named as on the truth on all three; the fix matched
+    on two, and on bath-2 the app named "Knee bend at trophy" as the fix for a
+    player whose knee closed to 114 degrees (a bend of 65; on the true
+    landmarks the fix was shoulder tilt).
+  - **Its 3D landmarks miss the knee bend.** At the deepest true load each
+    read sampled (a median knee angle of 108 degrees), MediaPipe's world
+    landmarks put the knee a median 55 degrees straighter (32 to 66 across the
+    40 serves), while its picture landmarks are within 3.7 (at most 8.6). Per
+    frame its world elbow is 10.6 degrees off and its world shoulder tilt 2.0.
+    The trophy is found as the deepest world knee angle, so on this figure it
+    lands on noise, and knee bend and shoulder tilt are then read at the wrong
+    moment. Knee bend, shoulder tilt and the elbow readings all use the world
+    landmarks; RTMPose refines only the picture's.
+  - **Two reads the app does not make**, to see whether its second model
+    rescues contact. RTMPose on every frame before the keyframes, pointed at
+    MediaPipe's own box per frame as the app's refine is: 4 measured, the
+    racket wrist at contact no better (0.63), the other joints sharper
+    (shoulder 0.015, elbow 0.020, wrist 0.027, knee 0.015, ankle 0.012).
+    Pointed at one box round everything MediaPipe placed in the read: 17
+    measured, wrist at contact still 0.60. Frame by frame on bath-39 it does
+    find the raised hand, at a score of 0.45 to 0.55 against the 0.5 the app
+    asks before taking its joint, and once names it the other hand. The box
+    from MediaPipe's landmarks is why the app's refine cannot help: where
+    MediaPipe dropped the arm, the crop leaves the hand out.
+  - **What it means.** On this picture the app mostly refuses rather than
+    misleads, which is the honesty machinery working. Where it did measure, it
+    graded with the trophy late and two contacts early, without a hedge. Two
+    weaknesses are now specific enough to test on real footage: an arm straight
+    up at contact read as hanging down, and world landmarks that do not show
+    the knee bend the picture landmarks show. The second matters most, because
+    the trophy, knee bend, shoulder tilt and the elbow readings stand on it.
+  - **What it does not.** Accuracy on players: the figure is not a player.
+    The per-reading numbers are three serves at one placement and 30 fps.
+    The truth is the engine on true landmarks, so the engine's own definitions
+    are not tested here; the mocap bench does that.
+  - **Not adopted, and why.** Nothing in the engine, the app, the thresholds,
+    the bands or the noise tables changed. Not RTMPose over a whole-read box:
+    it measured 17 serves where the app measured 3, but put contact 60 ms or
+    more from the truth on 10 of them (contact height 0.33 of a body height
+    low on average, 44 times its noise), which trades an honest refusal for a
+    confident wrong number. Not a lower
+    RTMPose score to adopt the raised hand, not a trophy found from the
+    picture's knee angle, and not a different framing line: each needs real
+    footage first.
+  - Timings are not to be read from these runs: a serve took 30 to 45 s on a
+    busy machine, and when the test suite ran beside a check, the app's 6 s
+    refine budget ran out and the refine was skipped. The full runs were made
+    with nothing else of ours running.
+
+Next in this wave, from N2.8:
+1. **The 3D knee on real footage, without labels.** On the side-on clips in
+   `bench-data/clips/`, set MediaPipe's world knee angle through the load
+   beside its picture knee angle; from the side they are the same angle. If
+   the world one stays straight while the picture bends, the trophy and knee
+   bend should be read off the picture.
+2. **The raised arm at contact on real footage.** Whether MediaPipe's wrist
+   leaves the hand at contact on the retest clips, and whether RTMPose pointed
+   at a box that holds the whole swing finds it.
+
 - [x] **N2.9 Where the player's serves went now orders the plan, past chance
   only.** Finding 6 held: the in, net, long and wide taps reached Progress and
   nothing in the coaching. Now a report reads the player's earlier serves of
