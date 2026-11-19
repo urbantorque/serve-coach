@@ -228,4 +228,30 @@
     grid-row: 4;
     text-align: left;
   }
+
+  /* ------------------------------------------------------ a practice session */
+
+  /* Wider, and the session's own numbers held on the left while its fixes and
+     every serve scroll on the right. */
+  .session .session-inner {
+    max-width: 1080px;
+  }
+
+  .session .session-dash {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 28px 48px;
+    align-items: start;
+  }
+
+  .session-dash > * {
+    grid-column: 2;
+  }
+
+  .session-dash > .session-hero {
+    grid-column: 1;
+    grid-row: 1 / span 8;
+    position: sticky;
+    top: 24px;
+  }
 }

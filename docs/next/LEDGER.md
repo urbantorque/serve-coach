@@ -88,9 +88,13 @@ Findings checked against the code before work starts:
   because the clip is already big. Reports went from about 3 laptop screens
   to 2.3. Gate green, 2,251 checks.
 
-Not yet wide, and left for wave 5's rebuild: the practice session and the
-glance (a readable column, centred), sheets (centred modals), and charts
-whose SVG labels grow with the column. The first run still says "on this
+- [x] **N3.5 The practice session in two panes on a laptop.** The session's
+  numbers and headline held on the left, its fixes, every serve and the rest
+  on the right, the same pattern as the report. CSS only, phone unchanged.
+
+Not wide on purpose: the glance, which is read on court from a phone. Left
+for wave 5's rebuild: sheets (centred modals) and charts whose SVG labels
+grow with the column. The first run still says "on this
 phone" on a laptop; the landing page (wave 6) takes that line.
 
 ## Wave 2. Trust foundations, first slice
