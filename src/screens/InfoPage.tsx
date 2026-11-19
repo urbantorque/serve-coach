@@ -207,6 +207,9 @@ function YourPlus({ until }: { until?: number }) {
       <button className="btn btn--quiet btn--full" onClick={() => void share()}>
         {copied ? 'Link copied. Open it on the other device.' : 'Use Plus on another device'}
       </button>
+      <p className="sr-only" role="status" aria-live="polite">
+        {copied ? 'Link copied. Open it on the other device.' : ''}
+      </p>
       {problem && (
         <p className="plus-problem" role="alert">
           {problem}

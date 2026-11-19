@@ -561,3 +561,7 @@ Wave 6 shipped N6.2 to N6.7 on top of N6.1. Not built, and why: accounts and
 synced numbers, which nothing needs yet and which would change the promise
 the pages make; a live read of a real video on the landing page (N6.6). The
 entry chunk sits at its budget, 0.02 kB inside.
+The guidelines pass over the wave's screens found one gap, fixed: copying the
+link that brings Plus to another device changed only the button's own label,
+which a screen reader is not told; the confirmation now also reaches a polite
+live region, checked in the browser against the stand-in.
