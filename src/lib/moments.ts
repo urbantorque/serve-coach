@@ -199,6 +199,17 @@ function derive(sessions: Session[], prefs: Prefs, now: number, evidence: readon
         title: 'Goal reached',
         body: cue(`Faster than where you started: ${aboutSpeed(goal.cleared, unit)}. ${SPEED_CAVEAT}`),
       })
+    } else if (goal.secondCleared) {
+      // N4.3: from the player's own taps, so it says whose count it is.
+      found.push({
+        kind: 'goal',
+        key: `goal:second:${goal.at}`,
+        at: goal.at,
+        title: 'Goal reached',
+        body: cue(
+          `${goal.secondCleared.inn} of ${goal.secondCleared.of} second serves in, from ${goal.goal.kind === 'second' ? `${goal.goal.from.inn} of ${goal.goal.from.of}` : 'where you started'}. By your own tags.`,
+        ),
+      })
     }
   }
 

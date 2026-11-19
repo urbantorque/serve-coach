@@ -306,3 +306,17 @@ know a good serve from a poor one":
   the demo serve is not one, and `faultDemo.test.ts` refuses a demonstration
   of a fault the read would not call on the same serve. Posture collapse and
   an early shoulder turn need a part the figure cannot paint yet.
+- [x] **N4.3 A pathway for a second serve that goes in.** A third kind of
+  goal beside a fault and pace: "Get more second serves in", for the double
+  faults a UTR 2 to 6 player loses matches to. The first goal read off where
+  the ball went, and only ever off the player's own taps: `secondServe.ts`
+  counts each trip's second serves tagged with where they landed (at least
+  eight a trip), and a goal is reached when a later trip's share is clearly
+  higher, by a one-sided two-proportion test at 95% with a continuity
+  correction. Without the correction a dozen serves a side called 6.5% of
+  unchanged pairs better; with it under 5%, which `secondServe.test.ts` holds.
+  Offered once a trip has enough tags; its weeks walk the plan's toss ladder
+  (or its first fault), closing on a row that asks for second serves tagged;
+  Today's check asks for the same; its note says the counts are the player's
+  own; reaching it is a moment ("9 of 10 second serves in, from 3 of 10. By
+  your own tags."). 3 of 10 to 9 of 10 reaches it; 5 of 10 to 7 of 10 does not.

@@ -100,7 +100,7 @@ export interface Prefs {
    * programme is stored: its weeks are worked out from the history and the
    * ladders every time, so they cannot drift from either.
    */
-  goal?: { kind: 'fault'; flaw: string; startedAt: number } | { kind: 'speed'; startedAt: number }
+  goal?: { kind: 'fault'; flaw: string; startedAt: number } | { kind: 'speed' | 'second'; startedAt: number }
 }
 
 const KEY = 'serve-coach-prefs'

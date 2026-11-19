@@ -58,11 +58,12 @@ import type { ServeTag, Session } from './storage/db'
 import type { TripRecord } from './storage/ledger'
 import type { Cadence, Prefs } from './storage/prefs'
 import { drilledFault, weekPlan, type WeekItem, type WeekPlan } from './weekPlan'
+import { MIN_TAGGED, clearlyMoreIn, inLine, secondInByTrip, type InRate } from './secondServe'
 
 /** The range a speed goal has to clear: one trip's typical first serve. */
 export type SpeedRange = Pick<SpeedSummary, 'ms' | 'low' | 'high' | 'at'>
 
-export type Goal = { kind: 'fault'; flaw: FlawId } | { kind: 'speed'; from: SpeedRange }
+export type Goal = { kind: 'fault'; flaw: FlawId } | { kind: 'speed'; from: SpeedRange } | { kind: 'second'; from: InRate }
 
 export type WeekState = 'done' | 'current' | 'upcoming'
 
@@ -73,7 +74,7 @@ export interface ProgrammeWeek {
   from: number
   to: number
   /** A rung of the ladder, the hold that makes a fix count, or the trip that reads a speed. */
-  kind: 'step' | 'hold' | 'speed'
+  kind: 'step' | 'hold' | 'speed' | 'second'
   state: WeekState
   /** Where the rung sits, on a step. */
   step?: { at: number; of: number }
@@ -144,6 +145,8 @@ export interface GoalReached {
   graduation?: Graduation
   /** The trip that reached a speed goal. */
   cleared?: SpeedSummary
+  /** The trip whose second serves went in clearly more often (N4.3). */
+  secondCleared?: InRate
 }
 
 /** What else a history can hold, beside the reports and practice evidence. */
@@ -190,11 +193,32 @@ const SPEED_DRILL: Drill = {
   reps: `${CHECK_SERVES} serves`,
 }
 
-export const goalTitle = (goal: Goal): string => (goal.kind === 'fault' ? GOAL_TITLE[goal.flaw] : SPEED_TITLE)
+/**
+ * A second serve that goes in (N4.3): the trip's second serves the player
+ * tagged in, beaten clearly by a later trip (`secondServe.ts`). The first goal
+ * read off where the ball went, and only ever off the player's own taps.
+ */
+export const SECOND_TITLE = 'Get more second serves in'
+
+export const SECOND_NOTE = 'From the second serves you tagged in or out. Nothing here sees the court.'
+
+/** The faults a second serve misses with, where the plan has one: the toss, worst first. */
+const SECOND_WORK: readonly FlawId[] = ['toss_drift', 'toss_arm_drops', 'toss_height']
+
+const SECOND_DRILL: Drill = {
+  name: 'Second serves, tagged',
+  how: 'Serve a basket of second serves. After each, tap second serve and where it landed.',
+  reps: `${MIN_TAGGED} second serves or more`,
+}
+
+export const goalTitle = (goal: Goal): string =>
+  goal.kind === 'fault' ? GOAL_TITLE[goal.flaw] : goal.kind === 'speed' ? SPEED_TITLE : SECOND_TITLE
 
 /** The patch that picks a goal: `writePrefs(chooseGoal(option.goal))`. */
 export function chooseGoal(goal: Goal, now: number = Date.now()): Pick<Prefs, 'goal'> {
-  return { goal: goal.kind === 'fault' ? { kind: 'fault', flaw: goal.flaw, startedAt: now } : { kind: 'speed', startedAt: now } }
+  return {
+    goal: goal.kind === 'fault' ? { kind: 'fault', flaw: goal.flaw, startedAt: now } : { kind: goal.kind, startedAt: now },
+  }
 }
 
 /** One history, read once for everything below. */
@@ -208,6 +232,8 @@ interface Reading {
   week?: WeekPlan
   /** Each trip's typical first serve, oldest first. */
   trips: SpeedSummary[]
+  /** Each trip's tagged second serves, in out of told, oldest first (N4.3). */
+  seconds: InRate[]
   cadence: Cadence
   unit: SpeedUnit
   more: ProgrammeContext
@@ -234,6 +260,7 @@ function reading(
     evidence,
     week: weekPlan(sessions, prefs.ladder, now, evidence),
     trips: speedByTrip(sessions, more.tags ?? []),
+    seconds: secondInByTrip(sessions, more.tags ?? []),
     cadence: cadenceOf(sessions, prefs, more),
     unit: prefs.speedUnit ?? defaultSpeedUnit(),
     more,
@@ -241,10 +268,12 @@ function reading(
 }
 
 /** The goal the player picked, when this build can still read it and it has a ladder to walk. */
-function picked(prefs: Prefs): { kind: 'speed'; startedAt: number } | { kind: 'fault'; flaw: FlawId; startedAt: number } | undefined {
+function picked(
+  prefs: Prefs,
+): { kind: 'speed' | 'second'; startedAt: number } | { kind: 'fault'; flaw: FlawId; startedAt: number } | undefined {
   const g = prefs.goal
   if (!g || typeof g.startedAt !== 'number') return undefined
-  if (g.kind === 'speed') return g
+  if (g.kind === 'speed' || g.kind === 'second') return g
   return g.kind === 'fault' && progressionFor(g.flaw as FlawId) ? (g as { kind: 'fault'; flaw: FlawId; startedAt: number }) : undefined
 }
 
@@ -277,6 +306,17 @@ function speedRun(trips: readonly SpeedSummary[]): { from: SpeedSummary; last?: 
 
 const range = ({ ms, low, high, at }: SpeedSummary): SpeedRange => ({ ms, low, high, at })
 
+/**
+ * Where a second-serve goal stands: the trip it started from, and the first
+ * later trip whose second serves went in clearly more often. Reached stays
+ * reached, as a speed goal does.
+ */
+function secondFrom(seconds: readonly InRate[], startedAt: number): { from: InRate; cleared?: InRate } {
+  const before = seconds.filter((t) => t.at <= startedAt)
+  const from = before[before.length - 1] ?? seconds[0]
+  return { from, cleared: seconds.find((t) => t.at > from.at && clearlyMoreIn(t, from)) }
+}
+
 /** The first fault in the plan: the default goal. */
 const planFirst = (r: Reading): WeekItem | undefined => r.week?.items.find((i) => i.flaw)
 
@@ -285,6 +325,10 @@ function goalNow(r: Reading): { goal: Goal; chosen: boolean; startedAt?: number 
   const choice = picked(r.prefs)
   if (choice?.kind === 'fault' && !graduation(r.pool, choice.flaw)) {
     return { goal: { kind: 'fault', flaw: choice.flaw }, chosen: true, startedAt: choice.startedAt }
+  }
+  if (choice?.kind === 'second' && r.seconds.length) {
+    const at = secondFrom(r.seconds, choice.startedAt)
+    if (!at.cleared) return { goal: { kind: 'second', from: at.from }, chosen: true, startedAt: choice.startedAt }
   }
   if (choice?.kind === 'speed' && r.trips.length) {
     const at = speedFrom(r.trips, choice.startedAt)
@@ -366,6 +410,17 @@ const holdRow = (ladder: Progression, state: WeekState): Row => ({
   trips: GRADUATION_TRIPS,
 })
 
+const secondRow = (from: InRate, state: WeekState): Row => ({
+  kind: 'second',
+  state,
+  title: 'Tag your second serves',
+  drill: SECOND_DRILL,
+  check: `Tag at least ${MIN_TAGGED} second serves, and where each landed.`,
+  filmed: false,
+  know: cue(`You will know when a trip's second serves go in clearly more often than ${inLine(from)}.`),
+  trips: 1,
+})
+
 const speedRow = (from: SpeedRange, unit: SpeedUnit, state: WeekState): Row => ({
   kind: 'speed',
   state,
@@ -432,6 +487,12 @@ function speedWork(r: Reading): FlawId {
   return r.week?.items.find((i) => i.flaw && SPEED_WORK.includes(i.flaw))?.flaw ?? 'no_leg_drive'
 }
 
+/** The ladder a second-serve goal works up: the plan's toss fault, or its first fault, or the toss. */
+function secondWork(r: Reading): FlawId {
+  const items = r.week?.items ?? []
+  return items.find((i) => i.flaw && SECOND_WORK.includes(i.flaw))?.flaw ?? items.find((i) => i.flaw)?.flaw ?? 'toss_drift'
+}
+
 /** The newest evidence that the player has been on court. */
 function lastVisit(r: Reading): number {
   return Math.max(
@@ -455,6 +516,7 @@ function paceLine(weeksLeft: number, cadence: Cadence): string {
 
 function whyLine(goal: Goal, chosen: boolean, unit: SpeedUnit): string {
   if (goal.kind === 'speed') return cue(`The trip to beat: ${aboutSpeed(goal.from, unit)}.`)
+  if (goal.kind === 'second') return cue(`The trip to beat: ${inLine(goal.from)} second serves in.`)
   return chosen ? 'You picked this one.' : 'First in your plan: the others often follow from it.'
 }
 
@@ -478,12 +540,14 @@ export function programmeFor(
   if (!found) return undefined
   const { goal, chosen, startedAt } = found
 
-  const flaw = goal.kind === 'fault' ? goal.flaw : speedWork(r)
+  const flaw = goal.kind === 'fault' ? goal.flaw : goal.kind === 'speed' ? speedWork(r) : secondWork(r)
   const { item, ladder, rung } = itemFor(r, flaw)
   const closing =
     goal.kind === 'fault'
       ? (state: WeekState) => holdRow(ladder, state)
-      : (state: WeekState) => speedRow(goal.from, r.unit, state)
+      : goal.kind === 'speed'
+        ? (state: WeekState) => speedRow(goal.from, r.unit, state)
+        : (state: WeekState) => secondRow(goal.from, state)
   const { rows, moveUp } = ladderRows(r, flaw, ladder, rung, closing)
 
   const span = WEEKS_PER_TRIP[r.cadence]
@@ -507,7 +571,7 @@ export function programmeFor(
     why: whyLine(goal, chosen, r.unit),
     chosen,
     ...(startedAt !== undefined ? { startedAt } : {}),
-    ...(goal.kind === 'speed' ? { note: SPEED_NOTE } : {}),
+    ...(goal.kind === 'speed' ? { note: SPEED_NOTE } : goal.kind === 'second' ? { note: SECOND_NOTE } : {}),
     cadence: r.cadence,
     weeks,
     current,
@@ -532,7 +596,11 @@ export function programmeFor(
 export function todayFor(programme: Pick<Programme, 'goal' | 'plan'>, minutes: CourtMinutes): CourtBlock[] {
   const blocks = courtPlan(programme.plan, minutes)
   if (programme.goal.kind === 'fault') return blocks
-  return blocks.map((b) => (b.kind === 'check' ? { ...b, line: `Film ${CHECK_SERVES} first serves from the side for a speed.` } : b))
+  const line =
+    programme.goal.kind === 'speed'
+      ? `Film ${CHECK_SERVES} first serves from the side for a speed.`
+      : `Serve ${MIN_TAGGED} second serves and tag where each landed.`
+  return blocks.map((b) => (b.kind === 'check' ? { ...b, line } : b))
 }
 
 /**
@@ -556,6 +624,14 @@ export function goalOptions(
       goal: { kind: 'fault', flaw: item.flaw },
       title: GOAL_TITLE[item.flaw],
       line: item.step ? `Step ${item.step.at} of ${item.step.of}: ${item.drill.name}.` : `${item.drill.name}.`,
+    })
+  }
+  const second = r.seconds[r.seconds.length - 1]
+  if (second && inForce?.kind !== 'second') {
+    out.push({
+      goal: { kind: 'second', from: second },
+      title: SECOND_TITLE,
+      line: cue(`Beat ${inLine(second)} second serves in, from the ones you tagged.`),
     })
   }
   const newest = r.trips[r.trips.length - 1]
@@ -593,6 +669,10 @@ export function goalsReached(
     if (!held) continue
     const wasGoal = (choice?.kind === 'fault' && choice.flaw === flaw) || drilledFault(r.pool, held.since, prefs.ladder) === flaw
     if (wasGoal) out.push({ goal: { kind: 'fault', flaw }, title: GOAL_TITLE[flaw], at: held.since, graduation: held })
+  }
+  if (choice?.kind === 'second' && r.seconds.length) {
+    const at = secondFrom(r.seconds, choice.startedAt)
+    if (at.cleared) out.push({ goal: { kind: 'second', from: at.from }, title: SECOND_TITLE, at: at.cleared.at, secondCleared: at.cleared })
   }
   if (r.trips.length) {
     const reachedSpeed =

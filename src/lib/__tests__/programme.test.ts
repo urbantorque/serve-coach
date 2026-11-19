@@ -482,4 +482,40 @@ check('the season comes out as a programme somebody could follow', () => {
   assert(p.goal.kind === 'fault', 'the season has faults to work on')
 })
 
+heading('A second serve that goes in (N4.3)')
+
+/** Second serves tagged on every serve of a trip, the first `inn` of them in. */
+const seconds = (serves: Session[], inn: number): ServeTag[] =>
+  serves.map((s, i) => ({ id: s.id, serveNumber: 2, outcome: i < inn ? 'in' : 'net', taggedAt: s.createdAt }))
+
+check('offered once a trip has enough tagged second serves, and run with its own row and note', () => {
+  const a = trip(170, 10, [TOSS])
+  const tags = seconds(a, 3)
+  const offered = goalOptions(history(a), prefs(), 172 * DAY, [], { tags })
+  const option = offered.find((o) => o.goal.kind === 'second')
+  assert(option !== undefined, 'a trip of ten tagged second serves offered no second-serve goal')
+  const chosen = prefs(chooseGoal(option!.goal, 172 * DAY))
+  const p = programmeFor(history(a), chosen, 173 * DAY, [], { tags })!
+  assert(p.goal.kind === 'second' && p.chosen, `the goal in force is ${p.goal.kind}`)
+  assert(p.title === goalTitle(p.goal) && p.note !== undefined, 'no title or note')
+  const last = p.weeks[p.weeks.length - 1]
+  assert(last.kind === 'second' && !last.filmed, `the closing row is ${last.kind}`)
+  assert(/3 of 10/.test(p.why), `why does not name the trip to beat: ${p.why}`)
+  assert(p.today.some((b) => b.kind === 'check' && /tag/i.test(b.line)), 'today does not ask for second serves tagged')
+  clean([p.title, p.why, p.note!, last.check, last.know, option!.line])
+})
+
+check('a later trip with clearly more in reaches it; a lucky small step does not', () => {
+  const a = trip(170, 10, [TOSS])
+  const b = trip(185, 10, [TOSS])
+  const chosen = prefs(chooseGoal({ kind: 'second', from: { inn: 0, of: 0, at: 0 } }, 172 * DAY))
+  const reached = goalsReached(history(a, b), chosen, 186 * DAY, [], { tags: [...seconds(a, 3), ...seconds(b, 9)] })
+  const got = reached.find((g) => g.goal.kind === 'second')
+  assert(got?.secondCleared?.inn === 9, '3 of 10 to 9 of 10 did not reach the goal')
+  const after = programmeFor(history(a, b), chosen, 186 * DAY, [], { tags: [...seconds(a, 3), ...seconds(b, 9)] })!
+  assert(after.goal.kind !== 'second', 'a reached goal stayed in force')
+  const lucky = goalsReached(history(a, b), chosen, 186 * DAY, [], { tags: [...seconds(a, 5), ...seconds(b, 7)] })
+  assert(!lucky.some((g) => g.goal.kind === 'second'), '5 of 10 to 7 of 10 was called a second serve fixed')
+})
+
 report()
