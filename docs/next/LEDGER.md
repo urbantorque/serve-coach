@@ -342,3 +342,15 @@ know a good serve from a poor one":
   a run that was still live clears it now. Not walked past the 150 s session
   line in a browser: what happens after the stop is the existing path for a
   long clip.
+- [x] **N4.5 Kick and slice pathways: cut, measured.** The handover asked for
+  a pathway each for learning a kick and a slice. Neither has a target the
+  camera can read. A slice is its sideways contact and sideways spin, and the
+  side-on camera measures neither (`SERVE_TYPES.slice` in `coaching.ts`: "the
+  lateral half of a slice is measured nowhere"). A kick is its topspin; what
+  the camera sees of it is a steeper shoulder tilt (36 to 50 degrees against
+  the flat serve's under 36), while published contact height and contact in
+  front are the same as a flat serve's (Vacek 2023, Campbell 2013). A goal
+  called "Learn a kick" would be reached by tilting the shoulders, which is
+  confident nonsense. What already holds: a player who says they hit a kick or
+  a slice has every fault goal read against that serve's own bands, and the
+  second-serve goal (N4.3) counts what lands, which is what a kick is for.
