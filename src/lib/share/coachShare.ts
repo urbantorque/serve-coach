@@ -34,8 +34,17 @@ function stills(analysis: Reportable): CoachStill[] {
   return out
 }
 
-export async function sendCoachReport(analysis: Reportable, context?: CoachContext): Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'> {
-  const plan = causalPlan(analysis.triage, analysis.diagnosis)
+/**
+ * The coach's page, in the order the report gave (N7.5): the report's plan when
+ * it has one, which a player's own tags can reorder past chance (N2.9), and the
+ * causal order where it was not passed.
+ */
+export async function sendCoachReport(
+  analysis: Reportable,
+  context?: CoachContext,
+  given?: Analysis['focus'][],
+): Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'> {
+  const plan = given?.length ? given : causalPlan(analysis.triage, analysis.diagnosis)
   const html = coachReportHtml(analysis, plan, stills(analysis), context)
   const day = new Date(analysis.createdAt).toISOString().slice(0, 10)
   return shareBlob(new Blob([html], { type: 'text/html' }), `serve-report-${day}.html`, 'Serve report for my coach', 'text/html')

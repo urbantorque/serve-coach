@@ -917,3 +917,32 @@ Next in this wave, from N2.8:
     of 27 tagged".
   Not done: "trophy" on the jargon list. It is a glossary word with a tap to
   explain it everywhere it leads, which is what the copy rule asks.
+
+- [x] **N7.5 The engine reviewer's corrections: a scoring break said out loud,
+  and the accuracy page held to real footage.** From the close-out review (an
+  engine-regression hunter, each finding re-checked by a skeptic):
+  - **`SCORING_VERSION` 7, a measurement change.** N2.5 and N2.6 withhold a
+    racket drop the picture could not have shown, which moves the Swing area
+    and the overall of a clip that lost the drop (on the rig's lost frame,
+    swing 41 to 74 and overall 76 to 83), and the rule's own comment says a
+    change that moves a saved report's number is a bump. It is a
+    `measurement`, since the check needs frames a saved report does not keep:
+    the chart breaks at it, the player's usual and best restart, and the
+    miss links wait for 48 new tags. N2.12's flat bands and N7.3's contact
+    far in front, scored as the band's edge, land at the same break.
+  - **The accuracy page.** It said a re-read moves the score "4 points or
+    fewer" and "a bigger change is your serve, not my camera". The 4 comes
+    from the test serves' ensembles; copies of two small real clips moved it 1
+    to 9 points. The page now says both, scoped to where each was measured,
+    and that a change of a few points can be the camera.
+  - **The coach's page** lists the plan in the report's order, which the
+    player's own tags can reorder past chance (N2.9); it rebuilt the causal
+    order on its own.
+  - Two comments corrected: the drop that cannot be seen gets no weight at
+    all since N2.6 (it said "left to the depth proxy"), and the ladder is no
+    longer "gentle at the bottom" for the three signals N2.12 flattened, which
+    cuts both ways (a still-learning lean named from 31 degrees, not 36; a
+    strong one from 31, not 27 or 24).
+  Confirmed and left: the triage bar at 0.85 (a measured trade recorded in
+  N2.12, with no slack), and the week plan and glance, which never followed
+  the report's order or only read its first fix.

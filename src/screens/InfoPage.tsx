@@ -1,7 +1,7 @@
 import { useEffect, useState, type MouseEvent, type ReactNode } from 'react'
 import '../styles/info.css'
 import { Icon } from '../components/primitives'
-import { SCORE_STEADY, accuracyRows, unmeasuredRows, wobbleText } from '../lib/accuracy'
+import { SCORE_ON_SMALL_CLIPS, SCORE_STEADY, accuracyRows, unmeasuredRows, wobbleText } from '../lib/accuracy'
 import { deviceNoun } from '../lib/device'
 import { ATTRIBUTION } from '../lib/figure/modelCredit'
 import { INFO_PAGES, INFO_TITLES, pathFor, type InfoPageId } from '../lib/routes'
@@ -231,8 +231,14 @@ function Accuracy({ onPage }: { onPage: Go }) {
       <Section title="The number at the top">
         <p>It sets every graded reading of your serve against its band, then weighs the areas into one number out of 100.</p>
         <p>
-          Read again, the same serve moves it <strong className="tnum">{SCORE_STEADY}</strong> points or fewer, nine times in ten.
-          A bigger change is your serve, not my camera.
+          Read again, my test serves move it <strong className="tnum">{SCORE_STEADY}</strong> points or fewer, nine times in ten.
+        </p>
+        <p>
+          Copies of two small, dark real clips moved it{' '}
+          <strong className="tnum">
+            {SCORE_ON_SMALL_CLIPS[0]} to {SCORE_ON_SMALL_CLIPS[1]}
+          </strong>{' '}
+          points. A change of a few points can be my camera, not your serve.
         </p>
         <p>No coach and no ranking has checked what a number means for a real player. Set it against your own serves, not anyone else&apos;s.</p>
       </Section>

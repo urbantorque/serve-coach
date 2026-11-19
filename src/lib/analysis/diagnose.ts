@@ -1227,8 +1227,9 @@ export function diagnose(
    *
    * Absence of evidence only counts where evidence could have appeared. If the
    * racket wrist was not seen through the stretch a drop would live in, the
-   * flat posture series says nothing about the player and the reading is left
-   * to the depth proxy and its own confidence.
+   * flat posture series says nothing about the player, and since N2.6 both
+   * readings it feeds get no weight (`dropNotEvidence`), so no shallow drop
+   * and no collapsed elbow is named from that clip.
    *
    * Visibility is necessary and not sufficient, and a real clip is what showed
    * why. Filmed from behind the baseline at about seventy degrees of yaw, a

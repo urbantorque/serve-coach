@@ -300,9 +300,6 @@ export default function Report({
   const { sharing: clipping, trigger: makeClip } = useShareState(() =>
     shareServeClip(analysis, streak, bestScore && bestTripLine(bestScore, analysis.createdAt)),
   )
-  const { sharing: sendingCoach, trigger: sendCoach } = useShareState(() =>
-    import('../lib/share/coachShare').then(async ({ sendCoachReport }) => sendCoachReport(analysis, await coachContext?.())),
-  )
 
   const goToPhase = (phase: PhaseId) => {
     setSeek((prev) => ({ phase, n: (prev?.n ?? 0) + 1 }))
@@ -328,6 +325,13 @@ export default function Report({
   const ranked = linked.plan
   const plan = ranked.length ? ranked : [analysis.focus]
   const first = plan[0]
+
+  // The coach's page lists the plan as this report orders it (N7.5).
+  const { sharing: sendingCoach, trigger: sendCoach } = useShareState(() =>
+    import('../lib/share/coachShare').then(async ({ sendCoachReport }) =>
+      sendCoachReport(analysis, await coachContext?.(), ranked),
+    ),
+  )
 
   /** Where one fix's drill sits on its ladder, or -1 where it has none. */
   const rungOf = (item: Analysis['focus']): number => {

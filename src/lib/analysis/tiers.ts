@@ -106,10 +106,16 @@ function cardBand(card: string): SignalSpec['anchors'] {
 /**
  * The ladder.
  *
- * Deliberately gentle at the bottom and never tour-level at the top: the 9-rung
- * of every flexibility-bound signal sits at what a fit strong amateur can hold
- * without forcing a joint, not at what a professional produces. The engine's job
- * is to move somebody one rung, not to describe the best serve ever filmed.
+ * Never tour-level at the top: the 9-rung of every flexibility-bound signal
+ * sits at what a fit strong amateur can hold without forcing a joint, not at
+ * what a professional produces. The engine's job is to move somebody one rung,
+ * not to describe the best serve ever filmed.
+ *
+ * Not gentle at the bottom any more, for the three a fault is named from
+ * (N2.12): the palm, the lower back and the elbow are flat at the club band at
+ * every rung. That cuts both ways and both are meant: a still-learning player
+ * is held to the club line (the lean named from 31 degrees, not 36), and a
+ * strong one is no longer held tighter than it (31, not 27 or 24).
  */
 export const SIGNALS: Record<string, SignalSpec> = {
   /* --- grip and the racket face ------------------------------------------ */

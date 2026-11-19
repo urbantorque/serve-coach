@@ -22,6 +22,16 @@ import { REAL_CHANGE } from './analysis/realChange'
  */
 export const SCORE_STEADY = REAL_CHANGE.overall - 1
 
+/**
+ * How far the headline number moved between copies of one real serve (N7.5):
+ * two small, dark public clips, each re-read darker, further away, smaller and
+ * a frame later (LEDGER N2.2, `docs/next/bench/retest.json`). Wider than
+ * `SCORE_STEADY`, which is measured on the test serves' own ensembles, so the
+ * page says both and claims neither as the camera's whole share. Those copies
+ * are 320 by 240, which the retest record says overstates the noise.
+ */
+export const SCORE_ON_SMALL_CLIPS: readonly [number, number] = [1, 9]
+
 export interface AccuracyRow {
   id: string
   label: string

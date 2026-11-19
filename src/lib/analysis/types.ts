@@ -103,7 +103,14 @@ export interface Frame {
 // file is read on; a toss from behind by up to about 3.5 points on a whole clip
 // of four seconds and under 1 on a located window; and on a level phone, the
 // contact height and shoulder tilt of a stance near the line.
-export const SCORING_VERSION = 6
+// 7: a racket drop the picture could not have shown is withheld, not scored as
+// one that never fell (N2.5, N2.6: `couldSeeTheDrop`), which moves the Swing
+// area and the overall of a clip that lost the drop (on the rig's lost frame,
+// swing 41 to 74 and overall 76 to 83). It needs frames a saved report does not
+// keep, so it is a measurement. N2.12's flat lower-back and drop bands land at
+// the same break (they move the diagnosis, never the card), and so does N7.3's
+// contact far in front, scored as the band's edge since it has no fix.
+export const SCORING_VERSION = 7
 
 /**
  * Which rule bounded a basket's register lines: the arm, the landing and the
@@ -143,6 +150,8 @@ export const SCORING_KINDS: Record<number, 'card-bands' | 'measurement'> = {
   5: 'measurement',
   // The read, the toss window, levelling and the fault floors: see above.
   6: 'measurement',
+  // A drop the picture could not show is withheld (N2.5, N2.6): see above.
+  7: 'measurement',
 }
 
 /**
