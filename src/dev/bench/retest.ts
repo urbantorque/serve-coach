@@ -108,6 +108,39 @@ async function record(url: string, from: number, to: number, change: Change): Pr
   return URL.createObjectURL(new Blob(chunks, { type: 'video/webm' }))
 }
 
+/** How long a recorded copy really is, as the browser reads it back. */
+async function lengthOf(url: string): Promise<number> {
+  const v = document.createElement('video')
+  v.muted = true
+  v.src = url
+  await new Promise<void>((resolve) => {
+    v.onloadedmetadata = () => resolve()
+    v.onerror = () => resolve()
+  })
+  return Number.isFinite(v.duration) ? v.duration : 0
+}
+
+/**
+ * Record a copy and check it came out whole (N2.4). A copy recorded while the
+ * machine was busy can come out a fraction of a second long: on 2026-11-19 the
+ * copies the bench had blamed for collapsed swings and flipped refusals were
+ * each 18 KB, about 0.17 s of video. Up to three tries; a copy still short is
+ * reported as short, never read as though it were the serve.
+ */
+async function recordWhole(url: string, from: number, to: number, change: Change): Promise<{ copy: string; seconds: number; tries: number }> {
+  const want = to - from - (change.late ?? 0)
+  let last = { copy: '', seconds: 0, tries: 0 }
+  for (let tries = 1; tries <= 3; tries++) {
+    const copy = await record(url, from, to, change)
+    const seconds = await lengthOf(copy)
+    last = { copy, seconds, tries }
+    if (seconds >= 0.9 * want) return last
+    log(`  ${change.id}: recording came out ${seconds.toFixed(2)} s of ${want.toFixed(2)}, again`)
+    URL.revokeObjectURL(copy)
+  }
+  return last
+}
+
 interface Reading {
   outcome: string
   overall?: number
@@ -115,6 +148,11 @@ interface Reading {
   flaws: string[]
   metrics: Record<string, number>
   speedKmh?: number
+  /** What the refusal gates read (`triage.ts` `LIMITS`): how close each copy came to them. */
+  blur?: number
+  swingSamples?: number
+  /** Where each phase landed, in seconds into the copy. */
+  phases?: Record<string, number>
 }
 
 function read(a: Analysis): Reading {
@@ -128,6 +166,9 @@ function read(a: Analysis): Reading {
     flaws: (a.diagnosis?.flaws ?? []).filter((f) => f.detected).map((f) => f.flaw).sort(),
     metrics,
     speedKmh: speed,
+    blur: a.triage?.quality ? Math.round(a.triage.quality.blur * 1000) / 1000 : undefined,
+    swingSamples: a.triage?.quality?.swing_samples,
+    phases: Object.fromEntries(a.phases.map((p) => [p.id, Math.round(p.t * 1000) / 1000])),
   }
 }
 
@@ -144,6 +185,8 @@ export interface RetestRow {
   clip: string
   change: string
   outcome: string
+  blur?: number
+  swingSamples?: number
   overall?: number
   overallMove?: number
   /**
@@ -162,6 +205,32 @@ export interface RetestRow {
 
 const PAST = 2 * Math.SQRT2
 
+/** Copies whose swing window collapsed, kept so they can be saved and replayed. */
+const cases: { name: string; url: string; phases?: Record<string, number>; error?: string }[] = []
+;(window as unknown as { __retestCases: typeof cases }).__retestCases = cases
+
+/**
+ * `?file=name.webm`: read one saved copy from `bench-data/retest-cases/` three
+ * times and log where its phases landed, to see whether a failure is the
+ * file's or the read's.
+ */
+async function single(file: string) {
+  const runs: unknown[] = []
+  // `&before=clip.webm`: read another clip first, to see whether what the
+  // engine read last changes what it reads next.
+  const before = params.get('before')
+  if (before) {
+    const b = await analyse(before.includes('/') ? before : `/bench-data/clips/${before}`, before)
+    log(`before: ${before} ${b.error ?? b.reading?.outcome}`)
+  }
+  for (let i = 0; i < 3; i++) {
+    const got = await analyse(`/bench-data/retest-cases/${file}`, file)
+    log(`${file} #${i + 1}: ${got.error ?? got.reading?.outcome} swing ${got.reading?.swingSamples} ${JSON.stringify(got.reading?.phases)}`)
+    runs.push(got)
+  }
+  ;(window as unknown as { __single: unknown[] }).__single = runs
+}
+
 async function run() {
   const rows: RetestRow[] = []
   for (const clip of CLIPS) {
@@ -176,14 +245,26 @@ async function run() {
     log(`${clip}: window ${first.window[0].toFixed(2)}–${first.window[1].toFixed(2)} s`)
     let control: Reading | undefined
     for (const change of CHANGES) {
-      const copy = await record(url, from, to, change)
+      const recorded = await recordWhole(url, from, to, change)
+      const copy = recorded.copy
+      if (recorded.seconds < 0.9 * (to - from - (change.late ?? 0))) {
+        rows.push({ clip, change: change.id, outcome: `short recording: ${recorded.seconds.toFixed(2)} s`, moves: {}, pastNoise: [] })
+        log(`  ${change.id}: short recording after ${recorded.tries} tries, not read`)
+        continue
+      }
       const got = await analyse(copy, `${change.id}-${clip}`)
-      URL.revokeObjectURL(copy)
+      // A copy whose swing collapsed, or that could not be read, is kept for
+      // `scripts/retest.mjs` to save, so the failure can be replayed exactly.
+      const collapsed = got.error !== undefined || (got.reading?.swingSamples ?? 99) < 6
+      if (collapsed) cases.push({ name: `${change.id}-${clip}`, url: copy, phases: got.reading?.phases, error: got.error })
+      else URL.revokeObjectURL(copy)
       const r = got.reading
       if (change.id === 'control') control = r
       const row: RetestRow = { clip, change: change.id, outcome: got.error ? `error: ${got.error}` : (r?.outcome ?? 'none'), moves: {}, pastNoise: [] }
       if (r) {
         row.overall = r.overall
+        row.blur = r.blur
+        row.swingSamples = r.swingSamples
         if (control && change.id !== 'control') {
           if (r.overall !== undefined && control.overall !== undefined) row.overallMove = r.overall - control.overall
           row.bothMeasured = r.outcome === 'measured' && control.outcome === 'measured'
@@ -201,7 +282,7 @@ async function run() {
         }
       }
       rows.push(row)
-      log(`  ${change.id}: ${row.outcome}, overall ${row.overall ?? '-'}${row.overallMove !== undefined ? ` (${row.overallMove >= 0 ? '+' : ''}${row.overallMove})` : ''}${row.pastNoise.length ? `, past noise: ${row.pastNoise.join(' ')}` : ''}`)
+      log(`  ${change.id}: ${row.outcome} [blur ${row.blur ?? '-'}, swing ${row.swingSamples ?? '-'}], overall ${row.overall ?? '-'}${row.overallMove !== undefined ? ` (${row.overallMove >= 0 ? '+' : ''}${row.overallMove})` : ''}${row.pastNoise.length ? `, past noise: ${row.pastNoise.join(' ')}` : ''}`)
     }
   }
   ;(window as unknown as { __retest: RetestRow[] }).__retest = rows
@@ -217,4 +298,5 @@ async function run() {
   log('done')
 }
 
-void run()
+const file = params.get('file')
+void (file ? single(file) : run())

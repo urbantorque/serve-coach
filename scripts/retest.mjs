@@ -29,6 +29,24 @@ try {
   await page.goto(`${base}/retest.html${clips ? `?clips=${encodeURIComponent(clips)}` : ''}`, { waitUntil: 'load' })
   await page.waitForFunction(() => window.__retest, undefined, { timeout: 60 * 60_000, polling: 2000 })
   const rows = await page.evaluate(() => window.__retest)
+  // Save the copies whose swing collapsed, so the failure can be replayed
+  // exactly through `retest.html?file=` (bench-data is never committed).
+  const cases = await page.evaluate(async () =>
+    Promise.all(
+      window.__retestCases.map(async (c) => {
+        const buf = new Uint8Array(await (await fetch(c.url)).arrayBuffer())
+        let bin = ''
+        for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000))
+        return { name: c.name, data: btoa(bin), phases: c.phases, error: c.error }
+      }),
+    ),
+  )
+  const caseDir = join(root, 'bench-data', 'retest-cases')
+  mkdirSync(caseDir, { recursive: true })
+  for (const c of cases) {
+    writeFileSync(join(caseDir, c.name), Buffer.from(c.data, 'base64'))
+    console.log(`saved bench-data/retest-cases/${c.name} ${c.error ?? JSON.stringify(c.phases)}`)
+  }
   const out = join(root, 'docs', 'next', 'bench')
   mkdirSync(out, { recursive: true })
   writeFileSync(join(out, 'retest.json'), JSON.stringify({ ranAt: new Date().toISOString(), rows }, null, 2))
