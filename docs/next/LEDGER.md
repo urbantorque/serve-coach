@@ -693,3 +693,22 @@ live region, checked in the browser against the stand-in.
   real takes that do not fold) is gone. A first attempt held the three at
   level 5's band instead; the band test refused it, because a Bath serve
   reads 18° and the club band its source rests on reaches 19.
+- [x] **N2.13 The measurement records leave the shipped code; the tables stay
+  apart, measured.** The handover asked for one band table, one noise table and
+  one path from reading to grade, with the prose records moved out of runtime
+  code. Done: the twenty records in `UNDER_RESOLVED` and `UNCALIBRATED`, which
+  shipped to every player as strings nothing on screen reads, are written out
+  in `docs/next/measurement-records.md` (generated from the engine's own values,
+  then edited only to drop long dashes). The engine keeps the keys, so
+  `depth.test.ts` still refuses a signal measured with no record, and the check
+  that holds each stated deviation to what the ensemble measures now reads it
+  from the document ("says 5.7, measures 5.7230"). The long comments beside the
+  numbers stay where they are: the build strips them, and they are the reason
+  each number is what it is. Not done, on reading what they hold: one noise
+  table. `CARD_NOISE_SD` is a deviation per card reading, `NOISE_FLOOR` a
+  naming floor per diagnosis signal (a multiple of a deviation, raised where a
+  measured trade asked), and `CAMERA_ALLOWANCE` how far a phone's placement
+  moves a reading; `RETEST_SD` is measured on real footage and not adopted.
+  Four different quantities in four tables is not duplication, and folding
+  them would hide which one a check stands on. The card and diagnosis bands
+  already share one source where they read one number (`cardBand`, L5.1).

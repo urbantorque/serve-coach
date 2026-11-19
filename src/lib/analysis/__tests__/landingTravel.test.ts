@@ -13,6 +13,7 @@ import { UNCALIBRATED } from '../tiers'
 import { REAL_SERVES } from './repeatability'
 import type { Frame } from '../types'
 import { assert, check, heading, near, note, report } from './harness'
+import { recordOf } from './records'
 
 const FPS = 50
 /** The rig's standing height, in metres. */
@@ -87,7 +88,8 @@ check('the dial moves nothing until the ball has gone', () => {
 })
 
 check('falling back is declared uncalibrated, and the reason says why', () => {
-  const why = UNCALIBRATED.landing_travel_ratio
+  // The words live in the measurement records since N2.13; the key stays in the engine.
+  const why = 'landing_travel_ratio' in UNCALIBRATED ? recordOf('landing_travel_ratio') : undefined
   assert(why !== undefined && /not named/.test(why), 'the signed landing has no uncalibrated entry')
 })
 

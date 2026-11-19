@@ -59,6 +59,7 @@ import { METRICS } from '../coaching'
 import { NOISE_FLOOR, SIGNALS, UNCALIBRATED, UNDER_RESOLVED, inferTier } from '../tiers'
 import { CLEAN_SERVE, buildServe, type ServeDials } from '../syntheticServe'
 import { assert, check, heading, note, report } from './harness'
+import { recordOf } from './records'
 import {
   DEPTH_AWARE,
   DEPTH_BIAS,
@@ -1535,7 +1536,8 @@ check('the camera moves it by less than its own noise, and the entry claims noth
    * file, and an entry that said "identical at every angle" without saying what
    * that is worth would be the overclaim in the place people actually read.
    */
-  const entry = UNCALIBRATED.knee_extension_deg ?? ''
+  const entry = recordOf('knee_extension_deg') ?? ''
+  assert(entry.length > 20, 'knee extension has no record to hold to this')
   assert(
     !/camera|angle|yaw|invariant/i.test(entry),
     `the entry claims something about camera angle: "${entry}"`,
@@ -1692,7 +1694,7 @@ if (underResolved.length) {
             const unit = d.id.endsWith('_deg') ? '°' : ' ms'
             const dimensionless = d.id.endsWith('_ratio')
             const dev = dimensionless ? d.sd.toFixed(4) : `${d.sd.toFixed(1)}${unit}`
-            return `\n  \x1b[2m· ${d.id}: deviation ${dev}. ${UNCALIBRATED[d.id]}\x1b[0m`
+            return `\n  \x1b[2m· ${d.id}: deviation ${dev}. ${recordOf(d.id) ?? ''}\x1b[0m`
           })
           .join('') +
         `\n  \x1b[2mThese are the best-conditioned timings in the engine and none of them names` +
@@ -2145,13 +2147,16 @@ check('a delta between two serves is bounded by both terms, not by either alone'
  * held to it. This does not check every figure in the register — most describe
  * sweeps this suite does not run — and saying which two is the honest scope.
  *
- * Read out of the entry string rather than pasted, so an entry edited to a new
- * number is compared at the new number and an entry that drops its figure fails
- * the coverage check below rather than silently passing.
+ * Read out of the entry rather than pasted, so an entry edited to a new number
+ * is compared at the new number and an entry that drops its figure fails the
+ * coverage check below rather than silently passing. The entries are written in
+ * `docs/next/measurement-records.md` since N2.13, which moved them out of the
+ * code the player downloads; this reads them there, under each signal's heading.
  */
 check('the deviations UNCALIBRATED states are the ones the ensemble measures', () => {
   const stated = (id: string): number | undefined => {
-    const m = /deviation ([0-9.]+)/.exec(UNCALIBRATED[id] ?? '')
+    const entry = id in UNCALIBRATED ? recordOf(id) : undefined
+    const m = /deviation ([0-9.]+)/.exec(entry ?? '')
     return m ? Number(m[1]) : undefined
   }
   const measured = new Map(chainDeviations(deep.reads).map((d) => [d.id, d.sd]))

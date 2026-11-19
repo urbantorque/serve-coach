@@ -764,6 +764,14 @@ export const CAMERA_ALLOWANCE: Record<string, number> = {
  * `realiseReal`, the same noise on the Bath serves — and `separation_deg` is
  * the first to arrive that way: the rig's default camera never read it at all.
  */
+/**
+ * Where each record below is written out (N2.13). The keys stay in the engine,
+ * so `depth.test.ts` still refuses a signal measured with no record and a
+ * record with no signal; the sentences moved to `docs/next/measurement-records.md`,
+ * because they shipped to every player as strings nothing on screen reads.
+ */
+const RECORD = 'docs/next/measurement-records.md'
+
 export const UNDER_RESOLVED: Record<string, string> = {
 
   /*
@@ -775,9 +783,7 @@ export const UNDER_RESOLVED: Record<string, string> = {
    * 16 (on a 60 fps file 106, 28 and 7); clean Bath serves on 3 takes of 720
    * rather than 5. A gross collapse is still named; a mild one mostly is not.
    */
-  spine_lean_deg:
-    'kept: floor 12, over its 10 — the lean moves 7.7° between takes from behind on ' +
-    "the app's read; a 40° collapse is still named on 81% of takes, a 26° one on 4%",
+  spine_lean_deg: RECORD,
 
   /*
    * Kept, at an honest floor, because it still tells a gross fault from none.
@@ -860,10 +866,7 @@ export const UNDER_RESOLVED: Record<string, string> = {
    * The severity is not a gradient any more. For this signal that is the truth
    * rather than a defect — the only misses it can resolve are gross ones.
    */
-  hip_lead_ms:
-    'kept: smoothing moved to a time-based window, floor followed the ' +
-    'measurement 85 -> 76 ms, back to 85 on the app\'s read (H40) and 88 where its seek stops short of the end (H45); ' +
-    'arming_the_ball is not named, so the floor moves nothing a player is told',
+  hip_lead_ms: RECORD,
 
   /*
    * Kept, at a floor well above its deviation, because only an open chest
@@ -911,11 +914,7 @@ export const UNDER_RESOLVED: Record<string, string> = {
    *
    * `inferTier` already ignored this signal: 9° was wider than its 2.8° rung.
    */
-  separation_deg:
-    'kept: floor 30, far above its 14 — the first floor that names no real ' +
-    'serve from the noise (0 of 2,400 takes, from 28% at 9), and an open ' +
-    'chest is still named: 85% at a band floor of 13, 42% of a 22° one and ' +
-    '90% of a 45° one at 5',
+  separation_deg: RECORD,
 
   /*
    * Not named. `pancake_contact` is measured and never reported to a player.
@@ -962,9 +961,7 @@ export const UNDER_RESOLVED: Record<string, string> = {
    * producing a false pancake, from window smearing at low frame rates. Two
    * independent ways to read a snap as a push is itself the finding.
    */
-  pronation_deg:
-    'not named: `pancake_contact` fires on 10% of clean serves against 35% of ' +
-    'genuine pancakes, and an unsigned angle cannot miss its band by 85°',
+  pronation_deg: RECORD,
 }
 
 /**
@@ -1039,14 +1036,7 @@ export const UNCALIBRATED: Record<string, string> = {
    * compared, and real footage to say whether the lever refusal leaves enough
    * readings to compare at all.
    */
-  external_rotation_deg:
-    'measured and not named: 9.4–11.8° deviation over a 48° span, which is ' +
-    'gradeable, but read against a chosen reference frame with no zero — the ' +
-    'same arm reads 57.1° against the trunk and 93.5° against the shoulder ' +
-    'line. Both frames agree exactly about the size of a CHANGE (14.4° per 15° ' +
-    'dialled, opposite ways round) and both are confounded by posture: 30° of ' +
-    'spine lean moves the trunk frame 6–15° depending on where the arm sits. ' +
-    'Delta gradeable in principle, absolute ruled out.',
+  external_rotation_deg: RECORD,
   /*
    * Peak leg drive: the fastest the hips rose in the frame.
    *
@@ -1098,14 +1088,9 @@ export const UNCALIBRATED: Record<string, string> = {
    * serve are not ordered by this number, and a player who bends less has less
    * to spend rather than a fault.
    */
-  knee_extension_deg:
-    'measured and not named: tracks its dial 0.87 to one across five rungs, ' +
-    'deviation 5.7° against a 35.0° span — the best-conditioned depth reading here. ' +
-    'Nothing knows what a club player should straighten, and bending less is not a fault.',
+  knee_extension_deg: RECORD,
 
-  legs_peak_ms:
-    'measured and not named: 7.5 ms deviation, camera-invariant, and it times ' +
-    'the leg drive without measuring it — the same peak whether the player drives or not',
+  legs_peak_ms: RECORD,
 
   /*
    * The whole chain's span: peak leg drive to peak racket-hand speed.
@@ -1145,9 +1130,7 @@ export const UNCALIBRATED: Record<string, string> = {
    * named. A detector built on it today would be a band somebody made up,
    * validated against a rig that holds the quantity fixed.
    */
-  chain_span_ms:
-    'measured and not named: 7.8 ms deviation and no band — the span scales ' +
-    'with tempo, and the rig holds it fixed once tempo is divided out',
+  chain_span_ms: RECORD,
 
   /*
    * The same span divided by how long the motion took. Dimensionless.
@@ -1199,9 +1182,7 @@ export const UNCALIBRATED: Record<string, string> = {
    * Until all three, this is a well-conditioned number with nothing to compare
    * it against, which is what this register is for.
    */
-  chain_span_ratio:
-    'measured and not named: the division removes most of the tempo dependence ' +
-    'and not all of it — on one seed a 72% spread becomes 33% — and no band exists either way',
+  chain_span_ratio: RECORD,
 
   /*
    * The landing, and the first reading in this engine taken past contact.
@@ -1295,14 +1276,8 @@ export const UNCALIBRATED: Record<string, string> = {
    * re-derived on the Bath serves with the rig's off-line toss held outside.
    * A picture of where to aim, not a fault — nothing is named from it.
    */
-  toss_ahead_ratio:
-    'measured and not named: the published distances are for contact (Connolly ' +
-    '2021, Vacek 2023), not the top of the toss; reads its rig dial linearly from ' +
-    'the side, and from the ball when there is one, the hand when not',
-  toss_across_ratio:
-    'measured and not named: read only from behind, and the same contact-not-toss ' +
-    'gap as its partner; the kick-against-flat difference it will one day carry is ' +
-    'published for contact (Vacek 2023)',
+  toss_ahead_ratio: RECORD,
+  toss_across_ratio: RECORD,
 
   /*
    * The landing from each foot (D3.3). R64 measured that the ankle-centre
@@ -1320,14 +1295,8 @@ export const UNCALIBRATED: Record<string, string> = {
    * The roadmap's grading was to be for a fall across the front foot; there is
    * nothing yet to grade it against.
    */
-  landing_front_ratio:
-    "measured and not named: tracks the rig's lean exactly from behind and is " +
-    'immune to the back foot; read a third as large from the side; no published ' +
-    'norm for how far a body may fall across its front foot',
-  back_foot_follow_ratio:
-    "measured and not named: reads the rig's back-foot dial exactly at every lean; " +
-    'needs the hips to have moved to mean anything; no norm for how far a back ' +
-    'foot should trail',
+  landing_front_ratio: RECORD,
+  back_foot_follow_ratio: RECORD,
 
   /*
    * Which way the body went after contact (L5.7), signed by the swing's net
@@ -1341,10 +1310,7 @@ export const UNCALIBRATED: Record<string, string> = {
    * Bath serves are six skilled servers, all forward; a club player standing
    * still and a player falling back have nothing measured to be put against.
    */
-  landing_travel_ratio:
-    "measured and not named: signed by the swing's net direction and read from " +
-    "the side only; reads the rig's travel dial either sign, every real serve " +
-    'travels forward, and no study gives a distance to grade a fall back against',
+  landing_travel_ratio: RECORD,
 
   /*
    * The body held still at the trophy (D3.4) — see `hitch.ts` for how tempo,
@@ -1357,10 +1323,7 @@ export const UNCALIBRATED: Record<string, string> = {
    * the most visible on video; nothing measured gives a length of pause a serve
    * may carry before it costs anything.
    */
-  hitch_share_ratio:
-    'measured and not named: separates a hitch from a slow serve on the rig at ' +
-    '60 fps and above, every real serve reads zero, and no study gives a pause ' +
-    'length to grade against',
+  hitch_share_ratio: RECORD,
 
   /*
    * The legs' fastest rise to the elbow's fastest moment, from the side. It
@@ -1372,23 +1335,11 @@ export const UNCALIBRATED: Record<string, string> = {
    * 2003, via Kovacs 2011), peak hip speed 108–117 ms before it in the WTA
    * (Gao 2026). One skilled player reads 87 ± 11 ms in 3D. That is a sighting.
    */
-  leg_lead_ms:
-    'measured and not named: holds at 30 fps within 20 ms rms from the side, ' +
-    'said only as an order, and the gap scales with tempo and has no club band',
+  leg_lead_ms: RECORD,
 
-  arm_cock_ratio:
-    'measured and not named: the published signature is an angle (Gao 2026) and ' +
-    'no study gives it as a hand height; tracks its dial from 0.156 to 0.044 at ' +
-    'every camera angle, deviation 0.024 rig and 0.009 real, and the one real ' +
-    'population sits on the end the research calls the fault',
+  arm_cock_ratio: RECORD,
 
-  landing_offset_ratio:
-    'measured and not named: well conditioned from behind the server — 0.0035 ' +
-    'square against 0.0657 landed, on a 0.0045 deviation — and a quarter of that ' +
-    'from the guide placement, where a body facing the net falls along the ' +
-    'camera\'s line of sight; nothing knows what a club player should read, and ' +
-    'the rig poses a symmetric shift where a real collapse is over the front ' +
-    'foot, so it is validated against a model of the fault rather than the fault',
+  landing_offset_ratio: RECORD,
 
   /*
    * Peak racket-hand speed, and peak elbow speed, as moments in the serve.
@@ -1421,12 +1372,8 @@ export const UNCALIBRATED: Record<string, string> = {
    * repeatable than one assembled from world-z yaw, which was the question this
    * work existed to answer. They are not evidence about any player's serve.
    */
-  wrist_peak_ms:
-    'measured and not named: 0.5 ms deviation, no band, and timed against a ' +
-    'contact keyframe derived from the same track',
-  elbow_peak_ms:
-    'measured and not named: 0.7 ms deviation but a 10.2 ms camera-angle ' +
-    'artifact, which axes.ts cannot remove because image x cannot be de-mixed',
+  wrist_peak_ms: RECORD,
+  elbow_peak_ms: RECORD,
 }
 
 /**
