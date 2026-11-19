@@ -22,6 +22,8 @@ import {
   metricCopy,
   type MetricCopy,
 } from '../coaching'
+import { rescoreStoredCard } from '../metrics'
+import type { Fundamental, Metric } from '../types'
 import type { BodyAxis } from '../axes'
 import { MAX_SENTENCES, MAX_WORDS, command, cueIssues, plain, wordCount } from '../voice'
 import { VERDICT_TABLES, causalFocus, everyVerdictCue, refusalFor, rotationMoveLine } from '../verdict'
@@ -181,13 +183,16 @@ check('the target reads as a body position, and moves with the serve type', () =
   // head", and published kicks are struck in front of the toe, a little nearer
   // than flat serves or no nearer at all (Connolly 2021, Vacek 2023, Campbell
   // 2013). So since D2.1 a kick only lowers the contact floor, and the target
-  // that has to differ is the shoulders': a kick tilts further. If that ever
-  // collapses the serve-type picker has stopped meaning anything on screen.
+  // that differs is the shoulders': a kick may tilt further. Since N7.3 that
+  // is a ceiling lifted, not a band moved up: no study gives a kick's tilt, and
+  // a band starting where the flat one stops told kick servers to bend more.
   const reach = (type: ServeType) => metricCopy('contactAhead', type).ideal[0]
   assert(reach('kick') < reach('flat'), 'a kick may no longer be struck over the head')
-  const flat = targetOf('shoulderTilt', metricCopy('shoulderTilt', 'flat').ideal)
-  const kick = targetOf('shoulderTilt', metricCopy('shoulderTilt', 'kick').ideal)
-  assert(flat !== kick, `flat and kick ask for the same shoulders: "${flat}"`)
+  const flat = metricCopy('shoulderTilt', 'flat').ideal
+  const kick = metricCopy('shoulderTilt', 'kick').ideal
+  assert(kick[0] === flat[0], `a kick's tilt floor moved off the flat one: ${kick[0]} against ${flat[0]}`)
+  assert(kick[1] > flat[1], `a kick may tilt no further than a flat serve: ${kick[1]}`)
+  assert(!/further/i.test(metricCopy('shoulderTilt', 'kick').fix.low), 'a kick is told to tilt further again')
 })
 
 check('a value outside the axis still lands somewhere', () => {
@@ -402,7 +407,7 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { low: 'Explosive swing', high: 'Explosive swing' },
   },
   contactHeight: {
-    stamp: 'e056d4f1',
+    stamp: 'fb7baed1',
     insight: {
       low: ['Struck at head height', 'Struck below full reach'],
       ok: ['Struck at full racket reach'],
@@ -412,7 +417,7 @@ const CLAIMED: Record<string, Claimed> = {
   },
   // The ball's height at contact, on the hand's rungs raised by the racket.
   ballContactHeight: {
-    stamp: '57b7fc35',
+    stamp: '0f0c08cd',
     insight: {
       low: ['Struck at head height', 'Struck below full reach'],
       ok: ['Struck at full racket reach'],
@@ -432,13 +437,14 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { low: 'Arm long at contact', high: 'Arm long at contact' },
   },
   contactAhead: {
-    stamp: '91a9dbaa',
+    stamp: 'ef08c32c',
     insight: {
       low: ['Struck behind the head', 'Struck over the head'],
       ok: ['Struck in front of the body'],
       high: ['Struck far in front'],
     },
-    aim: { low: 'Struck in front of the body', high: 'Struck in front of the body' },
+    // No order past the ceiling since N7.3, so nothing there to aim.
+    aim: { low: 'Struck in front of the body' },
   },
   loadRatio: {
     stamp: 'a701f8ed',
@@ -488,7 +494,7 @@ const CLAIMED: Record<string, Claimed> = {
   'depth.tossPathWobble': {
     // The clean lines say which half of the toss the camera saw (N2.10), and
     // claim the same rungs as the plain clean lines they replace.
-    stamp: 'b8301f0e',
+    stamp: '420872b4',
     insight: { low: ['Dead straight lift'], ok: ['Dead straight lift', 'Straight lift'], high: ['Drifts a hand off line', 'Wanders off line'] },
     aim: { high: 'Straight lift' },
   },
@@ -502,23 +508,6 @@ const CLAIMED: Record<string, Claimed> = {
     stamp: '2fbaab92',
     insight: { ok: ['Struck at full racket reach'] },
     aim: { high: 'Struck at full racket reach' },
-  },
-  'kick.shoulderTilt': {
-    stamp: '2593fa48',
-    insight: {
-      // Every rung below the kick band, and the top one is the point: a shoulder
-      // the ladder calls under the ball is still short of what a kick asks for.
-      low: [
-        'Tossing shoulder under the ball',
-        'Hitting shoulder sits high',
-        'Shoulders level',
-        'Shoulders near level',
-        'Hitting shoulder under the ball',
-      ],
-    },
-    // Which is why the order underneath cannot be the flat one. It aims a rung
-    // higher than the flat fix does, at the only position this card praises.
-    aim: { low: 'Hitting shoulder far below' },
   },
 }
 
@@ -708,6 +697,15 @@ check('a fault the card names always arrives with the order that corrects it', (
       for (const v of probes(copy)) {
         if (v >= copy.ideal[0] && v <= copy.ideal[1]) continue
         const side = v < copy.ideal[0] ? 'low' : 'high'
+        // A side left without a fix on purpose is not graded (N7.3): the row
+        // scores as the band's edge there, with no fix and no drill.
+        if (!copy.fix[side]) {
+          const stored = { id, value: v, confidence: 1 } as Metric
+          const area = { id: 'contact', label: '', blurb: '', phase: copy.phase, score: 0, status: 'work', headline: '', metrics: [stored], drill: copy.drill } as Fundamental
+          const row = rescoreStoredCard([area], type)[0].metrics[0]
+          assert(!row.fix && !row.drill && (row.status === 'good' || row.status === 'great'), `${label} ${id} at ${v.toFixed(3)} has no fix and was still marked down`)
+          continue
+        }
         assert(
           copy.fix[side].length > 0,
           `${label} ${id} at ${v.toFixed(3)} is out of band, reads "${readoutOf(id, v)}" and offers no fix`,

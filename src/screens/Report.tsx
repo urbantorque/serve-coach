@@ -471,6 +471,8 @@ export default function Report({
               {strainBehind?.[n.flag] && <p className="injury-behind">{strainBehind[n.flag]}</p>}
             </div>
           ))}
+          {/* The stop line, where the warning is (N7.3), not only in the terms. */}
+          <p className="injury-stop">If it hurts, stop and see someone qualified.</p>
         </section>
       )}
 

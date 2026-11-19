@@ -46,7 +46,7 @@ import { DRILLS, FUNDAMENTALS } from './coaching'
 import type { BodyAxis } from './axes'
 import type { Diagnosis } from './diagnose'
 import { FLAWS, MIN_EVIDENCE, type FlawId } from './flaws'
-import { CARD_SIGNAL, type Severity } from './tiers'
+import { CARD_SIGNAL, SIGNALS, type Severity } from './tiers'
 import type { Triage } from './triage'
 import type { Drill, FundamentalId } from './types'
 
@@ -545,14 +545,31 @@ export function stepCheckLine(ladder: Progression, step: Step): string {
   return `Film a basket of ${CHECK_SERVES} on this step. Move up when ${ladder.pass} come back without this fault.`
 }
 
+/** Which side of its band a card row missed on. */
+export type MissSide = 'low' | 'high'
+
+/** The side a row's value fell outside its band, or undefined inside it. */
+export function missSide(m: { value: number; ideal?: [number, number] }): MissSide | undefined {
+  // A row stored before the band was kept on it says nothing about its side.
+  if (!m.ideal) return undefined
+  return m.value < m.ideal[0] ? 'low' : m.value > m.ideal[1] ? 'high' : undefined
+}
+
 /**
  * The fault a card row reads the same number as, through the signal they
  * share (`CARD_SIGNAL`): contact height is `low_contact`'s, the racket drop
  * `shallow_drop`'s. Undefined for a row no fault is judged on.
+ *
+ * Given the side the row missed on, undefined as well for a miss on the other
+ * side from the fault's (N7.3). A fault is one direction of its signal: contact
+ * far in front is not contact behind the head, and handing out that fault's
+ * ladder for it would walk the player the wrong way.
  */
-export function faultForMetric(metricId: string): FlawId | undefined {
+export function faultForMetric(metricId: string, side?: MissSide): FlawId | undefined {
   const signal = CARD_SIGNAL[metricId]
   if (!signal) return undefined
+  const direction = SIGNALS[signal]?.direction
+  if ((direction === 'higher' && side === 'high') || (direction === 'lower' && side === 'low')) return undefined
   return FLAWS.find((s) => s.signal === signal || s.sideOn === signal)?.flaw
 }
 
@@ -604,8 +621,9 @@ export function drillForMetric(
   own: Drill,
   rungs?: Partial<Record<string, number>>,
   severity?: Severity,
+  side?: MissSide,
 ): { drill: Drill; flaw?: FlawId } {
-  const flaw = faultForMetric(metricId)
+  const flaw = faultForMetric(metricId, side)
   const ladder = flaw ? progressionFor(flaw) : undefined
   if (!flaw || !ladder) return { drill: own }
   return { drill: ladder.steps[rungFor(flaw, ladder, rungs, severity)], flaw }

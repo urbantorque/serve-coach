@@ -28,7 +28,7 @@ export const GLOSSARY = {
   },
   likelyRange: {
     word: 'Likely range',
-    meaning: 'Where I am sure your speed off the racket sits, as a radar gun reads it. Test serves fell inside nineteen times in twenty.',
+    meaning: 'Where your speed off the racket, the one a radar reads, likely sits. Simulated serves fell inside nineteen times in twenty; no radar checked it.',
   },
 } as const
 

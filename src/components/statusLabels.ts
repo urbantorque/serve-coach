@@ -132,7 +132,7 @@ export function uncalibratedLine(id: string, from: number, to: number): string |
 /** The overall in words, under the number. */
 export const VERDICT: Record<Status, string> = {
   great: 'A seriously good serve',
-  good: 'A solid, repeatable serve',
+  good: 'A solid serve to build on',
   fair: 'Good bones, a few gaps',
   work: 'Plenty of free speed here',
 }

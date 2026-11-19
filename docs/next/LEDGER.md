@@ -859,3 +859,36 @@ Next in this wave, from N2.8:
   clean serve on the rig now leads with "Keep grooving this serve"
   (`engine.test.ts`). The comment that said weight kept that row "from being
   more than a note" is corrected: weight only shrinks its vote in the score.
+
+- [x] **N7.3 The coach's corrections: drills point the right way, the court is
+  safer, and the words claim no more than I know.** From the close-out review
+  (coach, each finding re-checked by a skeptic):
+  - **A ladder only on its own side.** `faultForMetric` mapped a card row to
+    its fault whichever side the row missed on, so contact far in front handed
+    out the ladder for contact behind the head. A fault is one direction of its
+    signal now (`missSide`, the signal's `direction`), in the headline, the
+    practice card and the drill they share; contact far in front has no fix,
+    as its ceiling sits over every published mean. The headline also keeps a
+    serve type's own drill for a row, as the practice card already did.
+  - **The baseline toss** puts the ball where the other toss drills do: "Stand
+    a racket length behind the baseline", then let it land on the line. "Serve
+    a basket with your heels off the ground" is gone from two fix lines; the
+    stop-the-swing lint now reads fix lines as well as drills.
+  - **Safety on court.** A throwing drill runs once, three minutes at most,
+    and its spare time goes to free serves: "reps, then repeat" had turned the
+    ladders' cap of fifteen throws into a hundred and more. The warm-up loosens
+    the arm first. "If it hurts, stop and see someone qualified." sits under
+    the injury cards, not only in the terms.
+  - **Honest words.** The speed glossary said "I am sure" and "as a radar gun
+    reads it"; it now says likely, simulated, and that no radar has checked
+    it, and Today's fastest speed says "about". "A solid, repeatable serve"
+    claimed a repeat from one serve: "A solid serve to build on". The level
+    says what it does since N2.12: the score and the faults I look for are the
+    same at every level, and it changes which fix comes first ("Fixes ordered
+    for club level"). A kick's tilt band no longer starts where the flat one
+    stops (no study gives one, and it told kick servers to bend their trunk
+    further, the bend the app flags for the lower back): it is the flat band
+    with its ceiling lifted. The second-serve goal says spin keeps a second
+    serve in and one camera cannot show me spin.
+  Not done: halving the plan while a joint warning is live. The skeptic held
+  the stop line and the throw cap, not a second volume rule.

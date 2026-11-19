@@ -10,6 +10,7 @@ import {
   everyProgression,
   faultForMetric,
   lastSeverity,
+  missSide,
   progressionFor,
   rungFor,
   startingRung,
@@ -18,7 +19,7 @@ import {
   type Step,
 } from '../progressions'
 import { DRILLS, FUNDAMENTALS, METRICS, SERVE_TYPES, metricCopy } from '../coaching'
-import { CARD_SIGNAL } from '../tiers'
+import { CARD_SIGNAL, SIGNALS } from '../tiers'
 import type { Drill } from '../types'
 import type { ServeType } from '../../storage/prefs'
 import { FLAWS, type FlawFinding, type FlawId } from '../flaws'
@@ -150,7 +151,7 @@ heading('No drill stops the swing, and one source per fault (L1.4)')
  * single pause" is the opposite instruction and is set aside first.
  */
 function stopsTheSwing(d: Drill): boolean {
-  const how = d.how.replace(/without (a single )?pause/gi, '')
+  const how = d.how.replace(/(without (a single )?|never )pause/gi, '')
   return (
     /\b(freeze|frozen|pause|stop dead)\b/i.test(how) ||
     /\bhold\b[^.]*\bseconds?\b/i.test(how) ||
@@ -176,10 +177,53 @@ check('no drill the app can hand out asks the swing to stop', () => {
   const stopping = reachable.filter(([, d]) => stopsTheSwing(d))
   note(`${reachable.length} drills read`)
   assert(stopping.length === 0, stopping.map(([where, d]) => `${where}: "${d.name}"`).join('; '))
+  // And every fix line, which a player reads as an instruction too (N7.3): two
+  // asked for a basket on the toes after the drills had stopped doing so.
+  const fixes: string[] = []
+  for (const id of Object.keys(METRICS)) {
+    for (const type of Object.keys(SERVE_TYPES) as ServeType[]) {
+      for (const axis of [undefined, 'depth', 'lateral'] as const) {
+        const copy = metricCopy(id, type, axis)
+        for (const line of Object.values(copy?.fix ?? {})) {
+          if (line && stopsTheSwing({ name: id, how: line, reps: '' })) fixes.push(`${id} (${type}): "${line}"`)
+        }
+      }
+    }
+  }
+  assert(fixes.length === 0, `a fix line stops the swing: ${fixes.join('; ')}`)
   // The detector itself, against the drills it was written for.
   assert(stopsTheSwing({ name: 'x', how: 'Pause at the drop with the elbow high.', reps: '10 holds' }), 'missed a pause')
   assert(stopsTheSwing({ name: 'x', how: 'Sink, hold two seconds, drive up.', reps: '8' }), 'missed a timed hold')
   assert(!stopsTheSwing({ name: 'x', how: 'Accelerate without a single pause until the ball leaves.', reps: '5' }), 'flagged the cure')
+})
+
+check("a ladder goes only with a miss on its own fault's side (N7.3)", () => {
+  let read = 0
+  for (const card of Object.keys(CARD_SIGNAL)) {
+    const flaw = faultForMetric(card)
+    if (!flaw) continue
+    const direction = SIGNALS[CARD_SIGNAL[card]].direction
+    const ideal = METRICS[card].ideal
+    assert(missSide({ value: ideal[0] - 1, ideal }) === 'low', `${card}: a value under the band is not low`)
+    assert(missSide({ value: ideal[1] + 1, ideal }) === 'high', `${card}: a value over the band is not high`)
+    assert(missSide({ value: (ideal[0] + ideal[1]) / 2, ideal }) === undefined, `${card}: the middle of the band missed`)
+    if (direction === 'higher') {
+      assert(faultForMetric(card, 'low') === flaw, `${card}: a miss under the band lost ${flaw}`)
+      assert(faultForMetric(card, 'high') === undefined, `${card}: a miss over the band handed out ${flaw}`)
+      read++
+    }
+    if (direction === 'lower') {
+      assert(faultForMetric(card, 'high') === flaw, `${card}: a miss over the band lost ${flaw}`)
+      assert(faultForMetric(card, 'low') === undefined, `${card}: a miss under the band handed out ${flaw}`)
+      read++
+    }
+  }
+  note(`${read} one-sided rows checked`)
+  // The case that was found: contact far in front walked back towards contact behind the head.
+  const own = { name: 'own', how: 'own', reps: 'own' }
+  assert(drillForMetric('contactAhead', own, undefined, undefined, 'high').drill === own, 'contact far in front got the contact-behind ladder')
+  assert(drillForMetric('contactAhead', own, undefined, undefined, 'low').drill !== own, 'contact behind the head lost its ladder')
+  assert(!METRICS.contactAhead.fix.high, 'contact far in front is told to pull the toss back again')
 })
 
 check("a card row that is a fault's number hands out that fault's ladder", () => {

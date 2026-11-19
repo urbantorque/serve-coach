@@ -617,9 +617,10 @@ export function suppressedNote(
  */
 export function tierLabel(triage: Triage | undefined): string | undefined {
   if (!triage?.tier) return undefined
-  // What the level does, said plainly (L3.9): it chooses the faults the plan
-  // names. The score is the same at every level, and "marked" said otherwise.
-  return `Faults pointed out for ${rungName(triage.tier.current)}, aiming one step above it`
+  // What the level does, said plainly (L3.9, N7.3): it orders the plan. Every
+  // named fault's band is flat across levels since N2.12, so "faults pointed
+  // out for" a level claimed a choice the level no longer makes.
+  return `Fixes ordered for ${rungName(triage.tier.current)}`
 }
 
 /* --------------------------------------------------- did the last one move -- */

@@ -256,6 +256,15 @@
   color: var(--fg);
 }
 
+/* An estimate says so where the number is (N7.3), as the report's hero does. */
+.momentum-about {
+  margin-right: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--fg-muted);
+}
+
 .today-streak {
   margin-top: -14px;
   font-size: 15px;

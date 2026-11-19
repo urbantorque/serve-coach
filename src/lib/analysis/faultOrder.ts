@@ -61,7 +61,7 @@ export const ARM_FIRST_AT = 4
  * The hierarchy at a player's level (L3.9).
  *
  * Kovacs's order puts the legs straight after the toss, and for a serve that
- * already has an arm action that is right. Below club level it is not: the arm
+ * already has an arm action that is right. At club level and below it is not: the arm
  * action matures first and leg drive last (Whiteside 2013), and a serve with
  * no leg drive costs racket speed while adding no load to the shoulder (Reid
  * 2008). So at rung 4 and below the racket drop and the elbow come before the

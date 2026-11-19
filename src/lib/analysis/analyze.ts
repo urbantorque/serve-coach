@@ -88,7 +88,7 @@ import { EngineLoadError } from '../engineDownload'
 import { cameraOf, storeLastCamera } from '../framing/camera'
 import { engineMegabytes } from '../engineManifest'
 import { detectWithContact, type ContactRead } from './contact'
-import { drillForMetric } from './progressions'
+import { drillForMetric, missSide } from './progressions'
 import { fileTimes, probeWorthRunning, retimeFlight, retimeFrames, stretchNote, type Stretch } from './slowMotion'
 import type { BallStretch } from './slowMotionProbe'
 import {
@@ -1116,10 +1116,15 @@ export function pickFocus(fundamentals: Fundamental[]): Analysis['focus'] {
   // the handful of measurements that share a correction. A row that is a
   // fault's number hands out that fault's ladder (L1.4), so this card and the
   // practice card give one exercise for one thing.
+  //
+  // Only on the side the fault is (N7.3), and never over a serve type's own
+  // exercise for the row: the practice card keeps a kick's drill the same way.
+  const own = worst.metric.drill ?? worst.area.drill
+  const typed = worst.metric.drill && worst.metric.drill.name !== METRICS[worst.metric.id]?.drill.name
   return {
     title: worst.metric.label,
     why: worst.metric.fix ?? worst.metric.insight,
-    drill: drillForMetric(worst.metric.id, worst.metric.drill ?? worst.area.drill).drill,
+    drill: typed ? own : drillForMetric(worst.metric.id, own, undefined, undefined, missSide(worst.metric)).drill,
   }
 }
 

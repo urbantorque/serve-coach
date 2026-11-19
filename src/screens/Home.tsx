@@ -292,7 +292,10 @@ export default function Home({
           </span>
           {fastest && (
             <span className="momentum-stat">
-              <span className="t-figure tnum">{speedFigures(fastest, unit).best}</span>
+              <span className="t-figure tnum">
+                <span className="momentum-about">about</span>
+                {speedFigures(fastest, unit).best}
+              </span>
               <span>{speedFigures(fastest, unit).unit} fastest</span>
             </span>
           )}

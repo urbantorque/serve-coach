@@ -1,5 +1,5 @@
 import { FUNDAMENTALS, METRICS, SERVE_TYPES, metricCopy } from './analysis/coaching'
-import { areaOfFault, drillForMetric, faultForMetric, lastSeverity, progressionFor, rungFor } from './analysis/progressions'
+import { areaOfFault, drillForMetric, faultForMetric, lastSeverity, missSide, progressionFor, rungFor, type MissSide } from './analysis/progressions'
 import { SOFT_MEASUREMENT } from './analysis/softness'
 import { mean } from './analysis/geometry'
 import { rowChange } from './analysis/realChange'
@@ -211,6 +211,8 @@ export function findPracticeFocus(
     fundamentalId: FundamentalId
     weakest: number
     fix?: string
+    /** The side the newest serve missed on, so a ladder goes only with its own fault (N7.3). */
+    side?: MissSide
   }
   const rows = new Map<string, Row>()
 
@@ -238,6 +240,7 @@ export function findPracticeFocus(
       if (metric.id === weakestId) row.weakest++
       // Keep the latest advice, which is the one that still applies.
       if (metric.fix) row.fix = metric.fix
+      row.side = missSide(metric)
       rows.set(metric.id, row)
     }
   }
@@ -276,7 +279,7 @@ export function findPracticeFocus(
   const recurring = buildConsistencyTrend(sessions, type)?.recurring
 
   // Started where the newest report that named the fault started its plan (L4.2).
-  const rowFault = faultForMetric(pick.id)
+  const rowFault = faultForMetric(pick.id, pick.side)
   const severity = rowFault ? lastSeverity(sameServe, rowFault) : undefined
   // A serve type's own exercise for the row wins over the fault's ladder
   // (L1.4's kick rule, kept when L5.3 gave contact in front a fault of its own):
@@ -286,7 +289,7 @@ export function findPracticeFocus(
   const ownRow =
     typed && typed !== METRICS[pick.id]?.drill
       ? { drill: typed, flaw: undefined as FlawId | undefined }
-      : drillForMetric(pick.id, typed ?? fundamental.drill, rungs, severity)
+      : drillForMetric(pick.id, typed ?? fundamental.drill, rungs, severity, pick.side)
   // One drill per body area (N0.2). A row with no fault of its own would hand
   // out its area's general drill, while the newest report plans a fault in that
   // same area with a ladder of its own. The card takes that fault's step, on

@@ -29,6 +29,7 @@
  * arrives in and it is not the same object.
  */
 import { DEFAULTS } from '../../lib/storage/prefs'
+import { WARM_LINE } from '../../lib/courtPlan'
 import { createElement } from 'react'
 // `server.browser`, not `server`. The Node entry pulls in `stream` through a
 // dynamic `require`, which esbuild cannot bundle into the ESM the runner
@@ -524,7 +525,7 @@ check("today's session is timed, in the order the hit runs, and ends on a filmed
   const sessions = [last, { ...last, id: 'serve-older-0', createdAt: last.createdAt - 2 * 86_400_000 }]
   const programme = programmeFor(sessions, DEFAULTS)!
   const out = html(createElement(SessionBody, { programme, onFilmCheck: noop }))
-  assert(out.includes('45 min') && out.includes('Warm up with easy serves'), 'the length or the warm-up went missing')
+  assert(out.includes('45 min') && out.includes(WARM_LINE), 'the length or the warm-up went missing')
   const at = (s: string) => out.indexOf(s)
   assert(at('Warm up with easy serves') < at('session-block--drill') && at('session-block--drill') < at('Serve freely'), 'the hit is not in the order it runs')
   assert(out.includes('Film a check'), 'no way to film the check')

@@ -200,7 +200,7 @@ const SPEED_DRILL: Drill = {
  */
 export const SECOND_TITLE = 'Get more second serves in'
 
-export const SECOND_NOTE = 'From the second serves you tagged in or out. Nothing here sees the court.'
+export const SECOND_NOTE = 'From second serves you tagged in or out; I cannot see the court. Spin keeps a second serve in, and one camera cannot show spin.'
 
 /** The faults a second serve misses with, where the plan has one: the toss, worst first. */
 const SECOND_WORK: readonly FlawId[] = ['toss_drift', 'toss_arm_drops', 'toss_height']

@@ -63,8 +63,8 @@ export default function LevelPicker({ value, onChange, estimated }: Props) {
         ))}
       </div>
       <p className="level-pick-note">
-        Your score is the same at every level. This only picks which faults the plan points out, one
-        step above where you are.
+        Your score and the faults I look for are the same at every level. This only changes which fix
+        comes first.
       </p>
     </fieldset>
   )

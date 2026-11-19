@@ -627,6 +627,14 @@
  * At the body size of a caveat it lost to both, which made "first in the
  * document" and "first thing you see" two different orderings.
  */
+/* Under the cards, in plain ink: the one instruction every warning shares. */
+.injury-stop {
+  margin: 2px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
 .injury-title {
   display: block;
   font-size: 17px;

@@ -1,7 +1,7 @@
 /**
  * Today on court, in minutes (N1.6).
  */
-import { COURT_MINUTES, courtPlan } from '../courtPlan'
+import { COURT_MINUTES, WARM_LINE, courtPlan } from '../courtPlan'
 import type { WeekPlan } from '../weekPlan'
 import { cueIssues } from '../analysis/voice'
 import { assert, check, heading, report } from '../analysis/__tests__/harness'
@@ -35,6 +35,22 @@ check('the first drill, the cause, gets the most time, and a check of six follow
 check('with nothing to work on, it says to serve and film one', () => {
   const blocks = courtPlan(undefined, 30)
   assert(blocks.map((b) => b.kind).join() === 'warm,free', blocks.map((b) => b.kind).join())
+})
+
+check('a throwing drill runs once, and its spare time goes to free serves (N7.3)', () => {
+  const throws = { title: 'Throw', drill: { name: 'Overhead throws', how: 'x', reps: '10 throws' }, check: 'x' }
+  for (const m of COURT_MINUTES) {
+    const blocks = courtPlan({ from: {}, items: [throws, item('Drill 2')], graduated: [] } as unknown as WeekPlan, m)
+    const throwing = blocks.find((b) => b.line.startsWith('Overhead throws'))!
+    assert(throwing.minutes <= 3, `${m} minutes gave the throws ${throwing.minutes}`)
+    assert(/once\.$/.test(throwing.line) && !/repeat/.test(throwing.line), `"${throwing.line}"`)
+    assert(blocks.reduce((s, b) => s + b.minutes, 0) === m, `${m} minutes did not add up`)
+  }
+})
+
+check('the warm-up loosens the arm before the first serve (N7.3)', () => {
+  assert(courtPlan(week(1), 30)[0].line === WARM_LINE, 'the warm-up line moved')
+  assert(/arms?\b/.test(WARM_LINE) && /shadow/.test(WARM_LINE), WARM_LINE)
 })
 
 check('every line passes the copy lint', () => {

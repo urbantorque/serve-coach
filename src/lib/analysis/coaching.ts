@@ -666,7 +666,7 @@ export const METRICS: Record<string, MetricCopy> = {
       high: 'You strike at the **top of your reach**.',
     },
     fix: {
-      low: '**Reach up** and hit at the top. Serve a basket with your heels off the ground.',
+      low: '**Reach up** and hit at the top. Let your legs push you up into the ball.',
       high: '**Keep the toss in front** so you never lean back to reach it.',
     },
     drill: UP_AND_OUT,
@@ -701,7 +701,7 @@ export const METRICS: Record<string, MetricCopy> = {
       high: 'You meet the ball at the **top of your reach**.',
     },
     fix: {
-      low: '**Reach up** and hit at the top. Serve a basket with your heels off the ground.',
+      low: '**Reach up** and hit at the top. Let your legs push you up into the ball.',
       high: '**Keep the toss in front** so you never lean back to reach it.',
     },
     drill: UP_AND_OUT,
@@ -770,7 +770,11 @@ export const METRICS: Record<string, MetricCopy> = {
     },
     fix: {
       low: '**Toss further in front**, so you move up and forward into the ball. Contact belongs ahead of your front foot.',
-      high: '**Rein the toss back** if you fall into the court. Ahead is good, falling is not.',
+      // Empty, as `handUnderElbow`'s is (N7.3). The ceiling of 40 sits over every
+      // published mean and every Bath serve, so a flat serve past it is not told
+      // to pull the toss back, and no ladder for contact behind the head is
+      // handed out for a miss on the other side (`faultForMetric`).
+      high: '',
     },
     drill: {
       name: 'Step-in toss',
@@ -899,7 +903,7 @@ export interface AxisCopy {
  */
 const BASELINE_DROP_TOSS: Drill = {
   name: 'Baseline toss',
-  how: 'Toss from behind the baseline without swinging, and let the ball fall onto the line every time.',
+  how: 'Stand a racket length behind the baseline. Toss without swinging and let the ball land on the line.',
   reps: '20 tosses',
 }
 
@@ -933,7 +937,7 @@ export const AXIS_COPY: Record<string, Partial<Record<BodyAxis, AxisCopy>>> = {
         high: 'Your tossing hand **drifts forwards and back**, so the ball finishes nearer or further out each serve.',
       },
       fix: {
-        high: '**Keep the toss on one line** and let the ball fall back onto the baseline every serve.',
+        high: '**Keep the toss on one line.** From a racket length behind the baseline, let it land on the line.',
       },
       drill: BASELINE_DROP_TOSS,
     },
@@ -1113,14 +1117,13 @@ export const SERVE_TYPES: Record<ServeType, ServeTypeCopy> = {
       // published kick and flat impact heights are within a centimetre of each
       // other (Vacek 2023: 1.50 and 1.51 statures, professional men), and the
       // flat band now starts at 1.14, already lower than this one used to.
-      // More cartwheel: the hitting shoulder drops further under the ball, and
-      // this band starts where the flat one stops, 36. The steep tilt the flat card
-      // calls arching is the tilt a kick is hit with — the flat serve's fault is
-      // this serve's intent — so the two meet at the rung boundary instead of
-      // overlapping. Running from 20 to 40 split both rungs it touched: a
-      // shoulder the readout called under the ball was praised at 21 and
-      // corrected at 19.
-      shoulderTilt: [36, 50],
+      // The flat band, with its ceiling lifted to the top of the axis (N7.3).
+      // A kick is hit with more cartwheel, but no study gives a kick's tilt, and
+      // the band this replaced ([36, 50], starting where the flat one stops)
+      // told most club kick servers to "tilt further": more sideways bend in the
+      // trunk the app flags as a lower-back risk. A kick past the flat ceiling
+      // is not called a fault; one under the flat floor gets the flat fix.
+      shoulderTilt: [14, 50],
       // A kick is tossed a little lower and further back than a flat serve, so
       // the toss is allowed to peak at racket reach. The ceiling holds at the
       // flat serve's — see its own comment for why that is 2.1.
@@ -1145,13 +1148,6 @@ export const SERVE_TYPES: Record<ServeType, ServeTypeCopy> = {
       ballContactHeight: {
         ok: 'You meet the ball at **kick height**: high enough for margin, low enough to brush up it.',
       },
-      shoulderTilt: {
-        // The kick band starts a whole rung above the flat one, so everything
-        // the ladder calls "hitting shoulder under the ball" falls below it. The
-        // flat wording — the shoulder sits level or high — would deny that
-        // readout outright for every kick between the two.
-        low: 'Your hitting shoulder **dips too little** for a kick, so the racket goes through the ball instead of up it.',
-      },
     },
     fix: {
       contactAhead: {
@@ -1169,14 +1165,6 @@ export const SERVE_TYPES: Record<ServeType, ServeTypeCopy> = {
       },
       ballContactHeight: {
         high: '**Brush up the back of the ball** instead of reaching through it. Let contact sit under the top of your stretch.',
-      },
-      shoulderTilt: {
-        // The flat order is to drop the hitting shoulder under the ball, which is
-        // the position this card reads out for anything from fourteen degrees up
-        // — so a kick at eighteen was told to start doing what the same card had
-        // just said it was doing. A kick short of its band wants more of that
-        // drop, not the beginning of it.
-        low: '**Tilt further** so the hitting shoulder finishes well under the ball. Bend at the shoulders, never the lower back.',
       },
     },
     drill: {

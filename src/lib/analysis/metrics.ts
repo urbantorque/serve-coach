@@ -103,9 +103,15 @@ function build(
   if (!copy) throw new Error(`no coaching copy for metric "${id}"`)
   if (!Number.isFinite(value)) return undefined
   const confidence = ctx ? metricConfidence(id, ctx) : 1
-  const score = scoreAgainst(value, copy.ideal, copy.range, copy.missSpan)
   const below = value < copy.ideal[0]
   const above = value > copy.ideal[1]
+  // A side of the band with no fix is not a fault on that side (N7.3). Contact
+  // far in front is the one: its ceiling sits over every published mean and
+  // every Bath serve, and the only orders for it walked the toss the wrong way.
+  // Past that edge the row still says what it saw and scores as the edge, with
+  // no fix and no drill, so the card never marks down what it cannot correct.
+  const graded = above && !copy.fix.high ? copy.ideal[1] : below && !copy.fix.low ? copy.ideal[0] : value
+  const score = scoreAgainst(graded, copy.ideal, copy.range, copy.missSpan)
 
   // No cap here, and none needed. `scoreAgainst` crosses the "Solid" threshold
   // at the band edge, so band membership and badge already say the same thing:
