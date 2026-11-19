@@ -53,8 +53,16 @@ declare const process: { cwd(): string }
  * crosses the network and therefore what the player waits for; the raw figure is
  * carried alongside because it is what the phone has to parse, and on a mid-range
  * Android that is the half you feel.
+ *
+ * RE-BASELINED ONCE, to 132, the one move the Next handover allows (N2.10).
+ * Wave 6 put the commercial surface on the critical path, addresses for the
+ * pages, the plan gate and the links from Settings, and was taken back to
+ * 129.98 by moving its copy, its panel and its payment start-up off it. Then
+ * the coaching tables Today reads gained the words that say which half of a
+ * toss a side-on camera saw, and the chunk measured 130.06. Two kB of room,
+ * taken once and written down; the next move is off the path, not up.
  */
-const ENTRY_GZIP_BUDGET_KB = 130
+const ENTRY_GZIP_BUDGET_KB = 132
 
 /** And the parse cost, which gzip hides. 385 against a measured 367.09. */
 const ENTRY_RAW_BUDGET_KB = 385

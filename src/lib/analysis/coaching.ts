@@ -918,7 +918,16 @@ export const AXIS_COPY: Record<string, Partial<Record<BodyAxis, AxisCopy>>> = {
      * drifts forwards" would be a coin toss printed as an observation.
      */
     depth: {
+      /*
+       * A clean reading says which way it was seen (N2.10). Side-on, the angle
+       * the guide asks for, a sideways wander points into the lens: one 10 cm
+       * wobble reads 1 cm at 82° (F5, `depth.test.ts`). "Almost no drift" was
+       * then a claim about an axis the camera never saw, so a steady toss here
+       * is steady towards the net and back, and says the other half is unseen.
+       */
       insight: {
+        low: 'Your toss rises **dead straight**, towards the net and back. From the side I cannot see it drift sideways.',
+        ok: 'Your toss rises **straight**, with little drift towards the net or back. From the side I cannot see sideways drift.',
         high: 'Your tossing hand **drifts forwards and back**, so the ball finishes nearer or further out each serve.',
       },
       fix: {
@@ -934,7 +943,11 @@ export const AXIS_COPY: Record<string, Partial<Record<BodyAxis, AxisCopy>>> = {
      * exactly this reading and no other.
      */
     lateral: {
+      // From in front or behind, the other way round: across the body is seen,
+      // towards the net and back points into the lens (N2.10).
       insight: {
+        low: 'Your toss rises **dead straight** across your body. From here I cannot see it drift towards the net.',
+        ok: 'Your toss rises **straight**, with little drift sideways. From here I cannot see drift towards the net or back.',
         high: 'Your tossing hand **drifts sideways**, so the ball finishes somewhere new each serve.',
       },
       fix: {

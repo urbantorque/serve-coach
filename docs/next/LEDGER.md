@@ -565,3 +565,25 @@ The guidelines pass over the wave's screens found one gap, fixed: copying the
 link that brings Plus to another device changed only the button's own label,
 which a screen reader is not told; the confirmation now also reaches a polite
 live region, checked in the browser against the stand-in.
+
+## Wave 2. Trust foundations, the rest
+
+- [x] **N2.10 A steady toss says which way it was seen.** The handover's
+  finding 5: side-on, the angle the filming guide asks for, a toss wandering
+  sideways points into the lens, and one 10 cm wobble reads 1 cm (F5, pinned
+  in `depth.test.ts`). The card then called that toss "straight up with
+  almost no drift", a claim about an axis the camera never saw. No sum
+  recovers depth one camera does not have, so the reading now says what it
+  covered: side-on, "with little drift towards the net or back. From the side
+  I cannot see sideways drift"; from in front or behind, the other way round.
+  A drift the camera does see is still named and drilled on its own axis, as
+  before (`tossAxisWords.test.ts`: a 10 cm sideways wobble at 82° now says it
+  is unseen, the same wobble at 15° is named sideways). The corner band, where
+  neither axis beats a coin flip, already says nothing (R80b). Considered and
+  not done: a second sanctioned placement behind the baseline. The back fence
+  is measured in `CARD_NOISE_SD`, but the live framing check steers a player
+  to the side, and teaching two placements on a first afternoon costs more
+  than one sentence saying which half was unseen. The entry chunk then measured
+  130.06 kB: the coaching tables Today reads carry the new lines. Its budget
+  was re-baselined to 132 kB, the one move the handover allows, with the
+  reason in `bundle.test.ts`; the next move is off the critical path, not up.

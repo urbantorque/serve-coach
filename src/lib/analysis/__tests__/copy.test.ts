@@ -486,13 +486,15 @@ const CLAIMED: Record<string, Claimed> = {
    * started describing a different amount of drift.
    */
   'depth.tossPathWobble': {
-    stamp: '0109a6d6',
-    insight: { high: ['Drifts a hand off line', 'Wanders off line'] },
+    // The clean lines say which half of the toss the camera saw (N2.10), and
+    // claim the same rungs as the plain clean lines they replace.
+    stamp: 'b8301f0e',
+    insight: { low: ['Dead straight lift'], ok: ['Dead straight lift', 'Straight lift'], high: ['Drifts a hand off line', 'Wanders off line'] },
     aim: { high: 'Straight lift' },
   },
   'lateral.tossPathWobble': {
-    stamp: '0dd1afff',
-    insight: { high: ['Drifts a hand off line', 'Wanders off line'] },
+    stamp: '2c906a26',
+    insight: { low: ['Dead straight lift'], ok: ['Dead straight lift', 'Straight lift'], high: ['Drifts a hand off line', 'Wanders off line'] },
     aim: { high: 'Straight lift' },
   },
 
