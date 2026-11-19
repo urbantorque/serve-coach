@@ -1,4 +1,4 @@
-import { useState, type MouseEvent, type ReactNode } from 'react'
+import { useEffect, useState, type MouseEvent, type ReactNode } from 'react'
 import '../styles/info.css'
 import { Icon } from '../components/primitives'
 import { accuracyRows, unmeasuredRows, wobbleText } from '../lib/accuracy'
@@ -32,6 +32,20 @@ const LEDES: Record<InfoPageId, string> = {
  * the right, the same pattern as the report; on a phone they stack.
  */
 export default function InfoPage({ page, onBack, onPage }: Props) {
+  // What a search engine reads for this page, while it shows (N6.6): its own
+  // description, and its own address as the canonical one where the site has one.
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="description"]')
+    const canon = document.querySelector('link[rel="canonical"]')
+    const said = meta?.getAttribute('content')
+    const was = canon?.getAttribute('href')
+    meta?.setAttribute('content', LEDES[page])
+    if (canon && SITE.url) canon.setAttribute('href', `${SITE.url}/${page}`)
+    return () => {
+      if (said) meta?.setAttribute('content', said)
+      if (was) canon?.setAttribute('href', was)
+    }
+  }, [page])
   const go = (p: InfoPageId) => (e: MouseEvent<HTMLAnchorElement>) => {
     // A plain click stays in the app; a modified one opens the address as the browser would.
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return

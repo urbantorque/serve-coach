@@ -525,3 +525,24 @@ showed was wrong.
   is 129.98 kB of its 130, with 0.02 kB left, and the next screen that adds
   to it either takes something off or spends the one re-baseline the
   handover allows.
+- [x] **N6.6 The landing page sells what it does, and search engines can
+  read it.** The first run's long page gains a pricing section ("Free to read
+  every serve"): what free keeps beside what Plus adds, the price only when the
+  owner sets one, and, while Plus is not on sale, that everything is open; on
+  a laptop the words sit beside the two lists rather than over a dark half.
+  It already links how sure I am, privacy, terms and credits (N6.3).
+  `index.html` no longer tells a laptop its video stays on "your phone", and
+  carries a share title and card type. `lib/siteMeta.ts`, built into the page
+  by `vite.config.ts`: with `VITE_SITE_URL` set, a canonical address, the
+  preview picture's absolute address, a sitemap of the seven pages that stand
+  alone and a robots.txt that keeps search engines out of `/api/`; unset, the
+  page names no host and only robots.txt is written (`siteMeta.test.ts`, and
+  checked in a build with a test address). Each info page sets its own
+  description and canonical address while it shows. The preview picture,
+  `public/og.jpg` (1200 by 630, 64 kB), is drawn by `scripts/og-image.mjs`
+  with the app's own painting code: the model serve as one exposure beside
+  the promise, never a photograph. Partly met, on purpose: the handover asked
+  for "a real serve read in front of the visitor". The first run plays a real
+  serve from the motion capture and offers the sample report, but reading a
+  real video on the landing page would download the 57 MB coach before the
+  visitor has asked for anything, so it waits for the visitor's own serve.

@@ -201,3 +201,59 @@
   outline-offset: 2px;
   border-radius: var(--r-xs);
 }
+
+/* Free beside what Plus adds, under the price (N6.6). */
+.first-tiers {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  padding: 20px;
+  border-radius: var(--r-lg);
+  background: var(--panel);
+  box-shadow: var(--panel-edge);
+}
+
+.first-tiers h3 {
+  margin-bottom: 10px;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--fg);
+}
+
+.first-tiers ul {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.first-tiers li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--fg-muted);
+}
+
+.first-tiers li > svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--lime);
+}
+
+@media (min-width: 1024px) {
+  /* The words on the left, free beside Plus on the right. */
+  .first-more-price {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    grid-template-rows: auto auto auto auto 1fr;
+    column-gap: 56px;
+    row-gap: 16px;
+    align-items: start;
+  }
+
+  .first-more-price > .first-tiers {
+    grid-column: 2;
+    grid-row: 1 / -1;
+  }
+}

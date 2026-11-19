@@ -1,11 +1,12 @@
 import { existsSync, readFileSync } from 'node:fs'
-import { defineConfig, type Plugin } from 'vite'
+import { defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath } from 'node:url'
 // @ts-expect-error - a plain .mjs helper shared with the test runner
 import { engineCacheName, engineManifest } from './scripts/engine-manifest.mjs'
 import { headersFor, parseHeaders } from './src/lib/hostHeaders'
+import { headTags, robotsTxt, sitemapXml } from './src/lib/siteMeta'
 
 /**
  * The wasm runtimes must match the JavaScript that drives them. That JS is
@@ -222,7 +223,24 @@ async function mockPayments(): Promise<Plugin> {
   }
 }
 
-export default defineConfig(async () => ({
+/**
+ * What search engines and shared links read (N6.6): the canonical address and
+ * the preview picture in the page, a sitemap and robots.txt beside it. Every
+ * address is the site's own, from `VITE_SITE_URL`; unset, the page names no
+ * host at all and only robots.txt is written.
+ */
+function siteMeta(site: string | undefined): Plugin {
+  return {
+    name: 'serve-coach:site-meta',
+    transformIndexHtml: () => headTags(site).map((t) => ({ ...t, injectTo: 'head' as const })),
+    generateBundle() {
+      this.emitFile({ type: 'asset', fileName: 'robots.txt', source: robotsTxt(site) })
+      if (site) this.emitFile({ type: 'asset', fileName: 'sitemap.xml', source: sitemapXml(site) })
+    },
+  }
+}
+
+export default defineConfig(async ({ mode }) => ({
   base,
   ...(lanTls ? { server: { https: lanTls }, preview: { https: lanTls } } : {}),
   // Every engine file and its size, read off `public/` now (L6.1): the one
@@ -238,6 +256,7 @@ export default defineConfig(async () => ({
     // here abandoned the swing refine, and the one without isolation did not.
     ...(process.env.ISOLATE ? [isolationHeaders()] : []),
     hostHeaders(),
+    siteMeta(loadEnv(mode, process.cwd(), 'VITE_').VITE_SITE_URL || undefined),
     ...(process.env.VITE_PAYMENTS === 'mock' ? [await mockPayments()] : []),
     serveOrtRaw(),
     react(),

@@ -3,6 +3,9 @@ import '../styles/firstMore.css'
 import { Icon } from './primitives'
 import { deviceNoun } from '../lib/device'
 import { INFO_PAGES, INFO_TITLES, pathFor, type InfoPageId } from '../lib/routes'
+import { GATED, PRICE_LINE } from '../lib/billing/config'
+import { FEATURES } from '../lib/plans'
+import { FEATURE_COPY, FREE_COPY } from '../lib/planCopy'
 
 interface Props {
   onFilm: () => void
@@ -104,6 +107,45 @@ export default function FirstRunMore({ onFilm, onShowExample, onShowPage }: Prop
         </h2>
         <p className="first-more-lede">I read your serve in the browser on this {here}, even with no signal. The video stays where you filmed it.</p>
       </section>
+
+      {onShowPage && (
+        <section className="first-more-section first-more-price" aria-labelledby="first-price">
+          <h2 id="first-price" className="t-headline">
+            Free to read every serve.
+          </h2>
+          <p className="first-more-lede">Your score and the top fix on every serve, free. Plus adds the whole breakdown, a plan in steps and more.</p>
+          {PRICE_LINE && <p className="first-more-lede">Plus is {PRICE_LINE}.</p>}
+          {!GATED && <p className="first-more-lede">Everything is open while Plus is not on sale.</p>}
+          <a className="first-more-link" href={pathFor({ kind: 'page', page: 'pricing' }, import.meta.env.BASE_URL)} onClick={open('pricing')}>
+            See the plans
+            <Icon name="chevron" size={16} />
+          </a>
+          <div className="first-tiers">
+            <div>
+              <h3>Free</h3>
+              <ul>
+                {FREE_COPY.map((line) => (
+                  <li key={line}>
+                    <Icon name="check" size={15} />
+                    {line}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3>Plus adds</h3>
+              <ul>
+                {FEATURES.map((f) => (
+                  <li key={f}>
+                    <Icon name="lightning" size={15} />
+                    {FEATURE_COPY[f].name}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+      )}
 
       <div className="first-more-foot">
         <button className="btn btn--primary btn--big btn--full" onClick={onFilm}>
