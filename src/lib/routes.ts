@@ -26,6 +26,22 @@ export type RoutedView =
   | { kind: 'error' }
   | { kind: 'progress'; serves?: boolean }
   | { kind: 'session'; session: { id: string } }
+  | { kind: 'page'; page: InfoPageId }
+
+/**
+ * The pages a visitor reads rather than uses (N6.3): how accurate the app is,
+ * what it does with their data, the terms, and whose work is in it. Each has
+ * an address of its own, so a link from anywhere opens it.
+ */
+export const INFO_PAGES = ['accuracy', 'privacy', 'terms', 'credits'] as const
+export type InfoPageId = (typeof INFO_PAGES)[number]
+
+export const INFO_TITLES: Record<InfoPageId, string> = {
+  accuracy: 'How sure I am',
+  privacy: 'Privacy',
+  terms: 'Terms',
+  credits: 'Credits',
+}
 
 /** What an address asks for when the page is loaded at it. */
 export type Route =
@@ -35,6 +51,7 @@ export type Route =
   | { kind: 'serve'; id: string }
   | { kind: 'sample' }
   | { kind: 'practice'; id: string }
+  | { kind: 'page'; page: InfoPageId }
 
 /** The base the app is served under, always ending in a slash. */
 function slash(base: string): string {
@@ -61,6 +78,8 @@ export function pathFor(view: RoutedView, base = '/'): string {
       return `${b}glance`
     case 'error':
       return `${b}problem`
+    case 'page':
+      return `${b}${view.page}`
   }
 }
 
@@ -75,10 +94,12 @@ export function titleFor(view: RoutedView): string {
     analyzing: 'Reading your serve',
     glance: 'Your serve',
     error: 'Something stopped the read',
+    page: 'Serve Coach',
   }
   let label = name[view.kind]
   if (view.kind === 'progress' && view.serves) label = 'Every serve'
   if (view.kind === 'saved' && view.example) label = 'Sample report'
+  if (view.kind === 'page') label = INFO_TITLES[view.page]
   return `${label} | Serve Coach`
 }
 
@@ -108,5 +129,6 @@ export function parsePath(pathname: string, base = '/'): Route {
   if (head === 'sample' && !id) return { kind: 'sample' }
   if (head === 'serve' && id) return { kind: 'serve', id }
   if (head === 'practice' && id) return { kind: 'practice', id }
+  if (!id && (INFO_PAGES as readonly string[]).includes(head)) return { kind: 'page', page: head as InfoPageId }
   return { kind: 'home' }
 }

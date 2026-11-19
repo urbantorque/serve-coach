@@ -1,10 +1,14 @@
+import type { MouseEvent } from 'react'
 import '../styles/firstMore.css'
 import { Icon } from './primitives'
 import { deviceNoun } from '../lib/device'
+import { INFO_PAGES, INFO_TITLES, pathFor, type InfoPageId } from '../lib/routes'
 
 interface Props {
   onFilm: () => void
   onShowExample: () => void
+  /** How sure I am, privacy, terms and credits, linked from the foot (N6.3). */
+  onShowPage?: (page: InfoPageId) => void
 }
 
 /**
@@ -20,8 +24,14 @@ interface Props {
  * Lazily loaded below the fold, so the first screen and the entry chunk are
  * exactly what they were.
  */
-export default function FirstRunMore({ onFilm, onShowExample }: Props) {
+export default function FirstRunMore({ onFilm, onShowExample, onShowPage }: Props) {
   const here = deviceNoun()
+  // A plain click stays in the app; a modified one opens the address as the browser would.
+  const open = (p: InfoPageId) => (e: MouseEvent<HTMLAnchorElement>) => {
+    if (!onShowPage || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
+    e.preventDefault()
+    onShowPage(p)
+  }
   return (
     <div className="first-more">
       <section className="first-more-section" aria-labelledby="first-how">
@@ -79,6 +89,12 @@ export default function FirstRunMore({ onFilm, onShowExample }: Props) {
             <em>Hedged, or left out</em>
           </li>
         </ul>
+        {onShowPage && (
+          <a className="first-more-link" href={pathFor({ kind: 'page', page: 'accuracy' }, import.meta.env.BASE_URL)} onClick={open('accuracy')}>
+            Every reading, how steady it is and what it rests on
+            <Icon name="chevron" size={16} />
+          </a>
+        )}
       </section>
 
       <section className="first-more-section first-more-privacy" aria-labelledby="first-private">
@@ -98,6 +114,20 @@ export default function FirstRunMore({ onFilm, onShowExample }: Props) {
           See a sample report first
         </button>
       </div>
+
+      {onShowPage && (
+        <nav className="first-more-pages" aria-label="About Serve Coach">
+          {INFO_PAGES.map((p) => (
+            <a
+              key={p}
+              href={pathFor({ kind: 'page', page: p }, import.meta.env.BASE_URL)}
+              onClick={open(p)}
+            >
+              {INFO_TITLES[p]}
+            </a>
+          ))}
+        </nav>
+      )}
     </div>
   )
 }

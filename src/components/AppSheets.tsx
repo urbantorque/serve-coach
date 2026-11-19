@@ -8,6 +8,7 @@ import { defaultSpeedUnit } from '../lib/speedCopy'
 import type { OfflineWarmup } from './useOfflineWarmup'
 import { writePrefs, type Prefs } from '../lib/storage/prefs'
 import { deviceNoun } from '../lib/device'
+import { INFO_PAGES, INFO_TITLES, type InfoPageId } from '../lib/routes'
 
 const FilmingGuide = lazy(() => import('./FilmingGuide'))
 const StoragePanel = lazy(() => import('./StoragePanel'))
@@ -30,6 +31,8 @@ interface Props {
   offline: { ready: boolean | undefined; warming?: OfflineWarmup; metered?: 'saveData' | 'cellular'; onDownload: () => void }
   /** What the automatic copy of the history covers, in a sentence. */
   protection?: string
+  /** How sure I am, privacy, terms and credits (N6.3). */
+  onPage?: (page: InfoPageId) => void
 }
 
 /** Whether the app works with no signal, and the way to make it so. */
@@ -74,7 +77,7 @@ export function OfflineRow({ ready, warming, metered, onDownload }: Props['offli
  * The sheets over every screen: how to film it, and Settings with the things
  * only Settings holds. Out of `App.tsx`, where they were a third of the file.
  */
-export default function AppSheets({ sheet, onSheet, prefs, onPrefs, serves, onImported, offline, protection }: Props) {
+export default function AppSheets({ sheet, onSheet, prefs, onPrefs, serves, onImported, offline, protection, onPage }: Props) {
   const save = (patch: Partial<Prefs>) => onPrefs(writePrefs(patch))
   return (
     <>
@@ -130,9 +133,19 @@ export default function AppSheets({ sheet, onSheet, prefs, onPrefs, serves, onIm
           <Icon name="gauge" size={18} />
           What this {deviceNoun()} can do
         </button>
-        <Suspense fallback={null}>
-          <Credits />
-        </Suspense>
+        {onPage ? (
+          <nav className="settings-pages" aria-label="About Serve Coach">
+            {INFO_PAGES.map((p) => (
+              <button key={p} type="button" className="link-btn" onClick={() => onPage(p)}>
+                {INFO_TITLES[p]}
+              </button>
+            ))}
+          </nav>
+        ) : (
+          <Suspense fallback={null}>
+            <Credits />
+          </Suspense>
+        )}
       </Sheet>
 
       <Sheet open={sheet === 'check'} onClose={() => onSheet(null)} title={`What this ${deviceNoun()} can do`}>

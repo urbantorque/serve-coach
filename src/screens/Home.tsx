@@ -16,6 +16,7 @@ import { readPrefs, type Prefs } from '../lib/storage/prefs'
 import type { PracticeSession } from '../lib/session/session'
 import { DeltaChip } from '../components/Trend'
 import { deviceNoun } from '../lib/device'
+import type { InfoPageId } from '../lib/routes'
 
 const FirstRunStage = lazy(() => import('../components/FirstRunStage'))
 const FirstRunMore = lazy(() => import('../components/FirstRunMore'))
@@ -52,6 +53,8 @@ interface Props {
   onShowHistory: () => void
   /** Render a report from a simulated serve, so the app can be seen with nothing filmed. */
   onShowExample: () => void
+  /** How sure I am, privacy, terms or credits (N6.3). */
+  onShowPage?: (page: InfoPageId) => void
   /** `undefined` while the cache is still being asked. */
   offlineReady: boolean | undefined
   /** The last analysis the page did not live to finish, said once (L6.4). */
@@ -95,6 +98,7 @@ export default function Home({
   onShowProgress,
   onShowHistory,
   onShowExample,
+  onShowPage,
   offlineReady,
   interrupted,
   nudge,
@@ -193,7 +197,7 @@ export default function Home({
         {storage}
       </div>
       <Suspense fallback={null}>
-        <FirstRunMore onFilm={onFilm} onShowExample={onShowExample} />
+        <FirstRunMore onFilm={onFilm} onShowExample={onShowExample} onShowPage={onShowPage} />
       </Suspense>
       </>
     )

@@ -451,3 +451,22 @@ showed was wrong.
   measurement still stands; `isolation.test.ts` now holds that instead of the
   file not existing. Cloudflare Pages is the host the rest of the wave is
   written for: static files, this header file, and small functions beside them.
+- [x] **N6.3 A public accuracy page, privacy, terms and credits.** Four
+  pages at `/accuracy`, `/privacy`, `/terms` and `/credits`, one lazy screen
+  (`screens/InfoPage.tsx`), linked from the first run's foot, from under its
+  "I tell you what I cannot see" list, and from Settings. The accuracy page
+  ("How sure I am") is built from the tables the app grades with
+  (`lib/accuracy.ts`), so it cannot drift: for each of the fourteen measured
+  readings, how far it moves when the same serve is read again
+  (`CARD_NOISE_SD`), what two small, dark public clips moved it where that was
+  more (`RETEST_SD`, measured and not adopted), how often a serve held at the
+  middle of its band keeps its grade (the band rule worked out, rounded down,
+  never above 99: arm extension, the one known short band, keeps it 91 times
+  in 100), and the source each band rests on. Then the three ball readings,
+  graded with nothing measured under them; what is shown and never graded;
+  how I know, including that the noise is a floor and that it proves
+  steadiness, not agreement with a lab; and what I cannot see. Privacy and
+  terms say only what the app does today, in its own voice, short enough for
+  the copy lint; the operator's name and a contact address come from the build
+  (`lib/site.ts`) and are left out until the owner sets them. Looked at on a
+  phone and at 1440, where the title and the list of pages hold the left pane.

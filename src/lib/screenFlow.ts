@@ -30,7 +30,7 @@
  * fails if one is missing here, so a new screen cannot be added without
  * arriving in this table.
  */
-export const SCREENS = ['home', 'analyzing', 'report', 'glance', 'saved', 'error', 'progress', 'session'] as const
+export const SCREENS = ['home', 'analyzing', 'report', 'glance', 'saved', 'error', 'progress', 'session', 'page'] as const
 
 export type Screen = (typeof SCREENS)[number]
 
@@ -79,6 +79,9 @@ export const MOVES: Record<Screen, Move[]> = {
     // reached, and a stored session reopened from its row (L2.4).
     { to: 'session', via: 'openClip → openSessionClip' },
     { to: 'session', via: 'onOpenPracticeSession' },
+    // How sure I am, privacy, terms and credits (N6.3), from the first run's
+    // foot and from Settings.
+    { to: 'page', via: 'showPage' },
   ],
   analyzing: [
     { to: 'report', via: 'run (success)' },
@@ -117,6 +120,11 @@ export const MOVES: Record<Screen, Move[]> = {
   error: [{ to: 'home', via: 'captureAgain (pick, or the framing check)' }],
   // Was a sheet over home until it outgrew one; see `screens/Progress.tsx`.
   progress: [{ to: 'home', via: 'goHome' }],
+  // One page links to the others, and every page goes home.
+  page: [
+    { to: 'page', via: 'showPage' },
+    { to: 'home', via: 'goHome' },
+  ],
   session: [
     // Planning, reading, paused and done are one screen's stages, not screens.
     { to: 'session', via: 'startSession / stopSession' },

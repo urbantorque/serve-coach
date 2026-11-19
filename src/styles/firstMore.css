@@ -127,7 +127,7 @@
     grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
     /* The headline takes its own height and its line sits under it; the
        list beside them sets the section's height. */
-    grid-template-rows: auto 1fr;
+    grid-template-rows: auto auto 1fr;
     align-items: start;
     column-gap: 56px;
     row-gap: 16px;
@@ -135,11 +135,69 @@
 
   .first-more-section:has(.first-honest) > .first-honest {
     grid-column: 2;
-    grid-row: 1 / span 2;
+    grid-row: 1 / span 3;
+  }
+
+  /* The way to every reading sits under the promise it backs (N6.3). */
+  .first-more-section:has(.first-honest) > .first-more-link {
+    grid-column: 1;
+    grid-row: 3;
   }
 
   .first-more-privacy {
     align-items: center;
     text-align: center;
   }
+}
+
+/* How sure I am, privacy, terms and credits, under the two choices (N6.3). */
+.first-more-pages {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 20px;
+  padding-top: 8px;
+  border-top: 1px solid var(--hairline-soft);
+}
+
+.first-more-pages a {
+  padding: 10px 2px;
+  font-size: 15px;
+  color: var(--fg-muted);
+  text-decoration: none;
+}
+
+.first-more-pages a:hover {
+  color: var(--fg);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.first-more-pages a:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}
+
+.first-more-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  min-height: 44px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--lime);
+  text-decoration: none;
+}
+
+.first-more-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.first-more-link:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
 }

@@ -315,3 +315,18 @@ button.badge[disabled] {
   font-weight: 700;
   color: var(--fg);
 }
+
+/* The pages a visitor reads, at the foot of Settings (N6.3). */
+.settings-pages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hairline-soft);
+}
+
+.settings-pages .link-btn {
+  min-height: 44px;
+  font-size: 15px;
+}

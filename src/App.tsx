@@ -36,7 +36,7 @@ import { remember } from './lib/analysisCache'
 import type { FaultMove } from './lib/analysis/carryForward'
 import type { ServePairFrames } from './lib/analysis/consistency'
 import { SCORING_VERSION, type Analysis, type FailedCapture } from './lib/analysis/types'
-import { parsePath, pathFor, titleFor } from './lib/routes'
+import { parsePath, pathFor, titleFor, type InfoPageId } from './lib/routes'
 import { getPracticeSession, getSession, logPractice, safely, saveSession, tagsById, unlogPractice, type Session } from './lib/storage/db'
 import { downloadBackup, isIOS, isInstalled } from './lib/storage/backup'
 import { storageNudge } from './lib/storage/nudge'
@@ -84,6 +84,7 @@ const SessionScreen = lazy(loadSessionScreen)
 const Glance = lazy(loadGlance)
 /** The camera, a full-screen sheet: the viewfinder and its pose loop load with the tap. */
 const FramingCheck = lazy(() => import('./components/FramingCheck'))
+const InfoPage = lazy(() => import('./screens/InfoPage'))
 
 
 /**
@@ -150,6 +151,8 @@ export type View =
    * from home after a reload is not, and carrying on means picking it again.
    */
   | { kind: 'session'; session: PracticeSession; stage: SessionStage; canRead: boolean }
+  /** How sure I am, privacy, terms or credits (N6.3): read, not used. */
+  | { kind: 'page'; page: InfoPageId }
 
 
 /**
@@ -179,6 +182,7 @@ function initialView(): View {
   const route = parsePath(location.pathname, import.meta.env.BASE_URL)
   if (route.kind === 'progress') return { kind: 'progress' }
   if (route.kind === 'serves') return { kind: 'progress', serves: true }
+  if (route.kind === 'page') return { kind: 'page', page: route.page }
   return { kind: 'home' }
 }
 
@@ -280,6 +284,13 @@ export default function App() {
     const { frames: _f, ...session } = sampleAnalysis(DEMO_DIALS.example)
     void _f
     setView({ kind: 'saved', session, example: true })
+  }, [])
+
+  /** A page a visitor reads, from the first run's foot, Settings or another page (N6.3). */
+  const showPage = useCallback((page: InfoPageId) => {
+    setSheet(null)
+    setView({ kind: 'page', page })
+    window.scrollTo(0, 0)
   }, [])
 
   /**
@@ -706,6 +717,7 @@ export default function App() {
               }}
               onLadderStep={moveLadder}
               onShowSettings={() => setSheet('settings')}
+              onShowPage={showPage}
               onShowProgress={() => setView({ kind: 'progress' })}
               onShowHistory={() => setView({ kind: 'progress', serves: true })}
               onShowExample={() => void showExample()}
@@ -977,6 +989,8 @@ export default function App() {
             />
           )}
 
+          {view.kind === 'page' && <InfoPage page={view.page} onBack={goHome} onPage={showPage} />}
+
           {view.kind === 'saved' && view.example && (
             <Report
               key={view.session.id}
@@ -1057,6 +1071,7 @@ export default function App() {
         onImported={refreshSessions}
         offline={{ ready: offlineReady, warming, metered, onDownload: () => void makeOffline() }}
         protection={protection?.line}
+        onPage={showPage}
       />
 
       {/* Mounted only while it is open, which is what guarantees the camera is

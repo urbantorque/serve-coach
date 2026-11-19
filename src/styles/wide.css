@@ -360,6 +360,27 @@
     margin-top: 0;
   }
 
+  /* ---------------------------------------------------------- the info pages */
+
+  /* The title and the pages on the left, held while the page scrolls on the
+     right, as the report holds its clip (N6.3). */
+  .shell > .info {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr);
+    gap: 72px;
+    align-items: start;
+    padding-top: calc(40px + var(--safe-top));
+  }
+
+  .info > .info-side {
+    position: sticky;
+    top: 40px;
+  }
+
+  .info .acc-rows {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
   /* ------------------------------------------------------------- the sheets */
 
   /* A sheet on a laptop is a dialog in the middle of the window, not a phone's

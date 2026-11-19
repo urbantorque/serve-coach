@@ -9,7 +9,7 @@ declare const process: { cwd(): string }
 import fsUntyped from 'fs'
 // @ts-expect-error no @types/node; see egress.test.ts.
 import pathUntyped from 'path'
-import { parsePath, pathFor, titleFor, type RoutedView } from '../routes'
+import { INFO_PAGES, parsePath, pathFor, titleFor, type RoutedView } from '../routes'
 import { SCREENS } from '../screenFlow'
 import { assert, check, heading, report } from '../analysis/__tests__/harness'
 
@@ -27,6 +27,7 @@ const VIEWS: RoutedView[] = [
   { kind: 'analyzing' },
   { kind: 'glance' },
   { kind: 'error' },
+  ...INFO_PAGES.map((page) => ({ kind: 'page' as const, page })),
 ]
 
 heading('Every screen has an address (N3.1)')
@@ -53,8 +54,11 @@ check('an address the app hands out opens what it named, at the root and under a
               : 'serve'
             : v.kind === 'session'
               ? 'practice'
-              : 'home'
+              : v.kind === 'page'
+                ? 'page'
+                : 'home'
       assert(r.kind === want, `${p} opened ${r.kind}, wanted ${want}`)
+      if (r.kind === 'page') assert(v.kind === 'page' && r.page === v.page, `${p} opened the wrong page`)
       if (r.kind === 'serve' || r.kind === 'practice') {
         assert(r.id === (v as { session: { id: string } }).session.id, `${p} lost its id: ${r.id}`)
       }
@@ -63,7 +67,7 @@ check('an address the app hands out opens what it named, at the root and under a
 })
 
 check('an address the app does not know opens Today, never a blank page', () => {
-  for (const p of ['/nope', '/serve', '/serve/', '/serve/a/b', '/practice', '/other-base/progress', '/progress/x']) {
+  for (const p of ['/nope', '/serve', '/serve/', '/serve/a/b', '/practice', '/other-base/progress', '/progress/x', '/privacy/x', '/Accuracy']) {
     const r = parsePath(p, p.startsWith('/other') ? '/serve-coach/' : '/')
     assert(r.kind === 'home', `${p} opened ${r.kind}`)
   }
