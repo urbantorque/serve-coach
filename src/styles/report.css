@@ -413,6 +413,42 @@
   max-width: 100%;
 }
 
+/* Play both, phase for phase, and the moment both bodies stand at (N4.1). */
+.side-play {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.side-play-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-pill);
+  background: var(--lime);
+  color: var(--lime-ink);
+  transition: transform var(--fast) var(--ease);
+}
+
+.side-play-btn:active {
+  transform: scale(0.94);
+}
+
+.side-phases {
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.side-phases .seg-item {
+  flex: none;
+  white-space: nowrap;
+}
+
 .side-checks {
   display: flex;
   flex-direction: column;

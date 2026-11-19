@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import AthleteCanvas from '../../components/AthleteCanvas'
 import { Icon } from '../../components/primitives'
 import type { PhaseId } from '../../lib/analysis/types'
 import { swingOf, type Swing } from '../../lib/figure/swing'
+import { PHASE_ORDER, syncedFrame } from '../../lib/figure/syncPhases'
 import type { MomentCheck } from '../../lib/lookFor'
 import { shortDate } from '../../lib/progress'
 import type { Session } from '../../lib/storage/db'
@@ -24,6 +25,21 @@ interface Props {
 
 type Beside = 'model' | 'best' | 'last'
 
+const PHASE_NAME: Record<PhaseId, string> = {
+  ready: 'Ready',
+  toss: 'Toss',
+  trophy: 'Trophy',
+  drop: 'Racket drop',
+  contact: 'Contact',
+  finish: 'Finish',
+}
+
+/** How long one synced play-through takes: slow enough to watch two bodies at once. */
+const PLAY_SECONDS = 4
+
+const reducedMotion = () =>
+  typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
 /**
  * The player's body beside something to compare it with, at the moment that
  * matters: a real model serve, their own best, or their last. One picture and
@@ -32,6 +48,35 @@ type Beside = 'model' | 'best' | 'last'
 export default function SideBySide({ swing, moment, label, work, racket, checks, best, last }: Props) {
   const [beside, setBeside] = useState<Beside>('model')
   const [model, setModel] = useState<Swing | null>()
+  /*
+   * Which moment both bodies stand at, and, while playing, where the two are on
+   * one shared timeline (N4.1, `syncPhases.ts`): each serve reaches every phase
+   * at the same instant, so what differs is the serve, not its tempo.
+   */
+  const [at, setAt] = useState<PhaseId>(moment)
+  const [playU, setPlayU] = useState<number | null>(null)
+  const raf = useRef(0)
+
+  useEffect(() => setAt(moment), [moment])
+
+  useEffect(() => {
+    if (playU === null) return
+    const started = performance.now() - playU * PLAY_SECONDS * 1000
+    const tick = (now: number) => {
+      const u = (now - started) / (PLAY_SECONDS * 1000)
+      if (u >= 1) {
+        setPlayU(null)
+        setAt('contact')
+        return
+      }
+      setPlayU(u)
+      raf.current = requestAnimationFrame(tick)
+    }
+    raf.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf.current)
+    // Started once per play; the frame loop owns `playU` from there.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playU === null])
 
   useEffect(() => {
     let live = true
@@ -66,7 +111,10 @@ export default function SideBySide({ swing, moment, label, work, racket, checks,
       : []),
   ]
   const chosen = options.find((o) => o.id === beside) ?? options[0]
-  const name = label.toLowerCase()
+  const name = at === moment ? label.toLowerCase() : PHASE_NAME[at].toLowerCase()
+  const frameOf = (s: Swing) => (playU !== null ? Math.round(syncedFrame(s.moments, playU)) : (s.moments[at] ?? 0))
+  const phases = PHASE_ORDER.filter((p) => swing.moments[p] !== undefined)
+  const canPlay = !reducedMotion() && !!chosen.swing
   const fit = { height: 0.66, feet: 0.93, across: 0.5 }
 
   return (
@@ -77,7 +125,7 @@ export default function SideBySide({ swing, moment, label, work, racket, checks,
       <div className="side-pair">
         <figure className="side-cell">
           <div className="side-stage">
-            <AthleteCanvas swing={swing} mode="pose" at={swing.moments[moment] ?? 0} work={work} fit={fit} label={`Your ${name}, as the tracked body`} />
+            <AthleteCanvas swing={swing} mode="pose" at={frameOf(swing)} work={at === moment ? work : undefined} fit={fit} label={`Your ${name}, as the tracked body`} />
           </div>
           <figcaption>You</figcaption>
         </figure>
@@ -87,7 +135,7 @@ export default function SideBySide({ swing, moment, label, work, racket, checks,
               <AthleteCanvas
                 swing={chosen.swing}
                 mode="pose"
-                at={chosen.swing.moments[moment] ?? 0}
+                at={frameOf(chosen.swing)}
                 fit={fit}
                 label={`${chosen.caption ?? 'The other serve'}, at the ${name}`}
               />
@@ -97,6 +145,35 @@ export default function SideBySide({ swing, moment, label, work, racket, checks,
           </div>
           <figcaption>{chosen.caption}</figcaption>
         </figure>
+      </div>
+
+      <div className="side-play">
+        {canPlay && (
+          <button
+            type="button"
+            className="side-play-btn"
+            aria-label={playU !== null ? 'Pause both serves' : 'Play both serves, phase for phase'}
+            onClick={() => setPlayU(playU !== null ? null : 0)}
+          >
+            <Icon name={playU !== null ? 'pause' : 'play'} size={18} />
+          </button>
+        )}
+        <div className="seg side-phases" role="group" aria-label="Which moment to set side by side">
+          {phases.map((p) => (
+            <button
+              key={p}
+              type="button"
+              className={`seg-item${playU === null && p === at ? ' is-on' : ''}`}
+              aria-pressed={playU === null && p === at}
+              onClick={() => {
+                setPlayU(null)
+                setAt(p)
+              }}
+            >
+              {PHASE_NAME[p]}
+            </button>
+          ))}
+        </div>
       </div>
 
       {options.length > 1 && (
@@ -109,7 +186,7 @@ export default function SideBySide({ swing, moment, label, work, racket, checks,
         </div>
       )}
 
-      {checks.length > 0 && (
+      {checks.length > 0 && at === moment && playU === null && (
         <ul className="side-checks">
           {checks.map((c) => (
             <li key={c.id} className={c.inBand ? 'is-in' : 'is-out'}>
