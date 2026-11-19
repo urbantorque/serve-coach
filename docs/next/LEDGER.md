@@ -281,3 +281,28 @@ know a good serve from a poor one":
   laptop; one column on a phone. A line that promised a missed racket drop is
   never called a fault was cut before commit, because the smeared case
   (N2.5, KNOWN) still is.
+
+## Wave 4. Product depth
+
+- [x] **N4.1 Two serves side by side, in motion and phase for phase.** The
+  report's side-by-side (you beside a model serve, your best or your last)
+  showed one still at the fix's moment. It now has a phase strip to set both
+  bodies at any moment, and Play both, which runs the two serves together on
+  one shared timeline: `lib/figure/syncPhases.ts` pins each serve's phases to
+  the same instants and lets each run at its own pace between them, so both
+  reach the trophy, the drop and contact at once and what differs is the serve,
+  not its tempo. Four seconds a play-through, ending on contact; no playback
+  under reduced motion, where the phase strip does the work. The ticks and
+  crosses show only at the fix's own moment. `syncPhases.test.ts` holds every
+  phase landing on its own frame, no running backwards, and a missing phase
+  skipped. Walked on a phone (plays, pauses, lands on contact, the strip
+  scrolls inside its own width) and on a laptop in the studio's right pane.
+- [x] **N4.2 The commonest fault gets a demonstration.** "Your tossing arm
+  comes down early", the headline on most of the sample serves, had no moving
+  picture; it now has the rig's fault beside its fix (`tossArmHold` 0.3, at the
+  drop, the tossing hand painted). Eight of the eleven named faults now
+  demonstrate. Contact behind was tried at 0.5, 0.7 and 0.9 m and left out:
+  the engine names it only from a side view with the net's direction certain,
+  the demo serve is not one, and `faultDemo.test.ts` refuses a demonstration
+  of a fault the read would not call on the same serve. Posture collapse and
+  an early shoulder turn need a part the figure cannot paint yet.

@@ -97,6 +97,11 @@ export const DEMOS: Partial<Record<FlawId, DemoSpec>> = {
   toss_height: { dials: {}, apex: 2.45, moment: 'trophy', part: 'ball' },
   toss_drift: { dials: { tossWobble: 0.2 }, moment: 'toss', part: 'tossingHand' },
   no_leg_drive: { dials: { trophyKneeAngle: 175, contactHipHeight: 0.95 }, moment: 'contact', part: 'hips' },
+  // N4.2: the tossing arm down a third of the way to contact, not held up to it.
+  // Contact behind was tried and left out: the engine names it only from a
+  // side view where the net's direction is certain, and the demo serve is not
+  // one, so a demo of it would show a fault the read would not call.
+  toss_arm_drops: { dials: { tossArmHold: 0.3 }, moment: 'drop', part: 'tossingHand' },
 }
 
 /**
