@@ -45,7 +45,8 @@ import { unseenLines } from '../lib/analysis/angleReach'
 import { consistencyHeadline, type ServePairFrames } from '../lib/analysis/consistency'
 import { readAlike } from '../lib/analysis/realChange'
 import { scoreBreakdown } from '../lib/analysis/breakdown'
-import { causalPlan, injuryNotes, legLeadLine, refusalFor, suppressedNote, tierLabel } from '../lib/analysis/verdict'
+import { injuryNotes, legLeadLine, refusalFor, suppressedNote, tierLabel } from '../lib/analysis/verdict'
+import { linkedPlan, missLinks } from '../lib/missLinks'
 import { guessLine, type ServeGuess } from '../lib/serveGuess'
 import type { InjuryFlag } from '../lib/analysis/triage'
 import type { PracticeFocus } from '../lib/practice'
@@ -60,7 +61,7 @@ import {
 import { clipsWork, shareReportCard, shareServeClip } from '../lib/share/reportCard'
 import { swingOf, workParts } from '../lib/figure/swing'
 import { SCORING_VERSION, type Analysis, type PhaseId } from '../lib/analysis/types'
-import type { Session } from '../lib/storage/db'
+import type { ServeTag, Session } from '../lib/storage/db'
 import DrillCard from './report/DrillCard'
 import RevealStage from './report/RevealStage'
 import ShareChoice from './report/ShareChoice'
@@ -85,6 +86,13 @@ interface Props {
   moment?: Moment
   /** What a coach would ask first. Worked out only if a page is asked for. */
   coachContext?: () => Promise<CoachContext>
+  /**
+   * The player's history and what they said about each serve: where a fault
+   * this serve shows went with one kind of miss, past chance, the plan moves it
+   * up (N2.9). Absent on the example, which has no history.
+   */
+  sessions?: Session[]
+  tags?: ServeTag[]
   /** What the player said about this serve, and the taps that change it. */
   serveNumber?: 1 | 2
   outcome?: ServeOutcome
@@ -173,6 +181,8 @@ export default function Report({
   self,
   moment,
   coachContext,
+  sessions,
+  tags,
   serveNumber,
   outcome,
   onTagServe,
@@ -298,8 +308,19 @@ export default function Report({
   const refusal = refusalFor(analysis.triage)
   const injuries = injuryNotes(analysis.triage)
   // Worst cause first, falling back to the single focus on a report filed
-  // before the diagnostic pass, so there is always a first entry.
-  const ranked = causalPlan(analysis.triage, analysis.diagnosis)
+  // before the diagnostic pass, so there is always a first entry. A fault the
+  // player's own tags tie to a kind of miss, past chance, comes up the plan
+  // behind the first fix, with a line saying why (N2.9).
+  const linked = useMemo(
+    () =>
+      linkedPlan(
+        analysis.triage,
+        analysis.diagnosis,
+        example || !sessions?.length ? [] : missLinks(analysis, sessions, tags ?? []),
+      ),
+    [analysis, sessions, tags, example],
+  )
+  const ranked = linked.plan
   const plan = ranked.length ? ranked : [analysis.focus]
   const first = plan[0]
 
@@ -522,6 +543,7 @@ export default function Report({
           <p className="hero-why">
             <Cue text={first.why} />
           </p>
+          {first.flaw && linked.why[first.flaw] && <p className="hero-note">{linked.why[first.flaw]}</p>}
           {!refusal && analysis.quality.confidence < SOFT_READ && (
             <p className="hero-rough">
               <Icon name="warn" size={15} />
@@ -591,6 +613,7 @@ export default function Report({
                   </span>
                   <Icon name="chevron" size={18} />
                 </button>
+                {item.flaw && linked.why[item.flaw] && <p className="plan-why">{linked.why[item.flaw]}</p>}
               </li>
             ))}
           </ol>

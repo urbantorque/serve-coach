@@ -103,6 +103,13 @@ if (process.argv.includes('--chain')) {
   process.exit(0)
 }
 
+if (process.argv.includes('--outcomes')) {
+  // Whether the set's in, out and net labels give the fault-and-miss test
+  // anything to read (N2.9): every placement, 30 fps, three levels.
+  console.log(mocap.formatOutcomes(mocap.benchOutcomes(serves)))
+  process.exit(0)
+}
+
 if (process.argv.includes('--serve-cues')) {
   const takes = flag('--takes', 6)
   const side = mocap.measureCues(serves, mocap.SIDE_PLACEMENT, takes)

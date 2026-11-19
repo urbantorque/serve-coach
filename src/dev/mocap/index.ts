@@ -5,6 +5,7 @@
 export { readMat } from './mat'
 export { BATH_ATTRIBUTION, bathServe, parseOutcomes } from './bath'
 export { PLACEMENTS, RATES, benchMocap, formatBench } from './report'
+export { benchOutcomes, formatOutcomes } from './outcomes'
 export { METHOD_NAMES, benchCalls, benchChain, formatCalls, formatChain, formatRise, riseSweep, truthTable } from './chain'
 export {
   BEHIND_PLACEMENT,

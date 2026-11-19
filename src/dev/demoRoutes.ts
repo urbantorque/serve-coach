@@ -361,6 +361,37 @@ export async function runDemoRoute(
         verdict,
       },
     })
+  } else if (demo === 'links') {
+    /*
+     * A fix moved up by the player's own tags (N2.9), which no seeded season
+     * reaches: it needs 48 tagged serves of one kind. Three sittings of 16,
+     * half tagged net, the net ones mostly met low (the rig names a low contact
+     * at a reach of 1.05), then the newest serve, which shows it too. `&first`
+     * ties the tossing arm, the first fix, to the net instead, for the line
+     * under the headline.
+     */
+    const first = new URLSearchParams(location.search).has('first')
+    const sessions: Session[] = []
+    const tags: ServeTag[] = []
+    const start = Date.now() - 10 * 864e5
+    for (let day = 0; day < 3; day++) {
+      for (let i = 0; i < 16; i++) {
+        const net = i < 8
+        const marked = net ? i < 6 : i - 8 < 2
+        const dials: Partial<ServeDials> = first ? (marked ? {} : { tossArmHold: 0.72 }) : { contactReach: marked ? 1.05 : 1.25 }
+        const { frames: _f, ...rest } = sampleAnalysis({ noise: 0.004, seed: 700 + day * 16 + i, ...dials })
+        void _f
+        const id = `serve-demolinks${day * 16 + i}-0`
+        const createdAt = start + day * 3 * 864e5 + i * 60_000
+        sessions.push({ ...rest, id, createdAt } as Session)
+        tags.push({ id, outcome: net ? 'net' : 'in', serveNumber: 1, taggedAt: createdAt })
+      }
+    }
+    const { frames: _f, ...now } = sampleAnalysis({ noise: 0.004, seed: 799, contactReach: 1.05 })
+    void _f
+    const shown = { ...now, id: 'serve-demolinksnow-0', createdAt: Date.now() } as Session
+    seedHistory({ sessions: [shown, ...sessions.reverse()], practice: [], tags })
+    setView({ kind: 'saved', session: shown })
   } else if (demo === 'glance-refused') {
     setView({
       kind: 'glance',

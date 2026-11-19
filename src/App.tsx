@@ -887,6 +887,8 @@ export default function App() {
               self={shownSelf}
               moment={shownMoment}
               coachContext={() => import('./lib/share/coachContext').then((c) => c.coachContextOf(shownReport, sessions, serveTags, prefs))}
+              sessions={sessions}
+              tags={serveTags}
               serveNumber={tagsById(serveTags).get(shownReport.id)?.serveNumber}
               serveGuess={guessServeNumber(shownReport as Session, sessions, serveTags)}
               outcome={tagsById(serveTags).get(shownReport.id)?.outcome}

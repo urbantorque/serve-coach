@@ -568,6 +568,65 @@ live region, checked in the browser against the stand-in.
 
 ## Wave 2. Trust foundations, the rest
 
+- [x] **N2.9 Where the player's serves went now orders the plan, past chance
+  only.** Finding 6 held: the in, net, long and wide taps reached Progress and
+  nothing in the coaching. Now a report reads the player's earlier serves of
+  the same type, rubric and serve number, each tagged with where it went, and
+  asks of every named fault and every kind of miss whether the serves with
+  that fault went that way more often than chance allows (`lib/missLinks.ts`).
+  Where a fault this serve shows is linked, it moves up the plan to straight
+  after the first fix, ahead of the faults that are not, under a line: "I moved
+  this up. It showed on 18 of your 24 serves into the net, against 6 of your 24
+  that went in." A linked fault the four-drill cap held back comes in and the
+  last unlinked fix goes out, so the plan keeps its length; a rough reading on
+  this serve still comes after a firm one. When the first fix is itself
+  linked, the same counts sit under its headline. With too few tags, or
+  nothing past chance, the plan is `causalPlan`'s word for word, with no line.
+  "Past chance" is written down in the module: a one-sided exact test (Fisher's,
+  stratified) asked within each sitting and camera view, Holm-corrected across
+  every fault and miss asked; nothing before 48 tagged serves, and a pair only
+  with seven a side of both splits; then the whole history has to lean the same
+  way so the quoted counts agree with the line. The false-positive rate is 5%
+  over a player's whole tagged history, not per read: it looks again only when
+  the tags double, spending 2.5% at 48, 1.25% at 96 and so on, so the shares add
+  to under 5% however long the history runs, and the answer holds still between
+  looks. A fault that could not be read on a serve counts as neither with nor
+  without it.
+  `missLinks.test.ts` (21 checks): 400 players of pure noise tagging 384 serves,
+  read at every look, ever saw a link 1.0% of the time, in steady sittings and in
+  sittings that drift. Pooled into one stratum, a drifting season named links in
+  22.3% of histories at one 5% look; within sittings, 1.8%. A strong link (a
+  fault on half the serves, the net from 12% of serves to 40%) was found 14.8% of
+  the time at 48 tagged serves, 31.3% at 96 and 71.8% at 192, against stated
+  floors of 10, 25 and 60%; a weaker one (15% to 30%) 1.3, 2.8 and 9.3%: the test
+  is built to stay quiet, and it does. On the real engine, 48 rig serves with a
+  low contact planted on the net serves turn the plan "tossing arm, legs, low
+  contact" into "tossing arm, low contact, legs"; the same serves tagged evenly
+  say nothing. The exact test matches Fisher's by hand on the tea-tasting
+  tables. `?demo=links` (and `&first`) shows both lines; looked at on a phone
+  and at 1440, the console silent. The entry chunk took the two props only:
+  129.98 kB of 130.
+  **The Bath labels validate nothing here, measured.**
+  `npm run bench:mocap -- --outcomes`: 39 labelled serves (20 in, 10 net, 9
+  out) from one player, and
+  no fault named on any of them from any of the five placements, at the level
+  the engine infers or at stated levels 7 and 9 (nor at 60 or 120 fps in the
+  plain bench). With no serve carrying a fault there is no table to test; the
+  set is under the 48 a first look needs; "out" is not split into long and
+  wide; and with no known truth about what sends this player's serves into
+  the net, a link found or missed could not be scored anyway. Their one use:
+  their mix, about half in and a quarter into the net, set the synthetic
+  histories' outcomes.
+  Not adopted: moving the first fix. It is the stored verdict the glance,
+  Today's week, the drill check and the carry-forward all read, and moving it
+  on one screen would make two disagree. A look after every serve: in a
+  scratch run, 5% at every doubling already put the lifetime rate at 7.3 to
+  8.5%. A first look at 24: a strong link would be found there 3.8% of the time,
+  for half the budget. Left: Today's week and the coach's page keep the causal
+  order (the week loads with the entry chunk). Found and not changed:
+  Progress's `missesInCommon` names a gap at two standard errors across nine
+  readings and three misses with no correction between them; its rate on
+  noise is not measured.
 - [x] **N2.10 A steady toss says which way it was seen.** The handover's
   finding 5: side-on, the angle the filming guide asks for, a toss wandering
   sideways points into the lens, and one 10 cm wobble reads 1 cm (F5, pinned

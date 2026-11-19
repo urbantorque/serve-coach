@@ -343,6 +343,15 @@
   color: var(--fg-muted);
 }
 
+/* Why a fix sits where it does, from the player's own tags (N2.9). Under the
+   fix's words, clear of its number. */
+.plan-why {
+  margin: -6px 0 11px 43px;
+  font-size: 15px;
+  line-height: 1.38;
+  color: var(--fg-muted);
+}
+
 .plan-held,
 .against-best {
   font-size: 15px;
