@@ -6,7 +6,7 @@ laptop width. Nothing in this file has been executed. You are the building
 session.
 
 Repo: `C:\Users\roger\OneDrive\Desktop\serve coach`. Trunk is `main` at
-`0d7035d` (same commit as `next/premium`), clean, no remote. Windows 11,
+the commit that added this file (same as `next/premium`), clean, no remote. Windows 11,
 PowerShell and Git Bash.
 
 ## 1. The brief, in the owner's words
