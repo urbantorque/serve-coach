@@ -53,6 +53,46 @@ export function speakLocally(text: string, lang?: string): boolean {
   return true
 }
 
+/**
+ * Say `text`, then call `then` once it has been said (C1.1): a guided set's
+ * intro before its countdown, which would otherwise cut it off. Called at once
+ * where there is no local voice. Some browsers never fire `end` on an
+ * utterance, so a timer at a slow speaking pace calls it anyway; whichever
+ * comes first wins, and `then` runs once. Returns a cancel.
+ */
+export function speakThen(text: string, then: () => void): () => void {
+  let done = false
+  let timer = 0
+  let poll = 0
+  const stop = () => {
+    done = true
+    clearTimeout(timer)
+    clearInterval(poll)
+  }
+  const finish = () => {
+    if (done) return
+    stop()
+    then()
+  }
+  if (!speakLocally(text)) {
+    finish()
+    return stop
+  }
+  const words = plain(text).split(' ').length
+  timer = setTimeout(finish, 1500 + words * 450) as unknown as number
+  // Polled rather than `onend`, which `speakLocally` does not expose and some
+  // engines skip. Started late, since `speaking` can still read false for a
+  // moment after `speak()` while the engine queues the utterance.
+  const synth = window.speechSynthesis
+  setTimeout(() => {
+    if (done) return
+    poll = setInterval(() => {
+      if (!synth.speaking) finish()
+    }, 200) as unknown as number
+  }, 600)
+  return stop
+}
+
 /** Stop whatever is being said — leaving the screen, or turning the voice off. */
 export function stopSpeaking(): void {
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.cancel()

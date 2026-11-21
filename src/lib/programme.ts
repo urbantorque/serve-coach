@@ -370,6 +370,7 @@ function startRung(r: Reading, flaw: FlawId, ladder: Progression, rung: number):
 /** A ladder for a fault that has none: one row, the report's own drill, at graduation's default bar. */
 const oneStep = (item: WeekItem): Progression => ({
   cue: '',
+  say: '',
   easier: '',
   mistake: '',
   pass: CHECK_SERVES - 1,

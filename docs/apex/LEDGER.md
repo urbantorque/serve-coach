@@ -75,8 +75,8 @@ Branch `apex`, cut from `main` at `b4d0e80` on 2026-11-22.
   score small under the fix), B, four areas in place of one score, and C, the
   change since the player's best serve, each at 390 by 844 and 1440 by 900, on
   a licensed frame ("Blaž Rola NCAAs 2013" by ZooTennis.com, CC BY 3.0). The
-  pick is with the owner; the recommendation is A, with C as what A becomes
-  from the second trip on. B is honest only if every area is graded, and
+  recommendation was A, with C as what A becomes from the second trip on, and
+  the owner picked A on 2026-11-22. B is honest only if every area is graded, and
   contact is shown and never graded.
   - **What the canvas gets wrong, found building it.** Take A draws the lime
     target as a redrawn leg on the photograph. The app refuses that for an
@@ -113,8 +113,8 @@ Branch `apex`, cut from `main` at `b4d0e80` on 2026-11-22.
 
 ## Wave 2. The report and the coaching
 
-- [x] **B2.1 The held frame on a phone (take A, the recommendation; built
-  without an answer, as the handover says, and changeable).** Off the studio
+- [x] **B2.1 The held frame on a phone (take A; the owner's pick, confirmed
+  after it was built as the recommendation).** Off the studio
   the picture is the held frame and nothing else, and the score steps down
   under the fix.
   - **The shape to aim for on the picture**, where the score was: the card's
@@ -137,6 +137,37 @@ Branch `apex`, cut from `main` at `b4d0e80` on 2026-11-22.
     the row draws a target, the moment line is there when it does not, the
     score is in the tally and not on the picture, the figure is never drawn
     twice, and the short picture keeps its score.
+- [x] **C1.1 A guided set.** A drill check is now filmed one serve at a time,
+  hands-free, and the app talks the player through it with the phone on a bag.
+  - **What it says.** Before the first countdown, the step, the count and the
+    cue ("Toss and point, 6 serves. Point at the ball."), and the countdown
+    waits until that is said (`speakThen`). After each serve, on the glance,
+    that serve against the drill's one fault and the set so far ("Clean, 3 of
+    4 clean so far.", or "Not yet, 2 of 4 clean so far. Point at the ball.").
+    A serve the engine could not judge for the fault is said to be that and
+    counts neither way. When the set has its answer, the result
+    (`tripCheckLine`), and the loop back to the camera stops.
+  - **One fault only.** Between two serves the score, the speed and the
+    report's first fix stay on the screen and are not said: the drill asked
+    for one thing.
+  - **Every ladder has a spoken cue.** `Progression.say`, six words at most,
+    is required by the type, so a ladder cannot ship without one.
+    `guidedSet.test.ts` runs every line a set can say, for every step of all
+    11 ladders, through the copy lint and a check for characters a voice
+    mangles; the lint caught "just" in the toss height cue. It also plays
+    whole sets: passed after six clean, ended early after three named.
+  - **Proved in Chrome** with a fake on-device voice that logs what it is
+    given. `?demo=guided` (four serves in) said "Not yet, 2 of 4 clean so
+    far. Let the tip fall behind you." and kept the loop back to the camera;
+    `?demo=guided-done` said "Clean on 5 of 6 serves this trip. You have
+    passed this step." with no loop. Through Chrome's fake camera, Home's
+    session, "Film a check", hands-free: the intro at 17.0 s, "Recording in
+    5 seconds" at 20.0 s, then 3, 2, 1, Go. Console clean.
+  - **Not built: a read during the recording.** The read after a rep is the
+    glance's full read of that serve, not a faster one-fault read off the
+    hands-free hand samples. A new measurement read off those samples would be
+    untested on real serves, so the glance's normal read is used instead.
+    Six in one recording is still a tap away in the viewfinder's options.
 
 ## Wave 3. The loop and the studio
 

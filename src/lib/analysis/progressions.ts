@@ -68,6 +68,12 @@ const selfChecked = (drill: Drill, bar: string): Step => ({ ...drill, check: { b
 export interface Progression {
   /** One thing to feel, about the ball, the racket or the court. */
   cue: string
+  /**
+   * The cue cut to what a voice can say between two serves (C1.1): at most six
+   * words, said before a guided set and after any serve that still had the
+   * fault. Required, so a ladder cannot ship without its spoken line.
+   */
+  say: string
   /** Most guided first, most like a match last. Three to five. */
   steps: Step[]
   /** The way in for somebody who cannot do the first step yet. */
@@ -101,6 +107,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
   // into the swing at the pace the arm can keep.
   toss_arm_drops: {
     cue: 'Keep pointing at the ball with your tossing hand until the racket starts up to it.',
+    say: 'Point at the ball',
     steps: [
       {
         name: 'Toss and point',
@@ -125,6 +132,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
   // the serve that follows it into the court.
   contact_behind: {
     cue: 'Send the ball up in front of you, so it would land a racket length inside the baseline.',
+    say: 'Toss it out in front',
     steps: [
       {
         name: 'Toss in front',
@@ -154,6 +162,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
 
   waiters_tray: {
     cue: 'Hold the racket like a hammer and let the edge lead the way up to the ball.',
+    say: 'Edge first, up to the ball',
     steps: [
       {
         name: 'Edge bounces',
@@ -190,6 +199,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
 
   toss_height: {
     cue: 'Lift the ball up a narrow chimney and let it float off your fingers above your racket reach.',
+    say: 'Float it above your reach',
     steps: [
       {
         name: 'Lift and let go',
@@ -225,6 +235,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
 
   toss_drift: {
     cue: 'Lift the ball up one straight line, so it would land on the same spot in front of your front foot.',
+    say: 'One straight line up',
     steps: [
       // Replaced by the axis drill where the diagnosis knows which way the toss
       // wandered — see `progressionFor`. This is the axis-blind one.
@@ -257,6 +268,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
 
   posture_collapse: {
     cue: 'Keep looking at the spot where you hit the ball until you hear it land.',
+    say: 'Eyes on the spot you hit',
     steps: [
       {
         name: 'Toss and look',
@@ -287,6 +299,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
 
   shallow_drop: {
     cue: 'Let the racket tip fall towards the court behind you, then throw it up at the ball.',
+    say: 'Let the tip fall behind you',
     steps: [
       {
         name: 'Start it hanging',
@@ -312,6 +325,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
 
   collapsed_elbow: {
     cue: 'Throw the racket head up at the ball, as if lobbing it over a high fence.',
+    say: 'Throw the racket head up',
     steps: [
       selfChecked(DRILLS.overhead_throw, 'Move up when twelve of fifteen throws peak well above the net.'),
       {
@@ -344,6 +358,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
     // Not "until you hear the strings hit the ball", which asked for no trunk
     // turn before contact and argued with this ladder's own "Turn late" (L1.5).
     cue: 'Keep the logo on your shirt facing the side fence until the racket starts up, then turn to the net.',
+    say: 'Logo to the side fence',
     steps: [
       {
         name: 'Seated serves',
@@ -373,6 +388,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
 
   no_leg_drive: {
     cue: 'Send the ball all the way to the back fence and let your body throw your arm.',
+    say: 'Send it to the back fence',
     steps: [
       selfChecked(DRILLS.push_throws, 'Move up when your legs start every throw before your arm does.'),
       served(DRILLS.back_leg_serve),
@@ -392,6 +408,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
 
   low_contact: {
     cue: 'Meet the ball with the racket as high as it can go: top floor, not halfway up.',
+    say: 'Top floor, full reach',
     steps: [
       {
         name: 'Find your top',

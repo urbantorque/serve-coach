@@ -14,7 +14,8 @@ import type { View } from '../App'
 import { bandsFor, keyframeOverlay } from '../lib/analysis/analyze'
 import type { FaultMove } from '../lib/analysis/carryForward'
 import { buildConsistency, pairStills, type ServePairFrames } from '../lib/analysis/consistency'
-import { checkDrill } from '../lib/analysis/progressions'
+import { checkDrill, progressionFor } from '../lib/analysis/progressions'
+import type { FlawId } from '../lib/analysis/flaws'
 import type { Analysis } from '../lib/analysis/types'
 import type { PracticeLog, Session } from '../lib/storage/db'
 import type { PracticeSession } from '../lib/session/session'
@@ -29,6 +30,8 @@ export interface DemoContext {
   seedHistory: (history: { sessions: Session[]; practice: PracticeLog[]; tags?: ServeTag[]; practiceSessions?: PracticeSession[] }) => void
   /** The object URL of a generated clip, so `App.tsx` can release it with the rest. */
   keepVideoUrl: (url: string) => void
+  /** The drill a guided set is checking (C1.1), as "Film a check" sets it. */
+  setCheckTarget: (target: { flaw: FlawId; drill: string }) => void
 }
 
 /**
@@ -95,7 +98,7 @@ function rigStills(a: Analysis): void {
 
 export async function runDemoRoute(
   demo: string,
-  { setView, setPair, seedHistory, keepVideoUrl }: DemoContext,
+  { setView, setPair, seedHistory, keepVideoUrl, setCheckTarget }: DemoContext,
 ): Promise<void> {
   /*
    * A season of practice, on the home screen, going nowhere else.
@@ -110,6 +113,34 @@ export async function runDemoRoute(
    */
   if (demo === 'history') {
     seedHistory(sampleHistory())
+    return
+  }
+  /*
+   * A guided set (C1.1), on the glance after its latest serve: `?demo=guided`
+   * is four serves in with that one still showing the racket drop, and
+   * `?demo=guided-done` is six in and passed, where the loop back to the
+   * camera stops. The serves are the sample serve with the drop's verdict set
+   * by hand, three minutes apart, so they are one trip. Turn hands-free on to
+   * see the court layout; what is said is logged by a fake voice in the
+   * scripted run.
+   */
+  if (demo === 'guided' || demo === 'guided-done') {
+    const flaw: FlawId = 'shallow_drop'
+    const pattern = demo === 'guided' ? 'cncn' : 'ccnccc'
+    const base = sampleAnalysis()
+    const now = Date.now()
+    const serves = [...pattern].map((p, i) => {
+      const finding = { flaw, detected: p === 'n', signal: 's', value: 0.5, unit: 'ratio', miss: p === 'n' ? 0.2 : 0, target: [0.6, 1], target_tier: 4, severity: p === 'n' ? 'medium' : 'none', confidence: 0.9 }
+      return {
+        ...base,
+        id: `guided-${i}`,
+        createdAt: now - (pattern.length - 1 - i) * 3 * 60_000,
+        diagnosis: { ...base.diagnosis, flaws: [...(base.diagnosis?.flaws ?? []).filter((f) => f.flaw !== flaw), finding] },
+      } as unknown as Session
+    })
+    seedHistory({ sessions: serves, practice: [] })
+    setCheckTarget({ flaw, drill: progressionFor(flaw)!.steps[0].name })
+    setView({ kind: 'glance', analysis: serves[serves.length - 1] })
     return
   }
   // The crash screen (L6.8): a stored report with nothing in it, which the

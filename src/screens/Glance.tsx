@@ -9,6 +9,8 @@ import { OUTCOME_LABEL, SERVE_NUMBER_LABEL } from '../lib/serveTagCopy'
 import { hasLocalVoice, onVoicesChanged, speakLocally, stopSpeaking } from '../lib/speech'
 import { scoreMoveCaption, scoreMoveWords, type ScoreMove } from '../lib/progress'
 import { canMoveUp, tripCheckLine, tripDrillCheck } from '../lib/tripCheck'
+import { repLine, setDone } from '../lib/guidedSet'
+import { judgeServe } from '../lib/analysis/progressions'
 import type { FlawId } from '../lib/analysis/flaws'
 import { beforeAfter } from '../lib/graduationCard'
 import FixedPair from '../components/FixedPair'
@@ -215,10 +217,19 @@ export default function Glance({
   // filmed with it on, so this screen has to be read from the fence too.
   const handsFree = prefs.handsFree ?? onCourtDefault()
   const court = handsFree && !refusal
+  /*
+   * A guided set (C1.1): the player chose this drill to check, so what is said
+   * is this serve against its one fault, and the set so far. Once the set has
+   * its answer the loop back to the camera stops: the set is over.
+   */
+  const guided = trip?.target && (!tripCheck || tripCheck.flaw === trip.target)
+    ? repLine(trip.target, judgeServe(analysis as Session, trip.target), tripCheck)
+    : undefined
+  const setOver = !!guided && setDone(tripCheck)
 
   // And then back to the camera, counted down where it can be seen, with any
   // touch of this screen — a tag, a scroll — keeping it here instead.
-  const [backIn, setBackIn] = useState<number | null>(() => (handsFree && onRecordAnother ? BACK_TO_CAMERA_S : null))
+  const [backIn, setBackIn] = useState<number | null>(() => (handsFree && onRecordAnother && !setOver ? BACK_TO_CAMERA_S : null))
   const recordAnotherRef = useRef(onRecordAnother)
   recordAnotherRef.current = onRecordAnother
   useEffect(() => {
@@ -239,7 +250,9 @@ export default function Glance({
    */
   const spoken = refusal
     ? refusal.title
-    : // The speed first, when there is one (C3): the reading a player most
+    : guided
+      ? guided
+      : // The speed first, when there is one (C3): the reading a player most
       // wants, and the one this screen cannot show from the baseline.
       `${reading ? `${speedSpokenLine(reading, unit)} Score ` : ''}${analysis.overall}${scoreMove ? `, ${scoreMoveWords(scoreMove)}` : ''}. ${first ? `${first.title}. ${first.why}` : 'Nothing stood out on that one. Hit another.'}`
   const [voiced, setVoiced] = useState(() => hasLocalVoice())

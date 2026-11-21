@@ -18,7 +18,9 @@ import { MAX_RECORDING_SECONDS, recordClip, recordingOutcome, recordingType } fr
 import { MAX_PRACTICE_SECONDS, canRecordPractice, privateFileSink, recordPractice } from '../lib/framing/practice'
 import { loadEngine, nextVideoTimestamp } from '../lib/pose/poseEngine'
 import { recordingConstraints } from '../lib/framing/camera'
-import { primeSpeech, speakLocally } from '../lib/speech'
+import { primeSpeech, speakLocally, speakThen } from '../lib/speech'
+import { setIntro } from '../lib/guidedSet'
+import type { FlawId } from '../lib/analysis/flaws'
 import {
   COUNTDOWN_S,
   RECORDING_DUTY,
@@ -125,6 +127,12 @@ interface Props {
    */
   target?: string
   /**
+   * The fault the drill in `target` is for, which makes the check a guided set
+   * (C1.1): the step, the count and the cue are said once before the first
+   * countdown. Not on a re-armed opening, which is the same set continuing.
+   */
+  targetFlaw?: FlawId
+  /**
    * Opened from the glance's "Record another" with hands-free on (C3): the
    * player has walked back to the baseline, so the next countdown starts by
    * itself once they stand still in a clear picture. A tap on the button still
@@ -154,7 +162,7 @@ const CAMERA_APP_HELPS = new Set(['unsupported', 'denied', 'missing', 'unknown']
 /** Hand samples kept for the re-arm check: comfortably more than `REARM_S` of them. */
 const REARM_WINDOW_S = 6
 
-export default function FramingCheck({ onRecorded, target, rearm = false, onCameraApp, onClose, onPick, onHelp, firstTime, onSeenRules }: Props) {
+export default function FramingCheck({ onRecorded, target, targetFlaw, rearm = false, onCameraApp, onClose, onPick, onHelp, firstTime, onSeenRules }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   // Mounted only while the viewfinder is open, and that is a phone propped on
   // a fence while its owner walks to the baseline — the screen must not lock.
@@ -204,8 +212,10 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
 
   /*
    * Hands-free and the voice (N1.1, N1.2): kept in prefs, so a player who
-   * films from the fence every time sets them once. A drill check defaults to
-   * six serves, the basket its bar is out of.
+   * films from the fence every time sets them once. A drill check is a guided
+   * set (C1.1): one serve a recording, each read on the glance before the next,
+   * so the player hears how every rep went. Six in one recording is still a tap
+   * away, read together afterwards.
    *
    * On by default on a phone (`onCourtDefault`, Q6) until the player sets
    * either: off, they were four decisions away and most players met the court
@@ -213,13 +223,17 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
    */
   const [handsFree, setHandsFree] = useState(() => readPrefs().handsFree ?? onCourtDefault())
   const [speak, setSpeak] = useState(() => readPrefs().speakFraming ?? onCourtDefault())
-  const [serveCount, setServeCount] = useState<ServeCount>(() => (target ? 6 : (readPrefs().handsFreeServes ?? 1)))
+  const [serveCount, setServeCount] = useState<ServeCount>(() => (target ? 1 : (readPrefs().handsFreeServes ?? 1)))
   const [countdown, setCountdown] = useState<number | null>(null)
   /** Hands-free, the voice and the serve count, folded: they rarely change. */
   const [optionsOpen, setOptionsOpen] = useState(false)
   const countdownRef = useRef<number | null>(null)
   countdownRef.current = countdown
   const countdownTimer = useRef(0)
+  const intro = target && targetFlaw ? setIntro(targetFlaw, target) : undefined
+  /** Whether this set's intro has been said; a re-armed opening is the set continuing. */
+  const introSaidRef = useRef(rearm)
+  const introCancelRef = useRef<() => void>(() => {})
   /*
    * What the framing is judged for (C4): the swing, from four to five metres,
    * or a speed, from six to seven with the phone on its side. Kept in prefs
@@ -250,7 +264,13 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
   const say = (text: string) => {
     if (speakRef.current) speakLocally(text)
   }
-  useEffect(() => () => clearInterval(countdownTimer.current), [])
+  useEffect(
+    () => () => {
+      clearInterval(countdownTimer.current)
+      introCancelRef.current()
+    },
+    [],
+  )
   /**
    * Which container this browser will record, decided once.
    *
@@ -513,6 +533,7 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
     // A tap during the countdown calls it off.
     if (countdown !== null) {
       clearInterval(countdownTimer.current)
+      introCancelRef.current()
       setCountdown(null)
       return
     }
@@ -538,9 +559,20 @@ export default function FramingCheck({ onRecorded, target, rearm = false, onCame
   const startCountdown = () => {
     if (!streamRef.current || !type || !onRecorded || countdownRef.current !== null) return
     earcon('armed')
+    countdownRef.current = COUNTDOWN_S
+    setCountdown(COUNTDOWN_S)
+    // A guided set says what it is first, and counts down once that is said:
+    // spoken over the countdown, "3" would cut the cue off halfway.
+    if (intro && !introSaidRef.current) {
+      introSaidRef.current = true
+      introCancelRef.current = speakThen(intro, count)
+      return
+    }
+    count()
+  }
+
+  const count = () => {
     let left = COUNTDOWN_S
-    countdownRef.current = left
-    setCountdown(left)
     speakLocally(countdownWord(left)!)
     countdownTimer.current = setInterval(() => {
       left -= 1

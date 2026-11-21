@@ -518,6 +518,7 @@ export default function App() {
           keepVideoUrl: (url) => {
             urlRef.current = url
           },
+          setCheckTarget,
         }),
       )
     }
@@ -1124,6 +1125,7 @@ export default function App() {
         <Suspense fallback={null}>
           <FramingCheck
             target={checkTarget?.drill}
+            targetFlaw={checkTarget?.flaw}
             rearm={film?.rearm}
             onClose={() => setFilm(null)}
             onPick={pickFromFilm}
