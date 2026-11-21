@@ -405,6 +405,73 @@ export default function Report({
   const heldTarget = leadMetric && targetDrawn(leadMetric) ? leadMetric : undefined
   const stageLabel = `Your serve at ${(focusPhase?.label ?? 'contact').toLowerCase()}${work.length ? ', with the part to work on picked out' : ''}.`
 
+  // The score and the speed: on the picture beside the studio's clip, and on a
+  // phone under the fix, so the held frame carries the correction (B2.1). Under
+  // a warning the picture is short and keeps the number, as N7.8 fitted it.
+  const below = !studio && !injuries.length
+  const numbers = (
+    <div className="hero-numbers">
+      <div className="hero-score">
+        <span className="hero-scoreline">
+          <span className="t-score" aria-label={`${analysis.overall} out of 100`}>
+            {shown}
+          </span>
+          <span className="hero-outof" aria-hidden="true">
+            /100
+          </span>
+        </span>
+        <p className="hero-band">{verdict}</p>
+      </div>
+      {figures && (
+        <section className="hero-speed" aria-label="Serve speed">
+          <p className="hero-speed-figure">
+            <span className="hero-speed-about">about</span>
+            <span className="hero-speed-line">
+              <strong>{figures.best}</strong>
+              {NBSP}
+              {figures.unit}
+            </span>
+          </p>
+          <p className="hero-speed-range">
+            <Term id="likelyRange">Likely</Term> {figures.low}–{figures.high}
+            {NBSP}
+            {figures.unit}. No radar has checked it.
+          </p>
+        </section>
+      )}
+    </div>
+  )
+  // The same two figures, small, under the fix on the held frame's report.
+  const tally = (
+    <div className="hero-tally">
+      <p className="hero-tally-score">
+        <span className="sr-only">{`${analysis.overall} out of 100.`}</span>
+        <span className="hero-tally-num" aria-hidden="true">
+          {shown}
+        </span>
+        <span className="hero-outof" aria-hidden="true">
+          /100
+        </span>
+        <span className="hero-tally-band">{verdict}</span>
+      </p>
+      {figures && (
+        <section className="hero-tally-speed" aria-label="Serve speed">
+          <p className="hero-tally-figure">
+            about <strong>{figures.best}</strong>
+            {NBSP}
+            {figures.unit}
+          </p>
+          <p className="hero-tally-range">
+            <Term id="likelyRange">Likely</Term> {figures.low}–{figures.high}
+            {NBSP}
+            {figures.unit}. No radar has checked it.
+          </p>
+        </section>
+      )}
+    </div>
+  )
+  const settledView = (settled || !fresh) && !replaying
+
   const topbar = (
     <header className="report-top">
       <button className="glass-btn" onClick={onBack} aria-label="Back">
@@ -509,7 +576,7 @@ export default function Report({
 
       <section className="hero" data-settled={settled || !fresh ? 'true' : 'false'}>
         <div
-          className={`hero-stage${injuries.length ? ' hero-stage--short' : ''}${injuries.length > 1 ? ' hero-stage--shorter' : ''}${studio ? ' hero-stage--panel' : ''}`}
+          className={`hero-stage${injuries.length ? ' hero-stage--short' : ''}${injuries.length > 1 ? ' hero-stage--shorter' : ''}${studio ? ' hero-stage--panel' : ''}${below ? ' hero-stage--held' : ''}`}
           onClick={() => setSettled(true)}
         >
           {fresh && !settled && !studio && (
@@ -534,7 +601,7 @@ export default function Report({
           />
           )}
           {!studio && <div className="hero-veil" aria-hidden="true" />}
-          {!studio && clip && (settled || !fresh) && !replaying && (
+          {!studio && clip && settledView && (
             <button
               type="button"
               className="hero-replay"
@@ -548,36 +615,14 @@ export default function Report({
               Play it again
             </button>
           )}
-          <div className="hero-numbers">
-            <div className="hero-score">
-              <span className="hero-scoreline">
-                <span className="t-score" aria-label={`${analysis.overall} out of 100`}>
-                  {shown}
-                </span>
-                <span className="hero-outof" aria-hidden="true">
-                  /100
-                </span>
-              </span>
-              <p className="hero-band">{verdict}</p>
+          {!below && numbers}
+          {below && settledView && (heldTarget ? (
+            <div className="hero-plate">
+              <TargetShape metric={heldTarget} />
             </div>
-            {figures && (
-              <section className="hero-speed" aria-label="Serve speed">
-                <p className="hero-speed-figure">
-                  <span className="hero-speed-about">about</span>
-                  <span className="hero-speed-line">
-                    <strong>{figures.best}</strong>
-                    {NBSP}
-                    {figures.unit}
-                  </span>
-                </p>
-                <p className="hero-speed-range">
-                  <Term id="likelyRange">Likely</Term> {figures.low}–{figures.high}
-                  {NBSP}
-                  {figures.unit}. No radar has checked it.
-                </p>
-              </section>
-            )}
-          </div>
+          ) : (
+            <p className="hero-moment">{heldAt(focusPhase?.id ?? 'contact')}</p>
+          ))}
         </div>
 
         <div className="hero-fix">
@@ -607,8 +652,10 @@ export default function Report({
           <p className="hero-why">
             <Cue text={first.why} />
           </p>
-          {/* The shape to aim for, under the fix it belongs to (B1.1). */}
-          {heldTarget && (
+          {below && tally}
+          {/* The shape to aim for, under the fix it belongs to (B1.1), where the
+              studio's clip has the picture. */}
+          {studio && heldTarget && (
             <div className="hero-target">
               <TargetShape metric={heldTarget} />
             </div>
@@ -1264,4 +1311,18 @@ function DrilledLine({
       )}
     </div>
   )
+}
+
+/** What the held frame is stopped on, in words under it. */
+function heldAt(phase: PhaseId): string {
+  return phase === 'contact' ? 'Held at contact' : phase === 'ready' ? 'Held at the ready position' : `Held at the ${PHASE_NAME[phase]}`
+}
+
+const PHASE_NAME: Record<PhaseId, string> = {
+  ready: 'ready position',
+  toss: 'toss',
+  trophy: 'trophy',
+  drop: 'racket drop',
+  contact: 'contact',
+  finish: 'finish',
 }

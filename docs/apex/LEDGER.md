@@ -113,6 +113,31 @@ Branch `apex`, cut from `main` at `b4d0e80` on 2026-11-22.
 
 ## Wave 2. The report and the coaching
 
+- [x] **B2.1 The held frame on a phone (take A, the recommendation; built
+  without an answer, as the handover says, and changeable).** Off the studio
+  the picture is the held frame and nothing else, and the score steps down
+  under the fix.
+  - **The shape to aim for on the picture**, where the score was: the card's
+    figure and key side by side on glass, caveat and viewpoint whole, across
+    the foot of the picture. The faults that lead with a figure are read high
+    on the body (the toss, the contact), so the feet are what it covers.
+    Where no figure is drawn, the foot of the picture says what it is held on
+    ("Held at the trophy").
+  - **The tally**, small under the fix: the score with its verdict, the speed
+    with its range and "No radar has checked it" (N7.4), in two lines.
+  - **The drill still clears the action bar.** Measured at 375 by 812: 44 to
+    68 px clear on the sample, the low-contact, basket and live reports (50 to
+    90 before). The picture gave back the height the number took (38 dvh, at
+    most 340 px). At 375 by 667 the drill was under the bar before and still is.
+  - **Under an injury warning nothing moves:** the short picture keeps the
+    number as N7.8 fitted it, and no plate is drawn on it.
+  - **The laptop studio is unchanged**: score on its panel, figure under the
+    fix (B1.1).
+  - `heldTarget.test.ts` now proves the plate is on the picture exactly when
+    the row draws a target, the moment line is there when it does not, the
+    score is in the tally and not on the picture, the figure is never drawn
+    twice, and the short picture keeps its score.
+
 ## Wave 3. The loop and the studio
 
 ## Wave 4. The front door

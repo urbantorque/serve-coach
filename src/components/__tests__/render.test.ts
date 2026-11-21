@@ -282,7 +282,8 @@ check('the fix is the report\'s headline, and the band is its caption', () => {
   const h1 = /<h1>([^<]*)<\/h1>/.exec(out)?.[1]
   const escaped = a.focus.title.replace(/&/g, '&amp;').replace(/'/g, '&#x27;').replace(/"/g, '&quot;')
   assert(h1 === escaped, `the headline is "${h1}", not the fix "${a.focus.title}"`)
-  assert(out.includes('class="hero-band"'), 'the band caption is missing')
+  // On the picture beside the studio, or in the tally under the fix (B2.1).
+  assert(/class="hero-(tally-)?band"/.test(out), 'the band caption is missing')
 })
 
 check('a soft read says so beside the score, and a clear one does not', () => {

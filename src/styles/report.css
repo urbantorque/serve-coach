@@ -912,12 +912,150 @@
   margin-top: 4px;
 }
 
-/* Below a laptop's width the figure would push the drill under the action bar
-   (N7.8). There it belongs on the picture, which waits on the score leaving
-   it: the report-moment design gate (docs/apex/LEDGER.md, B1.1). */
-@media (max-width: 1023px) {
-  .hero-target {
-    display: none;
+/* The held frame (B2.1, take A). Off the studio, the picture carries the
+   correction and the score steps down under the fix, small: the fault is the
+   news, the number is how it went. The picture no longer holds the number, so
+   it gives back the height the number took, and the drill still clears the
+   action bar at 375 by 812 (N7.8). */
+.hero-stage--held {
+  height: min(38dvh, 340px);
+  min-height: 260px;
+}
+
+/* The tally: the score with its verdict, and the speed with the range it
+   owes (N7.4), in two short lines rather than a block. */
+.hero-tally {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  column-gap: 14px;
+  row-gap: 2px;
+  margin-top: 2px;
+}
+
+.hero-tally-score {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  color: var(--fg-muted);
+}
+
+.hero-tally-num,
+.hero-tally-figure strong {
+  font-size: 36px;
+  font-stretch: var(--wd-number);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-tally .hero-outof {
+  font-size: 15px;
+}
+
+.hero-tally-band {
+  margin-left: 9px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.25;
+  align-self: center;
+  text-wrap: balance;
+}
+
+/* A grid of its own children, so the range runs the full width under both. */
+.hero-tally-speed {
+  display: contents;
+}
+
+.hero-tally-figure {
+  grid-column: 2;
+  grid-row: 1;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+
+.hero-tally-figure strong {
+  font-size: 28px;
+  color: var(--lime);
+}
+
+.hero-tally-range {
+  grid-column: 1 / -1;
+  font-size: 14px;
+  color: var(--fg-muted);
+}
+
+/* The shape to aim for, on the picture where the score was: the card's figure
+   and key, caveat and viewpoint included, side by side on glass so it takes
+   the foot of the picture and not the player. The faults that lead with a
+   figure are read high on the body (the toss, the contact), so the foot is the
+   part it can cover. */
+.hero-plate {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+}
+
+.hero-plate .tshape {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 9px 12px;
+  background: var(--glass);
+  border-color: var(--glass-edge);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.hero-plate .tshape-canvas,
+.hero-plate .tshape-canvas--height {
+  height: 84px;
+  max-width: 96px;
+}
+
+.hero-plate .tshape-key {
+  align-self: center;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.hero-plate .tshape-swatch {
+  align-self: flex-start;
+  margin-top: 0.6em;
+}
+
+.hero-plate .tshape-view {
+  margin-top: 1px;
+  font-size: 14px;
+}
+
+/* What the picture is stopped on, where no figure is drawn. */
+.hero-moment {
+  position: absolute;
+  left: 20px;
+  bottom: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-plate,
+  .hero-moment {
+    animation: plate-in 420ms var(--ease-out) both;
+  }
+}
+
+@keyframes plate-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
 }
 
