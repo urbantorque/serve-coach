@@ -5,6 +5,7 @@ import type { DrillCheck } from '../../lib/analysis/progressions'
 import { CHECK_SERVES, drillCheckLine, progressionFor, stepCheckLine } from '../../lib/analysis/progressions'
 import type { Analysis } from '../../lib/analysis/types'
 import { hasDemo } from '../../lib/faultDemoDials'
+import { COST_NAME, LESSONS, fromLine } from '../../lib/analysis/lessons'
 
 type PlanItem = Analysis['focus']
 
@@ -22,6 +23,8 @@ interface Props {
   onFilmCheck?: () => void
   /** The season's card for this drill, with its log, when the season agrees. */
   season?: ReactNode
+  /** The player's own latest serve that had this right (C1.3), said in a line. */
+  ownGood?: string
 }
 
 /**
@@ -31,12 +34,13 @@ interface Props {
  * Moving a step is always the player's tap. A ladder that moved itself would be
  * a ladder nobody trusted.
  */
-export default function DrillCard({ item, racket, check, rung, onLadderStep, drilled, onFilmCheck, season }: Props) {
+export default function DrillCard({ item, racket, check, rung, onLadderStep, drilled, onFilmCheck, season, ownGood }: Props) {
   const ladder = item.flaw ? progressionFor(item.flaw, item.axis) : undefined
   const onLadder = Boolean(ladder) && rung >= 0
   const drill = ladder && onLadder ? ladder.steps[rung] : item.drill
   const [movedTo, setMovedTo] = useState<number>()
   const flaw = item.flaw
+  const lesson = flaw ? LESSONS[flaw] : undefined
 
   const move = (to: number) => {
     if (!flaw || !onLadderStep) return
@@ -103,6 +107,31 @@ export default function DrillCard({ item, racket, check, rung, onLadderStep, dri
           <Icon name="camera" size={20} />
           Film a check
         </button>
+      )}
+
+      {/* Why the drill is worth a week (C1.3): what the fault costs, and good, cited or marked. */}
+      {lesson && (
+        <details className="drill-ladder drill-lesson">
+          <summary>
+            Why it matters
+            <Icon name="chevron" size={14} />
+          </summary>
+          <ul className="drill-steps">
+            {lesson.costs.map((cost) => (
+              <li key={cost.text}>
+                <span className="drill-step-name">{COST_NAME[cost.kind]}</span>
+                <span className="drill-step-how">{cost.text}</span>
+                <span className="drill-step-reps">{fromLine(cost.from)}</span>
+              </li>
+            ))}
+            <li>
+              <span className="drill-step-name">What good looks like</span>
+              <span className="drill-step-how">{lesson.good.text}</span>
+              <span className="drill-step-reps">{fromLine(lesson.good.from)}</span>
+            </li>
+          </ul>
+          {ownGood && <p className="drill-note">{ownGood}</p>}
+        </details>
       )}
 
       {ladder && onLadder && (

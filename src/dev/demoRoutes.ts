@@ -143,6 +143,30 @@ export async function runDemoRoute(
     setView({ kind: 'glance', analysis: serves[serves.length - 1] })
     return
   }
+  /*
+   * A lesson with the player's own good (C1.3): the sample serve, led by the
+   * tossing arm, after one yesterday that the engine judged clean of it. Open
+   * "Start the drill" and "Why it matters" to see the line.
+   */
+  if (demo === 'lesson-own') {
+    const flaw: FlawId = 'toss_arm_drops'
+    const { frames: _f, ...base } = sampleAnalysis()
+    void _f
+    const now = Date.now()
+    const yesterday = {
+      ...base,
+      id: 'lesson-own-0',
+      createdAt: now - 24 * 60 * 60 * 1000,
+      diagnosis: {
+        ...base.diagnosis,
+        flaws: (base.diagnosis?.flaws ?? []).map((f) => (f.flaw === flaw ? { ...f, detected: false, severity: 'none', confidence: 0.9 } : f)),
+      },
+    } as unknown as Session
+    const today = { ...base, id: 'lesson-own-1', createdAt: now } as unknown as Session
+    seedHistory({ sessions: [yesterday, today], practice: [] })
+    setView({ kind: 'saved', session: today })
+    return
+  }
   // The crash screen (L6.8): a stored report with nothing in it, which the
   // report cannot render, so the boundary catches it as it would a record an
   // older version wrote.

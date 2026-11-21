@@ -32,6 +32,7 @@ import { faultMetric, faultMoment, momentChecks } from '../lib/lookFor'
 import { targetDrawn } from '../lib/analysis/targetShape'
 import TargetShape from '../components/TargetShape'
 import { drillCheckLine, progressionFor, rungFor } from '../lib/analysis/progressions'
+import { ownGoodLine } from '../lib/ownGood'
 import { FAULT_NAME } from '../lib/graduation'
 import TrackPlayer from '../components/TrackPlayer'
 import { replayFrom } from '../lib/storage/poseTrack'
@@ -1240,6 +1241,7 @@ export default function Report({
           <DrillCard
             item={lesson === 0 ? { ...first, drill: firstDrill } : plan[lesson]}
             racket={analysis.handedness}
+            ownGood={plan[lesson].flaw ? ownGoodLine(sessions, analysis, plan[lesson].flaw!) : undefined}
             check={lesson === 0 ? check : undefined}
             rung={rungOf(plan[lesson])}
             onLadderStep={onLadderStep}

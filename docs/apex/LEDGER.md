@@ -198,6 +198,33 @@ Branch `apex`, cut from `main` at `b4d0e80` on 2026-11-22.
   - **Not done:** drills cut or added as a coach would. The library review
     still needs a coach's eye on each cited claim, which this round has not
     had.
+- [x] **C1.3 A lesson for each fault.** Every drill's sheet folds open "Why
+  it matters": one or two costs (pace, reach, clearing the net, the body,
+  timing) and what good looks like, for all 11 ladders (`analysis/lessons.ts`).
+  - **Cited or marked.** Each claim names its study (`SOURCES`, with the full
+    reference and doi) or says "How coaches teach it, not a measurement." 16
+    claims cite a study and 8 are marked. Each says no more than its study
+    measured: who was studied is in the line ("junior players", "skilled
+    servers"), and a figure from another task (the pause that cost a fifth of
+    arm speed, measured off the court) is not quoted. Measurements are said in
+    body terms ("a hand's width", "a third of their height"), as the copy lint
+    asks. A trunk-bend claim from the WTA study was cut: it compared rankings,
+    not pace, and was filed under pace.
+  - **On the player's own serve.** Under the lesson, the latest earlier serve
+    the engine judged clean of the fault: "Your serve on Saturday had this
+    right, so your body can already do it." Never a serve it could not judge
+    for the fault, the serve itself, or a later one (`ownGood.ts`).
+  - **What good looks like on a model serve** is the demonstration above it
+    (C1.2).
+  - `lessons.test.ts`: every ladder has a lesson and no lesson lacks a
+    ladder, every claim is cited or marked, every cited source has a
+    reference someone could look up, more claims are cited than marked, and
+    all 48 lines pass the copy lint. `ownGood.test.ts` holds the own-serve line.
+  - Shots in Chrome at 360, 390 and 1440 wide (`?demo=lean`,
+    `?demo=met-behind`, `?demo=lesson-own`), every lesson text at 14 px or
+    more, console clean. The rows borrow the ladder's step style without its
+    numbers, so nothing reads as an order. That left the split stylesheets at
+    20.00 kB gzip, on their budget: the next screen style needs room made first.
 
 ## Wave 3. The loop and the studio
 

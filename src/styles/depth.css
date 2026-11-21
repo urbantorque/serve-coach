@@ -812,7 +812,8 @@
   counter-increment: rung;
 }
 
-.drill-steps li::before {
+/* Numbered on the ladder's ordered steps only; a lesson's rows (C1.3) are a list, not an order. */
+ol.drill-steps li::before {
   content: counter(rung);
   position: absolute;
   left: 12px;
@@ -821,6 +822,10 @@
   font-weight: 700;
   color: var(--fg-faint);
   font-variant-numeric: tabular-nums;
+}
+
+ul.drill-steps li {
+  padding-left: 12px;
 }
 
 .drill-steps li.is-now {
