@@ -168,6 +168,36 @@ Branch `apex`, cut from `main` at `b4d0e80` on 2026-11-22.
     hands-free hand samples. A new measurement read off those samples would be
     untested on real serves, so the glance's normal read is used instead.
     Six in one recording is still a tap away in the viewfinder's options.
+- [x] **C1.2 Every drill demonstrated, or measured to have nothing to show.**
+  Ten of the eleven ladders now open a moving demonstration (the fault beside
+  its fix on the model serve); eight had one.
+  - **Contact behind**, watching the ball: met 0.35 m further back, named on
+    the demo serve and not on its fix, the ball 0.32 body heights from the
+    fix's at contact. N4.2 had left it out when the demo serve could not
+    settle which way the net was; contact ahead's floor has since moved (H40).
+  - **Posture collapse, seen from behind the baseline.** A demonstration can
+    now be drawn from the camera its fault is read from (`DemoSpec.view`).
+    From the side the sideways bend runs along the lens (0.035 body heights),
+    and the engine does not name it there either; from behind, the head and
+    shoulders are 0.15 apart at contact, and the picture says "Seen from
+    behind the baseline, where this fault shows." The trunk is painted on the
+    figure for the first time, with the upright fix dashed from the same hips.
+  - **The early shoulder turn has no demonstration**, measured: at most 0.042
+    body heights from the side, behind or a corner, under the 0.1 a player can
+    see. A turn about the trunk's own axis needs a view from above, which no
+    camera of the player's gives. Arming the ball (retired) likewise.
+  - **The rule, as a test.** `faultDemo.test.ts` fails if any ladder has
+    neither a demonstration nor a place in `NO_DEMO`, and builds every
+    `NO_DEMO` entry from three cameras to hold it under the bar, so the list
+    cannot become a way round it. Every demonstration is still named by the
+    engine on its own serve, for either hand.
+  - **The ball's flight is fitted only for a toss height demo.** Fitting it
+    for a ball met at the strings shrank both bodies.
+  - Shots in Chrome at 390 by 844 and 1440 by 900 (`?demo=lean`,
+    `?demo=met-behind`, then the drill's sheet); console clean.
+  - **Not done:** drills cut or added as a coach would. The library review
+    still needs a coach's eye on each cited claim, which this round has not
+    had.
 
 ## Wave 3. The loop and the studio
 

@@ -29,19 +29,18 @@ import type { PhaseId } from './analysis/types'
  * ONLY FAULTS A STICK FIGURE CAN SHOW. Every entry must differ from its fix by
  * `DEMO_MIN_DIFFERENCE` (`faultDemo.test.ts`), measured on the part it names.
  * Two people side by side looking the same under "this fault" and "the fix"
- * teach nothing, so two faults stay out:
+ * teach nothing, so the faults in `NO_DEMO` stay out, each with the dials
+ * that show it has no shape from any camera the rig has (the test measures
+ * them again, so the list cannot become a way round the rule).
  *
- *   · `arming_the_ball` is the order the hips and shoulders fire in. Dialled at
- *     a 90 ms lead, the two bodies are never more than 0.016 body heights apart
- *     anywhere in the swing — a timing fault has no shape.
- *   · `early_shoulder_rotation` is the trunk turning towards the net, which on
- *     the side-on camera is a turn towards the lens: 0.04 at its widest.
- *   · `posture_collapse` is the spine bending sideways across the hips, and by
- *     contact the hips face the net — so the bend runs along the baseline, which
- *     is the line the guide's camera looks down. Re-posed on the Bath serves'
- *     trunk turn, a 26° collapse moves the picture 0.035 body heights. The
- *     engine still names it, because it reads the lean from the depth the pose
- *     model infers, and the picture draws only what the lens sees.
+ * FROM WHERE IT SHOWS (C1.2). A demonstration is drawn from the camera the
+ * engine reads its fault from: side-on for most, and from behind the baseline
+ * for `posture_collapse`, the spine bending sideways across the hips. By
+ * contact the hips face the net, so from the side that bend runs along the
+ * lens (0.035 body heights) and the engine does not name it there either; from
+ * behind, the head and shoulders are 0.15 apart at contact, and that is where
+ * `angleReach.ts` sends the player to film it. Both bodies stand under the
+ * same camera, and the picture says which.
  *
  * Four came back once the figure carried a racket and a ball (L4.4, L4.5):
  *
@@ -58,6 +57,11 @@ import type { PhaseId } from './analysis/types'
  *     fault IS the hips' travel — so its measure is that travel, from the
  *     trophy to contact, on the same ground.
  *
+ * `contact_behind` came back in C1.2: the ball met 0.35 m further back is named
+ * on the demo serve since contact ahead's floor rose (H40), and the racket
+ * head and the ball are 0.32 body heights from the fix's at contact. N4.2 had left it out
+ * when the side-on demo serve could not settle which way the net was.
+ *
  * `pancake_contact` is never named (`flaws.ts`).
  *
  * The moment is a keyframe of the CLEAN serve: where the picture parks, and
@@ -70,7 +74,7 @@ import type { PhaseId } from './analysis/types'
  * picture and painted in `--work` on the faulty body, with the fix's own
  * dashed beside it.
  */
-export type DemoPart = 'racket' | 'elbow' | 'tossingHand' | 'ball' | 'hips'
+export type DemoPart = 'racket' | 'elbow' | 'tossingHand' | 'ball' | 'hips' | 'trunk'
 
 export const PART_NAME: Record<DemoPart, string> = {
   racket: 'the racket head',
@@ -78,6 +82,21 @@ export const PART_NAME: Record<DemoPart, string> = {
   tossingHand: 'the tossing hand',
   ball: 'the ball',
   hips: 'the hips',
+  trunk: 'the head and shoulders',
+}
+
+/** Where the camera stands for a demonstration: the guide's side-on placement, or behind the baseline. */
+export type DemoView = 'side' | 'behind'
+
+/**
+ * The rig's camera yaw for each view: the guide's own placement (`CLEAN_SERVE`),
+ * and the one the flaw suite names a sideways lean from.
+ */
+export const VIEW_YAW: Record<DemoView, number> = { side: 82, behind: 8 }
+
+/** Said under a picture not drawn from the side, so nobody compares it with their own side-on clip. */
+export const VIEW_LINE: Partial<Record<DemoView, string>> = {
+  behind: 'Seen from behind the baseline, where this fault shows.',
 }
 
 export interface DemoSpec {
@@ -86,6 +105,8 @@ export interface DemoSpec {
   part: DemoPart
   /** Where the drawn toss peaks, in statures; the model's own when absent. */
   apex?: number
+  /** Where the camera stands; side-on when absent. */
+  view?: DemoView
 }
 
 export const DEMOS: Partial<Record<FlawId, DemoSpec>> = {
@@ -98,10 +119,26 @@ export const DEMOS: Partial<Record<FlawId, DemoSpec>> = {
   toss_drift: { dials: { tossWobble: 0.2 }, moment: 'toss', part: 'tossingHand' },
   no_leg_drive: { dials: { trophyKneeAngle: 175, contactHipHeight: 0.95 }, moment: 'contact', part: 'hips' },
   // N4.2: the tossing arm down a third of the way to contact, not held up to it.
-  // Contact behind was tried and left out: the engine names it only from a
-  // side view where the net's direction is certain, and the demo serve is not
-  // one, so a demo of it would show a fault the read would not call.
   toss_arm_drops: { dials: { tossArmHold: 0.3 }, moment: 'drop', part: 'tossingHand' },
+  // Where the ball is met: the racket head is as far out, but the ball is what the cue moves.
+  contact_behind: { dials: { contactBehind: 0.35 }, moment: 'contact', part: 'ball' },
+  posture_collapse: { dials: { spineLean: 34 }, moment: 'contact', part: 'trunk', view: 'behind' },
+}
+
+/**
+ * The faults with no demonstration, the dials that pose each, and why. The
+ * test builds each from every view and holds it under `DEMO_MIN_DIFFERENCE`:
+ * a fault that grows a shape has to move to `DEMOS`.
+ */
+export const NO_DEMO: Partial<Record<FlawId, { dials: Partial<ServeDials>; why: string }>> = {
+  arming_the_ball: {
+    dials: { hipLead: -0.09 },
+    why: 'the order the hips and shoulders fire in: a timing fault has no shape',
+  },
+  early_shoulder_rotation: {
+    dials: { shoulderYaw: 82, hipYaw: 116 },
+    why: 'a turn of the trunk about its own axis: under 0.05 body heights from the side, a corner or behind',
+  },
 }
 
 /**
@@ -111,6 +148,9 @@ export const DEMOS: Partial<Record<FlawId, DemoSpec>> = {
  * on a phone without being told where to look.
  */
 export const DEMO_MIN_DIFFERENCE = 0.1
+
+/** The camera yaw a demonstration is drawn from. */
+export const yawOf = (spec: DemoSpec): number => VIEW_YAW[spec.view ?? 'side']
 
 /** Whether a fault has a demonstration at all — for deciding to offer one. */
 export const hasDemo = (flaw: FlawId | undefined): flaw is FlawId =>

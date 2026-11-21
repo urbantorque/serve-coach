@@ -125,5 +125,16 @@ function partOn(
       ]
       return { work: thighs, target: thighs.map(([p, q]) => ({ a: m(fix.image[p]), b: m(fix.image[q]) })) }
     }
+    case 'trunk': {
+      // The trunk's two sides and the shoulder line, the fix's hung from the
+      // same hips: a lean is the shoulders leaving the hips sideways (C1.2).
+      const m = hung(mid(fault, LM.leftHip, LM.rightHip), mid(fix, LM.leftHip, LM.rightHip))
+      const trunk: [number, number][] = [
+        [LM.leftHip, LM.leftShoulder],
+        [LM.rightHip, LM.rightShoulder],
+        [LM.leftShoulder, LM.rightShoulder],
+      ]
+      return { work: trunk, target: trunk.map(([p, q]) => ({ a: m(fix.image[p]), b: m(fix.image[q]) })) }
+    }
   }
 }

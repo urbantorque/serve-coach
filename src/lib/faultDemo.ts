@@ -38,7 +38,7 @@ import { mirrorFrames } from './analysis/mirror'
 import type { FlawId } from './analysis/flaws'
 import type { Frame, Phase, PhaseId } from './analysis/types'
 import type { BallFlight } from './vision/ballTrack'
-import { DEMOS, type DemoPart } from './faultDemoDials'
+import { DEMOS, yawOf, type DemoPart, type DemoView } from './faultDemoDials'
 
 /**
  * The rate the demonstration serves are built at. Faster than any clip the app
@@ -70,6 +70,14 @@ export interface FaultDemo {
   racket: 'left' | 'right'
   /** What to watch, named under the picture and painted on the faulty body (L4.5). */
   part: DemoPart
+  /** Where the camera stands for both bodies (C1.2). */
+  view: DemoView
+  /**
+   * Whether the picture must widen to hold the ball's whole flight: a toss
+   * dialled away from the model's apex. A ball met behind the head is at the
+   * strings, and widening for it only shrank both bodies (C1.2).
+   */
+  fitBall: boolean
 }
 
 /** A flight reflected with the body, for a left-hander. */
@@ -137,12 +145,14 @@ function built(dials: Partial<ServeDials>, racket: 'left' | 'right', apex?: numb
 export function faultDemo(flaw: FlawId, racket: 'left' | 'right'): FaultDemo | undefined {
   const demo = DEMOS[flaw]
   if (!demo) return undefined
-  const fault = built(demo.dials, racket, demo.apex)
+  // Both under one camera: the view the fault shows from (C1.2).
+  const cameraYaw = yawOf(demo)
+  const fault = built({ ...demo.dials, cameraYaw }, racket, demo.apex)
   // `CLEAN_SERVE` spelled out rather than `{}`, so a reader sees which serve
   // the fault is being measured against.
-  const fix = built({ ...CLEAN_SERVE }, racket)
+  const fix = built({ ...CLEAN_SERVE, cameraYaw }, racket)
   if (!fault || !fix) return undefined
-  return { moment: demo.moment, fault, fix, racket, part: demo.part }
+  return { moment: demo.moment, fault, fix, racket, part: demo.part, view: demo.view ?? 'side', fitBall: demo.apex !== undefined }
 }
 
 /** Exposed for the test, which has to diagnose the same frames the picture is drawn from. */

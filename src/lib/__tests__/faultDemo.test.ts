@@ -9,11 +9,12 @@
  * and fail, rather than reaching a report.
  */
 import { DEMO_FPS, demoRig, faultDemo, type DemoServe, type FaultDemo } from '../faultDemo'
-import { DEMOS, DEMO_MIN_DIFFERENCE, PART_NAME, hasDemo, type DemoPart } from '../faultDemoDials'
+import { DEMOS, DEMO_MIN_DIFFERENCE, NO_DEMO, PART_NAME, VIEW_YAW, hasDemo, yawOf, type DemoPart } from '../faultDemoDials'
 import { ballOn, highlightOf } from '../demoDraw'
 import { diagnose } from '../analysis/diagnose'
-import { detectServe } from '../analysis/phases'
-import { CLEAN_SERVE } from '../analysis/syntheticServe'
+import { buildPhases, detectServe } from '../analysis/phases'
+import { CLEAN_SERVE, type ServeDials } from '../analysis/syntheticServe'
+import { everyProgression } from '../analysis/progressions'
 import { FLAWS, type FlawId } from '../analysis/flaws'
 import { LM, sided } from '../analysis/geometry'
 import type { Frame } from '../analysis/types'
@@ -41,9 +42,11 @@ for (const racket of ['right', 'left'] as const) {
   for (const flaw of shown) {
     check(`${flaw}, ${racket}-handed: named on the fault, not on the fix`, () => {
       const spec = DEMOS[flaw]!
-      const fault = finding(flaw, demoRig(spec.dials, racket, spec.apex), racket)
+      // Under the camera the picture is drawn from (C1.2).
+      const cameraYaw = yawOf(spec)
+      const fault = finding(flaw, demoRig({ ...spec.dials, cameraYaw }, racket, spec.apex), racket)
       assert(fault?.detected === true, `${flaw}: the engine does not name it on the demo serve`)
-      const clean = finding(flaw, demoRig({ ...CLEAN_SERVE }, racket), racket)
+      const clean = finding(flaw, demoRig({ ...CLEAN_SERVE, cameraYaw }, racket), racket)
       assert(clean?.detected !== true, `${flaw}: the fix is named with the fault too`)
     })
   }
@@ -79,6 +82,7 @@ const PART_POINTS: Record<Exclude<DemoPart, 'hips'>, string[]> = {
   elbow: [String(sided('right').elbow)],
   tossingHand: [LM.leftWrist, LM.leftIndex, LM.leftPinky, LM.leftThumb].map(String),
   ball: ['ball'],
+  trunk: [LM.nose, LM.leftShoulder, LM.rightShoulder].map(String),
 }
 
 /**
@@ -187,11 +191,50 @@ check('a left-hander sees the racket arm on their own side', () => {
 })
 
 check('the pancake and the faults with no shape are not offered', () => {
-  for (const flaw of ['pancake_contact', 'arming_the_ball', 'early_shoulder_rotation', 'posture_collapse'] as const) {
+  for (const flaw of ['pancake_contact' as FlawId, ...(Object.keys(NO_DEMO) as FlawId[])]) {
     assert(!hasDemo(flaw), `${flaw} is offered a demonstration it cannot show`)
   }
   assert(!hasDemo(undefined), 'a report with no named fault offered a demo')
   note(`demonstrated: ${FLAWS.filter((f) => hasDemo(f.flaw)).map((f) => f.flaw).join(', ')}`)
 })
+
+heading('Every drill is demonstrated, or measured to have nothing to show (C1.2)')
+
+check("every ladder's fault has a demonstration, or a place in NO_DEMO", () => {
+  const missing = everyProgression()
+    .map(([flaw]) => flaw)
+    .filter((flaw) => !hasDemo(flaw) && !NO_DEMO[flaw])
+  assert(missing.length === 0, `ladders with no demonstration and no reason: ${missing.join(', ')}`)
+  const shownLadders = everyProgression().filter(([flaw]) => hasDemo(flaw)).length
+  note(`${shownLadders} of ${everyProgression().length} ladders demonstrated`)
+})
+
+/** The widest gap between a dialled serve and the clean one at any keyframe, under one camera, in body heights. */
+function widestGap(dials: Partial<ServeDials>, cameraYaw: number): number {
+  const build = (d: Partial<ServeDials>) => {
+    const rig = demoRig({ ...d, cameraYaw }, 'right')!
+    const skel = detectServe(rig.frames, DEMO_FPS, 'right')
+    return { frames: rig.frames, phases: buildPhases(rig.frames, skel.keys), contactT: rig.frames[skel.keys.contact].t }
+  }
+  const fault = build(dials)
+  const fix = build({ ...CLEAN_SERVE })
+  let widest = 0
+  for (const phase of fix.phases) {
+    const demo = { moment: phase.id, fault, fix, racket: 'right', part: 'racket', view: 'side', fitBall: false } as FaultDemo
+    widest = Math.max(widest, gapsAt(demo)[0][1])
+  }
+  return widest
+}
+
+for (const [flaw, entry] of Object.entries(NO_DEMO) as [FlawId, NonNullable<(typeof NO_DEMO)[FlawId]>][]) {
+  check(`${flaw} has no shape from any camera: ${entry.why}`, () => {
+    const views = { ...VIEW_YAW, corner: 45 }
+    const gaps = Object.entries(views).map(([view, yaw]) => [view, widestGap(entry.dials, yaw)] as const)
+    note(`${flaw}: ${gaps.map(([v, g]) => `${v} ${g.toFixed(3)}`).join(', ')}`)
+    for (const [view, gap] of gaps) {
+      assert(gap < DEMO_MIN_DIFFERENCE, `${flaw} shows ${gap.toFixed(3)} from ${view}: give it a demonstration`)
+    }
+  })
+}
 
 report()

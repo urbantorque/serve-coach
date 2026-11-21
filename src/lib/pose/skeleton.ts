@@ -564,7 +564,12 @@ function solidsOf(bones: readonly (readonly [number, number])[]): string[] {
       [`${side}-shin`, l.knee, l.ankle],
     ] as [string, number, number][]
   })
-  return bones.flatMap(([a, b]) => names.filter(([, p, q]) => (p === a && q === b) || (p === b && q === a)).map(([id]) => id))
+  const limbs = bones.flatMap(([a, b]) => names.filter(([, p, q]) => (p === a && q === b) || (p === b && q === a)).map(([id]) => id))
+  // A hip-to-shoulder bone is the trunk, which the figure draws as one solid (C1.2).
+  const hips: number[] = [LM.leftHip, LM.rightHip]
+  const shoulders: number[] = [LM.leftShoulder, LM.rightShoulder]
+  const trunk = bones.some(([a, b]) => (hips.includes(a) && shoulders.includes(b)) || (hips.includes(b) && shoulders.includes(a)))
+  return trunk ? [...limbs, 'torso'] : limbs
 }
 
 export interface SkeletonOptions {

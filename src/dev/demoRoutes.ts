@@ -438,6 +438,13 @@ export async function runDemoRoute(
     const { frames: _f, ...session } = sampleAnalysis({ tossArmHold: 0.72, trophyKneeAngle: 133, contactHipHeight: 1.0, contactReach: 1.0 })
     void _f
     setView({ kind: 'saved', session })
+  } else if (demo === 'lean' || demo === 'met-behind') {
+    // The two faults demonstrated since C1.2: a sideways lean, filmed from
+    // behind the baseline where it is read, and a ball met behind the head.
+    const dials = demo === 'lean' ? { spineLean: 34, cameraYaw: 8 } : { contactBehind: 0.35 }
+    const { frames: _f, ...session } = sampleAnalysis(dials)
+    void _f
+    setView({ kind: 'saved', session })
   } else {
     if (new URLSearchParams(location.search).has('stills')) rigStills(analysis)
     const { frames: _f, ...session } = analysis
