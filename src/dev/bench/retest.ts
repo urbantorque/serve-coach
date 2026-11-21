@@ -25,7 +25,7 @@ import { CARD_NOISE_SD } from '../../lib/analysis/cardNoise'
 import type { Analysis } from '../../lib/analysis/types'
 
 const params = new URLSearchParams(location.search)
-const CLIPS = (params.get('clips') ?? 'Saque_con_pelota.webm,0SAQUE.webm,Saque_reves.webm').split(',')
+const CLIPS = (params.get('clips') ?? 'Saque_con_pelota.webm,0SAQUE.webm').split(',')
 
 /** How the same serve can reach the app differently. */
 interface Change {

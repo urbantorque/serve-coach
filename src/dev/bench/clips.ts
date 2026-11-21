@@ -20,7 +20,6 @@ import { readingPlan } from '../../lib/pose/rate'
 const CLIPS = [
   '0SAQUE.webm',
   'Saque_con_pelota.webm',
-  'Saque_reves.webm',
   'Sharapova_Amelia_Island.webm',
   'Blaz_Rola_NCAAs_2013.webm',
 ]

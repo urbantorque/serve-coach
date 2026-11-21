@@ -511,7 +511,7 @@ function rotateFrames(frames: Frame[], theta: number, pivot: { cx: number; cy: n
  * rather than to the 0° a median of ±179° would give.
  *
  * ONLY OVER FRAMES WHERE THAT BODY WAS SEEN, AND ONLY WHEN MOST OF THEM WERE.
- * The Commons table-tennis clip (`/clipbench.html`) tracks something with its
+ * A Commons clip with no tennis serve in it tracked something with its
  * "shoulders" below its "hips" in every frame, steady to an R of 0.997, at
  * visibility under a half in three frames of four. It was refused as upside
  * down, which is the wrong reason for a clip with no serve in it — the same

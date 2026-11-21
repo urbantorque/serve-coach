@@ -241,7 +241,7 @@ check('a phone tilted past levelling is told so, from a lean to upside down', ()
 })
 
 check('a body the tracker barely saw is not called upside down', () => {
-  // The Commons table-tennis clip: its "shoulders" sit below its "hips" in
+  // A clip the pose model could not read: its "shoulders" sit below its "hips" in
   // every frame, steadily, at visibility under a half in three frames of four.
   // A picture the pose model cannot read is not a phone on its side, so it gets
   // no verdict from the roll and goes on to be refused as no serve.

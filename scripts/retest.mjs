@@ -4,7 +4,7 @@
  * found to docs/next/bench/retest.json, for the ledger and the accuracy page.
  *
  *   node scripts/retest.mjs                      every clip
- *   node scripts/retest.mjs Saque_reves.webm     one clip
+ *   node scripts/retest.mjs 0SAQUE.webm          one clip
  *
  * Needs the dev server on 5180 and `npm run setup:bench` for the clips. Dev
  * tooling: nothing here ships. Uses the Playwright copy `playwright-cli` runs on.

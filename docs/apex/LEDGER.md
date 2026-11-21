@@ -31,12 +31,12 @@ Branch `apex`, cut from `main` at `b4d0e80` on 2026-11-22.
   model from `bench-data/models/`; `import.meta.env.DEV` is false in a build,
   so the app always fetches its own. Results in
   `docs/apex/bench/real-probe.json` and `real-probe-heavy.json`.
-  - **What there is to read.** Five licensed clips, every one 640 by 480 or
-    smaller: three measured (`0SAQUE` and `Saque_con_pelota`, side-on at 320
-    by 240; `Blaz_Rola_NCAAs_2013`, from behind the far baseline at 640 by
-    480), `Sharapova_Amelia_Island` refused as not a serve, and
-    `Saque_reves` refused, rightly: it is a table tennis serve, which N2.1
-    recorded as "not taken for a serve" without naming the sport.
+  - **What there is to read.** Four licensed tennis clips, every one 640 by
+    480 or smaller: three measured (`0SAQUE` and `Saque_con_pelota`, side-on
+    at 320 by 240; `Blaz_Rola_NCAAs_2013`, from behind the far baseline at
+    640 by 480), and `Sharapova_Amelia_Island` refused as not a serve. A
+    fifth, `Saque_reves`, was a table tennis serve; it is out of the benches
+    and the results (A1.2).
   - **The 3D knee, with the app's model.** On both side-on clips one knee
     agrees with the picture at its deepest bend (2.2 and 3.2 degrees apart)
     and the other reads 19.1 and 13.5 degrees straighter in 3D. On the Rola
@@ -61,6 +61,12 @@ Branch `apex`, cut from `main` at `b4d0e80` on 2026-11-22.
     when the camera is side-on needs the mocap bench and the retest bench run
     both ways, and real footage sharper than 320 by 240 to settle it: owner
     serves, or more licensed clips (both asked, A0.2).
+- [x] **A1.2 Tennis only.** The owner's call: the app is about tennis serves
+  and nothing else. `Saque_reves` (a table tennis serve) is out of
+  `bench-data/clips/` and its attribution, the clip bench, the retest bench's
+  default set and both probe results; two comments that used it as an example
+  now describe the failure without it. The app itself already refused it as
+  "not a serve", and still refuses any clip with no tennis serve in it.
 
 - [x] **B1.0 The report moment, three takes, on a Claude Design canvas.**
   "Serve Coach: the report moment, three takes" (artifact
