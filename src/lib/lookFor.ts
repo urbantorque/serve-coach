@@ -66,6 +66,15 @@ export function momentMark(fundamentals: readonly Fundamental[], phase: PhaseId)
  * measured. Undefined for a fault no row on this report reads.
  */
 export function faultMoment(fundamentals: readonly Fundamental[], flaw: FlawId | undefined): PhaseId | undefined {
+  return faultMetric(fundamentals, flaw)?.phase
+}
+
+/**
+ * The card row that reads a fault's number: the one the held frame draws the
+ * target shape for (B1.1). The same row `faultMoment` takes its moment from, so
+ * the frame and the shape on it are always the same measurement.
+ */
+export function faultMetric(fundamentals: readonly Fundamental[], flaw: FlawId | undefined): Metric | undefined {
   if (!flaw) return undefined
-  return fundamentals.flatMap((f) => f.metrics).find((m) => faultForMetric(m.id) === flaw)?.phase
+  return fundamentals.flatMap((f) => f.metrics).find((m) => faultForMetric(m.id) === flaw)
 }

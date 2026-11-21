@@ -905,3 +905,53 @@
 .report > .injuries {
   margin-top: calc(64px + var(--safe-top));
 }
+
+/* The shape to aim for, under the fix (B1.1): the card's own figure, with its
+   phrases, so the first screen shows the correction as well as saying it. */
+.hero-target .tshape {
+  margin-top: 4px;
+}
+
+/* Below a laptop's width the figure would push the drill under the action bar
+   (N7.8). There it belongs on the picture, which waits on the score leaving
+   it: the report-moment design gate (docs/apex/LEDGER.md, B1.1). */
+@media (max-width: 1023px) {
+  .hero-target {
+    display: none;
+  }
+}
+
+/* "Play it again": the replay of the clip into the hold, one press. */
+.hero-replay {
+  position: absolute;
+  top: calc(var(--safe-top) + 72px);
+  left: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: var(--r-pill);
+  background: var(--glass);
+  box-shadow: inset 0 0 0 1px var(--glass-edge);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: var(--fg);
+  font-size: 15px;
+  font-weight: var(--wt-label);
+  transition: transform var(--fast) var(--ease);
+}
+
+.hero-replay:active {
+  transform: scale(0.96);
+}
+
+.hero-replay:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 2px;
+}
+
+/* Under a warning the picture is short, and the button would sit on the score. */
+.hero-stage--short .hero-replay {
+  display: none;
+}

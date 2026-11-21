@@ -28,7 +28,9 @@ import { NBSP, SPEED_MISS_LINE, defaultSpeedUnit, speedFigures } from '../lib/sp
 import { SOFT_READ, readQuality, VERDICT } from '../components/statusLabels'
 import ModelServe from '../components/ModelServe'
 import Term from '../components/Term'
-import { faultMoment, momentChecks } from '../lib/lookFor'
+import { faultMetric, faultMoment, momentChecks } from '../lib/lookFor'
+import { targetDrawn } from '../lib/analysis/targetShape'
+import TargetShape from '../components/TargetShape'
 import { drillCheckLine, progressionFor, rungFor } from '../lib/analysis/progressions'
 import { FAULT_NAME } from '../lib/graduation'
 import TrackPlayer from '../components/TrackPlayer'
@@ -250,6 +252,9 @@ export default function Report({
   const [overrode, setOverrode] = useState(false)
   /** The picture has arrived, so the numbers and words can come in. */
   const [settled, setSettled] = useState(false)
+  // "Play it again" (B1.1): each press is a fresh stage, played through to the hold.
+  const [replays, setReplays] = useState(0)
+  const [replaying, setReplaying] = useState(false)
   // Nothing may keep the words off the screen: a clip that stalls settles anyway.
   useEffect(() => {
     const t = setTimeout(() => setSettled(true), 6000)
@@ -395,6 +400,9 @@ export default function Report({
     earcon(moment ? 'moment' : 'reveal', true)
   }, [fresh, settled, moment])
 
+  // The row the fix reads, for the target shape on the held frame (B1.1).
+  const leadMetric = faultMetric(analysis.fundamentals, first.flaw)
+  const heldTarget = leadMetric && targetDrawn(leadMetric) ? leadMetric : undefined
   const stageLabel = `Your serve at ${(focusPhase?.label ?? 'contact').toLowerCase()}${work.length ? ', with the part to work on picked out' : ''}.`
 
   const topbar = (
@@ -511,17 +519,35 @@ export default function Report({
           )}
           {!studio && (
           <RevealStage
+            key={replays}
             analysis={analysis}
             swing={swing}
             videoUrl={clip}
             moment={stageMoment}
             work={work}
-            reveal={fresh}
-            onSettled={() => setSettled(true)}
+            reveal={fresh || replays > 0}
+            onSettled={() => {
+              setSettled(true)
+              setReplaying(false)
+            }}
             label={stageLabel}
           />
           )}
           {!studio && <div className="hero-veil" aria-hidden="true" />}
+          {!studio && clip && (settled || !fresh) && !replaying && (
+            <button
+              type="button"
+              className="hero-replay"
+              onClick={(e) => {
+                e.stopPropagation()
+                setReplaying(true)
+                setReplays((n) => n + 1)
+              }}
+            >
+              <Icon name="repeat" size={17} />
+              Play it again
+            </button>
+          )}
           <div className="hero-numbers">
             <div className="hero-score">
               <span className="hero-scoreline">
@@ -581,6 +607,12 @@ export default function Report({
           <p className="hero-why">
             <Cue text={first.why} />
           </p>
+          {/* The shape to aim for, under the fix it belongs to (B1.1). */}
+          {heldTarget && (
+            <div className="hero-target">
+              <TargetShape metric={heldTarget} />
+            </div>
+          )}
           {first.flaw && linked.why[first.flaw] && <p className="hero-note">{linked.why[first.flaw]}</p>}
           {!refusal && analysis.quality.confidence < SOFT_READ && (
             <p className="hero-rough">

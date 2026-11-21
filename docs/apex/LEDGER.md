@@ -62,6 +62,49 @@ Branch `apex`, cut from `main` at `b4d0e80` on 2026-11-22.
     both ways, and real footage sharper than 320 by 240 to settle it: owner
     serves, or more licensed clips (both asked, A0.2).
 
+- [x] **B1.0 The report moment, three takes, on a Claude Design canvas.**
+  "Serve Coach: the report moment, three takes" (artifact
+  `aab94563-67dd-45e8-9e8d-90c98a49fbfb`): today's report beside A, the held
+  frame (the serve stops on the fault, today in coral, the target in lime, the
+  score small under the fix), B, four areas in place of one score, and C, the
+  change since the player's best serve, each at 390 by 844 and 1440 by 900, on
+  a licensed frame ("Blaž Rola NCAAs 2013" by ZooTennis.com, CC BY 3.0). The
+  pick is with the owner; the recommendation is A, with C as what A becomes
+  from the second trip on. B is honest only if every area is graded, and
+  contact is shown and never graded.
+  - **What the canvas gets wrong, found building it.** Take A draws the lime
+    target as a redrawn leg on the photograph. The app refuses that for an
+    angle measured in 3D (`targetShape.ts`: no image-space construction
+    re-measures to a world angle), and A1.1 has just shown the 3D knee
+    disagreeing with the picture. On the player's own footage the target is
+    the target shape, a diagram in its own plane, captioned "Shape to aim
+    for"; only a height fault's ghost (`ghostFor`) may sit on the body.
+- [x] **B1.1 The fix shows the shape to aim for, and the held frame plays
+  again.** Common to all three takes, so built before the pick.
+  - **The shape to aim for under the fix, on a laptop.** `faultMetric`
+    (`lib/lookFor.ts`) finds the card row the leading fault is read from (the
+    row `faultMoment` already took the held moment from), and `targetDrawn`
+    (`analysis/targetShape.ts`) is every reason `TargetShape` withholds a
+    figure, now in one place the report and the card both ask. Drawn on 1 of 7
+    dialled serves: a low contact; the toss arm, leg drive and clean serves
+    have no figure, which is the rule. `heldTarget.test.ts` proves the report
+    draws it exactly when the row would, with its caveat, and never inside the
+    band or on a soft reading.
+  - **Not on a phone, yet.** Under the fix it pushed "What to do now" behind
+    the action bar at 375 by 812, undoing N7.8; as a plate on the picture it
+    covered the score, and cutting it down would drop the viewpoint line the
+    figure must carry. It goes on the picture once the score leaves it, which
+    is the design pick. Hidden below 1024 px until then.
+  - **The key's swatch was lime beside a coral line**, on every card that
+    draws a figure: the line takes the status colour and the swatch did not.
+    It does now, so "You" is keyed in the colour it is drawn in.
+  - **Play it again.** A glass button on the held frame replays the clip into
+    the hold (the stage is keyed, so each press is a fresh reveal), hidden
+    while it plays and under a warning, where the picture is short. Proved in
+    Chrome on `Saque_con_pelota`: hidden during the replay, the picture moving
+    mid-way, and the same held frame after.
+  - `?demo=held-target` opens a report led by a low contact.
+
 ## Wave 2. The report and the coaching
 
 ## Wave 3. The loop and the studio

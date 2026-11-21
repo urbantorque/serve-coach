@@ -60,8 +60,9 @@
  * carries the view it is drawn from as a string the player reads. A diagram whose viewpoint
  * is not stated is a diagram inviting the reader to assume it is the camera's.
  */
-import type { Landmark } from './types'
+import type { Landmark, Metric } from './types'
 import { jointAngle, signedElevationFromHorizontal } from './geometry'
+import { SOFT_MEASUREMENT } from './softness'
 
 export interface Pt {
   x: number
@@ -277,6 +278,23 @@ const SHAPES: Record<string, ShapeSpec> = {
 
 /** Measurements a figure can be drawn for. Used by the tests and the copy lint. */
 export const DRAWN = Object.keys(SHAPES)
+
+/**
+ * Whether a target shape is drawn for this reading at all (B1.1).
+ *
+ * Every reason `TargetShape` withholds one, in one place, so a caller that
+ * frames the figure (the held frame's plate) asks the same question the
+ * figure does and never shows an empty frame: no construction for this
+ * measurement, a reading already inside its band, a soft reading, or a
+ * readout and target that are the same phrase.
+ */
+export function targetDrawn(m: Pick<Metric, 'id' | 'value' | 'ideal' | 'confidence' | 'softness' | 'readout' | 'target'>): boolean {
+  if (!SHAPES[m.id]) return false
+  if (!Number.isFinite(m.value)) return false
+  if (m.value >= m.ideal[0] && m.value <= m.ideal[1]) return false
+  if ((m.confidence ?? 1) < SOFT_MEASUREMENT || !!m.softness) return false
+  return m.readout !== m.target
+}
 
 /** How to read the figure for a measurement, or nothing if it has none. */
 export function viewOf(id: string): ShapeView | undefined {

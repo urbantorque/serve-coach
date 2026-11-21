@@ -401,6 +401,12 @@ export async function runDemoRoute(
       } as Analysis,
       videoUrl: '',
     })
+  } else if (demo === 'held-target') {
+    // A report led by a low contact, opened again, so the held frame carries
+    // the shape to aim for (B1.1). The same dials `heldTarget.test.ts` reads.
+    const { frames: _f, ...session } = sampleAnalysis({ tossArmHold: 0.72, trophyKneeAngle: 133, contactHipHeight: 1.0, contactReach: 1.0 })
+    void _f
+    setView({ kind: 'saved', session })
   } else {
     if (new URLSearchParams(location.search).has('stills')) rigStills(analysis)
     const { frames: _f, ...session } = analysis

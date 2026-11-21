@@ -523,23 +523,36 @@
   fill: var(--metric-tone);
 }
 
+/* The key's swatch in the line's own colour (B1.1): it was always lime, beside
+   a line drawn in the status colour, so a coral line was keyed by a lime dash. */
+.tshape-swatch--you.tshape-swatch--great,
+.tshape-swatch--you.tshape-swatch--good,
+.tshape-swatch--you.tshape-swatch--fair,
+.tshape-swatch--you.tshape-swatch--work {
+  border-top-color: var(--metric-tone);
+}
+
 .tshape-you--great,
-.tshape-you-dot--great {
+.tshape-you-dot--great,
+.tshape-swatch--great {
   --metric-tone: var(--great);
 }
 
 .tshape-you--good,
-.tshape-you-dot--good {
+.tshape-you-dot--good,
+.tshape-swatch--good {
   --metric-tone: var(--good);
 }
 
 .tshape-you--fair,
-.tshape-you-dot--fair {
+.tshape-you-dot--fair,
+.tshape-swatch--fair {
   --metric-tone: var(--fair);
 }
 
 .tshape-you--work,
-.tshape-you-dot--work {
+.tshape-you-dot--work,
+.tshape-swatch--work {
   --metric-tone: var(--work);
 }
 

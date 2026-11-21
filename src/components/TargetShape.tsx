@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
-import { SOFT_MEASUREMENT } from '../lib/analysis/softness'
 import {
   boundsOf,
   figureOf,
   markerOf,
   pathOf,
+  targetDrawn,
   viewOf,
   type Figure,
 } from '../lib/analysis/targetShape'
@@ -64,9 +64,7 @@ const PAD = 0.09
 
 export default function TargetShape({ metric: m }: Props) {
   const view = viewOf(m.id)
-  const inBand = m.value >= m.ideal[0] && m.value <= m.ideal[1]
-  const soft = (m.confidence ?? 1) < SOFT_MEASUREMENT || !!m.softness
-  const drawable = !!view && !inBand && !soft && m.readout !== m.target
+  const drawable = !!view && targetDrawn(m)
 
   const drawing = useMemo(() => {
     if (!drawable) return undefined
@@ -202,7 +200,7 @@ export default function TargetShape({ metric: m }: Props) {
 
       <figcaption className="tshape-key">
         <span className="tshape-key-row">
-          <span className="tshape-swatch tshape-swatch--you" aria-hidden="true" />
+          <span className={`tshape-swatch tshape-swatch--you tshape-swatch--${m.status}`} aria-hidden="true" />
           <span className="tshape-key-label">You</span>
           <span className="tshape-key-value">{m.readout}</span>
         </span>
