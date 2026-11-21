@@ -6,6 +6,7 @@ import type { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision'
 import { fetchStreamed } from '../engineDownload'
 import { ENGINE_MANIFEST } from '../engineManifest'
 import { inEngineCache } from '../engineCache'
+import { devModelUrl } from './devModels'
 
 /**
  * What `FilesetResolver.forVisionTasks` hands back.
@@ -57,7 +58,7 @@ async function downloadModel(onProgress: (p: EngineProgress) => void): Promise<U
   // next attempt starts again instead of joining a dead one.
   const totalBytes = ENGINE_MANIFEST.find((f) => MODEL_URL.endsWith(f.path))?.bytes ?? 0
   let loadedBytes = 0
-  return fetchStreamed(MODEL_URL, {
+  return fetchStreamed(devModelUrl('pose') ?? MODEL_URL, {
     onChunk: (bytes) => {
       loadedBytes += bytes
       onProgress({

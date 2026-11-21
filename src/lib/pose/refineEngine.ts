@@ -20,6 +20,7 @@ import type { InferenceSession } from 'onnxruntime-web'
 import { RTM_INPUT, RTM_MEAN, RTM_STD, decodeSimcc, rtmCrop, type Pt } from './rtmpose'
 import { fetchStreamed } from '../engineDownload'
 import { inEngineCache } from '../engineCache'
+import { devModelUrl } from './devModels'
 
 const BASE = import.meta.env?.BASE_URL || '/'
 const MODEL_URL = `${BASE}models/rtmpose-s.onnx`
@@ -51,7 +52,7 @@ export function loadRefineEngine(): Promise<InferenceSession> {
         : 1
       // Streamed, so a download that stops arriving is rejected rather than
       // awaited forever, and `pending` cleared below (L6.1).
-      const model = await fetchStreamed(MODEL_URL)
+      const model = await fetchStreamed(devModelUrl('refine') ?? MODEL_URL)
       session = await ort.InferenceSession.create(model, { executionProviders: ['wasm'] })
       return session
     } catch (err) {
