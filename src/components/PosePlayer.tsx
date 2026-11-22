@@ -17,7 +17,7 @@ import PlayerControls, { type WatchRate } from './PlayerControls'
 import { LOOK_FOR, momentMark } from '../lib/lookFor'
 import StudioLayer, { type StudioTool } from './StudioLayer'
 import type { StudioMark } from '../lib/storage/db'
-import { exportStill } from '../lib/studioStill'
+import { canRecordClip, exportStill, recordStudioClip } from '../lib/studioStill'
 
 interface Props {
   videoUrl: string
@@ -75,6 +75,23 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired, tools = f
   const [zoom, setZoom] = useState(0)
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [tool, setTool] = useState<StudioTool>()
+  const [recording, setRecording] = useState(false)
+  /** The serve's window, played from its start and recorded with the lines and marks (W6.5). */
+  const saveClip = async () => {
+    const v = videoRef.current
+    if (!v || recording) return
+    setRecording(true)
+    v.pause()
+    v.currentTime = win.start
+    await new Promise((r) => v.addEventListener('seeked', r, { once: true }))
+    const maxMs = ((win.end - win.start) / speed) * 1000 + 3000
+    await recordStudioClip(v, canvasRef.current, marks, aspect, win.end, analysis.createdAt, () => {
+      void v.play()
+      setPlaying(true)
+    }, maxMs).catch(() => false)
+    setPlaying(false)
+    setRecording(false)
+  }
   // The best serve's body over this one (W6.3): full, half, faint or off.
   const [ghostAt, setGhostAt] = useState(0)
   const ghostAlpha = GHOST_STEPS[ghostAt].alpha
@@ -896,6 +913,11 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired, tools = f
               >
                 Save still
               </button>
+              {canRecordClip() && (
+                <button className="watch-lines" onClick={() => void saveClip()} disabled={recording} aria-busy={recording}>
+                  {recording ? 'Saving the clip' : 'Save clip'}
+                </button>
+              )}
             </>
           ) : undefined
         }

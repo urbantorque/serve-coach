@@ -537,3 +537,22 @@ three inputs, the free and Plus table and prices, and Ask the coach.
   - `nextTime.test.ts` runs the line for every card row both ways through the
     copy lint, and refuses an unfinished practice. **Not seen in Chrome:** no
     demo route seeds a finished practice session with a drift.
+- [x] **W6.5 The studio saves an annotated clip.** "Save clip" plays the
+  serve's own window at the player's speed and records each frame as the
+  studio shows it, the video with the body lines and every mark and read-out,
+  with the browser's own `MediaRecorder`, then saves the file on the device
+  (`recordStudioClip`; the still and the clip share one frame painter). It
+  takes as long as it plays, stops at the window's end, at the player's loop,
+  or at a time limit, and is offered only where the browser can record. In
+  Chrome on `Saque_con_pelota` at 1440: an 839 KB WebM in 6.0 s, decoding at
+  the clip's own 320 by 240, a frame from its middle showing the body lines
+  and a drawn line reading 8 degrees from upright; no page errors.
+
+## Wave 6 report
+
+The coach's posture finding, the studio's open items (marks for the coach,
+the ghost's strength, Studio on the rail, an annotated clip), the held frame
+pointing at the body part on a row-led fix, and the last practice carried into
+the next session. Found already met: area D's moments. Still open: four-up
+compare, a landing on a licensed real serve, a faster first read, recording a
+whole practice in the app, and everything waiting on the owner.

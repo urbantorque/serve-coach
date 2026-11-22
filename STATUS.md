@@ -40,9 +40,10 @@ names.
   story: the serve now, then and now on the player's body, the faults serve by
   serve, speed (about, with its range, never graded), what changed, and one
   fold for the rest.
-- **The laptop studio.** Frame keys (arrows, J K L, 1 to 6), zoom and pan,
-  lines and angles measured on the picture and kept with the serve, a still
-  saved on the device, and the best serve beside a kept clip.
+- **The laptop studio,** on the rail. Frame keys (arrows, J K L, 1 to 6),
+  zoom and pan, lines and angles measured on the picture and kept with the
+  serve and shown on the coach's page, the best serve's ghost at four
+  strengths, and a still or an annotated clip saved on the device.
 - **Sharing, by the player only.** A poster, a slow-motion clip, then and now,
   and a coach's page.
 - **Offline and protected.** One stated download, a first read before the
@@ -61,17 +62,15 @@ names.
 - **Real footage is thin:** four licensed tennis clips, all 640 by 480 or
   smaller. Whether the trophy and knee should be read off the picture side-on
   waits on sharper footage or the owner's own serves (A1.1).
-- **The report's moment** holds the player's footage at the fix's moment but
-  draws the fault on the body only for a height fault, and the target figure on
-  1 of 7 serves, by the rule that no picture-space shape is re-measured as a 3D
+- **The report's moment** holds the player's footage at the fix's moment and
+  paints the body part the fix is about, but draws the target figure on 1 of
+  7 serves, by the rule that no picture-space shape is re-measured as a 3D
   angle.
-- **The studio** lacks the ghost's opacity control, four-up compare, an
-  annotated short clip, the marks on the coach page, and a rail entry.
+- **The studio** has two-up compare on a kept clip, not four-up.
 - **The front door** shows a drawn figure, not a licensed real serve; a first
   read takes about 110 s on an 18 s clip; Ask the coach is not built (egress,
   the owner's call).
-- **The posture ladder's cue** is not the sideways stacking the fault names,
-  and the drill library has not had a coach's review.
+- **The drill library** has not had a coach's full review.
 - **Recording a whole practice in the app** is not started.
 
 ## The owner's call
