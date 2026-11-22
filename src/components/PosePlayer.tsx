@@ -15,6 +15,9 @@ import { pairedLookup, type TrackPair } from '../lib/trackPair'
 import { Icon } from './primitives'
 import PlayerControls, { type WatchRate } from './PlayerControls'
 import { LOOK_FOR, momentMark } from '../lib/lookFor'
+import StudioLayer, { type StudioTool } from './StudioLayer'
+import type { StudioMark } from '../lib/storage/db'
+import { exportStill } from '../lib/studioStill'
 
 interface Props {
   videoUrl: string
@@ -28,7 +31,19 @@ interface Props {
    * aim for: the two are the same ink saying different things.
    */
   paired?: TrackPair
+  /**
+   * The studio's tools (E1.2): draw lines and angles, zoom and pan, save a
+   * still. On a laptop, where a pointer can place a point; the marks are shown
+   * at every size.
+   */
+  tools?: boolean
+  /** What was drawn on this serve, kept on its tag. */
+  marks?: StudioMark[]
+  onMarks?: (marks: StudioMark[]) => void
 }
+
+/** The studio's zoom steps: the picture, then up to four times. */
+const ZOOMS = [1, 1.5, 2, 3, 4]
 
 /**
  * The clip with the tracked skeleton drawn over it.
@@ -38,7 +53,7 @@ interface Props {
  * to find the toss. The racket hand leaves a trail so the swing path reads at a
  * glance, and each keyframe annotates the joint angle it is judged on.
  */
-export default function PosePlayer({ videoUrl, analysis, seek, paired }: Props) {
+export default function PosePlayer({ videoUrl, analysis, seek, paired, tools = false, marks = [], onMarks }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
@@ -49,6 +64,21 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired }: Props) 
   const [activePhase, setActivePhase] = useState<PhaseId>('ready')
   const [skeletonOn, setSkeletonOn] = useState(true)
   const [cursor, setCursor] = useState(0)
+  const [zoom, setZoom] = useState(0)
+  const [pan, setPan] = useState({ x: 0, y: 0 })
+  const [tool, setTool] = useState<StudioTool>()
+  const scale = ZOOMS[zoom]
+  /** Zoom one step, keeping the pan inside the picture. */
+  const zoomBy = (d: number) => {
+    const next = Math.max(0, Math.min(ZOOMS.length - 1, zoom + d))
+    setZoom(next)
+    if (next === 0) setPan({ x: 0, y: 0 })
+  }
+  /** Move the zoomed picture, never past its own edge. */
+  const panBy = (dx: number, dy: number) => {
+    const room = (scale - 1) / 2
+    setPan((p) => ({ x: Math.max(-room, Math.min(room, p.x + dx)), y: Math.max(-room, Math.min(room, p.y + dy)) }))
+  }
 
   /**
    * Steadies the skeleton against per-frame pose noise, for drawing only.
@@ -479,7 +509,8 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired }: Props) 
     const canvas = canvasRef.current
     const videoEl = videoRef.current
     if (!canvas || !videoEl) return false
-    const rect = videoEl.getBoundingClientRect()
+    // Layout size, not the on-screen box: a studio zoom scales the box (E1.2).
+    const rect = { width: videoEl.offsetWidth, height: videoEl.offsetHeight }
     const dpr = Math.min(2, window.devicePixelRatio || 1)
     canvas.style.width = `${rect.width}px`
     canvas.style.height = `${rect.height}px`
@@ -657,6 +688,15 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired }: Props) 
       ArrowRight: () => step(1),
       ArrowLeft: () => step(-1),
       ' ': toggle,
+      // J K L, as an editor has them (E1.1): back a frame, play or pause, on a frame.
+      j: () => step(-1),
+      k: toggle,
+      l: () => step(1),
+      '+': () => zoomBy(1),
+      '=': () => zoomBy(1),
+      '-': () => zoomBy(-1),
+      '0': () => zoomBy(-ZOOMS.length),
+      Escape: () => setTool(undefined),
       Home: () => seekTo(win.start),
       End: () => seekTo(win.end - 0.01),
     }
@@ -687,9 +727,17 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired }: Props) 
       tabIndex={0}
       onKeyDown={onKeyDown}
       role="group"
-      aria-label="Serve video. Left and right arrows step one frame, space plays, keys 1 to 6 jump to each key position."
+      aria-label="Serve video. Left and right arrows or J and L step one frame, space or K plays, keys 1 to 6 jump to each key position, plus and minus zoom."
     >
       <div className="player-stage" style={{ aspectRatio: `${video.width} / ${video.height}` }}>
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            transform: scale > 1 ? `translate(${pan.x * 100}%, ${pan.y * 100}%) scale(${scale})` : undefined,
+            transformOrigin: '50% 50%',
+          }}
+        >
         <video
           ref={videoRef}
           src={videoUrl}
@@ -719,19 +767,35 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired }: Props) 
           onClick={toggle}
         />
         <canvas ref={canvasRef} onClick={toggle} aria-hidden="true" />
+        {(marks.length > 0 || tool || scale > 1) && (
+          <StudioLayer
+            marks={marks}
+            aspect={aspect}
+            tool={tool}
+            time={frames[cursor]?.t ?? 0}
+            zoomed={scale > 1}
+            onPan={panBy}
+            onTap={toggle}
+            onAdd={(m) => onMarks?.([...marks, m])}
+          />
+        )}
         {/* The reading where the ball left the racket (C6), in the DOM so it
             stays crisp and readable. Parked on contact or the finish only: in
             between, the picture is still on its way there. */}
         {struck && struckPath && skeletonOn && (activePhase === 'contact' || activePhase === 'finish') && (
           <SpeedTag speed={struck} at={struckPath[struckPath.length - 1]} aspect={aspect} />
         )}
-        <button className="player-scrim" onClick={toggle} aria-label={playing ? 'Pause' : 'Play'} tabIndex={-1}>
-          {!playing && (
-            <span className="player-play">
-              <Icon name="play" size={26} />
-            </span>
-          )}
-        </button>
+        </div>
+        {/* Out of the way while drawing, zoomed, or over marks it would hide (E1.2); the video itself still plays on a tap. */}
+        {!tool && scale === 1 && !marks.length && (
+          <button className="player-scrim" onClick={toggle} aria-label={playing ? 'Pause' : 'Play'} tabIndex={-1}>
+            {!playing && (
+              <span className="player-play">
+                <Icon name="play" size={26} />
+              </span>
+            )}
+          </button>
+        )}
       </div>
 
       <div
@@ -787,6 +851,34 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired }: Props) 
           >
             Body lines
           </button>
+        }
+        tools={
+          tools ? (
+            <>
+              {(['line', 'angle'] as const).map((t) => (
+                <button key={t} className={`watch-lines${tool === t ? ' is-on' : ''}`} onClick={() => setTool(tool === t ? undefined : t)} aria-pressed={tool === t}>
+                  {t === 'line' ? 'Line' : 'Angle'}
+                </button>
+              ))}
+              <button className="watch-lines" onClick={() => zoomBy(1)} disabled={zoom === ZOOMS.length - 1} aria-label="Zoom in">
+                Zoom in
+              </button>
+              <button className="watch-lines" onClick={() => zoomBy(-1)} disabled={zoom === 0} aria-label="Zoom out">
+                Zoom out
+              </button>
+              {marks.length > 0 && (
+                <button className="watch-lines" onClick={() => onMarks?.(marks.slice(0, -1))}>
+                  Undo mark
+                </button>
+              )}
+              <button
+                className="watch-lines"
+                onClick={() => videoRef.current && void exportStill(videoRef.current, canvasRef.current, marks, aspect, analysis.createdAt)}
+              >
+                Save still
+              </button>
+            </>
+          ) : undefined
         }
       />
     </div>

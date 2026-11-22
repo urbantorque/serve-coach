@@ -1551,12 +1551,33 @@ export type ServeOutcome = (typeof SERVE_OUTCOMES)[number]
  * storing an empty record, because a store that accumulates rows saying nothing
  * is a store whose count means nothing.
  */
+/**
+ * A line or an angle drawn on a serve in the studio (E1.2): points across the
+ * picture, 0 to 1 on each axis, and the clip time it was drawn at. Measured on
+ * the picture, so a read-out is the angle the camera saw, not one in 3D.
+ */
+export interface StudioMark {
+  kind: 'line' | 'angle'
+  /** Two points for a line; three for an angle, its vertex in the middle. */
+  pts: { x: number; y: number }[]
+  t: number
+}
+
+/** The most marks a serve keeps: a drawing, not a database. */
+export const MAX_MARKS = 24
+
 export interface ServeTag {
   /** The report's own id. */
   id: string
   serveNumber?: 1 | 2
   /** Where it finished, if the player said. Never inferred — nothing sees the court. */
   outcome?: ServeOutcome
+  /**
+   * What the player or their coach drew on it (E1.2). Here, on the serve's
+   * own tag, so the marks live and die with the report, travel in a backup
+   * with the tags and reach the coach page with them.
+   */
+  marks?: StudioMark[]
   /** When the player said so — not when the serve was hit. */
   taggedAt: number
 }
@@ -1577,16 +1598,17 @@ export interface ServeTag {
 export function withServeTag(
   existing: ServeTag | undefined,
   id: string,
-  patch: Partial<Pick<ServeTag, 'serveNumber' | 'outcome'>>,
+  patch: Partial<Pick<ServeTag, 'serveNumber' | 'outcome' | 'marks'>>,
   now: number,
 ): ServeTag | undefined {
   const serveNumber = 'serveNumber' in patch ? patch.serveNumber : existing?.serveNumber
   const outcome = 'outcome' in patch ? patch.outcome : existing?.outcome
+  const marks = ('marks' in patch ? patch.marks : existing?.marks)?.slice(0, MAX_MARKS)
   // Nothing left to say. Delete rather than store a row that only carries a
   // timestamp — the store's own count is what tells a later screen whether the
   // player uses this at all.
-  if (serveNumber === undefined && outcome === undefined) return undefined
-  return { id, serveNumber, outcome, taggedAt: now }
+  if (serveNumber === undefined && outcome === undefined && !marks?.length) return undefined
+  return { id, serveNumber, outcome, ...(marks?.length ? { marks } : {}), taggedAt: now }
 }
 
 /**
@@ -1621,11 +1643,28 @@ export function normaliseServeTag(raw: unknown): ServeTag | undefined {
   const outcome = SERVE_OUTCOMES.includes(t.outcome as ServeOutcome)
     ? (t.outcome as ServeOutcome)
     : undefined
+  const marks = Array.isArray(t.marks) ? t.marks.filter(validMark).slice(0, MAX_MARKS) : []
   // And a row that survived with nothing on it is not a tag, by the same rule
   // `withServeTag` deletes on: an empty row is a claim that the player said
   // something, and they did not.
-  if (serveNumber === undefined && outcome === undefined) return undefined
-  return { id: t.id, serveNumber, outcome, taggedAt: t.taggedAt }
+  if (serveNumber === undefined && outcome === undefined && !marks.length) return undefined
+  return { id: t.id, serveNumber, outcome, ...(marks.length ? { marks } : {}), taggedAt: t.taggedAt }
+}
+
+/** A mark that can be drawn: its kind, the right number of points, each inside the picture. */
+function validMark(m: unknown): m is StudioMark {
+  if (!m || typeof m !== 'object') return false
+  const k = m as Partial<StudioMark>
+  const n = k.kind === 'line' ? 2 : k.kind === 'angle' ? 3 : 0
+  const inside = (v: unknown) => typeof v === 'number' && v >= 0 && v <= 1
+  return (
+    n > 0 &&
+    Array.isArray(k.pts) &&
+    k.pts.length === n &&
+    k.pts.every((p) => p && inside(p.x) && inside(p.y)) &&
+    typeof k.t === 'number' &&
+    Number.isFinite(k.t)
+  )
 }
 
 /* ------------------------------------------------------- practice sessions */

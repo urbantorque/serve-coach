@@ -134,7 +134,7 @@ export function useHistory() {
    * stored.
    */
   const applyServeTag = useCallback(
-    async (id: string, patch: Partial<Pick<ServeTag, 'serveNumber' | 'outcome'>>) => {
+    async (id: string, patch: Partial<Pick<ServeTag, 'serveNumber' | 'outcome' | 'marks'>>) => {
       let next: ServeTag | undefined
       setServeTags((tags) => {
         next = withServeTag(tags.find((t) => t.id === id), id, patch, Date.now())

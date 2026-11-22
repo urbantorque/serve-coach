@@ -897,6 +897,8 @@ export default function App() {
               outcome={tagsById(serveTags).get(shownReport.id)?.outcome}
               onTagServe={(n) => void applyServeTag(shownReport.id, { serveNumber: n })}
               onTagOutcome={(o) => void applyServeTag(shownReport.id, { outcome: o })}
+              marks={tagsById(serveTags).get(shownReport.id)?.marks}
+              onMarks={(m) => void applyServeTag(shownReport.id, { marks: m })}
               tossMap={tossMapFor(shownReport, sessions, serveTags)}
               kept={keptMedia?.id === shownReport.id ? { url: keptMedia.url, bestUrl: keptMedia.bestUrl } : undefined}
               keepsClips={Boolean(prefs.keepClips)}

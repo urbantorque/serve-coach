@@ -303,6 +303,34 @@ owner: A0.2's three inputs.
   `progress.test.ts` holds the short form; Progress still waits six weeks.
   Read off the first screen in Chrome at 390 and 1440 for the season player:
   all three answered above the fold.
+- [x] **E1.1 The studio: keys, zoom, draw and measure, a still.** On a
+  laptop the player under a fresh report gains a row of tools (`Draw and
+  measure`).
+  - **Keys:** J and L step a frame, K plays and pauses, beside the arrows,
+    space and 1 to 6 it had; plus and minus zoom in steps to four times, 0
+    resets; Escape puts a tool down. Zoomed, a drag pans, held inside the
+    picture. The zoom moves the video, the body lines and the marks as one.
+  - **Draw and measure:** a line (two taps) reads its lean from upright, an
+    angle (three taps, the corner in the middle) reads its opening, both
+    measured on the picture and labelled so; the 3D readings stay the
+    report's (`studioMarks.ts`).
+  - **Saved with the serve:** marks live on the serve's own tag
+    (`ServeTag.marks`), so they go when the report goes, travel in a backup
+    with the tags, and come back after a reload: drawn over the kept clip on
+    a reopened report. A malformed mark is dropped on its own; 24 at most.
+  - **A still:** the frame at the clip's own size with the body lines and
+    every mark and read-out, made in the browser and saved as a picture.
+  - `studioMarks.test.ts`: the read-outs (plumb, flat, a right angle, the
+    picture's shape counted), marks kept and cleared on the tag, a reload
+    dropping only what cannot be drawn.
+  - **In Chrome** on `Saque_con_pelota` at 1440 by 900: J and L moved the
+    frame 0 to 2 to 1; a line read 8 degrees from upright and an angle 151;
+    zoomed twice, the marks rode with the picture; the still downloaded
+    with both; reloaded and reopened, both marks sat on the kept clip.
+  - **Not built:** the ghost's opacity control, four-up compare (two-up, this
+    serve beside the best, is there on a kept clip), an annotated short clip,
+    the marks on the coach page, and Studio as a rail entry with its
+    `DESIGN.md` line.
 
 ## Wave 4. The front door
 

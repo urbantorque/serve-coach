@@ -36,6 +36,8 @@ interface Props {
   speeds?: boolean
   /** Anything else that belongs on the row. */
   extra?: React.ReactNode
+  /** The studio's drawing and zoom tools (E1.2), on a row of their own under the moments. */
+  tools?: React.ReactNode
 }
 
 /**
@@ -61,6 +63,7 @@ export default function PlayerControls({
   caption,
   speeds = true,
   extra,
+  tools,
 }: Props) {
   const pills = useRef<HTMLDivElement>(null)
   usePillInView(pills, active)
@@ -118,6 +121,12 @@ export default function PlayerControls({
       <p className="watch-caption" aria-live={playing ? 'off' : 'polite'}>
         {caption}
       </p>
+
+      {tools && (
+        <div className="watch-moments" role="toolbar" aria-label="Draw and measure">
+          {tools}
+        </div>
+      )}
     </>
   )
 }

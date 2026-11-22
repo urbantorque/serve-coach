@@ -65,7 +65,7 @@ import {
 import { clipsWork, shareReportCard, shareServeClip } from '../lib/share/reportCard'
 import { swingOf, workParts } from '../lib/figure/swing'
 import { SCORING_VERSION, type Analysis, type PhaseId } from '../lib/analysis/types'
-import type { PracticeLog, ServeTag, Session } from '../lib/storage/db'
+import type { PracticeLog, ServeTag, Session, StudioMark } from '../lib/storage/db'
 import DrillCard from './report/DrillCard'
 import RevealStage from './report/RevealStage'
 import ShareChoice from './report/ShareChoice'
@@ -108,6 +108,9 @@ interface Props {
   outcome?: ServeOutcome
   onTagServe?: (n: 1 | 2 | undefined) => void
   onTagOutcome?: (o: ServeOutcome | undefined) => void
+  /** What was drawn on this serve in the studio (E1.2), and the way to keep more. */
+  marks?: StudioMark[]
+  onMarks?: (marks: StudioMark[]) => void
   /** Which serve this looks like, from the player's own record. Never stored as a tag. */
   serveGuess?: ServeGuess
   /** Show this clip as the glance: the one-screen read for the court. */
@@ -198,6 +201,8 @@ export default function Report({
   outcome,
   onTagServe,
   onTagOutcome,
+  marks,
+  onMarks,
   serveGuess,
   onGlance,
   tossMap,
@@ -851,7 +856,15 @@ export default function Report({
           <h2 className="t-headline" id="watch-title">
             Watch your serve
           </h2>
-          <PosePlayer videoUrl={videoUrl!} analysis={analysis as Analysis} seek={seek} paired={ghost?.pair} />
+          <PosePlayer
+            videoUrl={videoUrl!}
+            analysis={analysis as Analysis}
+            seek={seek}
+            paired={ghost?.pair}
+            tools={studio && Boolean(onMarks)}
+            marks={marks}
+            onMarks={onMarks}
+          />
           {ghost && !analysis.tilt && (
             <p className="player-note">
               {ghost.who === 'best'
@@ -871,6 +884,7 @@ export default function Report({
             url={kept.url}
             phases={analysis.phases}
             aspect={analysis.video.width / Math.max(1, analysis.video.height)}
+            marks={marks}
             beside={
               kept.bestUrl && best
                 ? { url: kept.bestUrl, phases: best.phases, aspect: best.video.width / Math.max(1, best.video.height) }

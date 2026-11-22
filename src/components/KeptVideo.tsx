@@ -1,5 +1,7 @@
 import { useRef } from 'react'
 import type { Phase } from '../lib/analysis/types'
+import type { StudioMark } from '../lib/storage/db'
+import StudioLayer from './StudioLayer'
 
 interface Props {
   /** This serve's kept clip, as an object URL. */
@@ -9,6 +11,8 @@ interface Props {
   aspect?: number
   /** The best earlier serve's kept clip, to play beside this one, when it was kept too. */
   beside?: { url: string; phases: Phase[]; aspect?: number }
+  /** What was drawn on this serve in the studio (E1.2), shown over the clip, not editable here. */
+  marks?: StudioMark[]
 }
 
 /** Where both clips start when played together: just before the toss. */
@@ -26,7 +30,7 @@ const LEAD_SECONDS = 0.3
  * together from just before each toss at half speed, so the same moment of
  * both serves is on screen at once.
  */
-export default function KeptVideo({ url, phases, aspect, beside }: Props) {
+export default function KeptVideo({ url, phases, aspect, beside, marks }: Props) {
   const shape = (a?: number) => (a && Number.isFinite(a) ? { aspectRatio: String(a) } : undefined)
   const mine = useRef<HTMLVideoElement>(null)
   const theirs = useRef<HTMLVideoElement>(null)
@@ -68,7 +72,12 @@ export default function KeptVideo({ url, phases, aspect, beside }: Props) {
           </figure>
         </div>
       ) : (
-        <video ref={mine} className="kept-video" src={url} controls playsInline preload="metadata" style={shape(aspect)} />
+        <div style={{ position: 'relative' }}>
+          <video ref={mine} className="kept-video" src={url} controls playsInline preload="metadata" style={shape(aspect)} />
+          {marks?.length && aspect ? (
+            <StudioLayer marks={marks} aspect={aspect} time={0} zoomed={false} onAdd={() => undefined} onTap={() => undefined} />
+          ) : null}
+        </div>
       )}
       <div className="kept-actions">
         {beside && (
