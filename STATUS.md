@@ -43,7 +43,9 @@ names.
 - **The laptop studio,** on the rail. Frame keys (arrows, J K L, 1 to 6),
   zoom and pan, lines and angles measured on the picture and kept with the
   serve and shown on the coach's page, the best serve's ghost at four
-  strengths, and a still or an annotated clip saved on the device.
+  strengths, a still or an annotated clip saved on the device, and two or
+  four up: this serve beside the best, the last and one from a month before,
+  every clip moved to the same moment together.
 - **Sharing, by the player only.** A poster, a slow-motion clip, then and now,
   and a coach's page.
 - **Offline and protected.** One stated download, a first read before the
@@ -66,9 +68,9 @@ names.
   paints the body part the fix is about, but draws the target figure on 1 of
   7 serves, by the rule that no picture-space shape is re-measured as a 3D
   angle.
-- **The studio** has two-up compare on a kept clip, not four-up.
-- **The front door** shows a drawn figure, not a licensed real serve; a first
-  read takes about 110 s on an 18 s clip; Ask the coach is not built (egress,
+- **The front door** plays a licensed real serve with its own read; its load
+  time is not measured on the throttled profile, a first read takes about
+  110 s on an 18 s clip, and Ask the coach is not built (egress,
   the owner's call).
 - **The drill library** has not had a coach's full review.
 - **Recording a whole practice in the app** is not started.
@@ -92,7 +94,7 @@ designer 7, a coach 6.5, an engine hunter 6, a first-time visitor 6, out of
 ten against the brief) and its fixes, W5.1. The before and after galleries are
 `docs/lift/apex-gallery.html` (phone) and `docs/lift/apex-gallery-laptop.html`.
 
-The suite runs **2,412 checks** (2026-11-22, after the close). The last loop tag is
+The suite runs **2,430 checks** (2026-11-23, after W6.7). The last loop tag is
 `loop-green-15`, from the August loop.
 
 The entry chunk budget is 132 kB gzip and 385 kB raw (`bundle.test.ts`); it is

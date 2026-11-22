@@ -45,7 +45,8 @@ import { storageNudge } from './lib/storage/nudge'
 import { readPrefs, writePrefs, type Prefs } from './lib/storage/prefs'
 import { clipIdOf } from './lib/storage/sessionKey'
 import type { PracticeSession, SessionStage } from './lib/session/session'
-import { clipFor } from './lib/storage/clipStore'
+import { clipFor, keptClips } from './lib/storage/clipStore'
+import type { KeptOther } from './screens/Report'
 import { guessServeNumber } from './lib/serveGuess'
 import type { ProtectionStatus, RecoveryOffer } from './lib/storage/protect'
 import Home from './screens/Home'
@@ -213,7 +214,7 @@ export default function App() {
    */
   const [pair, setPair] = useState<ServePairFrames>()
   /** The kept clip on screen for a reopened report — see the effect beside `shownReport`. */
-  const [keptMedia, setKeptMedia] = useState<{ id: string; url: string; bestUrl?: string }>()
+  const [keptMedia, setKeptMedia] = useState<{ id: string; url: string; others: KeptOther[] }>()
   // The saved reports, the practice log and the serve tags, loaded and
   // refreshed together — see `useHistory` (W5.2).
   const {
@@ -662,35 +663,47 @@ export default function App() {
     () => (shownReport ? momentOn(shownReport as Session, sessions, { ledger: tripLedger, practice: practiceSessions, prefs }) : undefined),
     [shownReport, sessions, tripLedger, practiceSessions, prefs],
   )
-  // A reopened report's kept clip, and its best serve's (D6.4) — read from the
-  // device as object URLs, and revoked when the report changes.
+  // A reopened report's kept clip, and the earlier serves' kept clips to set
+  // beside it (D6.4; four up, Apex E): read from the device as object URLs, and
+  // revoked when the report changes. Which serves is `compareSet`, loaded with
+  // the clips, so it stays off the first screen.
   const reopenedId = liveReport ? undefined : shownReport?.id
-  const reopenedBestId = shownReport && !liveReport
-    ? bestPriorTo(sessions, shownReport.createdAt, typeOf(shownReport), scoringVersionOf(shownReport))?.id
-    : undefined
   useEffect(() => {
     if (!reopenedId) return
     let cancelled = false
-    const urls: string[] = []
+    const urls = new Map<string, string>()
     void (async () => {
       const own = await clipFor(clipIdOf(reopenedId))
       if (!own || cancelled) return
-      // The best serve may come from the same basket video, which then plays
-      // twice from one file, each copy from its own toss.
-      const sameClip = reopenedBestId !== undefined && clipIdOf(reopenedBestId) === clipIdOf(reopenedId)
-      const best = reopenedBestId && !sameClip ? await clipFor(clipIdOf(reopenedBestId)) : undefined
-      if (cancelled) return
-      const url = URL.createObjectURL(own)
-      const bestUrl = sameClip ? url : best ? URL.createObjectURL(best) : undefined
-      urls.push(url, ...(bestUrl && bestUrl !== url ? [bestUrl] : []))
-      setKeptMedia({ id: reopenedId, url, bestUrl })
+      const all = historyRef.current.sessions
+      const shown = all.find((s) => s.id === reopenedId)
+      const [{ compareSet }, list] = await Promise.all([import('./lib/compareSet'), keptClips().catch(() => [])])
+      const have = new Set(list.map((c) => c.id))
+      const slots = shown ? compareSet(all, shown, (s) => have.has(clipIdOf(s.id))) : []
+      // A basket's serves share one video, which then plays more than once,
+      // each copy from its own toss.
+      const urlOf = async (clipId: string, file?: File) => {
+        if (urls.has(clipId)) return urls.get(clipId)
+        const f = file ?? (await clipFor(clipId))
+        if (!f || cancelled) return undefined
+        const u = URL.createObjectURL(f)
+        urls.set(clipId, u)
+        return u
+      }
+      const url = (await urlOf(clipIdOf(reopenedId), own))!
+      const others: KeptOther[] = []
+      for (const slot of slots) {
+        const u = await urlOf(clipIdOf(slot.session.id))
+        if (u) others.push({ who: slot.who, session: slot.session, url: u })
+      }
+      if (!cancelled) setKeptMedia({ id: reopenedId, url, others })
     })()
     return () => {
       cancelled = true
-      for (const u of urls) URL.revokeObjectURL(u)
+      for (const u of urls.values()) URL.revokeObjectURL(u)
       setKeptMedia(undefined)
     }
-  }, [reopenedId, reopenedBestId])
+  }, [reopenedId, sessions.length])
 
   return (
     <div className={(view.kind === 'home' || view.kind === 'progress') && sessions.length > 0 ? 'app has-bar' : 'app'}>
@@ -900,7 +913,7 @@ export default function App() {
               marks={tagsById(serveTags).get(shownReport.id)?.marks}
               onMarks={(m) => void applyServeTag(shownReport.id, { marks: m })}
               tossMap={tossMapFor(shownReport, sessions, serveTags)}
-              kept={keptMedia?.id === shownReport.id ? { url: keptMedia.url, bestUrl: keptMedia.bestUrl } : undefined}
+              kept={keptMedia?.id === shownReport.id ? { url: keptMedia.url, others: keptMedia.others } : undefined}
               keepsClips={Boolean(prefs.keepClips)}
               keepFailed={keepFailedFor === shownReport.id}
               fixtureExport={FIXTURE_EXPORT}

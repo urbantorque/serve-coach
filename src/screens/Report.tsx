@@ -8,6 +8,7 @@ import ConsistencyPanel from '../components/ConsistencyPanel'
 import TossMap from '../components/TossMap'
 import FiringTimeline from '../components/FiringTimeline'
 import KeptVideo from '../components/KeptVideo'
+import type { CompareWho } from '../lib/compareSet'
 import type { TossMap as TossMapData } from '../lib/tossMap'
 import FundamentalCard from '../components/FundamentalCard'
 import Locked from '../components/Locked'
@@ -61,7 +62,7 @@ import {
   scoreMoveCaption,
   scoringVersionOf,
   type BestGap,
-  type BestTrip, deltaStatus } from '../lib/progress'
+  type BestTrip, deltaStatus, shortDate } from '../lib/progress'
 import { clipsWork, shareReportCard, shareServeClip } from '../lib/share/reportCard'
 import { swingOf, rowParts, workParts } from '../lib/figure/swing'
 import { SCORING_VERSION, type Analysis, type PhaseId } from '../lib/analysis/types'
@@ -76,6 +77,20 @@ import { deviceNoun } from '../lib/device'
  * The band in words, as a caption to the score. Said once, and short: the fix
  * is the headline.
  */
+
+/** An earlier serve whose clip is kept, to play beside this one (four up, Apex E). */
+export interface KeptOther {
+  who: CompareWho
+  session: Session
+  url: string
+}
+
+/** What each kept serve beside this one is called, under its clip. */
+const KEPT_LABEL: Record<CompareWho, (at: number) => string> = {
+  best: () => 'Your best',
+  last: (at) => `Your last, ${shortDate(at)}`,
+  month: (at) => `A month before, ${shortDate(at)}`,
+}
 
 interface Props {
   analysis: Analysis | Session
@@ -118,7 +133,8 @@ interface Props {
   /** Every toss in this basket, when two or more were read. */
   tossMap?: TossMapData
   /** The clip this report came from, kept on this device, and the best serve's. */
-  kept?: { url: string; bestUrl?: string }
+  /** This serve's kept clip, and earlier serves' kept clips to set beside it. */
+  kept?: { url: string; others?: KeptOther[] }
   /** Whether the player keeps videos, so the "never saved" lines follow it. */
   keepsClips?: boolean
   /** The keep for this clip failed, said on the live report. */
@@ -890,11 +906,14 @@ export default function Report({
             phases={analysis.phases}
             aspect={analysis.video.width / Math.max(1, analysis.video.height)}
             marks={marks}
-            beside={
-              kept.bestUrl && best
-                ? { url: kept.bestUrl, phases: best.phases, aspect: best.video.width / Math.max(1, best.video.height) }
-                : undefined
-            }
+            others={(kept.others ?? []).map((o) => ({
+              label: KEPT_LABEL[o.who](o.session.createdAt),
+              url: o.url,
+              phases: o.session.phases,
+              aspect: o.session.video.width / Math.max(1, o.session.video.height),
+            }))}
+            four={showCompare}
+            racket={analysis.handedness}
           />
           <p className="player-note">You kept this clip on this {deviceNoun()}. It goes when you delete this report, or first when space runs short.</p>
         </section>

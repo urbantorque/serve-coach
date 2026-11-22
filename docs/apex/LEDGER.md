@@ -579,12 +579,37 @@ three inputs, the free and Plus table and prices, and Ask the coach.
     the lead-in, the slow part, the hold and the loop; data saver showed the
     drawn serve with its own label; console clean. **Not checked:** Safari
     and Firefox (the owner's download), and LCP on the throttled profile.
+  - **The egress guard caught it first:** the landing's one same-origin GET
+    of its own JSON was not on `egress.test.ts`'s list, and the gate refused
+    the commit until it was named there with its reason.
+- [x] **W6.7 Four up in the studio.** A reopened report with kept clips now
+  sets this serve beside up to three earlier ones: the best, the last, and
+  one from about a month before (nearest thirty days, at least three weeks
+  back), each only if its clip is still on the device, each serve once, the
+  same serve type, never a refused clip (`compareSet.ts`). Two up (this and
+  the first of them) stays for everyone, as before; "Four up" is offered to
+  Plus with two or more earlier clips kept. Every clip moves together: a
+  moment's button puts each at its own instance of that moment, and "Play
+  all from the toss" starts each just before its own toss at half speed. A
+  fourth pane with no clip holds the model serve at the chosen moment.
+  - `compareSet.test.ts`: the order, a best that is also the last shown once
+    and the serve before it not called the last, only kept clips, the
+    month's three-week floor and thirty-day aim, and no later serve, other
+    serve type, refused clip, or best from an older rubric.
+  - In Chrome at 1440 by 900 with four serves seeded through the app's own
+    store and clip store: captions "This serve", "Your best", "Your last",
+    "A month before" with dates; Trophy put all four clips at their trophy;
+    Play all ran all four at half speed together. With the month's clip
+    gone, the model serve filled the fourth pane at the racket drop. Two up
+    and back by keyboard; console clean. **Not checked:** four different
+    players' clips (the seed used one licensed clip four times).
 
 ## Wave 6 report
 
 The coach's posture finding, the studio's open items (marks for the coach,
-the ghost's strength, Studio on the rail, an annotated clip), the held frame
-pointing at the body part on a row-led fix, and the last practice carried into
-the next session. Found already met: area D's moments. Still open: four-up
-compare, a landing on a licensed real serve, a faster first read, recording a
-whole practice in the app, and everything waiting on the owner.
+the ghost's strength, Studio on the rail, an annotated clip, four up), the
+held frame pointing at the body part on a row-led fix, the last practice
+carried into the next session, and a landing that plays a licensed real serve
+with its own read. Found already met: area D's moments. Still open: a faster
+first read, recording a whole practice in the app, a coach's review of the
+drill library, and everything waiting on the owner.
