@@ -1107,6 +1107,7 @@ export default function App() {
           onTab={(tab) => setView({ kind: tab === 'today' ? 'home' : 'progress' })}
           onFilm={startFilming}
           loading={warming?.stage === 'downloading' ? warming.ratio : undefined}
+          onStudio={() => setView({ kind: 'saved', session: sessions[0] })}
         />
       )}
 

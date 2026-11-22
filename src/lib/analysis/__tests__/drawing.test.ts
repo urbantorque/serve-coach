@@ -19,7 +19,7 @@ const FPS = 50
 
 /** Records the calls a canvas context receives, and nothing else. */
 function recordingContext() {
-  const strokes: { from: [number, number]; to: [number, number]; dashed: boolean; style: string }[] = []
+  const strokes: { from: [number, number]; to: [number, number]; dashed: boolean; style: string; alpha: number }[] = []
   const arcs: { x: number; y: number; r: number; style: string }[] = []
   const texts: string[] = []
   let dash: number[] = []
@@ -39,6 +39,7 @@ function recordingContext() {
   const ctx = {
     strokeStyle: '',
     fillStyle: '',
+    globalAlpha: 1,
     lineWidth: 1,
     lineCap: '',
     font: '',
@@ -62,6 +63,7 @@ function recordingContext() {
         to: [x, y],
         dashed: dash.length > 0,
         style: String(ctx.strokeStyle),
+        alpha: ctx.globalAlpha,
       })
       current = [x, y]
     },
@@ -506,6 +508,13 @@ function pairedBody(): ({ x: number; y: number } | null)[] {
     below.has(i) ? null : { x: 0.4 + (i % 5) * 0.03, y: 0.15 + (i % 7) * 0.04 },
   )
 }
+
+check('the studio’s ghost control draws the other serve at its strength, and not at all when off (W6.3)', () => {
+  const half = drawOnce({ paired: pairedBody(), pairedAlpha: 0.5 }).strokes.filter((st) => st.dashed)
+  assert(half.length > 0 && half.every((st) => Math.abs(st.alpha - 0.5) < 1e-9), `the half ghost drew at ${half.map((st) => st.alpha).join(', ')}`)
+  const off = drawOnce({ paired: pairedBody(), pairedAlpha: 0 }).strokes.filter((st) => st.dashed)
+  assert(off.length === 0, `an "off" ghost still drew ${off.length} dashed lines`)
+})
 
 check('the other serve is drawn dashed, so it can never read as a tracked body', () => {
   const { strokes, passes } = drawOnce({ paired: pairedBody() })

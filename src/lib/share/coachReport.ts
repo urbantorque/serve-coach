@@ -77,6 +77,7 @@ figcaption{font-size:12px;color:#555}table{width:100%;border-collapse:collapse;f
 <p class="meta">${esc(when)} · ${esc(analysis.handedness)}-handed · ${esc(analysis.serveType)} serve · overall ${Math.round(analysis.overall)}</p>
 ${about ? `<h2>This player so far</h2><ul class="notes">${lines([...context!.record, ...context!.working])}</ul>` : ''}
 ${own ? `<h2>This serve against their own usual</h2><ul class="notes">${lines(context!.usual)}</ul>` : ''}
+${context?.marks?.length ? `<h2>What the player drew on it</h2><ul class="notes">${lines(context.marks)}</ul>` : ''}
 <h2>What to work on, in order</h2>
 <ol>${faults || '<li>Nothing stood out on this serve.</li>'}</ol>
 ${pics ? `<h2>Six moments, as the tracked body</h2><div class="stills">${pics}</div>` : ''}

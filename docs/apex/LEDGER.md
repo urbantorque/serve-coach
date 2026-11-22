@@ -488,3 +488,20 @@ three inputs, the free and Plus table and prices, and Ask the coach.
   player on this ladder keeps their step number. The cue points at the ball's
   height ("Reach tall to the ball"), and the mistake names bending at the
   waist to get the shoulder down. The copy lint caught "a little" in the cue.
+- [x] **W6.2 The studio's open items: marks for the coach, the ghost's
+  strength, Studio on the rail.**
+  - **The coach page lists what the player drew:** each mark with its moment
+    and read-out ("At 1.25 s, a line: 0 degrees from upright, measured on the
+    picture."), escaped as text like every line there (`coachContext.ts`,
+    `coachReport.ts`; `coachContext.test.ts`).
+  - **The best serve's body has a strength:** full, half, faint or off, from
+    a "Best:" button in the studio's tools or the G key (`pairedAlpha`).
+    `drawing.test.ts` holds the half ghost to half strength and the off
+    ghost to no dashed line at all. Not shown in Chrome: neither licensed
+    clip measures the camera's angle, so the app, rightly, pairs no best
+    serve under it.
+  - **Studio on the laptop rail,** under Progress, opening the latest serve in
+    the review studio; hidden on a phone, which keeps its two places and the
+    film button. In Chrome at 1440 it opened `serve-demo28`; at 390 it is
+    not there; console clean. `DESIGN.md` now says so, and that Pathways stays
+    a sheet from Today's goal; the owner's design question is marked settled.

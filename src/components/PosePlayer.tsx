@@ -42,6 +42,14 @@ interface Props {
   onMarks?: (marks: StudioMark[]) => void
 }
 
+/** The ghost's strengths, in the order a press steps through them. */
+const GHOST_STEPS = [
+  { alpha: 1, label: 'full' },
+  { alpha: 0.5, label: 'half' },
+  { alpha: 0.25, label: 'faint' },
+  { alpha: 0, label: 'off' },
+] as const
+
 /** The studio's zoom steps: the picture, then up to four times. */
 const ZOOMS = [1, 1.5, 2, 3, 4]
 
@@ -67,6 +75,10 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired, tools = f
   const [zoom, setZoom] = useState(0)
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [tool, setTool] = useState<StudioTool>()
+  // The best serve's body over this one (W6.3): full, half, faint or off.
+  const [ghostAt, setGhostAt] = useState(0)
+  const ghostAlpha = GHOST_STEPS[ghostAt].alpha
+  const nextGhost = () => setGhostAt((i) => (i + 1) % GHOST_STEPS.length)
   const scale = ZOOMS[zoom]
   /** Zoom one step, keeping the pan inside the picture. */
   const zoomBy = (d: number) => {
@@ -290,9 +302,10 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired, tools = f
       ball: ballMarkerAt(drawBall, t),
       ghost,
       paired: ghost ? undefined : pairedAt?.(t),
+      pairedAlpha: ghostAlpha,
     })
     if (struckPath && contactT !== undefined && t >= contactT - 0.01) drawStruckBall(ctx, struckPath, aspect, rect)
-  }, [struckPath, contactT, activePhase, drawBall, drawRacketBoxes, ghosts, analysis.handedness, analysis.scale, aspect, frameAt, drawFrames, phases, skeletonOn, video.height, video.width, win.end, win.start, pairedAt])
+  }, [struckPath, contactT, activePhase, drawBall, drawRacketBoxes, ghosts, analysis.handedness, analysis.scale, aspect, frameAt, drawFrames, phases, skeletonOn, video.height, video.width, win.end, win.start, pairedAt, ghostAlpha])
 
   /**
    * The latest `draw`, reachable from effects that must not re-run when it changes.
@@ -697,6 +710,7 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired, tools = f
       '-': () => zoomBy(-1),
       '0': () => zoomBy(-ZOOMS.length),
       Escape: () => setTool(undefined),
+      g: () => paired && nextGhost(),
       Home: () => seekTo(win.start),
       End: () => seekTo(win.end - 0.01),
     }
@@ -860,6 +874,11 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired, tools = f
                   {t === 'line' ? 'Line' : 'Angle'}
                 </button>
               ))}
+              {paired && (
+                <button className="watch-lines" onClick={nextGhost} aria-label={`Your best serve drawn ${GHOST_STEPS[ghostAt].label}. Change it.`}>
+                  Best: {GHOST_STEPS[ghostAt].label}
+                </button>
+              )}
               <button className="watch-lines" onClick={() => zoomBy(1)} disabled={zoom === ZOOMS.length - 1} aria-label="Zoom in">
                 Zoom in
               </button>

@@ -14,6 +14,7 @@ import { selfRead } from '../selfRead'
 import { aboutSpeed, defaultSpeedUnit } from '../speedCopy'
 import type { ServeTag, Session } from '../storage/db'
 import type { Prefs } from '../storage/prefs'
+import { markLabel } from '../studioMarks'
 import type { ReadableServe } from '../baseline'
 
 export interface CoachContext {
@@ -23,6 +24,8 @@ export interface CoachContext {
   working: string[]
   /** This serve against the player's own usual, past their own noise. */
   usual: string[]
+  /** What the player drew on it in the studio, each read-out with its moment (W6.2). */
+  marks: string[]
 }
 
 /** The same for every report, and the first thing a coach should know. */
@@ -36,7 +39,7 @@ export const CANNOT_SEE = [
 const bare = (s: string) => s.replace(/\*\*/g, '')
 
 export function coachContextOf(
-  report: ReadableServe,
+  report: ReadableServe & Partial<Pick<Session, 'video'>>,
   sessions: readonly Session[],
   tags: readonly ServeTag[],
   prefs: Prefs,
@@ -67,5 +70,10 @@ export function coachContextOf(
   }
 
   const read = selfRead(report, sessions, tags)
-  return { record, working, usual: [...(read?.usual ?? []), ...(read?.best ?? [])].map((f) => bare(f.line)) }
+  // The studio's marks, as the coach would read them off the screen: when, what, and its read-out (W6.2).
+  const aspect = report.video ? report.video.width / Math.max(1, report.video.height) : 1
+  const marks = (tags.find((t) => t.id === report.id)?.marks ?? []).map(
+    (m) => `At ${m.t.toFixed(2)} s, ${m.kind === 'line' ? 'a line' : 'an angle'}: ${markLabel(m, aspect)}, measured on the picture.`,
+  )
+  return { record, working, usual: [...(read?.usual ?? []), ...(read?.best ?? [])].map((f) => bare(f.line)), marks }
 }

@@ -8,6 +8,11 @@ interface Props {
   onFilm: () => void
   /** The engine download's progress, 0 to 1, drawn round the Film button while it runs. */
   loading?: number
+  /**
+   * The laptop rail's Studio (W6.3, `DESIGN.md`): the latest serve, opened in the
+   * review studio. On the rail only; a phone keeps its two places and the button.
+   */
+  onStudio?: () => void
 }
 
 /**
@@ -17,7 +22,7 @@ interface Props {
  * always under the thumb. There used to be no navigation at all: Progress was a
  * card two screens down, and filming was two differently named buttons.
  */
-export default function TabBar({ on, onTab, onFilm, loading }: Props) {
+export default function TabBar({ on, onTab, onFilm, loading, onStudio }: Props) {
   const ring = loading !== undefined ? Math.max(0.04, Math.min(1, loading)) : undefined
   return (
     <nav className="tabbar" aria-label="Main">
@@ -37,6 +42,12 @@ export default function TabBar({ on, onTab, onFilm, loading }: Props) {
         <Icon name="progress" size={24} />
         <span>Progress</span>
       </button>
+      {onStudio && (
+        <button className="tab tab--rail" onClick={onStudio} aria-label="Studio: your latest serve, to review">
+          <Icon name="film" size={24} />
+          <span>Studio</span>
+        </button>
+      )}
     </nav>
   )
 }

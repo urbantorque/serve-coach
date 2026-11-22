@@ -89,9 +89,10 @@ Two things to know before step 8:
 
 ## A design question
 
-- **The laptop rail.** `DESIGN.md` names Today, Studio, Progress and Pathways;
-  the app has Film, Today and Progress, and Studio and Pathways are inside the
-  report and Today. Either add them to the rail or change `DESIGN.md`.
+- **The laptop rail.** Settled in the Apex round (W6.3), as its handover asked:
+  Studio is on the rail and opens the latest serve in the review studio;
+  Pathways stays a sheet from Today's goal, and `DESIGN.md` says so. Say if
+  you want Pathways on the rail too.
 
 ## Later
 

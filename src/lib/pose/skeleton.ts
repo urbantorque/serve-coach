@@ -646,6 +646,8 @@ export interface SkeletonOptions {
    * which has no video, and `ghost` on `PosePlayer`, which does.
    */
   paired?: readonly ({ x: number; y: number } | null)[]
+  /** How strongly the paired body is drawn, 0 to 1 (W6.3): the studio's ghost control. One when absent. */
+  pairedAlpha?: number
   /**
    * Where the toss peaked against the front foot, for the toss still (D4.6).
    * Build it with `tossMarkFor`, which refuses a picture that is not upright.
@@ -839,7 +841,12 @@ export function drawSkeleton(ctx: CanvasRenderingContext2D, o: SkeletonOptions):
   // body, for the same reason: whatever the player actually did is the thing on
   // top. These two never arrive together — see `SkeletonOptions.paired` — and the
   // order is fixed anyway rather than left to whichever check ran first.
-  if (o.paired) drawPairedGhost(ctx, o.paired, rect, aspect, scale)
+  if (o.paired && (o.pairedAlpha ?? 1) > 0) {
+    ctx.save()
+    ctx.globalAlpha *= o.pairedAlpha ?? 1
+    drawPairedGhost(ctx, o.paired, rect, aspect, scale)
+    ctx.restore()
+  }
 
   if (o.ghost) drawGhost(ctx, o.ghost, rect, aspect, scale)
   if (o.target?.length && !o.targetOver) drawTarget(ctx, o.target, rect, aspect, scale)

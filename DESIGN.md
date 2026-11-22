@@ -150,7 +150,8 @@ a longer one, well under the court tones. Settings turns them off.
 ## Structure
 
 Today, Progress, and the lime film button between them; on a laptop, a rail with
-Today, Studio, Progress and Pathways. A new player has no bar: one screen, one
+the film button, Today, Progress and Studio, which opens the latest serve in the
+review studio. Pathways stays a sheet from Today's goal, where the goal is. A new player has no bar: one screen, one
 promise, one action. Filming is the whole screen. Everything else is a sheet, one
 tap away, or a fold.
 

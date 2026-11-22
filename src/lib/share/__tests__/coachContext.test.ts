@@ -76,8 +76,18 @@ check('with nothing known, the sections are not there, and the limits still are'
 })
 
 check('a line is text, whatever it holds', () => {
-  const html = page({ record: ['<img src=x onerror=alert(1)>'], working: [], usual: [] })
-  assert(!html.includes('<img src=x'), 'a line reached the page as markup')
+  const html = page({ record: ['<img src=x onerror=alert(1)>'], working: [], usual: [], marks: ['<script>x</script>'] })
+  assert(!html.includes('<img src=x') && !html.includes('<script>x'), 'a line reached the page as markup')
+})
+
+check('the marks drawn on the serve reach the coach, with their read-outs and moments (W6.2)', () => {
+  const tag = { id: newest.id, taggedAt: 1, marks: [{ kind: 'line' as const, pts: [{ x: 0.5, y: 0.1 }, { x: 0.5, y: 0.9 }], t: 1.25 }] }
+  const ctx = coachContextOf(newest, sessions, [tag], DEFAULTS)
+  assert(ctx.marks.length === 1 && ctx.marks[0] === 'At 1.25 s, a line: 0° from upright, measured on the picture.', ctx.marks.join(' | '))
+  const html = coachReportHtml(newest, [], [], ctx)
+  assert(html.includes('What the player drew on it') && html.includes('0° from upright'), 'the marks are not on the page')
+  const none = coachReportHtml(newest, [], [], coachContextOf(newest, sessions, [], DEFAULTS))
+  assert(!none.includes('What the player drew'), 'an empty marks section was drawn')
 })
 
 report()

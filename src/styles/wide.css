@@ -70,6 +70,10 @@
     color: var(--fg);
   }
 
+  .tabbar .tab--rail {
+    display: flex;
+  }
+
   .tab.is-on {
     background: var(--ink-3);
   }

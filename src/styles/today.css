@@ -36,6 +36,11 @@
   transition: color var(--fast) var(--ease);
 }
 
+/* The rail's Studio (W6.3): a laptop entry, not a phone tab. */
+.tab--rail {
+  display: none;
+}
+
 .tab.is-on {
   color: var(--fg);
 }
