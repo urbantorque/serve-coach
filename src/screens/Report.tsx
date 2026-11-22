@@ -63,7 +63,7 @@ import {
   type BestGap,
   type BestTrip, deltaStatus } from '../lib/progress'
 import { clipsWork, shareReportCard, shareServeClip } from '../lib/share/reportCard'
-import { swingOf, workParts } from '../lib/figure/swing'
+import { swingOf, rowParts, workParts } from '../lib/figure/swing'
 import { SCORING_VERSION, type Analysis, type PhaseId } from '../lib/analysis/types'
 import type { PracticeLog, ServeTag, Session, StudioMark } from '../lib/storage/db'
 import DrillCard from './report/DrillCard'
@@ -396,9 +396,8 @@ export default function Report({
 
   // A fix led by a card row rather than a named fault holds at that row's own
   // moment (W5.3): a racket drop held at contact showed the wrong instant.
-  const focusMoment =
-    faultMoment(analysis.fundamentals, first.flaw) ??
-    (first.flaw ? undefined : analysis.fundamentals.flatMap((f) => f.metrics).find((m) => m.label === first.title)?.phase)
+  const focusRow = first.flaw ? undefined : analysis.fundamentals.flatMap((f) => f.metrics).find((m) => m.label === first.title)
+  const focusMoment = faultMoment(analysis.fundamentals, first.flaw) ?? focusRow?.phase
   const focusPhase = focusMoment ? analysis.phases.find((p) => p.id === focusMoment) : undefined
   /**
    * The fix's moment beside a model serve, played phase for phase (N4.1).
@@ -407,7 +406,9 @@ export default function Report({
    */
   const besideModel = Boolean(swing && focusMoment && focusPhase)
   const stageMoment: PhaseId = focusMoment ?? 'contact'
-  const work = workParts(first.flaw, analysis.handedness)
+  // And it paints the body part that row is about (W6.4): the fault its row reads,
+  // painted over the player's own footage, where a named fault already was.
+  const work = first.flaw ? workParts(first.flaw, analysis.handedness) : focusRow ? rowParts(focusRow.id, analysis.handedness) : []
 
   // Fresh out of the analysis: played through once. Reopened, it opens at rest.
   const fresh = 'frames' in analysis && !example

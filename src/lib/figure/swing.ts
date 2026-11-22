@@ -90,3 +90,40 @@ export function workParts(flaw: FlawId | undefined, racket: Side): string[] {
       return arm(racket, 'upper', 'fore', 'hand')
   }
 }
+
+/**
+ * The body part a card row measures, for a fix led by a row rather than a
+ * named fault (W6.4): painted on the held frame the way a fault's part is.
+ * It points at the part; it draws no angle. A row about timing (from the
+ * drop to contact, the trophy's share of the swing) is no one part, so none.
+ */
+export function rowParts(metricId: string, racket: Side): string[] {
+  const toss: Side = racket === 'left' ? 'right' : 'left'
+  const arm = (side: Side, ...parts: string[]) => parts.map((p) => `${side}-${p}`)
+  switch (metricId) {
+    case 'releaseHeight':
+    case 'tossPeakHeight':
+    case 'tossArmHold':
+      return arm(toss, 'upper', 'fore', 'hand')
+    case 'tossPathWobble':
+      return arm(toss, 'fore', 'hand')
+    case 'kneeBend':
+    case 'legDrive':
+      return ['-thigh', '-shin']
+    case 'shoulderTilt':
+      return ['torso']
+    case 'dropDepth':
+    case 'handUnderElbow':
+      return arm(racket, 'fore', 'hand')
+    case 'elbowAtDrop':
+      return arm(racket, 'upper', 'fore')
+    case 'contactBelowPeak':
+    case 'ballContactHeight':
+    case 'contactHeight':
+    case 'armExtension':
+    case 'contactAhead':
+      return arm(racket, 'upper', 'fore', 'hand')
+    default:
+      return []
+  }
+}

@@ -505,3 +505,17 @@ three inputs, the free and Plus table and prices, and Ask the coach.
     film button. In Chrome at 1440 it opened `serve-demo28`; at 390 it is
     not there; console clean. `DESIGN.md` now says so, and that Pathways stays
     a sheet from Today's goal; the owner's design question is marked settled.
+- [x] **W6.3 The held frame points at the body part on a row-led fix.** The
+  held frame already painted a named fault's part over the player's own
+  footage, translucent in the work colour (`paintWorkOn`), and the player and
+  the designer in W5 saw none: their real clip's first fix came from a card
+  row, which names no fault, so nothing was painted. Each card row now
+  points at the part it measures (`rowParts`): the tossing arm for the toss
+  rows, the legs for knee bend and leg drive, the trunk for shoulder tilt,
+  the hitting forearm for the racket drop, and so on; the two timing rows
+  point at nothing, since no one part is the timing. It points; it draws no
+  angle, so the no-picture-space-angles rule (`targetShape.ts`) stands.
+  `rowParts.test.ts` holds every row to a part or a named timing, in the
+  vocabulary a fault paints in, on the player's own side. In Chrome on
+  `Saque_con_pelota` at 390: "Held at the racket drop" with the forearm and
+  hand painted over the player's arm; no page errors.
