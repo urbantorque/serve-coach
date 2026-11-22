@@ -293,6 +293,16 @@ owner: A0.2's three inputs.
     one rule spacing the parts.
   - `render.test.ts` holds Progress to one fold; `progressDashboard.test.ts`
     still finds the records under the ribbon and the path one tap away.
+- [x] **D1.3 Today answers "is it getting better".** Today's first screen
+  said what the serve is like now (the typical score) and what to do this week
+  (the goal and the next session), and answered the third question only with a
+  chip, which stays hidden when the change is inside the camera's own noise:
+  most of the time. It now says it in a line from the second full trip, on
+  the six-week milestone's own rule ("6 weeks in, a typical serve scores 79,
+  about where you started."; "2 trips in" before a week has passed).
+  `progress.test.ts` holds the short form; Progress still waits six weeks.
+  Read off the first screen in Chrome at 390 and 1440 for the season player:
+  all three answered above the fold.
 
 ## Wave 4. The front door
 

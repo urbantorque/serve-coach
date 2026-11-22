@@ -3,7 +3,7 @@ import { Icon, Sheet } from '../components/primitives'
 import { engineMegabytes } from '../lib/engineManifest'
 import { NUDGE_COPY, type StorageNudge } from '../lib/storage/nudge'
 import { sessionEvidence } from '../lib/session/evidence'
-import { buildProgress, currentRubricEra, streakLine, tripDay, deltaStatus } from '../lib/progress'
+import { buildProgress, currentRubricEra, streakLine, tripDay, deltaStatus, sixWeekMilestone } from '../lib/progress'
 import { momentsFor, weekRecap } from '../lib/moments'
 import MomentCard from '../components/MomentCard'
 import { programmeFor } from '../lib/programme'
@@ -333,6 +333,8 @@ export default function Home({
           </span>
         </button>
       )}
+      {/* Is it getting better (D1.3): said in a line, even when the change is too small for a chip. */}
+      {form && sixWeekMilestone(form, 0) && <p className="today-streak">{sixWeekMilestone(form, 0)}</p>}
       {streak && <p className="today-streak">{streak}</p>}
 
       {recapFresh && recap && (

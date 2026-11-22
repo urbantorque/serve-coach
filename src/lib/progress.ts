@@ -518,21 +518,27 @@ export const MILESTONE_SPAN_MS = 6 * 7 * 24 * 60 * 60 * 1000
  * against its latest, each by its median. A single first serve as the
  * "before" let one lucky or unlucky take decide the whole sentence.
  */
-export function sixWeekMilestone(progress: Progress): string | undefined {
+/**
+ * Also Today's answer to "is it getting better" (D1.3), from the second full
+ * trip on rather than the sixth week: `span` 0, and the trips counted where
+ * the weeks would still be none.
+ */
+export function sixWeekMilestone(progress: Progress, span = MILESTONE_SPAN_MS): string | undefined {
   const full = currentRubricEra(progress.trips).filter((t) => t.serves >= MIN_TRIP_SERVES)
   if (full.length < 2) return undefined
   const first = full[0]
   const latest = full[full.length - 1]
-  if (latest.createdAt - first.createdAt < MILESTONE_SPAN_MS) return undefined
+  if (latest.createdAt - first.createdAt < span) return undefined
 
-  const weeks = Math.floor((latest.createdAt - first.createdAt) / (7 * 24 * 60 * 60 * 1000))
+  const n = Math.floor((latest.createdAt - first.createdAt) / (7 * 24 * 60 * 60 * 1000))
+  const weeks = n > 1 ? `${n} weeks` : n ? 'A week' : `${full.length} trips`
   const delta = latest.overall - first.overall
   if (Math.abs(delta) < REAL_CHANGE.trip) {
-    return `${weeks} weeks in, a typical serve scores ${latest.overall}, about where you started.`
+    return `${weeks} in, a typical serve scores ${latest.overall}, about where you started.`
   }
   return delta > 0
-    ? `${weeks} weeks in: a typical serve scored ${first.overall} on ${shortDate(first.createdAt)}, and ${latest.overall} on ${shortDate(latest.createdAt)}.`
-    : `${weeks} weeks in: a typical serve scores ${latest.overall}, down from ${first.overall} on ${shortDate(first.createdAt)}.`
+    ? `${weeks} in: a typical serve scored ${first.overall} on ${shortDate(first.createdAt)}, and ${latest.overall} on ${shortDate(latest.createdAt)}.`
+    : `${weeks} in: a typical serve scores ${latest.overall}, down from ${first.overall} on ${shortDate(first.createdAt)}.`
 }
 
 /* ------------------------------------------------- consistency, over time -- */

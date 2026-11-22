@@ -186,6 +186,16 @@ check('a six-week move the camera could make on its own is "about where you star
   assert(!sixWeekMilestone(buildProgress(past)!)!.includes('about where'), 'a move past the line was called flat')
 })
 
+check('Today says it from the second trip: in trips under a week, in weeks after (D1.3)', () => {
+  const days = [...trip(0, [60, 61, 62], 'f'), ...trip(3 * DAY, [70, 71, 72], 'r')]
+  const short = sixWeekMilestone(buildProgress(days)!, 0)
+  assert(short !== undefined && short.startsWith('2 trips in'), `two trips three days apart: "${short}"`)
+  assert(sixWeekMilestone(buildProgress(days)!) === undefined, 'Progress spoke before six weeks')
+  const one = [...trip(0, [60, 61, 62], 'f'), ...trip(8 * DAY, [70, 71, 72], 'r')]
+  assert(sixWeekMilestone(buildProgress(one)!, 0)!.startsWith('A week in'), 'a week is not one weeks')
+  assert(sixWeekMilestone(buildProgress(trip(0, [60, 61, 62], 'f'))!, 0) === undefined, 'one trip has no trend to give')
+})
+
 check('a first serve on its own is not the "before"', () => {
   // One lucky or unlucky take used to decide the whole sentence (L3.2). The
   // stretch has to run between two trips of three serves or more.
