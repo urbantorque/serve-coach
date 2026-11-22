@@ -274,6 +274,25 @@ owner: A0.2's three inputs.
     check in the app shell and this restore. The check now runs in the
     report, which loads on its own (`drillLogs` passed down), and the entry
     is 384.32 kB: under, with less than a kilobyte to spare.
+- [x] **D1.2 Progress as one story.** Twenty blocks down to ten for a
+  season-long player (`?demo=history`, counted in Chrome at both sizes).
+  - **The order answers the player's question.** The typical serve over time
+    with its records inside it (what is my serve like now), then and now on
+    their own body, the faults serve by serve, and speed (is it getting
+    better), then one "What changed" block holding what was fixed, what keeps
+    coming back, and what the best serves share.
+  - **One fold for the rest.** "Go deeper" is one detail view: first and
+    second serves, serves per week, the serve path, the records, the season's
+    weakest spot, how the last trip served, the change since the last serve,
+    repeatability and the table, each a titled part. It was a heading over
+    seven separate folds, with two more open sections above it.
+  - **On a laptop** the score panel spans two rows beside then-and-now and
+    the faults, and speed sits under it, where it had left a column dark.
+  - **Smaller and lighter:** the sub-heads take the subhead style, and the
+    dead fold rules came out of the split stylesheets, which pay for the
+    one rule spacing the parts.
+  - `render.test.ts` holds Progress to one fold; `progressDashboard.test.ts`
+    still finds the records under the ribbon and the path one tap away.
 
 ## Wave 4. The front door
 

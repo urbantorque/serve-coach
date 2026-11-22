@@ -168,14 +168,10 @@
     grid-column: 1 / -1;
   }
 
-  /* The shape of the serve, with the records and the first fold beside it. */
+  /* The shape of the serve and its records, beside then-and-now and the faults (D1.2). */
   .progress-screen > .shape {
     grid-column: 1;
-    grid-row: span 3;
-  }
-
-  .progress-screen > .record-tiles {
-    grid-column: 2;
+    grid-row: span 2;
   }
 
   /* Empty: the words and the one action on the left, the model serve as one

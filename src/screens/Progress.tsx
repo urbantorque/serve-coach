@@ -308,63 +308,46 @@ function ProgressBody({
             Showing your {SERVE_TYPES[form.serveType].word} serves. {form.setAside} other {form.setAside === 1 ? 'serve is' : 'serves are'} scored against different targets.
           </p>
         )}
-      </section>
 
-      {(fig || sheetBestScore) && (
-        <div className="record-tiles" id="progress-records">
-          {fig && (
+        {(fig || sheetBestScore) && (
+          <div className="record-tiles" id="progress-records">
+            {fig && (
+              <div className="record-tile">
+                {/* A speed says "about" wherever it stands (DESIGN.md, N7.6). */}
+                <span className="record-about">about</span>
+                <span className="t-figure tnum">{fig.best}</span>
+                <span>{fig.unit} fastest</span>
+              </div>
+            )}
+            {sheetBestScore && (
+              <div className="record-tile">
+                <span className="t-figure tnum">{sheetBestScore.score}</span>
+                <span>best trip</span>
+              </div>
+            )}
             <div className="record-tile">
-              {/* A speed says "about" wherever it stands (DESIGN.md, N7.6). */}
-              <span className="record-about">about</span>
-              <span className="t-figure tnum">{fig.best}</span>
-              <span>{fig.unit} fastest</span>
+              <span className="t-figure tnum">{sessions.length}</span>
+              <span>serves filmed</span>
             </div>
-          )}
-          {sheetBestScore && (
-            <div className="record-tile">
-              <span className="t-figure tnum">{sheetBestScore.score}</span>
-              <span>best trip</span>
-            </div>
-          )}
-          <div className="record-tile">
-            <span className="t-figure tnum">{sessions.length}</span>
-            <span>serves filmed</span>
           </div>
-        </div>
-      )}
+        )}
+      </section>
 
       {!usualReady && (
         <p className="progress-foot">After a dozen serves over three trips, I can read each new serve against your own usual.</p>
       )}
 
-      {fixedCards.length > 0 && (
-        <section className="block" id="progress-fixed">
-          <h2 className="block-title">Fixed lately</h2>
-          {fixedCards.map((c) => (
-            <FixedPair key={c.flaw} then={c.then} now={c.now} title={c.name} line={c.line} />
-          ))}
-        </section>
+      {thenNow && (
+        <Suspense fallback={null}>
+          <ThenNow then={thenNow.then} now={thenNow.now} />
+        </Suspense>
       )}
 
-      {(strain.length > 0 || strainCleared.length > 0) && (
+      {faults.length > 0 && (
         <section className="block">
-          <h2 className="block-title">{strain.length > 0 ? 'What keeps coming back' : 'What has stopped'}</h2>
-          {strain.map((record) => {
-            const line = strainLine(record)
-            return line ? (
-              <p key={record.flag} className="strain-line">
-                {line}
-              </p>
-            ) : null
-          })}
-          {strainCleared.map((record) => {
-            const line = strainClearedLine(record)
-            return line ? (
-              <p key={record.flag} className="strain-line strain-line--clear">
-                {line}
-              </p>
-            ) : null
-          })}
+          <h2 className="block-title">Serve by serve</h2>
+          <FaultGrid faults={faults} />
+          <p className="progress-foot">Each square is a serve, oldest first. Lime means it was not there.</p>
         </section>
       )}
 
@@ -395,174 +378,196 @@ function ProgressBody({
         </section>
       )}
 
-      {links.length > 0 && (
-        <section className="block">
-          <h2 className="block-title">What your best serves share</h2>
-          {links.map((l) => (
-            <p key={`${l.kind}${l.metricId}`} className="strain-line strain-line--clear">
-              <Cue text={l.line} />
-            </p>
-          ))}
-          <p className="progress-foot">From your own serves, and past what chance would give. It says what goes together, not what causes what.</p>
-        </section>
-      )}
-
-      {faults.length > 0 && (
-        <section className="block">
-          <h2 className="block-title">Serve by serve</h2>
-          <FaultGrid faults={faults} />
-          <p className="progress-foot">Each square is a serve, oldest first. Lime means it was not there.</p>
-        </section>
-      )}
-
-      {thenNow && (
-        <Suspense fallback={null}>
-          <ThenNow then={thenNow.then} now={thenNow.now} />
-        </Suspense>
-      )}
-
-      {(numbers.length > 0 || inRates.length > 0 || slowSecond || misses.length > 0) && (
-        <section className="block">
-          <h2 className="block-title">First and second serves</h2>
-          <InRateBars
-            rows={numbers
-              .filter((n) => n.outcomes >= MIN_OUTCOMES_FOR_RATE)
-              .map((n) => ({ label: `${SERVE_NUMBER_LABEL[n.serveNumber]}s`, inServes: n.inServes, outcomes: n.outcomes }))}
-          />
-          {numbers.map((n) => (
-            <p key={n.serveNumber} className="progress-foot">
-              {SERVE_NUMBER_LABEL[n.serveNumber]}s: {n.serves} tagged, averaging {n.average}
-              {n.outcomes >= MIN_OUTCOMES_FOR_RATE ? `, in on ${n.inServes} of the ${n.outcomes} you said where they landed.` : '.'}
-            </p>
-          ))}
-          {inRates.map((r) => (
-            <p key={r.serveType} className="progress-foot">
-              {SERVE_TYPES[r.serveType].word.charAt(0).toUpperCase() + SERVE_TYPES[r.serveType].word.slice(1)} serves: in on {r.inServes} of {r.outcomes} tagged.
-            </p>
-          ))}
-          {slowSecond && (
-            <p className="progress-foot">
-              <Cue text={slowSecond.line} />
-            </p>
+      {/* What changed (D1.2): fixed, coming back, and what the best serves share, as one block. */}
+      {(fixedCards.length > 0 || strain.length > 0 || strainCleared.length > 0 || links.length > 0) && (
+        <section className="block" id="progress-changed">
+          <h2 className="block-title">What changed</h2>
+          {fixedCards.length > 0 && (
+            <div className="progress-part" id="progress-fixed">
+              <h3 className="t-subhead">Fixed lately</h3>
+              {fixedCards.map((c) => (
+                <FixedPair key={c.flaw} then={c.then} now={c.now} title={c.name} line={c.line} />
+              ))}
+            </div>
           )}
-          {misses.map((m) => (
-            <p key={m.miss} className="progress-foot">
-              <Cue text={m.line} />
-            </p>
-          ))}
-        </section>
-      )}
 
-      {load.weeks.filter((w) => w.serves > 0).length >= 2 && (
-        <section className="block">
-          <h2 className="block-title">Serves per week</h2>
-          <LoadBars load={load} />
-          {load.line && <p className="progress-foot">{load.line}</p>}
-        </section>
-      )}
-
-      <h2 className="block-title progress-deeper">Go deeper</h2>
-      {path && (
-        <details className="block progress-more" id="progress-path">
-          <summary className="block-title">
-            Your serve path
-            <Icon name="chevron" size={16} />
-          </summary>
-          <p className="path-headline">{path.headline}</p>
-          <ol className="path">
-            {path.parts.map((part) => (
-              <li key={part.group} className={`path-part path-part--${part.state}`}>
-                <span className="path-name">{part.name.charAt(0).toUpperCase() + part.name.slice(1)}</span>
-                <em className={`tag tag--${PART_TAG[part.state]}`}>{partLabel(part)}</em>
-                {part.slipped && <span className="path-slipped">{part.slipped}</span>}
-              </li>
-            ))}
-          </ol>
-        </details>
-      )}
-
-      {(bests.length > 0 || streak || longestStreakText || setLines.length > 0) && (
-        <details className="block progress-more">
-          <summary className="block-title">
-            All your records
-            <Icon name="chevron" size={16} />
-          </summary>
-          {bests.map((b) => (
-            <p key={b.metricId} className="progress-foot">
-              {bodyBestLine(b)}
-            </p>
-          ))}
-          {streak && <p className="progress-foot">{streak}</p>}
-          {longestStreakText && <p className="progress-foot">{longestStreakText}</p>}
-          {sheetBestScore && <p className="progress-foot">{bestTripEverLine(sheetBestScore)}</p>}
-          {setLines.map((l) => (
-            <p key={l} className="progress-foot">
-              {l}
-            </p>
-          ))}
-        </details>
-      )}
-
-      {practice && (
-        <details className="block progress-more">
-          <summary className="block-title">
-            The season's weakest spot
-            <Icon name="chevron" size={16} />
-          </summary>
-          <PracticeCard focus={practice} onLogDrill={onLogDrill} onUndoDrill={practice.drilled ? onUndoDrill : undefined} />
-        </details>
-      )}
-
-      {profile && profile.lines.length > 0 && (
-        <details className="block progress-more">
-          <summary className="block-title">
-            How you served, {tripDay(profile.at)}
-            <Icon name="chevron" size={16} />
-          </summary>
-          <ul className="profile">
-            {profile.lines.map((l) => (
-              <li key={l.id} className="profile-line">
-                <span className="path-name">{l.label}</span>
-                <span className="profile-tag">{l.tag}</span>
-              </li>
-            ))}
-          </ul>
-        </details>
-      )}
-
-      {form.areaDeltas.length > 0 && (
-        <details className="block progress-more">
-          <summary className="block-title">
-            Change since your last serve
-            <Icon name="chevron" size={16} />
-          </summary>
-          <DeltaBars deltas={form.areaDeltas} />
-        </details>
-      )}
-
-      {spread && spread.points.length > 1 && (
-        <details className="block progress-more">
-          <summary className="block-title">
-            How repeatable, over time
-            <Icon name="chevron" size={16} />
-          </summary>
-          <GapTrend points={spread.points} />
-          {sheetGapDelta && <p className="sheet-note">{sheetGapDelta}</p>}
-          {spread.recurring && (
-            <p className="sheet-note">
-              {spread.recurring.label} has been your least repeatable part in {spread.recurring.sessions} of these. That is the one to practise most.
-            </p>
+          {(strain.length > 0 || strainCleared.length > 0) && (
+            <div className="progress-part">
+              <h3 className="t-subhead">{strain.length > 0 ? 'What keeps coming back' : 'What has stopped'}</h3>
+              {strain.map((record) => {
+                const line = strainLine(record)
+                return line ? (
+                  <p key={record.flag} className="strain-line">
+                    {line}
+                  </p>
+                ) : null
+              })}
+              {strainCleared.map((record) => {
+                const line = strainClearedLine(record)
+                return line ? (
+                  <p key={record.flag} className="strain-line strain-line--clear">
+                    {line}
+                  </p>
+                ) : null
+              })}
+            </div>
           )}
-          {sheetBestGap && <p className="sheet-note">{bestGapEverLine(sheetBestGap)}</p>}
-        </details>
+
+          {links.length > 0 && (
+            <div className="progress-part">
+              <h3 className="t-subhead">What your best serves share</h3>
+              {links.map((l) => (
+                <p key={`${l.kind}${l.metricId}`} className="strain-line strain-line--clear">
+                  <Cue text={l.line} />
+                </p>
+              ))}
+              <p className="progress-foot">From your own serves, and past what chance would give. It says what goes together, not what causes what.</p>
+            </div>
+          )}
+        </section>
       )}
 
-      <details className="block progress-more">
+      {/* Everything else, in one fold (D1.2): the serves by number, the weeks, the path, the records and the tables. */}
+      <details className="block progress-more progress-deeper">
         <summary className="block-title">
-          See the numbers as a table
+          Go deeper
           <Icon name="chevron" size={16} />
         </summary>
-        <TrendTable points={form.trips} />
+        {(numbers.length > 0 || inRates.length > 0 || slowSecond || misses.length > 0) && (
+          <div className="progress-part">
+            <h3 className="t-subhead">First and second serves</h3>
+            <InRateBars
+              rows={numbers
+                .filter((n) => n.outcomes >= MIN_OUTCOMES_FOR_RATE)
+                .map((n) => ({ label: `${SERVE_NUMBER_LABEL[n.serveNumber]}s`, inServes: n.inServes, outcomes: n.outcomes }))}
+            />
+            {numbers.map((n) => (
+              <p key={n.serveNumber} className="progress-foot">
+                {SERVE_NUMBER_LABEL[n.serveNumber]}s: {n.serves} tagged, averaging {n.average}
+                {n.outcomes >= MIN_OUTCOMES_FOR_RATE ? `, in on ${n.inServes} of the ${n.outcomes} you said where they landed.` : '.'}
+              </p>
+            ))}
+            {inRates.map((r) => (
+              <p key={r.serveType} className="progress-foot">
+                {SERVE_TYPES[r.serveType].word.charAt(0).toUpperCase() + SERVE_TYPES[r.serveType].word.slice(1)} serves: in on {r.inServes} of {r.outcomes} tagged.
+              </p>
+            ))}
+            {slowSecond && (
+              <p className="progress-foot">
+                <Cue text={slowSecond.line} />
+              </p>
+            )}
+            {misses.map((m) => (
+              <p key={m.miss} className="progress-foot">
+                <Cue text={m.line} />
+              </p>
+            ))}
+          </div>
+        )}
+
+        {load.weeks.filter((w) => w.serves > 0).length >= 2 && (
+          <div className="progress-part">
+            <h3 className="t-subhead">Serves per week</h3>
+            <LoadBars load={load} />
+            {load.line && <p className="progress-foot">{load.line}</p>}
+          </div>
+        )}
+
+        {path && (
+          <div className="progress-part" id="progress-path">
+            <h3 className="t-subhead">
+              Your serve path
+            </h3>
+            <p className="path-headline">{path.headline}</p>
+            <ol className="path">
+              {path.parts.map((part) => (
+                <li key={part.group} className={`path-part path-part--${part.state}`}>
+                  <span className="path-name">{part.name.charAt(0).toUpperCase() + part.name.slice(1)}</span>
+                  <em className={`tag tag--${PART_TAG[part.state]}`}>{partLabel(part)}</em>
+                  {part.slipped && <span className="path-slipped">{part.slipped}</span>}
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+
+        {(bests.length > 0 || streak || longestStreakText || setLines.length > 0) && (
+          <div className="progress-part">
+            <h3 className="t-subhead">
+              All your records
+            </h3>
+            {bests.map((b) => (
+              <p key={b.metricId} className="progress-foot">
+                {bodyBestLine(b)}
+              </p>
+            ))}
+            {streak && <p className="progress-foot">{streak}</p>}
+            {longestStreakText && <p className="progress-foot">{longestStreakText}</p>}
+            {sheetBestScore && <p className="progress-foot">{bestTripEverLine(sheetBestScore)}</p>}
+            {setLines.map((l) => (
+              <p key={l} className="progress-foot">
+                {l}
+              </p>
+            ))}
+          </div>
+        )}
+
+        {practice && (
+          <div className="progress-part">
+            <h3 className="t-subhead">
+              The season's weakest spot
+            </h3>
+            <PracticeCard focus={practice} onLogDrill={onLogDrill} onUndoDrill={practice.drilled ? onUndoDrill : undefined} />
+          </div>
+        )}
+
+        {profile && profile.lines.length > 0 && (
+          <div className="progress-part">
+            <h3 className="t-subhead">
+              How you served, {tripDay(profile.at)}
+            </h3>
+            <ul className="profile">
+              {profile.lines.map((l) => (
+                <li key={l.id} className="profile-line">
+                  <span className="path-name">{l.label}</span>
+                  <span className="profile-tag">{l.tag}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {form.areaDeltas.length > 0 && (
+          <div className="progress-part">
+            <h3 className="t-subhead">
+              Change since your last serve
+            </h3>
+            <DeltaBars deltas={form.areaDeltas} />
+          </div>
+        )}
+
+        {spread && spread.points.length > 1 && (
+          <div className="progress-part">
+            <h3 className="t-subhead">
+              How repeatable, over time
+            </h3>
+            <GapTrend points={spread.points} />
+            {sheetGapDelta && <p className="sheet-note">{sheetGapDelta}</p>}
+            {spread.recurring && (
+              <p className="sheet-note">
+                {spread.recurring.label} has been your least repeatable part in {spread.recurring.sessions} of these. That is the one to practise most.
+              </p>
+            )}
+            {sheetBestGap && <p className="sheet-note">{bestGapEverLine(sheetBestGap)}</p>}
+          </div>
+        )}
+
+        <div className="progress-part">
+          <h3 className="t-subhead">
+            See the numbers as a table
+          </h3>
+          <TrendTable points={form.trips} />
+        </div>
       </details>
 
       <ProgressShare records={seasonRecords} sessions={sessions} strainLine={strain.map(strainLine).find(Boolean) ?? undefined} fixed={fixedCards} thenNow={thenNow} />

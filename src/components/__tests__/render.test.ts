@@ -894,7 +894,8 @@ check('progress leads its faults and serves with pictures, and folds the prose (
   assert(out.includes('class="inrate-bars"') && /aria-label="First serves: in on \d+ of \d+"/.test(out), 'no in-rate bar with a text version')
   const open = (out.match(/<section class="block"/g) ?? []).length
   assert(open <= 7, `${open} sections stand open`)
-  assert(out.includes('class="block progress-more"'), 'nothing was folded')
+  assert(out.includes('class="block progress-more progress-deeper"'), 'nothing was folded')
+  assert((out.match(/class="block progress-more/g) ?? []).length === 1, 'more than one fold: the rest belongs in one (D1.2)')
 })
 
 check('progress says what the misses share, and the best sets, and nothing from noise (N3.1, N3.2)', () => {

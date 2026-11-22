@@ -840,12 +840,7 @@ button.tile {
   font-weight: 500;
 }
 
-/* The folds, one list. */
-.progress-more + .progress-more {
-  margin-top: -24px;
-  border-top: 1px solid var(--glass-edge);
-}
-
-.progress-deeper {
-  margin-bottom: -18px;
+/* One fold, and one "what changed" (D1.2): the parts inside a block, spaced as parts. */
+.progress-part + .progress-part {
+  margin-top: 28px;
 }
