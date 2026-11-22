@@ -266,15 +266,24 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
     pass: 5,
   },
 
+  /*
+   * The fault is a sideways fold at the waist, seen from behind (W6.1). The
+   * ladder used to coach the eyes, which fixes a head pulled down, not a body
+   * folding across its hips. It now starts on the stack itself, the hitting
+   * shoulder under the tossing arm with the trunk straight, and its cue
+   * points at the ball's height, outside the body, as every cue here does.
+   * The first step was replaced rather than one added, so a player already on
+   * this ladder keeps the step number they were on.
+   */
   posture_collapse: {
-    cue: 'Keep looking at the spot where you hit the ball until you hear it land.',
-    say: 'Eyes on the spot you hit',
+    cue: 'Reach up to the ball as tall as you can, as if it sits higher than it does.',
+    say: 'Reach tall to the ball',
     steps: [
       {
-        name: 'Toss and look',
-        how: 'Toss, keep your eyes and your tossing arm up for a count of one, then catch.',
-        reps: '15 tosses',
-        check: { by: 'self', bar: 'Move up when your eyes stay on the ball for the count on every toss.' },
+        name: 'Shoulder over shoulder',
+        how: 'Shadow serve with the tossing arm pointing high, so your hitting shoulder dips under it, then swing through without stopping.',
+        reps: '15 swings',
+        check: { by: 'self', bar: 'Move up when the hitting shoulder dips under the tossing arm on every swing, with no bend at the waist.' },
       },
       served(DRILLS.head_up_hold),
       {
@@ -293,7 +302,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
     easier:
       'Fix the toss first. A toss that wanders makes your body chase it, and the chase is what folds you over.',
     mistake:
-      'Looking at the target before you hit. Some tilt is good, so stay tall through the ball rather than stiffly upright.',
+      'Bending at the waist to get the shoulder down. The tilt comes from the shoulders, with the trunk straight, never from folding over the hips.',
     pass: 5,
   },
 

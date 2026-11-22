@@ -476,3 +476,15 @@ as the handover's own: no real phone, thin real footage, the report's moment
 not yet drawn on the body, a studio without its compare and ghost controls,
 and a landing that does not yet demonstrate. Waiting on the owner: A0.2's
 three inputs, the free and Plus table and prices, and Ask the coach.
+
+## Wave 6. The open items
+
+- [x] **W6.1 The posture ladder coaches the fault it names.** The engine names
+  a sideways fold at the waist, read from behind; the ladder coached the eyes
+  ("eyes on the spot you hit"), which fixes a head pulled down. The coach in
+  W5 found it. The first step is now "Shoulder over shoulder" (the drill the
+  shoulder-tilt row already hands out: the hitting shoulder under the tossing
+  arm, the trunk straight, swung through), replacing "Toss and look" so a
+  player on this ladder keeps their step number. The cue points at the ball's
+  height ("Reach tall to the ball"), and the mistake names bending at the
+  waist to get the shoulder down. The copy lint caught "a little" in the cue.
