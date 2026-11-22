@@ -11,7 +11,8 @@ import { METRICS } from '../analysis/coaching'
 import type { FlawId } from '../analysis/flaws'
 import { VERDICT_TABLES } from '../analysis/verdict'
 import { cue } from '../analysis/voice'
-import { MIN_JUDGED, type Drift, type FaultCount, type SessionStats } from './stats'
+import { MIN_JUDGED, sessionStats, type Drift, type FaultCount, type SessionStats } from './stats'
+import type { PracticeSession } from './session'
 
 /** A fault's name as the report heads it. */
 export const flawTitle = (flaw: FlawId): string => VERDICT_TABLES.flaws[flaw]?.title ?? flaw
@@ -26,8 +27,10 @@ const labelOf = (id: string) => {
 export function driftLine(d: Drift): string {
   const words = ROW_WORDS[d.id]?.[d.gap > 0 ? 'more' : 'less']
   if (words) return cue(`As the session went on you started to ${words}.`)
-  const from = readoutOf(d.id, d.early)
-  const to = readoutOf(d.id, d.late)
+  // Inside a sentence, so lower case: "went from Peaks well above" read as a mistake (W6.4).
+  const low = (t: string | undefined) => t && t.charAt(0).toLowerCase() + t.slice(1)
+  const from = low(readoutOf(d.id, d.early))
+  const to = low(readoutOf(d.id, d.late))
   const label = labelOf(d.id)
   if (from && to && from !== to) return cue(`Your ${label} went from ${from} at the start to ${to} by the end.`)
   return cue(`Your ${label} ${d.gap > 0 ? 'rose' : 'fell'} from the start of the session to the end.`)
@@ -76,3 +79,23 @@ export const unsureLine = (n: number): string =>
 /** What the fixes say when there are none to give. */
 export const noFixLine = (read: number): string =>
   cue(read < MIN_JUDGED ? 'Too few serves read to name a fault for the session.' : 'No fault showed on most of your serves.')
+
+/**
+ * What the last practice says about this one (W6.4): the change that showed
+ * from its start to its end, and the one thing to do about it today. Nothing
+ * when the last practice is unfinished, read too few serves to compare its
+ * two ends, or held steady.
+ */
+export function lastPracticeLine(practice: readonly PracticeSession[]): string | undefined {
+  const last = practice.filter((p) => p.phase === 'done').sort((a, b) => b.updatedAt - a.updatedAt)[0]
+  if (!last) return undefined
+  const stats = sessionStats(last.lines)
+  const drift = stats.drifts[0]
+  return drift ? nextTimeLine(drift) : undefined
+}
+
+/** One drift, said for the next session: what changed. The advice is its own line beside it. */
+export const nextTimeLine = (drift: Drift): string => driftLine(drift)
+
+/** What to do about a drift, today. */
+export const NEXT_TIME = 'Shorter baskets today, with a rest between.'

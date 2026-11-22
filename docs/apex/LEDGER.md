@@ -519,3 +519,21 @@ three inputs, the free and Plus table and prices, and Ask the coach.
   vocabulary a fault paints in, on the player's own side. In Chrome on
   `Saque_con_pelota` at 390: "Held at the racket drop" with the forearm and
   hand painted over the player's arm; no page errors.
+- [x] **W6.4 The last practice carries into the next session.** A practice
+  session's summary already said what changed from its start to its end;
+  nothing carried that forward. Today's session now opens with it: "Last
+  practice. As the session went on you started to bring the tossing arm down
+  sooner. Shorter baskets today, with a rest between." (`lastPracticeLine`,
+  from the latest finished practice; nothing from an unfinished one or one
+  that held steady.) Practice serves already counted as evidence for the
+  programme (`sessionEvidence`); the moments worth returning for (a goal, a
+  fault fixed, a step passed with then and now, records, the weekly recap)
+  were already built, so area D's other two items were found met.
+  - **Two old wording faults fixed on the way:** a reading inside a sentence
+    kept its capital ("went from Peaks well above"), and a row named by a
+    question read "Your how far the ball falls first went from". The three
+    question-shaped rows have plain words now, in the table the "than usual"
+    headlines share.
+  - `nextTime.test.ts` runs the line for every card row both ways through the
+    copy lint, and refuses an unfinished practice. **Not seen in Chrome:** no
+    demo route seeds a finished practice session with a drift.

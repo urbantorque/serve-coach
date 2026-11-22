@@ -443,6 +443,10 @@ export const ROW_WORDS: Record<string, { more: string; less: string }> = {
     less: 'take less time from the racket drop to the ball',
   },
   contactHeight: { more: 'meet the ball higher', less: 'meet the ball lower' },
+  // A label that is a question reads badly inside a sentence (W6.4).
+  contactBelowPeak: { more: 'let the ball fall further before you hit it', less: 'hit the ball nearer the top of the toss' },
+  tossPeakHeight: { more: 'toss higher', less: 'toss lower' },
+  ballContactHeight: { more: 'meet the ball higher', less: 'meet the ball lower' },
   armExtension: { more: 'meet the ball with a straighter arm', less: 'meet the ball with a more bent arm' },
   contactAhead: { more: 'meet the ball further in front', less: 'meet the ball further back' },
   loadRatio: {

@@ -381,6 +381,7 @@ export default function Home({
           {programme && (
             <SessionBody
               programme={programme}
+              practice={practiceSessions}
               onFilmCheck={() => {
                 setSheet(null)
                 const first = programme.plan.items[0]

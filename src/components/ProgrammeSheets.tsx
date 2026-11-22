@@ -7,17 +7,34 @@ import type { Session } from '../lib/storage/db'
 import { readPrefs, writePrefs, type Prefs } from '../lib/storage/prefs'
 import { Icon } from './primitives'
 import { filmable } from '../lib/analysis/progressions'
+import { NEXT_TIME, lastPracticeLine } from '../lib/session/sessionCopy'
+import type { PracticeSession } from '../lib/session/session'
 import { CourtCard } from './CourtCard'
 import '../styles/programme.css'
 
 /** Today's session, in minutes, with the court card and the way to film the check. */
-export function SessionBody({ programme, onFilmCheck }: { programme: Programme; onFilmCheck: () => void }) {
+export function SessionBody({
+  programme,
+  onFilmCheck,
+  practice = [],
+}: {
+  programme: Programme
+  onFilmCheck: () => void
+  /** The practice sessions read so far, for what the last one says about today (W6.4). */
+  practice?: readonly PracticeSession[]
+}) {
   const [minutes, setMinutes] = useState<CourtMinutes>(() => readPrefs().courtMinutes ?? programme.minutes)
   const [card, setCard] = useState(false)
   const blocks = todayFor(programme, minutes)
   const first = programme.plan.items[0]
+  const last = lastPracticeLine(practice)
   return (
     <div className="session-today">
+      {last && (
+        <p className="programme-note">
+          <strong>Last practice.</strong> {last} <strong>{NEXT_TIME}</strong>
+        </p>
+      )}
       <div className="seg" role="group" aria-label="How long you have">
         {COURT_MINUTES.map((m) => (
           <button
