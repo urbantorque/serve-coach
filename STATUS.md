@@ -2,105 +2,112 @@
 
 Serve Coach coaches a tennis serve from one phone clip, read entirely on the
 device. This page says what works, what is open, and what is the owner's call.
-The programme that brought it here is `docs/next/HANDOVER.md`, its ledger is
-`docs/next/LEDGER.md` (Waves 0 to 7, closed), the visual rules are `DESIGN.md`,
+The programme that brought it here is `docs/apex/HANDOVER.md`, its ledger is
+`docs/apex/LEDGER.md` (Waves 0 to 5, closed), the visual rules are `DESIGN.md`,
 and `README.md` says how to run it.
 
-Finished ledgers from earlier loops are in `docs/history/`, with the full design
-record that used to be the README (`README-design-record.md`). Source comments
-cite them by their old names.
+Finished ledgers from earlier loops are in `docs/history/` and `docs/next/`, with
+the full design record that used to be the README
+(`docs/history/README-design-record.md`). Source comments cite them by their old
+names.
 
 ## What works
 
 - **One serve, read and coached.** Filmed in the app or picked from the camera
-  roll; MediaPipe finds the body and RTMPose refines the swing. The first screen
-  answers how did I do, what do I fix and what do I do now, over the player's
-  own footage with the fault drawn on it, and leads with any injury warning.
-  Two to four fixes, worst cause first, each with a lesson and a ladder of
-  drills checked by filming a basket.
+  roll; MediaPipe finds the body and RTMPose refines the swing. The report opens
+  on the player's own clip held at the moment of the first fix, with the shape
+  to aim for where a figure can be drawn honestly, and leads with any injury
+  warning. Two to four fixes, worst cause first.
+- **Coaching you can see and follow.** Ten of the eleven faults are shown
+  moving on a model serve, the fault beside its fix, from the camera the fault
+  is read from; the eleventh is measured to have nothing a camera can show.
+  Each fault has a short lesson: what it costs and what good looks like, every
+  claim cited or marked as coaching, and the player's own earlier serve that
+  had it right. A drill check runs as a guided set, hands-free, the phone on a
+  bag: the step and cue said, each serve read against the drill's one fault,
+  and the set ended when it has an answer. A serve filmed after a drill block
+  is read against that drill first, past the player's own spread.
 - **Honest by construction.** Every graded band rests on a study or on real
-  serve motion (the forty Bath serves), named beside it; a reading with neither
-  is shown and never graded. Only a fault that needs work and that a study
-  measures can lead the report. A clip the engine cannot trust is refused with
-  what to change. The `/accuracy` page is built from the tables the engine
-  grades with.
+  serve motion, named beside it; a reading with neither is shown and never
+  graded. A clip the engine cannot trust is refused with what to change. The
+  `/accuracy` page is built from the tables the engine grades with.
 - **Against the player's own serve.** Each serve read against their usual and
-  their best, past their own measured noise; what their tagged misses share,
-  past chance only, can reorder the plan behind the first fix.
+  their best, past their own measured noise.
 - **On court.** Hands-free recording with a spoken countdown and framing check,
-  a glance of one screen between serves, a court card, and today's session in
-  minutes with a capped throwing dose and a warm-up.
-- **Over time.** A programme towards one goal, Progress as the shape of the
-  serve, speed by trip (about, with its likely range, never graded), second
-  serves as their own view, and practice sessions from a long clip.
+  a glance between serves, a court card, and today's session in minutes.
+- **Over time.** Today answers what the serve is like now, whether it is
+  getting better and what to do this week, on its first screen. Progress is one
+  story: the serve now, then and now on the player's body, the faults serve by
+  serve, speed (about, with its range, never graded), what changed, and one
+  fold for the rest.
+- **The laptop studio.** Frame keys (arrows, J K L, 1 to 6), zoom and pan,
+  lines and angles measured on the picture and kept with the serve, a still
+  saved on the device, and the best serve beside a kept clip.
 - **Sharing, by the player only.** A poster, a slow-motion clip, then and now,
-  and a coach's page in the report's own order.
+  and a coach's page.
 - **Offline and protected.** One stated download, a first read before the
-  refinement model is in, a rolling local copy of the history, export and
-  import, and a crash screen that keeps data.
+  refinement model is in, a rolling local copy, and export and import that
+  carry everything, the plan included.
 - **The commercial surface, switched off.** Free and Plus behind one
-  `can(feature)`, a signed pass with no accounts, Cloudflare Pages Functions
-  for checkout, claim, refresh and the portal, tested against a local stand-in
-  (`VITE_PAYMENTS=mock`). Pricing, accuracy, privacy, terms and credits pages,
-  host headers with a content security policy, sitemap and social card. None
-  of it makes a request until the owner switches it on.
-- **Both sizes.** A phone first; on a laptop the report is a review studio,
-  with the clip on the left and the words, the fix and the action on the right.
+  `can(feature)`, a signed pass with no accounts, Cloudflare Pages Functions for
+  checkout (monthly, and by the year and with a trial when the owner sets them),
+  claim, refresh and the portal, tested against a local stand-in. None of it
+  makes a request until the owner switches it on.
 
 ## What is open
 
 - **Nothing has run on a real phone,** and nothing has decoded in Safari's
-  engine or Firefox (that needs the owner's yes to a 200 MB download).
-- **Real footage is thin.** The pose models scored against truth on a drawn
-  body (N2.8) refused 37 of 40 Bath serves: MediaPipe read the raised arm at
-  contact as hanging down. A faceless figure is not a player, and two small
-  public clips were all measured (N2.2), but the gap between the two is the
-  most important unknown. Licensed 720p footage would settle it.
-- **The real-footage noise** (`RETEST_SD`) is measured on two 320 by 240 clips
-  and not adopted; the accuracy page shows it as measured and not used.
-- **Threads and the pose worker** stay opt-in until a quiet machine times them
-  (`ISOLATE=1`, `?worker=1`). This machine's timings are not trustworthy.
-- **Known limits of the read**, each measured in the ledger: arm extension sits
-  at 1.12 of the band rule; the scan can land on the toss on long clips; clips
-  of unknown rate and blind windows read noisier than the table; a tilted phone
-  from the side of 4 to 5 degrees is neither corrected nor told; load ratio on
-  half-bent legs can flip between two timings.
-- **Backups** do not yet carry `Prefs.goal` and `ladder`.
-- **Recording a whole practice in the app** (N1.10) is not started.
+  engine or Firefox (the owner's yes to a 200 MB download).
+- **Real footage is thin:** four licensed tennis clips, all 640 by 480 or
+  smaller. Whether the trophy and knee should be read off the picture side-on
+  waits on sharper footage or the owner's own serves (A1.1).
+- **The report's moment** holds the player's footage at the fix's moment but
+  draws the fault on the body only for a height fault, and the target figure on
+  1 of 7 serves, by the rule that no picture-space shape is re-measured as a 3D
+  angle.
+- **The studio** lacks the ghost's opacity control, four-up compare, an
+  annotated short clip, the marks on the coach page, and a rail entry.
+- **The front door** shows a drawn figure, not a licensed real serve; a first
+  read takes about 110 s on an 18 s clip; Ask the coach is not built (egress,
+  the owner's call).
+- **The posture ladder's cue** is not the sideways stacking the fault names,
+  and the drill library has not had a coach's review.
+- **Recording a whole practice in the app** is not started.
 
 ## The owner's call
 
 Everything only the owner can do is in `docs/next/OWNER-STEPS.md`, in order:
-what is free and what Plus costs, a Stripe account, the pass keys, a domain and
-a git remote, the Cloudflare Pages project, a reading of the terms and privacy
-page by someone qualified, and the switch to live. Also: a radar-checked
-serve, licensed footage or the owner's own serves, THETIS's licence, the 200 MB
-browser download, threads on a quiet machine, and whether the laptop rail adds
-Studio and Pathways as `DESIGN.md` says.
+what is free and what Plus costs (the Apex proposal is
+`docs/apex/PLANS-PROPOSAL.md`), a Stripe account and its prices (monthly, and
+optionally yearly and a trial), the pass keys, a domain and a git remote, the
+Cloudflare Pages project, a reading of the terms and privacy page, and the
+switch to live. Also: the owner's own serves in `bench-data/own/`, more licensed
+footage, the 200 MB browser download, and whether Ask the coach may ever be
+switched on.
 
 ## Resuming this loop
 
-Work is on `next/premium`, cut from `master` at `e8bf74c`; nothing is pushed
-and there is no remote. The programme's last wave closed with an independent
-review (a player, a coach, a designer and an engine hunter, each finding
-re-checked by a skeptic) and its fixes, N7.1 to N7.7. The before and after
-gallery is `docs/lift/next-gallery.html` (phone) and
-`docs/lift/next-gallery-laptop.html`.
+Work is on `apex`, cut from `main` at `b4d0e80`; nothing is pushed and there is
+no remote. The programme closed with an independent review (a player 7, a
+designer 7, a coach 6.5, an engine hunter 6, a first-time visitor 6, out of
+ten against the brief) and its fixes, W5.1. The before and after galleries are
+`docs/lift/apex-gallery.html` (phone) and `docs/lift/apex-gallery-laptop.html`.
 
-The suite runs **2,360 checks** (2026-11-20, after the close-out). The last loop tag is
+The suite runs **2,412 checks** (2026-11-22, after the close). The last loop tag is
 `loop-green-15`, from the August loop.
 
-The entry chunk budget is 132 kB gzip (`bundle.test.ts`, re-baselined once in
-N2.10); the next screen loads lazily rather than raising it. Run
+The entry chunk budget is 132 kB gzip and 385 kB raw (`bundle.test.ts`); it is
+381.47 kB raw after W5.1 moved the restore out. The split stylesheets are at
+their 20 kB budget: the next screen style needs room made first. Run
 `npm run build` before trusting a size figure: `bundle.test.ts` reads `dist/`.
 
 How to work here, in short:
 
-- One commit per ledger item, ticked in `docs/next/LEDGER.md` with what it
+- One commit per ledger item, ticked in `docs/apex/LEDGER.md` with what it
   turned out to be and how it was proved. A measured "not adopted" is a result.
-- Before a commit: `npm run typecheck`, `npx eslint .`, `npm run build`,
-  `npm test`. `npm run release` runs all of it and then checks the built app
-  offline in a browser.
+- Before a commit, chained so a failure cannot commit: `npm run typecheck`,
+  `npx eslint .`, `npm run build`, `npm test`. `npm run release` runs all of it
+  and then checks the built app offline in a browser.
 - `SCORING_VERSION` is 7: a change that moves a saved report's number bumps it
   and says whether it is `card-bands` or a `measurement`.
 - Long browser timings on this machine are unreliable: other apps load the

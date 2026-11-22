@@ -332,6 +332,17 @@ owner: A0.2's three inputs.
     the marks on the coach page, and Studio as a rail entry with its
     `DESIGN.md` line.
 
+## Wave 3 report
+
+Backups now carry the plan (D1.1); Progress is ten blocks, not twenty, and
+reads as one story (D1.2); Today answers whether the serve is getting better
+in a line (D1.3); the laptop studio has frame keys, zoom, lines and angles kept
+with the serve, and a still (E1.1). Cut or not reached: moments worth
+returning for and practice sessions feeding the week's plan (area D), and the
+studio's ghost opacity, four-up compare, annotated clip, coach-page marks and
+rail entry (area E). Measured: the entry chunk twice over its raw budget by
+under a kilobyte, each time made room for.
+
 ## Wave 4. The front door
 
 - [x] **F1.1 A year, a trial, and a proposed free and Plus table.** Ready for
@@ -372,6 +383,16 @@ owner: A0.2's three inputs.
     156 s while the gate was running beside it. That is the engine reading
     every frame of an 18 s clip, and it is the long pole of a first visit.
     Not shortened here; the analysing screen's wait is unchanged.
+
+## Wave 4 report
+
+Plus can be offered by the year and with a trial once the owner sets them,
+proved against the stand-in (F1.1), and a free and Plus table is proposed
+(`PLANS-PROPOSAL.md`); a player with a clip reaches the picker in two taps,
+not three (F1.2). Measured: a first read takes about 110 s on an 18 s clip.
+Found already met: every locked Plus feature previews a real piece of the
+player's own data. Not built: a landing that plays a licensed real serve, and
+Ask the coach (egress; the owner's call).
 
 ## Wave 5. Close
 
@@ -435,3 +456,23 @@ owner: A0.2's three inputs.
     `ownGood.test.ts` (another type, older rules), `studioMarks.test.ts`
     (dot marks, the merge both ways), `guidedSet.test.ts` (no intro on a
     self step, for every step of every ladder; `filmable`).
+- [x] **W5.2 The close.** `npm run release` green (typecheck, lint, build, the
+  suite with its budgets, the manifest, the worker, home and the example
+  opening offline). `apex-after` shots at 390 by 844 (50 files) and 1440 by
+  900 (48), every state of the before set; the galleries are
+  `docs/lift/apex-gallery.html` and `apex-gallery-laptop.html`. The console
+  across both sets says what it said before the round: MediaPipe's load notes,
+  and errors only on the crash and offline-with-no-engine states built to show
+  them. `STATUS.md` rewritten for this round, with the review's scores as
+  given and what is open; `OWNER-STEPS.md` gains the year and the trial.
+
+## Wave 5 report
+
+Five independent reviewers scored the app against the brief: 7, 7, 6.5, 6
+and 6. Their findings were re-checked and seven fixed (W5.1), the most
+serious a loop check that could call a reading it never took "inside your
+usual spread". What keeps the scores where they are is mostly the same list
+as the handover's own: no real phone, thin real footage, the report's moment
+not yet drawn on the body, a studio without its compare and ghost controls,
+and a landing that does not yet demonstrate. Waiting on the owner: A0.2's
+three inputs, the free and Plus table and prices, and Ask the coach.
