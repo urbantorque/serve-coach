@@ -456,6 +456,41 @@ await check('an export carries nothing about this install', async () => {
   )
 })
 
+await check('an export carries the plan: the goal, each ladder step and when it moved, the cadence (D1.1)', async () => {
+  const goal = { kind: 'fault' as const, flaw: 'shallow_drop', startedAt: 9 }
+  const { store } = memoryStore({
+    prefs: { goal, ladder: { shallow_drop: 2 }, ladderMovedAt: { shallow_drop: 7 }, ladderPassedAt: { shallow_drop: 7 }, cadence: 'weekly', courtMinutes: 45 },
+  })
+  const backup = await buildBackup(store)
+  assert(backup.prefs?.goal?.kind === 'fault', 'the goal did not travel')
+  assert(backup.prefs?.ladder?.shallow_drop === 2, 'the ladder step did not travel')
+  assert(backup.prefs?.ladderMovedAt?.shallow_drop === 7, 'when the step moved did not travel')
+  assert(backup.prefs?.cadence === 'weekly' && backup.prefs?.courtMinutes === 45, 'the cadence or court time did not travel')
+})
+
+await check('a fresh phone takes the plan; a phone with its own keeps it, fault by fault', async () => {
+  const file = fileWithPrefs({
+    goal: { kind: 'speed', startedAt: 3 },
+    ladder: { shallow_drop: 2, toss_height: 1, bogus: -4 } as never,
+    ladderMovedAt: { shallow_drop: 5, toss_height: 6 },
+    cadence: 'fortnightly',
+  })
+  const fresh = memoryStore()
+  await importBackup(file, fresh.store)
+  assert(fresh.prefs().goal?.kind === 'speed', 'a fresh phone did not take the goal')
+  assert(fresh.prefs().ladder?.shallow_drop === 2 && fresh.prefs().ladder?.toss_height === 1, 'a fresh phone did not take the ladders')
+  assert(fresh.prefs().ladder?.bogus === undefined, 'a nonsense step was restored')
+  assert(fresh.prefs().ladderMovedAt?.toss_height === 6, 'when the step moved was not restored')
+  assert(fresh.prefs().cadence === 'fortnightly', 'a fresh phone did not take the cadence')
+
+  const mine = memoryStore({ prefs: { goal: { kind: 'second', startedAt: 8 }, ladder: { shallow_drop: 0 }, cadence: 'weekly' } })
+  await importBackup(file, mine.store)
+  assert(mine.prefs().goal?.kind === 'second', 'an old file overwrote the goal this phone set')
+  assert(mine.prefs().ladder?.shallow_drop === 0, 'an old file moved a step this phone had')
+  assert(mine.prefs().ladder?.toss_height === 1, 'a fault this phone never started did not come across')
+  assert(mine.prefs().cadence === 'weekly', 'an old file overwrote the cadence')
+})
+
 await check('a fresh phone takes the hand and the rating from the file', async () => {
   // The case this whole field exists for: a new device, where nothing local
   // knows any of this and the file is the only thing that does.

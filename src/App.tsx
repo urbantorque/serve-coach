@@ -24,7 +24,6 @@ import type { FlawId } from './lib/analysis/flaws'
 import { faultMoveOnTrip, rotationMoveOnTrip, scoreMoveAgainst, scoringVersionOf, streakLine, typeOf } from './lib/progress'
 import { bestPriorTo } from './lib/bestServe'
 import { selfRead } from './lib/selfRead'
-import { drillLoop } from './lib/drillLoop'
 import { momentOn } from './lib/moments'
 import { unlockEarcons } from './lib/earcon'
 import { tossMapFor } from './lib/tossMap'
@@ -659,10 +658,6 @@ export default function App() {
   const liveReport = view.kind === 'report' ? view : undefined
   const shownReport = liveReport?.analysis ?? (view.kind === 'saved' && !view.example ? view.session : undefined)
   const shownSelf = useMemo(() => (shownReport ? selfRead(shownReport, sessions, serveTags) : undefined), [shownReport, sessions, serveTags])
-  const shownLoop = useMemo(
-    () => (shownReport ? drillLoop(shownReport as Session, sessions, drillLogs, serveTags) : undefined),
-    [shownReport, sessions, drillLogs, serveTags],
-  )
   const shownMoment = useMemo(
     () => (shownReport ? momentOn(shownReport as Session, sessions, { ledger: tripLedger, practice: practiceSessions, prefs }) : undefined),
     [shownReport, sessions, tripLedger, practiceSessions, prefs],
@@ -892,7 +887,7 @@ export default function App() {
               previous={priorTo(shownReport.createdAt, typeOf(shownReport))}
               best={bestPriorTo(sessions, shownReport.createdAt, typeOf(shownReport), scoringVersionOf(shownReport))}
               self={shownSelf}
-              loop={shownLoop}
+              drillLogs={drillLogs}
               moment={shownMoment}
               coachContext={() => import('./lib/share/coachContext').then((c) => c.coachContextOf(shownReport, sessions, serveTags, prefs))}
               sessions={sessions}

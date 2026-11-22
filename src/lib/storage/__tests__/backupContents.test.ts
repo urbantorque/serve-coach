@@ -60,7 +60,7 @@ const RULINGS: readonly Ruling[] = [
   { key: 'practice', what: 'which drills they ticked off and when', personal: false },
   {
     key: 'prefs',
-    what: 'which hand they serve with, the level they picked, and which serve they were filming',
+    what: 'which hand they serve with, the level they picked, which serve they were filming, and their plan: the goal, the step on each drill, how often and how long they play',
     // Three fields, not the whole of `Prefs`. `seenFilmingGuide` and
     // `askedToPersist` are facts about an install rather than about a player and
     // are deliberately absent — see `Backup['prefs']`.

@@ -258,6 +258,23 @@ owner: A0.2's three inputs.
 
 ## Wave 3. The loop and the studio
 
+- [x] **D1.1 Backups carry the plan.** A backup moved the reports, the drill
+  records, the hand, the level and the serve type, and left the plan behind:
+  a paid player restoring onto a new phone lost their goal and every ladder
+  step. It now carries the goal, each fault's step with when it moved and
+  when it last passed, the cadence and the court time (`portablePrefs`).
+  - **Restored on the hand's rule:** what this phone has already decided
+    stands, and the file fills only what it has not. Ladders are filled fault
+    by fault, so a fault started on the new phone keeps its own step, and a
+    nonsense step (negative, fractional, past any ladder) is refused.
+  - `backup.test.ts` proves the export and both restores;
+    `backupContents.test.ts`'s ruling on `prefs` now names the plan, and it
+    is still not personal.
+  - **The entry chunk went 1.15 kB over its 385 kB raw budget** with C1.4's
+    check in the app shell and this restore. The check now runs in the
+    report, which loads on its own (`drillLogs` passed down), and the entry
+    is 384.32 kB: under, with less than a kilobyte to spare.
+
 ## Wave 4. The front door
 
 ## Wave 5. Close

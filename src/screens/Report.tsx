@@ -33,7 +33,7 @@ import { targetDrawn } from '../lib/analysis/targetShape'
 import TargetShape from '../components/TargetShape'
 import { drillCheckLine, progressionFor, rungFor } from '../lib/analysis/progressions'
 import { ownGoodLine } from '../lib/ownGood'
-import type { LoopRead } from '../lib/drillLoop'
+import { drillLoop } from '../lib/drillLoop'
 import { FAULT_NAME } from '../lib/graduation'
 import TrackPlayer from '../components/TrackPlayer'
 import { replayFrom } from '../lib/storage/poseTrack'
@@ -65,7 +65,7 @@ import {
 import { clipsWork, shareReportCard, shareServeClip } from '../lib/share/reportCard'
 import { swingOf, workParts } from '../lib/figure/swing'
 import { SCORING_VERSION, type Analysis, type PhaseId } from '../lib/analysis/types'
-import type { ServeTag, Session } from '../lib/storage/db'
+import type { PracticeLog, ServeTag, Session } from '../lib/storage/db'
 import DrillCard from './report/DrillCard'
 import RevealStage from './report/RevealStage'
 import ShareChoice from './report/ShareChoice'
@@ -86,8 +86,12 @@ interface Props {
   best?: Session
   /** This serve against the player's own usual and best, past their own noise. */
   self?: SelfRead
-  /** This serve against the drill done just before it, past the player's own spread (C1.4). */
-  loop?: LoopRead
+  /**
+   * The drills the player marked done, for reading this serve against the one
+   * done just before it (C1.4). Read here rather than in the app shell, so the
+   * check loads with the report and not with the first screen.
+   */
+  drillLogs?: PracticeLog[]
   /** What this report earned, as of the day it was filmed. */
   moment?: Moment
   /** What a coach would ask first. Worked out only if a page is asked for. */
@@ -185,7 +189,7 @@ export default function Report({
   previous,
   best,
   self,
-  loop,
+  drillLogs,
   moment,
   coachContext,
   sessions,
@@ -377,6 +381,11 @@ export default function Report({
   const drilledRung = drilledCheck && drilledLadder ? rungFor(drilledCheck.flaw, drilledLadder, rungs) : -1
 
   const suppressed = suppressedNote(analysis.triage, plan.length)
+  // The drill just done, read first (C1.4). Never on the example, which has no history.
+  const loop = useMemo(
+    () => (example || !sessions ? undefined : drillLoop(analysis as Session, sessions, drillLogs, tags)),
+    [example, analysis, sessions, drillLogs, tags],
+  )
   const againstBest = focusAgainstBest(first.flaw, analysis, best, previous && scoringVersionOf(previous) === rubric ? previous : undefined)
   const levelled = tierLabel(analysis.triage)
 

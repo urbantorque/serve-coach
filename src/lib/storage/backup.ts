@@ -84,7 +84,10 @@ export interface Backup {
    * Optional, and `version` is not bumped, for the reason `practice` gives above
    * its own field: nothing about the old shape became unreadable.
    */
-  prefs?: Pick<Prefs, 'handedness' | 'tier' | 'serveType' | 'sets'>
+  prefs?: Pick<
+    Prefs,
+    'handedness' | 'tier' | 'serveType' | 'sets' | 'goal' | 'ladder' | 'ladderMovedAt' | 'ladderPassedAt' | 'cadence' | 'courtMinutes'
+  >
   /**
    * What the player said about individual serves — which serve it was, and
    * where it landed.
@@ -127,7 +130,21 @@ export interface Backup {
  */
 export function portablePrefs(p: Prefs): Backup['prefs'] {
   // Finished sets travel too (L3.7): a record is about the player, not the phone.
-  return { handedness: p.handedness, tier: p.tier, serveType: p.serveType, ...(p.sets?.length ? { sets: p.sets } : {}) }
+  // And the plan (D1.1): the goal, the step reached on each ladder and when it
+  // moved, how often they get to a court and for how long. A paid player must
+  // not lose a plan with a phone, and none of it is about the install.
+  return {
+    handedness: p.handedness,
+    tier: p.tier,
+    serveType: p.serveType,
+    ...(p.sets?.length ? { sets: p.sets } : {}),
+    ...(p.goal ? { goal: p.goal } : {}),
+    ...(p.ladder && Object.keys(p.ladder).length ? { ladder: p.ladder } : {}),
+    ...(p.ladderMovedAt && Object.keys(p.ladderMovedAt).length ? { ladderMovedAt: p.ladderMovedAt } : {}),
+    ...(p.ladderPassedAt && Object.keys(p.ladderPassedAt).length ? { ladderPassedAt: p.ladderPassedAt } : {}),
+    ...(p.cadence ? { cadence: p.cadence } : {}),
+    ...(p.courtMinutes ? { courtMinutes: p.courtMinutes } : {}),
+  }
 }
 
 /**
@@ -579,6 +596,43 @@ export async function importBackup(
             s && typeof s.startedAt === 'number' && typeof s.inServes === 'number' && (s.serveNumber === 1 || s.serveNumber === 2) && !seen.has(s.startedAt),
         )
         if (theirs.length) patch.sets = [...mine, ...theirs].sort((a, b) => a.startedAt - b.startedAt)
+      }
+      /*
+       * The plan (D1.1), on the same rule as the hand: what this phone has
+       * already decided stands, and the file fills only what it has not. A
+       * ladder is filled fault by fault, with the times its step moved, so a
+       * fault started on the new phone keeps its own step.
+       */
+      const goal = prefs.goal as Prefs['goal'] | undefined
+      if (
+        !here.goal &&
+        goal &&
+        typeof goal.startedAt === 'number' &&
+        (goal.kind === 'speed' || goal.kind === 'second' || (goal.kind === 'fault' && typeof goal.flaw === 'string'))
+      ) {
+        patch.goal = goal
+      }
+      const rung = (n: unknown): n is number => typeof n === 'number' && Number.isInteger(n) && n >= 0 && n < 20
+      const time = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n)
+      if (prefs.ladder && typeof prefs.ladder === 'object') {
+        const ladder = { ...(here.ladder ?? {}) }
+        const moved = { ...(here.ladderMovedAt ?? {}) }
+        const passed = { ...(here.ladderPassedAt ?? {}) }
+        let filled = false
+        for (const [flaw, step] of Object.entries(prefs.ladder)) {
+          if (ladder[flaw] !== undefined || !rung(step)) continue
+          ladder[flaw] = step
+          const m = prefs.ladderMovedAt?.[flaw]
+          const p = prefs.ladderPassedAt?.[flaw]
+          if (time(m)) moved[flaw] = m
+          if (time(p)) passed[flaw] = p
+          filled = true
+        }
+        if (filled) Object.assign(patch, { ladder, ladderMovedAt: moved, ladderPassedAt: passed })
+      }
+      if (!here.cadence && (prefs.cadence === 'weekly' || prefs.cadence === 'fortnightly' || prefs.cadence === 'monthly')) patch.cadence = prefs.cadence
+      if (!here.courtMinutes && (prefs.courtMinutes === 30 || prefs.courtMinutes === 45 || prefs.courtMinutes === 60)) {
+        patch.courtMinutes = prefs.courtMinutes
       }
       if (Object.keys(patch).length) {
         store.writePrefs(patch)
