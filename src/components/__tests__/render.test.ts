@@ -65,7 +65,7 @@ import { modelMotion } from '../../lib/figure/modelMotion'
 import { PHASE_COPY } from '../../lib/analysis/phases'
 import { DEMO_DIALS, sampleAnalysis, sampleBasket } from '../../dev/sampleAnalysis'
 import type { PracticeFocus } from '../../lib/practice'
-import { progressionFor, stepCheckLine } from '../../lib/analysis/progressions'
+import { progressionFor, stepCheckLine, filmable } from '../../lib/analysis/progressions'
 import { causalPlan } from '../../lib/analysis/verdict'
 import { buildConsistency } from '../../lib/analysis/consistency'
 import { normalise, type Session } from '../../lib/storage/db'
@@ -569,7 +569,10 @@ check("today's session is timed, in the order the hit runs, and ends on a filmed
   assert(out.includes('45 min') && out.includes(WARM_LINE), 'the length or the warm-up went missing')
   const at = (s: string) => out.indexOf(s)
   assert(at('Warm up with easy serves') < at('session-block--drill') && at('session-block--drill') < at('Serve freely'), 'the hit is not in the order it runs')
-  assert(out.includes('Film a check'), 'no way to film the check')
+  // A check where the step has a served ball to read; a plain serve where it has none (W5.2).
+  const first = programme.plan.items[0]
+  const want = !first || filmable(first.flaw, first.drill.name) ? 'Film a check' : 'Film a serve'
+  assert(out.includes(want), `the session does not end on "${want}"`)
   assert(out.includes('Open the court card') && out.includes('Add to calendar'), 'the tools went')
 })
 

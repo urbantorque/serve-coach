@@ -34,7 +34,8 @@
  * unmade, and `storageNudge` notices it has stopped keeping up.
  */
 import { deviceNoun } from '../device'
-import { REAL_STORE, buildBackup, importBackup, isIOS, isInstalled, isPersisted, requestPersistence, type Backup, type ImportResult } from './backup'
+import { REAL_STORE, buildBackup, isIOS, isInstalled, isPersisted, requestPersistence, type Backup } from './backup'
+import type { ImportResult } from './restore'
 import { clipStoreAvailable } from './clipStore'
 import { compactSession, countFiledSince, countRows, firstFiledAt, listSummaries, safely } from './db'
 import { SNAPSHOT_EVERY } from './nudge'
@@ -466,7 +467,8 @@ const REAL_DEPS: ProtectDeps = {
   firstFiledAt,
   rows: countRows,
   readable: async () => (await listSummaries()).length,
-  restore: (text) => importBackup(text),
+  // Loaded when a restore runs, not with the first screen (W5.1).
+  restore: (text) => import('./restore').then((r) => r.importBackup(text)),
   estimate: async () => {
     const e = await navigator.storage?.estimate?.().catch(() => undefined)
     return e?.quota ? { usage: e.usage ?? 0, quota: e.quota } : undefined

@@ -3,7 +3,8 @@
  * reload and a backup, refusing what cannot be drawn.
  */
 import { markDegrees, markLabel } from '../studioMarks'
-import { MAX_MARKS, normaliseServeTag, withServeTag, type StudioMark } from '../storage/db'
+import { MAX_MARKS, normaliseServeTag, withServeTag, type ServeTag, type StudioMark } from '../storage/db'
+import { mergeTags } from '../storage/restore'
 import { assert, check, heading, report } from '../analysis/__tests__/harness'
 
 const line = (a: [number, number], b: [number, number]): StudioMark => ({ kind: 'line', pts: [{ x: a[0], y: a[1] }, { x: b[0], y: b[1] }], t: 1 })
@@ -55,6 +56,24 @@ check('a reload keeps good marks and drops what cannot be drawn, part by part', 
 check(`no more than ${MAX_MARKS} marks a serve`, () => {
   const many = Array.from({ length: MAX_MARKS + 5 }, () => line([0.1, 0.1], [0.2, 0.2]))
   assert(withServeTag(undefined, 'r', { marks: many }, 1)!.marks!.length === MAX_MARKS, 'too many kept')
+})
+
+check('two taps on one spot are not a mark (W5.1)', () => {
+  const dot = line([0.5, 0.5], [0.502, 0.501])
+  assert(normaliseServeTag({ id: 'd', taggedAt: 1, marks: [dot] }) === undefined, 'a dot-sized line was kept')
+})
+
+heading('A backup restore keeps both phones’ work (W5.1)')
+
+check('a newer tag from the file keeps the marks drawn here; a mark drawn here keeps the file’s outcome', () => {
+  const drawn: ServeTag = { id: 'x', marks: [line([0.1, 0.1], [0.3, 0.4])], taggedAt: 10 }
+  const fromFile: ServeTag = { id: 'x', serveNumber: 2, taggedAt: 20 }
+  const a = mergeTags(drawn, fromFile)!
+  assert(a.serveNumber === 2 && a.marks?.length === 1, `marks lost to a newer tag: ${JSON.stringify(a)}`)
+  const outcome: ServeTag = { id: 'x', outcome: 'net', taggedAt: 5 }
+  const b = mergeTags(drawn, outcome)!
+  assert(b.outcome === 'net' && b.marks?.length === 1, `an older outcome lost to a mark: ${JSON.stringify(b)}`)
+  assert(mergeTags(a, fromFile) === undefined, 'a file that adds nothing was written again')
 })
 
 report()

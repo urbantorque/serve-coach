@@ -20,10 +20,13 @@ const FLAW: FlawId = 'no_leg_drive'
 const ROW = 'legDrive'
 let ids = 0
 
-function stub(at: number, value: number, verdict: 'c' | 'n' | 'u' = 'n', flaw: FlawId = FLAW): Session {
-  const values: Record<string, number> = { ...Object.fromEntries(ROWS.map((r) => [r, middle(r)])), [ROW]: value }
+function stub(at: number, value: number, verdict: 'c' | 'n' | 'u' = 'n', flaw: FlawId = FLAW, opts: { rowConfidence?: number; others?: number } = {}): Session {
+  // `others` moves every other row that many of its own bands away: four rows louder than this one.
+  const off = (r: string) => (opts.others ? (METRICS[r].ideal[1] - METRICS[r].ideal[0]) * opts.others : 0)
+  const values: Record<string, number> = { ...Object.fromEntries(ROWS.map((r) => [r, middle(r) + off(r)])), [ROW]: value }
   const metrics = Object.entries(values).map(([id, v]) => ({
-    id, label: METRICS[id].label, value: v, unit: METRICS[id].unit, decimals: METRICS[id].decimals, ideal: METRICS[id].ideal, confidence: 1, score: 70,
+    id, label: METRICS[id].label, value: v, unit: METRICS[id].unit, decimals: METRICS[id].decimals, ideal: METRICS[id].ideal,
+    confidence: id === ROW ? (opts.rowConfidence ?? 1) : 1, score: 70,
   }))
   return {
     id: `serve-loop${ids++}-0`,
@@ -79,6 +82,23 @@ for (const [name, serve, want] of cases) {
     note(loop!.line)
   })
 }
+
+heading('Never "inside your spread" about a reading not taken, or outranked (W5.1)')
+
+check('a row too soft to read on this serve is said to be unread, even with the fault judged clean', () => {
+  const loop = read(stub(lastAt + 7 * DAY, middle(ROW), 'c', FLAW, { rowConfidence: 0.2 }))
+  assert(loop?.outcome === 'unread', `a soft row read as ${loop?.outcome}`)
+})
+
+check('a move into the band is towards, however loudly four other rows moved', () => {
+  const loop = read(stub(lastAt + 7 * DAY, middle(ROW), 'c', FLAW, { others: 3 }))
+  assert(loop?.outcome === 'towards', `outranked, it read ${loop?.outcome}`)
+})
+
+check('good news is hedged as one serve, the same as bad', () => {
+  const loop = read(after(middle(ROW), 'c'))!
+  assert(!/is working/.test(loop.line) && /film a few more/.test(loop.line), loop.line)
+})
 
 check('with no history to know the spread, one serve is said as one serve', () => {
   const s = stub(DAY, usual, 'c')

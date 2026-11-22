@@ -503,7 +503,7 @@ function finding(m: Metric, reference: number, noise: number, against: SelfRefer
 const strongest = (found: SelfFinding[]) => found.sort((a, b) => b.strength - a.strength).slice(0, MAX_READINGS)
 
 /** Whether a serve may be read against a baseline at all. */
-const readable = (s: ReadableServe, b: PlayerBaseline) =>
+export const readable = (s: ReadableServe, b: PlayerBaseline) =>
   s.triage?.status !== 'rejected' &&
   typeOf(s) === b.serveType &&
   scoringVersionOf(s) === b.scoringVersion &&

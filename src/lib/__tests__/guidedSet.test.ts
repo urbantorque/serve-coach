@@ -5,7 +5,7 @@
  */
 import { repLine, setDone, setIntro } from '../guidedSet'
 import { tripDrillCheck } from '../tripCheck'
-import { everyProgression, judgeServe, type Judged } from '../analysis/progressions'
+import { everyProgression, filmable, judgeServe, type Judged } from '../analysis/progressions'
 import { cueIssues, wordCount } from '../analysis/voice'
 import type { FlawId } from '../analysis/flaws'
 import type { Session } from '../storage/db'
@@ -69,7 +69,12 @@ check('the intro, every rep, and the result, for every step of every ladder', ()
   let lines = 0
   for (const [flaw, ladder] of ladders) {
     const said = new Set<string>()
-    for (const step of ladder.steps) said.add(setIntro(flaw, step.name)!)
+    for (const step of ladder.steps) {
+      const intro = setIntro(flaw, step.name)
+      // A step with no served ball is never filmed as a set (W5.2).
+      assert((intro === undefined) === (step.check.by === 'self'), `${flaw} "${step.name}": intro ${intro ? 'said' : 'withheld'} on a ${step.check.by} step`)
+      if (intro) said.add(intro)
+    }
     for (const pattern of ['cccccc', 'nnnnnn', 'cncncn', 'uucccccc', 'ncnnc']) {
       for (const { line } of play(flaw, pattern)) said.add(line)
     }
@@ -115,6 +120,15 @@ check('a set past reaching its bar ends early, and says to stay', () => {
   assert(end >= 0 && end < 6, `ended at serve ${end + 1}`)
   assert(said[end].line.includes('Stay on this step'), said[end].line)
   note(`ended after ${end + 1} serves: ${said[end].line}`)
+})
+
+check('a step with no served ball cannot be filmed as a check; a served one and a plain drill can (W5.2)', () => {
+  const ladder = everyProgression().find(([f]) => f === 'toss_arm_drops')![1]
+  const self = ladder.steps.find((s) => s.check.by === 'self')!
+  const served = ladder.steps.find((s) => s.check.by === 'engine')!
+  assert(!filmable('toss_arm_drops', self.name), `"${self.name}" was filmable`)
+  assert(filmable('toss_arm_drops', served.name), `"${served.name}" was not filmable`)
+  assert(filmable('toss_arm_drops', 'A card drill'), 'a plain drill was not filmable')
 })
 
 report()

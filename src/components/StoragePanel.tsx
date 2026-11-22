@@ -1,12 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import {
-  downloadBackup,
-  importBackup,
-  isIOS,
-  isInstalled,
-  isPersisted,
-  type ImportResult,
-} from '../lib/storage/backup'
+import { downloadBackup, isIOS, isInstalled, isPersisted } from '../lib/storage/backup'
+import { importBackup, type ImportResult } from '../lib/storage/restore'
 import { Icon } from './primitives'
 
 interface Props {

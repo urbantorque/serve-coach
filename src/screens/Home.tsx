@@ -9,7 +9,7 @@ import MomentCard from '../components/MomentCard'
 import { programmeFor } from '../lib/programme'
 import { SAMPLE_PEEK } from '../lib/samplePeek'
 import { practiceHeadline, type PracticeFocus } from '../lib/practice'
-import { faultForMetric } from '../lib/analysis/progressions'
+import { faultForMetric, filmable } from '../lib/analysis/progressions'
 import { fastestServe } from '../lib/speedTrend'
 import { NBSP, defaultSpeedUnit, speedFigures } from '../lib/speedCopy'
 import type { ServeTag, Session } from '../lib/storage/db'
@@ -384,7 +384,8 @@ export default function Home({
               onFilmCheck={() => {
                 setSheet(null)
                 const first = programme.plan.items[0]
-                if (first?.flaw) onCheckDrill?.(first.flaw, first.drill.name)
+                // A step with no served ball films a plain serve, with nothing counted for it (W5.2).
+                if (first?.flaw && filmable(first.flaw, first.drill.name)) onCheckDrill?.(first.flaw, first.drill.name)
                 else onFilm()
               }}
             />

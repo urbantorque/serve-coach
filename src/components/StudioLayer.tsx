@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { StudioMark } from '../lib/storage/db'
+import { MIN_MARK_SPAN, type StudioMark } from '../lib/storage/db'
 import { labelAt, markLabel } from '../lib/studioMarks'
 
 export type StudioTool = 'line' | 'angle'
@@ -87,6 +87,9 @@ export default function StudioLayer({ marks, aspect, tool, time, onAdd, onPan, z
     if (!tool) return onTap()
     const p = pointOf(e)
     if (!p) return
+    // A second tap on the same spot is not a new point (W5.1).
+    const last = draft[draft.length - 1]
+    if (last && Math.hypot(p.x - last.x, p.y - last.y) < MIN_MARK_SPAN) return
     const pts = [...draft, p]
     if (pts.length === (tool === 'line' ? 2 : 3)) {
       onAdd({ kind: tool, pts, t: time })

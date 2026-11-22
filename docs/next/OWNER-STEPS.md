@@ -14,7 +14,14 @@ no paywalls, no requests to any payment service.
    and its drill, the whole breakdown on the first serve, and the five newest
    serves) with its words in `src/lib/planCopy.ts`. Change the table, not the
    screens. Write the price as players should read it, for the build setting
-   `VITE_PRICE_LINE` (for example `£4 a month`).
+   `VITE_PRICE_LINE` (for example `£4 a month`). The Apex round's proposal,
+   placing everything built since (the studio, the guided set, the lessons),
+   is `docs/apex/PLANS-PROPOSAL.md`.
+   **Optional, a year and a trial (F1.1):** a second recurring price for a
+   year (`STRIPE_ANNUAL_PRICE_ID`, with `VITE_PRICE_LINE_ANNUAL` for its
+   words), and free days before the first charge (`TRIAL_DAYS` on the
+   server, 1 to 30, and `VITE_TRIAL_DAYS` for the pricing page). Leave them
+   unset and neither appears.
 2. **Make a Stripe account**, then in it: a product called Serve Coach Plus
    with one recurring price (its id, `price_…`, is `STRIPE_PRICE_ID`), and the
    customer portal switched on (Settings, Billing, Customer portal), which is

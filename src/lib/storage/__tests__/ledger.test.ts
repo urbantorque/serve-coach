@@ -10,7 +10,8 @@
  */
 import { mergeTripRecords, normaliseTripRecord, tripRecordId, tripRecordsOf, type TripRecord } from '../ledger'
 import { bestTrip, buildProgress, longestStreak, sixWeekMilestone, tripStreak } from '../../progress'
-import { buildBackup, importBackup, type BackupStore } from '../backup'
+import { buildBackup, type BackupStore } from '../backup'
+import { importBackup } from '../restore'
 import { DEFAULTS, type Prefs } from '../prefs'
 import type { Session } from '../db'
 import type { Analysis } from '../../analysis/types'

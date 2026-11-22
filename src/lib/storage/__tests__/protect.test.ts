@@ -30,7 +30,8 @@ import {
   type SnapshotMeta,
   type SnapshotShelf,
 } from '../protect'
-import { buildBackup, importBackup, type Backup, type BackupStore } from '../backup'
+import { buildBackup, type Backup, type BackupStore } from '../backup'
+import { importBackup } from '../restore'
 import { SNAPSHOT_EVERY } from '../nudge'
 import { DEFAULTS, type Prefs } from '../prefs'
 import type { PracticeLog, ServeTag, Session } from '../db'

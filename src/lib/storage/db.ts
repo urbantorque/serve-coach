@@ -1563,6 +1563,9 @@ export interface StudioMark {
   t: number
 }
 
+/** How far apart, across the picture, two points of a mark must be: about a finger's tap. */
+export const MIN_MARK_SPAN = 0.01
+
 /** The most marks a serve keeps: a drawing, not a database. */
 export const MAX_MARKS = 24
 
@@ -1662,6 +1665,8 @@ function validMark(m: unknown): m is StudioMark {
     Array.isArray(k.pts) &&
     k.pts.length === n &&
     k.pts.every((p) => p && inside(p.x) && inside(p.y)) &&
+    // Two points on one spot read 0 or 90 degrees of nothing (W5.1).
+    k.pts.every((p, i) => i === 0 || Math.hypot(p.x - k.pts![i - 1].x, p.y - k.pts![i - 1].y) >= MIN_MARK_SPAN) &&
     typeof k.t === 'number' &&
     Number.isFinite(k.t)
   )

@@ -6,6 +6,7 @@ import { shareBlob } from '../lib/share/reportCard'
 import type { Session } from '../lib/storage/db'
 import { readPrefs, writePrefs, type Prefs } from '../lib/storage/prefs'
 import { Icon } from './primitives'
+import { filmable } from '../lib/analysis/progressions'
 import { CourtCard } from './CourtCard'
 import '../styles/programme.css'
 
@@ -46,9 +47,10 @@ export function SessionBody({ programme, onFilmCheck }: { programme: Programme; 
           Open the court card
         </button>
       )}
+      {/* A step with no served ball has no check to film (W5.2): the session ends on a plain serve instead. */}
       <button type="button" className="btn btn--ghost btn--full" onClick={onFilmCheck}>
         <Icon name="camera" size={18} />
-        Film a check
+        {!first || filmable(first.flaw, first.drill.name) ? 'Film a check' : 'Film a serve'}
       </button>
       <button
         type="button"

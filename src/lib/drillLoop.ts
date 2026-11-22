@@ -19,7 +19,7 @@ import { FLAWS, type FlawId } from './analysis/flaws'
 import { everyProgression, judgeServe } from './analysis/progressions'
 import { CARD_SIGNAL } from './analysis/tiers'
 import { cue } from './analysis/voice'
-import { againstUsual, baselineFor, type ReadableServe } from './baseline'
+import { baselineFor, reachOf, readable, trustedRows, type ReadableServe } from './baseline'
 import type { PracticeLog, ServeTag, Session } from './storage/db'
 
 export type LoopOutcome = 'towards' | 'away' | 'level' | 'within' | 'no_usual' | 'no_usual_clean' | 'no_usual_named' | 'unread'
@@ -47,7 +47,7 @@ export function flawOfDrill(log: Pick<PracticeLog, 'drill' | 'metricId'>): FlawI
 }
 
 const LINES: Record<LoopOutcome, (drill: string) => string> = {
-  towards: (d) => `After ${d}, this serve moved towards the target, past your usual spread. The drill is working.`,
+  towards: (d) => `After ${d}, this serve moved towards the target, past your usual spread. A good sign, so film a few more to be sure.`,
   away: (d) => `After ${d}, this serve moved away from the target, past your usual spread. One serve can, so film a few more.`,
   level: (d) => `After ${d}, this serve moved past your usual spread but stayed on target. A change, not a fix.`,
   within: (d) => `After ${d}, this serve sits inside your usual spread. No change I can trust yet, so keep going.`,
@@ -85,7 +85,22 @@ export function drillLoop(
   const baseline = row ? baselineFor(serve, before, tags) : undefined
   // No spread to read it against: one serve's own verdict, said as one serve.
   if (!row || !baseline?.rows.some((r) => r.metricId === row)) return said(judged === 'clean' ? 'no_usual_clean' : 'no_usual_named')
-  const moved = againstUsual(serve, baseline).find((f) => f.metricId === row)
-  if (!moved) return said('within')
-  return said(moved.band === 'towards' ? 'towards' : moved.band === 'away' ? 'away' : 'level')
+  /*
+   * The drill's own row, asked directly (W5.1). `againstUsual` was the wrong
+   * door: it skips a row this serve could not read, a move inside the
+   * player's own furthest readings and anything past its three strongest
+   * findings, and each of those came out here as "inside your usual spread":
+   * a confident line about a reading that was never taken, or never ranked.
+   */
+  if (!readable(serve, baseline)) return said(judged === 'clean' ? 'no_usual_clean' : 'no_usual_named')
+  const usual = baseline.rows.find((r) => r.metricId === row)!
+  const here = trustedRows(serve).get(row)
+  if (!here) return said('unread')
+  const past = Math.abs(here.value - usual.typical) > reachOf(usual) && (here.value < usual.low || here.value > usual.high)
+  if (!past) return said('within')
+  const [lo, hi] = usual.ideal
+  const miss = (v: number) => (v < lo ? lo - v : v > hi ? v - hi : 0)
+  const was = miss(usual.typical)
+  const now = miss(here.value)
+  return said(now < was ? 'towards' : now > was ? 'away' : 'level')
 }

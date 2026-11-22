@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react'
 import FaultDemoPanel from '../../components/FaultDemoPanel'
 import { Cue, Icon } from '../../components/primitives'
 import type { DrillCheck } from '../../lib/analysis/progressions'
-import { CHECK_SERVES, drillCheckLine, progressionFor, stepCheckLine } from '../../lib/analysis/progressions'
+import { CHECK_SERVES, drillCheckLine, filmable, progressionFor, stepCheckLine } from '../../lib/analysis/progressions'
 import type { Analysis } from '../../lib/analysis/types'
 import { hasDemo } from '../../lib/faultDemoDials'
 import { COST_NAME, LESSONS, fromLine } from '../../lib/analysis/lessons'
@@ -102,7 +102,8 @@ export default function DrillCard({ item, racket, check, rung, onLadderStep, dri
       {drilled}
       {season}
 
-      {onFilmCheck && (
+      {/* Only a step with a served ball to read (W5.2): the rest the player checks themselves, above. */}
+      {onFilmCheck && filmable(flaw, drill.name) && (
         <button className="btn btn--primary btn--big btn--full" onClick={onFilmCheck}>
           <Icon name="camera" size={20} />
           Film a check

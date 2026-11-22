@@ -20,14 +20,14 @@
  *
  * Pure, so every line it can say is tested against the copy rules.
  */
-import { CHECK_SERVES, progressionFor, type Judged } from './analysis/progressions'
+import { CHECK_SERVES, filmable, progressionFor, type Judged } from './analysis/progressions'
 import type { FlawId } from './analysis/flaws'
 import { tripCheckLine, type TripCheck } from './tripCheck'
 
-/** Said before the first countdown of a guided set: the step, the count, the cue. */
+/** Said before the first countdown of a guided set: the step, the count, the cue. Never for a step with no served ball. */
 export function setIntro(flaw: FlawId, step: string): string | undefined {
   const ladder = progressionFor(flaw)
-  if (!ladder) return undefined
+  if (!ladder || !filmable(flaw, step)) return undefined
   return `${step}, ${CHECK_SERVES} serves. ${ladder.say}.`
 }
 

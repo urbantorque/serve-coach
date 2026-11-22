@@ -153,7 +153,7 @@ export async function runDemoRoute(
       } as unknown as Session
     })
     seedHistory({ sessions: serves, practice: [] })
-    setCheckTarget({ flaw, drill: progressionFor(flaw)!.steps[0].name })
+    setCheckTarget({ flaw, drill: progressionFor(flaw)!.steps.find((s) => s.check.by === 'engine')!.name })
     setView({ kind: 'glance', analysis: serves[serves.length - 1] })
     return
   }

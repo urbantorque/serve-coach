@@ -394,7 +394,11 @@ export default function Report({
   const againstBest = focusAgainstBest(first.flaw, analysis, best, previous && scoringVersionOf(previous) === rubric ? previous : undefined)
   const levelled = tierLabel(analysis.triage)
 
-  const focusMoment = faultMoment(analysis.fundamentals, first.flaw)
+  // A fix led by a card row rather than a named fault holds at that row's own
+  // moment (W5.3): a racket drop held at contact showed the wrong instant.
+  const focusMoment =
+    faultMoment(analysis.fundamentals, first.flaw) ??
+    (first.flaw ? undefined : analysis.fundamentals.flatMap((f) => f.metrics).find((m) => m.label === first.title)?.phase)
   const focusPhase = focusMoment ? analysis.phases.find((p) => p.id === focusMoment) : undefined
   /**
    * The fix's moment beside a model serve, played phase for phase (N4.1).

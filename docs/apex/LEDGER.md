@@ -374,3 +374,64 @@ owner: A0.2's three inputs.
     Not shortened here; the analysing screen's wait is unchanged.
 
 ## Wave 5. Close
+
+- [x] **W5.1 The independent review, and its findings fixed.** Five reviewers,
+  each briefed on its own and given the code, the ledger, the shots and the
+  running app, none shown this round's own verdict. Scores against the brief,
+  as given: **a UTR 3 player 7, a product designer 7, a coach 6.5, an engine
+  regression hunter 6, a first-time visitor 6.** Each finding below was
+  re-checked in the code or the app before it was acted on.
+  - **Fixed: the loop check could say "inside your usual spread" about a
+    reading it never took** (the engine hunter). It asked `againstUsual`,
+    which skips a row the serve could not read, a move inside the player's
+    own furthest readings, and anything past its three strongest; each came
+    out as "within". It now asks the drill's own row: unread when this serve
+    could not read it, and towards, away or level against the band otherwise.
+    Good news is hedged as one serve, like bad ("A good sign, so film a few
+    more to be sure"), where it had said "The drill is working".
+  - **Fixed: a backup restore could wipe studio marks.** Tag rows merged whole,
+    newest wins; now field by field (`mergeTags`), so a newer "second serve"
+    from a file keeps the marks drawn here, and a mark drawn here keeps the
+    file's older outcome.
+  - **Fixed: "your serve on Saturday had this right" could point at a kick for
+    a flat serve, or at older scoring.** Same type and rulebook only. Two
+    taps on one spot are no longer a mark that reads 0 or 90 degrees.
+  - **Fixed: the guided set could run on a step with no served ball** (the
+    coach): "Toss and point, 6 serves" for a toss that is caught. One rule
+    (`filmable`, beside the ladders) now governs the intro, the drill sheet's
+    "Film a check" and Today's session, which on a self-checked step ends on
+    "Film a serve", a plain recording with nothing counted for the step.
+    `?demo=guided` uses the first served step.
+  - **Fixed: three lesson citations claimed more than their sources** (the
+    coach). Kovacs's toss-over-the-head shoulder line was about where the
+    toss goes sideways, not front to back: cut. The toss-too-high wait is
+    Newton's (beginners wait at the top), the pause's cost Elliott's: both
+    cited. Kibler's half of the energy is said as a model. Campbell's players
+    are said to be elite young players, and posture's "good" line no longer
+    praises the sideways tilt the cost line warns of (now marked coaching).
+    14 claims cite a study and 9 are marked.
+  - **Fixed: a fix led by a card row held the picture at contact** (the
+    player and the designer): "Racket drop" over a frame of contact. It holds
+    at the row's own moment now; on `Saque_con_pelota` in Chrome, "Held at
+    the racket drop" under a racket-drop fix.
+  - **Checked, not changed:** the "First serve filmed" card half under the
+    action bar at 375 to 390 wide is the page meeting a fixed bar at the
+    fold; it scrolls clear, and the drill sits above the bar. Under an injury
+    warning the drill is under the bar on a phone, as B2.1 recorded.
+  - **Agreed and open:** the report's held frame is still the player's footage
+    with a moment named and no fault drawn on the body except on a height
+    fault, and the target figure on 1 of 7 serves (B1.1's rule); the laptop
+    studio lacks the ghost's opacity, compare four-up, an annotated clip and
+    a rail entry; the landing shows a drawn figure, not a licensed real
+    serve; a first read takes about 110 s on an 18 s clip; Plus never
+    appears while payments are off (by design, the owner's switch); the
+    posture ladder's cue ("eyes on the spot") is not the sideways stacking
+    the fault names, and the coach's review of the drill library is not done.
+  - **The entry chunk, made room in.** The fixes took it to 385.48 kB raw
+    against 385. Restoring a backup runs rarely, from Settings or a rolling
+    copy, and it was all on the first screen: it is `storage/restore.ts` now,
+    loaded when a restore runs. The entry is 381.47 kB, 3.5 kB under.
+  - Tests: `drillLoop.test.ts` (a soft row, an outranked row, the hedge),
+    `ownGood.test.ts` (another type, older rules), `studioMarks.test.ts`
+    (dot marks, the merge both ways), `guidedSet.test.ts` (no intro on a
+    self step, for every step of every ladder; `filmable`).

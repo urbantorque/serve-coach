@@ -9,17 +9,25 @@
  */
 import type { FlawId } from './analysis/flaws'
 import { judgeServe } from './analysis/progressions'
-import { tripDay } from './progress'
+import { scoringVersionOf, tripDay, typeOf } from './progress'
 import type { Session } from './storage/db'
 
 export function ownGoodLine(
   sessions: readonly Session[] | undefined,
-  now: { id: string; createdAt: number },
+  now: Pick<Session, 'id' | 'createdAt' | 'serveType' | 'scoringVersion'>,
   flaw: FlawId,
   today: number = Date.now(),
 ): string | undefined {
   const clean = (sessions ?? [])
-    .filter((s) => s.id !== now.id && s.createdAt < now.createdAt && judgeServe(s, flaw) === 'clean')
+    // The same serve, judged by the same rules (W5.1): a kick met clean is not a flat serve's proof.
+    .filter(
+      (s) =>
+        s.id !== now.id &&
+        s.createdAt < now.createdAt &&
+        typeOf(s) === typeOf(now as Session) &&
+        scoringVersionOf(s) === scoringVersionOf(now as Session) &&
+        judgeServe(s, flaw) === 'clean',
+    )
     .sort((a, b) => b.createdAt - a.createdAt)[0]
   if (!clean) return undefined
   const day = tripDay(clean.createdAt, today)

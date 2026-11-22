@@ -455,6 +455,17 @@ export interface DrillCheck {
 export type Judged = 'clean' | 'named' | 'unread'
 
 /** One serve against one fault — exported for graduation (L3.4), which counts the same way. */
+/**
+ * Whether a drill can be filmed as a check (W5.2): a step the app judges from a
+ * served ball. A toss caught, a throw or a swing with no ball has nothing for
+ * the engine to read, and counting serves for it measures a drill the player
+ * is not doing. A drill that is not a ladder step is the fault's own, and is.
+ */
+export function filmable(flaw: string | undefined, drill: string): boolean {
+  const step = flaw ? PROGRESSIONS[flaw as FlawId]?.steps.find((s) => s.name === drill) : undefined
+  return step?.check.by !== 'self'
+}
+
 export function judgeServe(
   serve: { diagnosis?: Diagnosis; triage?: Triage },
   flaw: FlawId,

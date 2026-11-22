@@ -21,12 +21,8 @@
  * an older state, or abandons every row after the first failure is the reason
  * somebody stops trusting the app with their history.
  */
-import {
-  backupFileName,
-  buildBackup,
-  importBackup,
-  type BackupStore,
-} from '../backup'
+import { backupFileName, buildBackup, type BackupStore } from '../backup'
+import { importBackup } from '../restore'
 import { DEFAULTS, type Prefs } from '../prefs'
 import type { PracticeLog, ServeTag, Session } from '../db'
 import type { Analysis } from '../../analysis/types'

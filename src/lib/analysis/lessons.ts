@@ -132,11 +132,6 @@ export const LESSONS: Partial<Record<FlawId, Lesson>> = {
   contact_behind: {
     costs: [
       {
-        kind: 'body',
-        text: 'A toss straight over your head makes the shoulder reach up at an angle that can pinch it.',
-        from: 'kovacs2011',
-      },
-      {
         kind: 'net',
         text: 'A ball met behind you leaves the strings climbing, so it sails long or you pull it down into the net.',
         from: COACHING,
@@ -161,8 +156,8 @@ export const LESSONS: Partial<Record<FlawId, Lesson>> = {
     costs: [
       {
         kind: 'timing',
-        text: 'A toss too high makes you wait at the top, and a pause there loses the stretch that powers the arm.',
-        from: 'elliott2006',
+        text: 'Beginners wait at the top for a toss to come down, and a pause there loses some of the stretch that powers the arm.',
+        from: ['newton2025', 'elliott2006'],
       },
       {
         kind: 'pace',
@@ -192,13 +187,13 @@ export const LESSONS: Partial<Record<FlawId, Lesson>> = {
     costs: [
       {
         kind: 'body',
-        text: 'Players with low back pain had more sideways force through the lower back while serving.',
+        text: 'Elite young players with low back pain had more sideways force through the lower back while serving.',
         from: 'campbell2013',
       },
     ],
     good: {
-      text: 'Skilled servers tilt the whole trunk so the hitting shoulder rises over the other, and the tilt grows with skill.',
-      from: 'whiteside2013',
+      text: 'The trunk stays straight and tilts as one piece, hitting shoulder over the other, rather than bending at the waist.',
+      from: COACHING,
     },
   },
   collapsed_elbow: {
@@ -225,7 +220,7 @@ export const LESSONS: Partial<Record<FlawId, Lesson>> = {
     costs: [
       {
         kind: 'pace',
-        text: 'The legs, hips and trunk give about half the serve’s energy, and the arm has to swing far faster to replace it.',
+        text: 'In a widely used model, the legs, hips and trunk give about half the serve’s energy, more than the arm can easily replace.',
         from: 'kibler1995',
       },
     ],

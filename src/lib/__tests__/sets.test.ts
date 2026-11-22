@@ -14,7 +14,8 @@ import {
   setTarget,
   type SetResult,
 } from '../sets'
-import { portablePrefs, importBackup, type BackupStore } from '../storage/backup'
+import { portablePrefs, type BackupStore } from '../storage/backup'
+import { importBackup } from '../storage/restore'
 import { DEFAULTS, type Prefs } from '../storage/prefs'
 import Glance from '../../screens/Glance'
 import { sampleAnalysis } from '../../dev/sampleAnalysis'
