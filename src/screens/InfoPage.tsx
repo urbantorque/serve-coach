@@ -10,6 +10,7 @@ import { FEATURES, hasPlus } from '../lib/plans'
 import { useEntitlement } from '../components/usePlan'
 import { FEATURE_COPY, FREE_COPY } from '../lib/planCopy'
 import { GATED, PAYMENTS, PRICE_LINE } from '../lib/billing/config'
+import { PRICE_LINE_ANNUAL, TRIAL_DAYS } from '../lib/billing/offers'
 
 interface Props {
   page: InfoPageId
@@ -161,19 +162,26 @@ function Pricing({ onFilm }: { onFilm?: () => void }) {
 /** Plus on sale and not held: the price, and the way to Stripe's checkout (N6.5). */
 function GetPlus() {
   const [state, setState] = useState<'idle' | 'going' | string>('idle')
-  const go = async () => {
+  const go = async (plan: 'monthly' | 'annual') => {
     setState('going')
     const { startCheckout } = await import('../lib/billing/client')
-    const problem = await startCheckout()
+    const problem = await startCheckout(plan)
     setState(problem ?? 'going')
   }
   return (
     <section className="plus-act" aria-label="Get Plus">
       {PRICE_LINE && <p className="tier-price">{PRICE_LINE}</p>}
-      <button className="btn btn--primary btn--big btn--full" onClick={() => void go()} disabled={state === 'going'}>
+      {/* A trial and a year, only when the owner has set them (F1.1). */}
+      {TRIAL_DAYS && <p className="plus-note">The first {TRIAL_DAYS} days are free, and nothing is charged if you cancel before then.</p>}
+      <button className="btn btn--primary btn--big btn--full" onClick={() => void go('monthly')} disabled={state === 'going'}>
         <Icon name="lightning" size={20} />
-        {state === 'going' ? 'Opening the checkout…' : 'Get Plus'}
+        {state === 'going' ? 'Opening the checkout…' : TRIAL_DAYS ? 'Start the free trial' : 'Get Plus'}
       </button>
+      {PRICE_LINE_ANNUAL && (
+        <button className="btn btn--ghost btn--full" onClick={() => void go('annual')} disabled={state === 'going'}>
+          Pay by the year: {PRICE_LINE_ANNUAL}
+        </button>
+      )}
       <p className="plus-note">Stripe takes the payment on its own page. Cancel any time, and Plus runs to the end of what you paid for.</p>
       {state !== 'idle' && state !== 'going' && (
         <p className="plus-problem" role="alert">

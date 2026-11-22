@@ -23,6 +23,10 @@ export interface PayEnv {
   STRIPE_SECRET_KEY?: string
   /** The Plus price in Stripe, `price_…`. Owner only. */
   STRIPE_PRICE_ID?: string
+  /** The yearly Plus price, `price_…`, when the owner offers one (F1.1). Owner only. */
+  STRIPE_ANNUAL_PRICE_ID?: string
+  /** Free days before the first charge, 1 to 30, when the owner offers a trial (F1.1). Owner only. */
+  TRIAL_DAYS?: string
   /** The private half of the pass key, as JSON. Owner only; never in the app. */
   ENTITLEMENT_PRIVATE_JWK?: string
   /** The site's own origin for the return addresses, when it differs from the request's. */
@@ -88,7 +92,7 @@ export async function handlePayments(req: Request, env: PayEnv, send: Fetch = (i
   const call = stripe(env, send)
   const origin = (env.SITE_URL ?? url.origin).replace(/\/+$/, '')
   const jwk = JSON.parse(env.ENTITLEMENT_PRIVATE_JWK) as JsonWebKey
-  const body = (await req.json().catch(() => ({}))) as { sessionId?: unknown; pass?: unknown }
+  const body = (await req.json().catch(() => ({}))) as { sessionId?: unknown; pass?: unknown; plan?: unknown }
 
   const passFor = async (sub: StripeSub): Promise<string | undefined> => {
     const until = periodEnd(sub)
@@ -100,10 +104,15 @@ export async function handlePayments(req: Request, env: PayEnv, send: Fetch = (i
 
   try {
     if (route === 'checkout') {
+      // Monthly unless a year was asked for and the owner sells one (F1.1).
+      const yearly = body.plan === 'annual'
+      if (yearly && !env.STRIPE_ANNUAL_PRICE_ID) return reply(400, { error: 'Paying by the year is not on sale yet.' })
+      const trial = Number(env.TRIAL_DAYS)
       const s = await call<{ url: string }>('POST', 'checkout/sessions', {
         mode: 'subscription',
-        'line_items[0][price]': env.STRIPE_PRICE_ID,
+        'line_items[0][price]': yearly ? env.STRIPE_ANNUAL_PRICE_ID! : env.STRIPE_PRICE_ID,
         'line_items[0][quantity]': '1',
+        ...(Number.isInteger(trial) && trial >= 1 && trial <= 30 ? { 'subscription_data[trial_period_days]': String(trial) } : {}),
         success_url: `${origin}/plus?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${origin}/pricing`,
       })

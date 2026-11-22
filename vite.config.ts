@@ -182,7 +182,14 @@ async function mockPayments(): Promise<Plugin> {
   const keys = await makeKeys()
   process.env.VITE_ENTITLEMENT_PUBLIC_JWK = JSON.stringify(keys.publicJwk)
   let mock: ReturnType<typeof stripeMock> | undefined
-  const env = { STRIPE_SECRET_KEY: 'sk_test_stand_in', STRIPE_PRICE_ID: 'price_stand_in', ENTITLEMENT_PRIVATE_JWK: JSON.stringify(keys.privateJwk) }
+  const env = {
+    STRIPE_SECRET_KEY: 'sk_test_stand_in',
+    STRIPE_PRICE_ID: 'price_stand_in',
+    ENTITLEMENT_PRIVATE_JWK: JSON.stringify(keys.privateJwk),
+    // A year and a trial on the stand-in when the app is told to offer them (F1.1).
+    ...(process.env.VITE_PRICE_LINE_ANNUAL ? { STRIPE_ANNUAL_PRICE_ID: 'price_annual_stand_in' } : {}),
+    ...(process.env.VITE_TRIAL_DAYS ? { TRIAL_DAYS: process.env.VITE_TRIAL_DAYS } : {}),
+  }
   return {
     name: 'serve-coach:mock-payments',
     apply: 'serve',

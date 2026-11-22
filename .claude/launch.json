@@ -64,6 +64,15 @@
         "set VITE_PAYMENTS=mock&& npx vite --port 5186 --strictPort"
       ],
       "port": 5186
+    },
+    {
+      "name": "serve-coach-pay-offers",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "set VITE_PAYMENTS=mock&& set VITE_PRICE_LINE=a test price a month&& set VITE_PRICE_LINE_ANNUAL=a test price a year&& set VITE_TRIAL_DAYS=7&& npx vite --port 5187 --strictPort"
+      ],
+      "port": 5187
     }
   ]
 }

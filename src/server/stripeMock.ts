@@ -12,6 +12,9 @@ interface MockSession {
   success_url: string
   cancel_url: string
   subscription?: string
+  /** The price asked for, and the free days before the first charge (F1.1). */
+  price?: string
+  trialDays?: number
 }
 
 interface MockSub {
@@ -41,7 +44,15 @@ export function stripeMock(origin: string, now: () => number = () => Date.now())
     if (init?.method === 'POST' && path === 'checkout/sessions') {
       const id = `cs_test_${++n}${Math.random().toString(36).slice(2, 10)}`
       const success = (form.get('success_url') ?? '').replace('{CHECKOUT_SESSION_ID}', id)
-      sessions.set(id, { id, status: 'open', success_url: success, cancel_url: form.get('cancel_url') ?? origin })
+      const trial = Number(form.get('subscription_data[trial_period_days]') ?? 0)
+      sessions.set(id, {
+        id,
+        status: 'open',
+        success_url: success,
+        cancel_url: form.get('cancel_url') ?? origin,
+        price: form.get('line_items[0][price]') ?? undefined,
+        ...(trial > 0 ? { trialDays: trial } : {}),
+      })
       return json(200, { id, url: `${origin}/api/mock/checkout?session=${id}` })
     }
     let m = /^checkout\/sessions\/(cs_\w+)$/.exec(path)
@@ -70,7 +81,14 @@ export function stripeMock(origin: string, now: () => number = () => Date.now())
     if (!s) return undefined
     if (s.status === 'open') {
       const sub = `sub_test_${++n}`
-      subs.set(sub, { id: sub, status: 'active', customer: `cus_test_${n}`, items: { data: [{ current_period_end: Math.floor(now() / 1000) + 30 * DAY }] } })
+      // A trial runs first and the period ends with it; a year runs a year (F1.1).
+      const days = s.trialDays ?? (/annual|year/.test(s.price ?? '') ? 365 : 30)
+      subs.set(sub, {
+        id: sub,
+        status: s.trialDays ? 'trialing' : 'active',
+        customer: `cus_test_${n}`,
+        items: { data: [{ current_period_end: Math.floor(now() / 1000) + days * DAY }] },
+      })
       s.status = 'complete'
       s.subscription = sub
     }

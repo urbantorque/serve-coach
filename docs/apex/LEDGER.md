@@ -334,4 +334,29 @@ owner: A0.2's three inputs.
 
 ## Wave 4. The front door
 
+- [x] **F1.1 A year, a trial, and a proposed free and Plus table.** Ready for
+  the owner's numbers; nothing is on sale and no price is set.
+  - **A year:** a second Stripe price (`STRIPE_ANNUAL_PRICE_ID`, owner only)
+    and a "Pay by the year" button that appears only when
+    `VITE_PRICE_LINE_ANNUAL` says what it costs. A yearly checkout with no
+    yearly price is refused in words.
+  - **A trial:** `TRIAL_DAYS`, a whole number from 1 to 30 or nothing, sent to
+    Stripe as the subscription's trial; the pricing page says so and its
+    button says "Start the free trial". Plus is on from the first day, and
+    the pass runs to the trial's end, then renews with the subscription.
+  - **Against the stand-in:** `payments.test.ts` checks the yearly price is
+    asked for, a plain checkout stays monthly, a year buys a pass past 300
+    days, a 7-day trial ends a pass with the trial, and 0, 45, 2.5 and
+    "seven" ask for no trial. In Chrome on the `serve-coach-pay-offers`
+    launch entry (test prices, a 7-day trial): the trial and the yearly
+    checkout each went through the stand-in's page and came back with Plus
+    on; console clean.
+  - **The table** is `docs/apex/PLANS-PROPOSAL.md`: every built feature from
+    B to E placed free or Plus, safety and backups never paid, five rows
+    marked as proposals for the owner.
+  - **The entry chunk went 0.03 kB over** with the two new settings in the
+    billing config every screen loads; they moved to `billing/offers.ts`,
+    read by the pricing page alone. The entry is 384.94 kB raw against 385:
+    60 bytes to spare, so the next thing on the first screen has to make room.
+
 ## Wave 5. Close

@@ -82,8 +82,8 @@ async function renew(pass: string, now: number): Promise<void> {
 }
 
 /** To Stripe's checkout. Returns a sentence to show if it could not start. */
-export async function startCheckout(): Promise<string | undefined> {
-  const r = await post('checkout', {})
+export async function startCheckout(plan: 'monthly' | 'annual' = 'monthly'): Promise<string | undefined> {
+  const r = await post('checkout', { plan })
   if (r.status === 200 && r.data.url) {
     location.assign(r.data.url)
     return undefined

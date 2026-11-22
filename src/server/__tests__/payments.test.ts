@@ -114,4 +114,37 @@ await check('Stripe is sent a price and return addresses, never anything about a
   for (const s of seen) assert(!/score|landmark|video|frame|fault/i.test(s), `Stripe was sent: ${s}`)
 })
 
+heading('A year, and a trial, when the owner sells them (F1.1)')
+
+await check('a yearly checkout asks Stripe for the yearly price, and is refused when there is none', async () => {
+  const withYear: PayEnv = { ...env, STRIPE_ANNUAL_PRICE_ID: 'price_annual_stand_in' }
+  const r = await call('checkout', { plan: 'annual' }, withYear)
+  const id = new URL(r.data.url!).searchParams.get('session')!
+  assert(mock.sessions.get(id)?.price === 'price_annual_stand_in', 'the yearly price was not asked for')
+  const monthly = new URL((await call('checkout', {}, withYear)).data.url!).searchParams.get('session')!
+  assert(mock.sessions.get(monthly)?.price === 'price_stand_in', 'a plain checkout did not stay monthly')
+  const none = await call('checkout', { plan: 'annual' })
+  assert(none.status === 400 && /not on sale/.test(none.data.error ?? ''), JSON.stringify(none))
+  // Paid for a year: the pass runs to the year's end.
+  mock.pay(id)
+  const claimed = await call('claim', { sessionId: id }, withYear)
+  const c = await readPass(claimed.data.pass!, verify)
+  assert(c !== undefined && c.until - clock > 300 * DAY, 'a year bought a pass for less than a year')
+})
+
+await check('a trial starts Plus at once, ends with the trial, and only a whole number of days from 1 to 30 counts', async () => {
+  const trial: PayEnv = { ...env, TRIAL_DAYS: '7' }
+  const id = new URL((await call('checkout', {}, trial)).data.url!).searchParams.get('session')!
+  assert(mock.sessions.get(id)?.trialDays === 7, 'the trial was not asked for')
+  mock.pay(id)
+  const c = await readPass((await call('claim', { sessionId: id }, trial)).data.pass!, verify)
+  assert(c !== undefined && Math.abs(c.until - (clock + 7 * DAY)) < DAY, 'the pass does not end with the trial')
+  assert(can('pathway', { gated: true, entitlement: { plan: 'plus', until: c!.until }, now: clock }), 'Plus is not on during the trial')
+  for (const bad of ['0', '45', '2.5', 'seven']) {
+    const s = new URL((await call('checkout', {}, { ...env, TRIAL_DAYS: bad })).data.url!).searchParams.get('session')!
+    assert(mock.sessions.get(s)?.trialDays === undefined, `a trial of "${bad}" was asked for`)
+  }
+  note('7-day trial: Plus on at once, pass to the trial’s end')
+})
+
 report()
