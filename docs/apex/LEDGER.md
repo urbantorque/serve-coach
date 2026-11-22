@@ -358,5 +358,19 @@ owner: A0.2's three inputs.
     billing config every screen loads; they moved to `billing/offers.ts`,
     read by the pricing page alone. The entry is 384.94 kB raw against 385:
     60 bytes to spare, so the next thing on the first screen has to make room.
+- [x] **F1.2 First run to first read, counted, and one tap removed.** A
+  stranger with a clip on a phone (390 by 844, a fresh browser, the dev
+  server on this laptop, `Saque_con_pelota`, 18 s at 320 by 240):
+  - **Before:** three taps to the file picker: "Film my serve", "Got it" on
+    the three filming rules, then "Videos" in the viewfinder (3.2 s). The
+    rules stood over the viewfinder, so "Videos" could not be reached past
+    them, and they are rules for filming, which this player is not doing.
+  - **After:** two. The rules carry "Pick a video instead", which marks them
+    seen and opens the picker (3.6 and 5.0 s on two quiet runs).
+  - **The read itself:** 109.3 and 115.2 s from the pick to the report on two
+    quiet runs, with the coach downloaded once from the local server; 140 to
+    156 s while the gate was running beside it. That is the engine reading
+    every frame of an 18 s clip, and it is the long pole of a first visit.
+    Not shortened here; the analysing screen's wait is unchanged.
 
 ## Wave 5. Close

@@ -758,6 +758,19 @@ export default function FramingCheck({ onRecorded, target, targetFlaw, rearm = f
           <button type="button" className="btn btn--primary btn--big btn--full" onClick={onSeenRules}>
             Got it
           </button>
+          {/* A clip already filmed is one tap from here, not two (F1.3): the rules are for filming. */}
+          {onPick && (
+            <button
+              type="button"
+              className="link-btn"
+              onClick={() => {
+                onSeenRules?.()
+                onPick()
+              }}
+            >
+              Pick a video instead
+            </button>
+          )}
         </div>
       )}
       <div className={`framer-stage framer-stage--${tone}`}>
