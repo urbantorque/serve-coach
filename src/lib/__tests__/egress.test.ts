@@ -109,6 +109,14 @@ const ALLOWED: (Site & { why: string })[] = [
       'same same-origin paths, all vendored by `fetch-assets.mjs`.',
   },
   {
+    file: 'components/FirstRunStage.tsx',
+    pattern: 'fetch',
+    why:
+      "The landing's real serve (Apex F): one GET of `landing/serve.json` from this app's own " +
+      'origin (`BASE_URL`-relative), the body points for a licensed clip that ships in ' +
+      '`public/`. It sends nothing, and is skipped when the browser asks to save data.',
+  },
+  {
     file: 'lib/speech.ts',
     pattern: 'speechSynthesis',
     why:

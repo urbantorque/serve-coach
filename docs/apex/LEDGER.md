@@ -548,6 +548,38 @@ three inputs, the free and Plus table and prices, and Ask the coach.
   the clip's own 320 by 240, a frame from its middle showing the body lines
   and a drawn line reading 8 degrees from upright; no page errors.
 
+- [x] **W6.6 The landing plays a real serve.** The first screen plays an
+  openly licensed clip of someone else's serve ("Saque con pelota", Dardo 86 7,
+  CC BY-SA 3.0) as the report plays the player's own: full speed to the toss,
+  slowed to 0.4 into the moment the fix is about, held there about 3 s with
+  that part of the body picked out, then on through the swing and round again.
+  Reduced motion gets the held frame; no autoplay gets the held frame; data
+  saver, no decoder or no first frame in 2.5 s gets the drawn serve as before.
+  It stops while off screen or in a hidden tab.
+  - **The read is the engine's own, saved once.** `scripts/landing-serve.mjs`
+    reads the clip in Chrome with `analyzeServe`, trims the serve's window
+    with Chrome's recorder as H.264 (90 kB, every browser plays it) and saves
+    the body's picture points (33 kB). The recorder starts a few frames from
+    where it is asked, so the script matches the copy to the clip picture by
+    picture and moves the points with it: checked against the original at
+    four moments, the held drop within one frame.
+  - **The words beside it are its read.** The peek says 79, "Hitting elbow at
+    drop", Overhead throws, 15 throws, labelled "On this serve". The sample
+    report's peek (75, the tossing arm) described a serve the landing did not
+    show. `landingServe.test.ts` re-scores the saved card on today's rubric
+    and fails when the peek, the held moment or the painted part drift from
+    it, and asks for the script again when a measurement changes. Where the
+    drawn serve stands in, the label says "A real serve I read".
+  - **Credited** on the picture with a link to the file page, and in both
+    credits lists; the trimmed copy carries the same licence. Not precached:
+    only a first visit fetches it.
+  - In Chrome at 390 by 844 and 1440 by 900: the stage held at the drop with
+    the hitting arm painted, the credit legible on the bright sky, the clip's
+    foot faded into the stage; the time sampled every half second showed
+    the lead-in, the slow part, the hold and the loop; data saver showed the
+    drawn serve with its own label; console clean. **Not checked:** Safari
+    and Firefox (the owner's download), and LCP on the throttled profile.
+
 ## Wave 6 report
 
 The coach's posture finding, the studio's open items (marks for the coach,

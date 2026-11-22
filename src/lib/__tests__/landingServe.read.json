@@ -1,0 +1,474 @@
+{
+ "clip": "Saque_con_pelota.webm",
+ "scoringVersion": 7,
+ "serveType": "flat",
+ "overall": 79,
+ "handedness": "right",
+ "focus": {
+  "title": "Hitting elbow at drop",
+  "why": "**Bend the elbow** and lead with it. Racket head down, elbow up, arm coiled.",
+  "drill": {
+   "name": "Overhead throws",
+   "how": "Throw an old ball high and far, so it peaks well above net height. The throw puts the elbow where it belongs.",
+   "reps": "15 throws"
+  }
+ },
+ "row": "elbowAtDrop",
+ "fundamentals": [
+  {
+   "id": "toss",
+   "label": "Toss",
+   "blurb": "Everything downstream is built on where the ball goes.",
+   "phase": "toss",
+   "score": 95,
+   "status": "great",
+   "headline": "Your toss holds up. Leave it alone.",
+   "metrics": [
+    {
+     "id": "releaseHeight",
+     "label": "Release height",
+     "value": 1.248077186322733,
+     "unit": "×",
+     "display": "1.25×",
+     "readout": "Let go above the head",
+     "target": "Let go above the head",
+     "decimals": 2,
+     "ideal": [
+      0.96,
+      1.36
+     ],
+     "range": [
+      0.7,
+      1.6
+     ],
+     "score": 87,
+     "status": "great",
+     "weight": 1,
+     "insight": "You let go **at head height or higher**, so the ball has a short, steady climb.",
+     "phase": "toss",
+     "confidence": 0.4,
+     "softness": "Your camera moved during the serve, so heights here are a guess. Stand the phone on something solid."
+    },
+    {
+     "id": "tossArmHold",
+     "label": "Tossing arm timing",
+     "value": 95.45454545454545,
+     "unit": "%",
+     "display": "95%",
+     "readout": "Arm holds through contact",
+     "target": "Arm holds to the swing",
+     "decimals": 0,
+     "ideal": [
+      55,
+      100
+     ],
+     "range": [
+      0,
+      100
+     ],
+     "score": 97,
+     "status": "great",
+     "weight": 1.1,
+     "insight": "You **hold** the tossing arm up into the swing, so the chest stays open.",
+     "phase": "trophy",
+     "confidence": 1
+    }
+   ],
+   "readings": [
+    {
+     "id": "tossArmExtension",
+     "label": "Tossing arm extension",
+     "value": 166.01346812351215,
+     "unit": "°",
+     "display": "166°",
+     "readout": "Arm straight",
+     "decimals": 0,
+     "phase": "toss",
+     "confidence": 1
+    }
+   ],
+   "drill": {
+    "name": "Fence toss",
+    "how": "Stand side-on a racket from a fence and toss so the ball brushes past it, landing on one spot.",
+    "reps": "20 tosses · 15 inside a racket head"
+   }
+  },
+  {
+   "id": "loading",
+   "label": "Loading",
+   "blurb": "Legs, hips and shoulders storing energy before they unwind.",
+   "phase": "trophy",
+   "score": 86,
+   "status": "great",
+   "headline": "Solid loading. Next to work on: knee bend at trophy.",
+   "metrics": [
+    {
+     "id": "kneeBend",
+     "label": "Knee bend at trophy",
+     "value": 45.589182981714146,
+     "unit": "°",
+     "display": "46°",
+     "readout": "Knees well bent",
+     "target": "Knees well bent",
+     "decimals": 0,
+     "ideal": [
+      35,
+      80
+     ],
+     "range": [
+      0,
+      110
+     ],
+     "score": 84,
+     "status": "good",
+     "weight": 1.1,
+     "insight": "An **athletic load**: deep enough to store power, shallow enough to launch.",
+     "phase": "trophy",
+     "confidence": 1
+    },
+    {
+     "id": "shoulderTilt",
+     "label": "Shoulder tilt",
+     "value": 22.067653182306216,
+     "unit": "°",
+     "display": "22°",
+     "readout": "Hitting shoulder under the ball",
+     "target": "Hitting shoulder under the ball",
+     "decimals": 0,
+     "ideal": [
+      14,
+      36
+     ],
+     "range": [
+      -25,
+      50
+     ],
+     "score": 92,
+     "status": "great",
+     "weight": 1,
+     "insight": "Hitting shoulder **down**, tossing shoulder up. That tilt sends the racket up at the ball.",
+     "phase": "trophy",
+     "confidence": 1
+    },
+    {
+     "id": "legDrive",
+     "label": "Leg drive",
+     "value": 0.18252400626243434,
+     "unit": "×",
+     "display": "0.183×",
+     "readout": "Strong drive up",
+     "target": "Strong drive up",
+     "decimals": 3,
+     "ideal": [
+      0.032,
+      0.36
+     ],
+     "range": [
+      0,
+      0.36
+     ],
+     "score": 84,
+     "status": "good",
+     "weight": 1,
+     "insight": "You **straighten up** out of the load, and the legs feed the swing.",
+     "phase": "contact",
+     "confidence": 0.4,
+     "softness": "Your camera moved during the serve, so heights here are a guess. Stand the phone on something solid."
+    }
+   ],
+   "readings": [
+    {
+     "id": "hipShoulderSeparation",
+     "label": "Shoulders turned past the hips",
+     "value": 10.526097248830126,
+     "unit": "°",
+     "display": "11°",
+     "readout": "Slight coil",
+     "decimals": 0,
+     "phase": "trophy",
+     "confidence": 1
+    }
+   ],
+   "drill": {
+    "name": "Push throws",
+    "how": "From side-on with your knees bent, push a ball up and out to full reach, legs and hips first.",
+    "reps": "10 throws"
+   }
+  },
+  {
+   "id": "swing",
+   "label": "Swing",
+   "blurb": "The racket drop and the acceleration that follows it.",
+   "phase": "drop",
+   "score": 45,
+   "status": "work",
+   "headline": "Your arm stays **straight** through the drop, so the racket circles round your side instead of falling behind your back.",
+   "metrics": [
+    {
+     "id": "dropDepth",
+     "label": "Racket drop",
+     "value": -0.037940095905513956,
+     "unit": "×",
+     "display": "-0.038×",
+     "readout": "Hand level with the shoulder",
+     "target": "Hand level with the shoulder",
+     "decimals": 3,
+     "ideal": [
+      -0.1,
+      0.3
+     ],
+     "range": [
+      -0.25,
+      0.5
+     ],
+     "score": 79,
+     "status": "good",
+     "weight": 1.2,
+     "insight": "The racket **lays back behind you** before it fires, and that fall is where racket speed comes from.",
+     "phase": "drop",
+     "confidence": 0.34906157555645845,
+     "softness": "Your camera moved during the serve, so heights here are a guess. Stand the phone on something solid."
+    },
+    {
+     "id": "elbowAtDrop",
+     "label": "Hitting elbow at drop",
+     "value": 143.5428203365092,
+     "unit": "°",
+     "display": "144°",
+     "readout": "Arm swings straight",
+     "target": "Arm folded in an L",
+     "decimals": 0,
+     "ideal": [
+      40,
+      95
+     ],
+     "range": [
+      20,
+      170
+     ],
+     "score": 36,
+     "status": "work",
+     "weight": 1,
+     "insight": "Your arm stays **straight** through the drop, so the racket circles round your side instead of falling behind your back.",
+     "fix": "**Bend the elbow** and lead with it. Racket head down, elbow up, arm coiled.",
+     "drill": {
+      "name": "Overhead throws",
+      "how": "Throw an old ball high and far, so it peaks well above net height. The throw puts the elbow where it belongs.",
+      "reps": "15 throws"
+     },
+     "phase": "drop",
+     "confidence": 0.8726539388911461
+    },
+    {
+     "id": "dropToContact",
+     "label": "Drop to contact",
+     "value": 359.0074003303449,
+     "unit": "ms",
+     "display": "359 ms",
+     "readout": "Steered swing",
+     "target": "Explosive swing",
+     "decimals": 0,
+     "ideal": [
+      110,
+      230
+     ],
+     "range": [
+      50,
+      450
+     ],
+     "score": 36,
+     "status": "work",
+     "weight": 1,
+     "insight": "Your racket **crawls** from drop to ball, so you are guiding the swing.",
+     "fix": "**Stop steering**. Serve at easy pace but twice as loose, and extend late.",
+     "drill": {
+      "name": "Loose arm serve",
+      "how": "Serve at easy intent with a light grip and let the arm extend late.",
+      "reps": "20 serves"
+     },
+     "phase": "contact",
+     "confidence": 0.8726539388911461
+    },
+    {
+     "id": "handUnderElbow",
+     "label": "Hand under the elbow",
+     "value": 0,
+     "unit": "%",
+     "display": "0%",
+     "readout": "Hand never gets under the elbow",
+     "target": "Hand hangs under the elbow",
+     "decimals": 0,
+     "ideal": [
+      4,
+      100
+     ],
+     "range": [
+      0,
+      100
+     ],
+     "score": 65,
+     "status": "fair",
+     "weight": 0.7,
+     "insight": "Your hand **never gets under your elbow**, so the arm pushes the ball instead of throwing it.",
+     "fix": "**Let the hand hang under your elbow** as the arm goes up. Keep the grip loose.",
+     "drill": {
+      "name": "Ball in a sock",
+      "how": "Swing a ball in a sock, or a towel, through the whole motion without stopping.",
+      "reps": "15 swings"
+     },
+     "phase": "drop",
+     "confidence": 0.8726539388911461
+    }
+   ],
+   "drill": {
+    "name": "Let the racket fall",
+    "how": "Serve at half pace with one thought: let the racket fall down your back before anything else moves.",
+    "reps": "20 serves · then 10 at full pace"
+   }
+  },
+  {
+   "id": "contact",
+   "label": "Contact",
+   "blurb": "Where you meet the ball, and how much of you is behind it.",
+   "phase": "contact",
+   "score": 80,
+   "status": "good",
+   "headline": "Solid contact. Next to work on: arm extension at contact.",
+   "metrics": [
+    {
+     "id": "contactHeight",
+     "label": "Hand height at contact",
+     "value": 1.2123856909567219,
+     "unit": "×",
+     "display": "1.21×",
+     "readout": "Struck at full racket reach",
+     "target": "Struck at full racket reach",
+     "decimals": 2,
+     "ideal": [
+      1.14,
+      1.5
+     ],
+     "range": [
+      0.9,
+      1.7
+     ],
+     "score": 82,
+     "status": "good",
+     "weight": 1.3,
+     "insight": "You strike at **full stretch**, exactly where your margin over the net lives.",
+     "phase": "contact",
+     "confidence": 0.3126421470275953,
+     "softness": "Your camera moved during the serve, so heights here are a guess. Stand the phone on something solid."
+    },
+    {
+     "id": "armExtension",
+     "label": "Arm extension at contact",
+     "value": 155.9233756059881,
+     "unit": "°",
+     "display": "156°",
+     "readout": "Arm long at contact",
+     "target": "Arm long at contact",
+     "decimals": 0,
+     "ideal": [
+      145,
+      180
+     ],
+     "range": [
+      100,
+      180
+     ],
+     "score": 79,
+     "status": "good",
+     "weight": 1.2,
+     "insight": "**Long arm** at contact, with nothing left on the table.",
+     "phase": "contact",
+     "confidence": 0.7714435212176805
+    }
+   ],
+   "readings": [
+    {
+     "id": "bodyExtension",
+     "label": "Body extension",
+     "value": 0.1581691360479383,
+     "unit": "×",
+     "display": "0.158×",
+     "readout": "Up off the court",
+     "decimals": 3,
+     "phase": "contact",
+     "confidence": 0.364409605662028,
+     "softness": "Your camera moved during the serve, so heights here are a guess. Stand the phone on something solid."
+    }
+   ],
+   "drill": {
+    "name": "Hit up and out",
+    "how": "From the service line, swing up and out towards the back fence and let the racket bring the ball down.",
+    "reps": "20 serves"
+   }
+  },
+  {
+   "id": "rhythm",
+   "label": "Rhythm",
+   "blurb": "Where each piece lands against the others.",
+   "phase": "ready",
+   "score": 92,
+   "status": "great",
+   "headline": "Your rhythm holds up. Leave it alone.",
+   "metrics": [
+    {
+     "id": "loadRatio",
+     "label": "Time from trophy to contact",
+     "value": 34.61493723003622,
+     "unit": "%",
+     "display": "35%",
+     "readout": "Slow build, fast finish",
+     "target": "Slow build, fast finish",
+     "decimals": 0,
+     "ideal": [
+      22,
+      42
+     ],
+     "range": [
+      8,
+      65
+     ],
+     "score": 92,
+     "status": "great",
+     "weight": 0.8,
+     "insight": "A **clean split** between the slow build and the fast finish.",
+     "phase": "trophy",
+     "confidence": 1
+    }
+   ],
+   "readings": [
+    {
+     "id": "totalTime",
+     "label": "Motion length",
+     "value": 1121.3604003303458,
+     "unit": "ms",
+     "display": "1121 ms",
+     "readout": "Even tempo",
+     "decimals": 0,
+     "phase": "contact",
+     "confidence": 1
+    },
+    {
+     "id": "syncAtRelease",
+     "label": "Arms in sync",
+     "value": 0.009156612894152342,
+     "unit": "×",
+     "display": "0.01×",
+     "readout": "Arms rise together",
+     "decimals": 2,
+     "phase": "toss",
+     "confidence": 0.34906157555645845,
+     "softness": "Your camera moved during the serve, so heights here are a guess. Stand the phone on something solid."
+    }
+   ],
+   "drill": {
+    "name": "Count the serve",
+    "how": "Say one as both hands go down, two at the trophy, three at contact. One and two stay slow.",
+    "reps": "2 baskets · out loud"
+   }
+  }
+ ]
+}

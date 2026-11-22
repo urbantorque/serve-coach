@@ -3,7 +3,7 @@ import '../styles/info.css'
 import { Icon } from '../components/primitives'
 import { SCORE_ON_SMALL_CLIPS, SCORE_STEADY, accuracyRows, unmeasuredRows, wobbleText } from '../lib/accuracy'
 import { deviceNoun } from '../lib/device'
-import { ATTRIBUTION } from '../lib/figure/modelCredit'
+import { ATTRIBUTION, LANDING_CREDIT } from '../lib/figure/modelCredit'
 import { INFO_PAGES, INFO_TITLES, pathFor, type InfoPageId } from '../lib/routes'
 import { POLICY_DATE, SITE } from '../lib/site'
 import { FEATURES, hasPlus } from '../lib/plans'
@@ -440,6 +440,9 @@ function Credits() {
     <>
       <Section title="The model serve">
         <p className="info-cite">{ATTRIBUTION}</p>
+      </Section>
+      <Section title="The serve on the first screen">
+        <p className="info-cite">{LANDING_CREDIT}</p>
       </Section>
       <Section title="Models and tools">
         <ul className="credit-list">

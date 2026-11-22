@@ -1,4 +1,4 @@
-import { Suspense, lazy, useMemo, useState } from 'react'
+import { Suspense, lazy, useCallback, useMemo, useState } from 'react'
 import { Icon, Sheet } from '../components/primitives'
 import { engineMegabytes } from '../lib/engineManifest'
 import { NUDGE_COPY, type StorageNudge } from '../lib/storage/nudge'
@@ -7,7 +7,7 @@ import { buildProgress, currentRubricEra, streakLine, tripDay, deltaStatus, sixW
 import { momentsFor, weekRecap } from '../lib/moments'
 import MomentCard from '../components/MomentCard'
 import { programmeFor } from '../lib/programme'
-import { SAMPLE_PEEK } from '../lib/samplePeek'
+import { LANDING_PEEK } from '../lib/samplePeek'
 import { practiceHeadline, type PracticeFocus } from '../lib/practice'
 import { faultForMetric, filmable } from '../lib/analysis/progressions'
 import { fastestServe } from '../lib/speedTrend'
@@ -118,6 +118,9 @@ export default function Home({
   onStartFresh,
 }: Props) {
   const [sheet, setSheet] = useState<'session' | 'programme' | null>(null)
+  // The landing's real serve could not play, so the drawn one stands in (Apex F).
+  const [drawn, setDrawn] = useState(false)
+  const onDrawn = useCallback(() => setDrawn(true), [])
   const allow = useCan()
   const known = sessionsLoaded && sessions.length > 0
   const evidence = useMemo(() => sessionEvidence(practiceSessions), [practiceSessions])
@@ -183,20 +186,21 @@ export default function Home({
         {cutOff}
         <div className="first-stage">
           <Suspense fallback={null}>
-            <FirstRunStage racket={prefs.handedness} />
+            <FirstRunStage racket={prefs.handedness} onDrawn={onDrawn} />
           </Suspense>
           <div className="hero-veil" aria-hidden="true" />
           {/* What a report says, on the picture (N7.6): the landing shows
-              rather than promises. The sample report's own words. */}
+              rather than promises. The real serve's own read (Apex F); where
+              the drawn serve stands in for it, the label says whose read it is. */}
           <div className="first-peek">
             <span className="first-peek-score">
-              <strong className="tnum">{SAMPLE_PEEK.score}</strong>/100
+              <strong className="tnum">{LANDING_PEEK.score}</strong>/100
             </span>
             <span className="first-peek-text">
-              <span className="first-peek-label">Sample report: work on this next</span>
-              <strong>{SAMPLE_PEEK.fix}</strong>
+              <span className="first-peek-label">{drawn ? 'A real serve I read: work on this next' : 'On this serve, work on this next'}</span>
+              <strong>{LANDING_PEEK.fix}</strong>
               <span>
-                {SAMPLE_PEEK.drill}, {SAMPLE_PEEK.reps}
+                {LANDING_PEEK.drill}, {LANDING_PEEK.reps}
               </span>
             </span>
           </div>
