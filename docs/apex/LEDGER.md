@@ -225,6 +225,36 @@ Branch `apex`, cut from `main` at `b4d0e80` on 2026-11-22.
     more, console clean. The rows borrow the ladder's step style without its
     numbers, so nothing reads as an order. That left the split stylesheets at
     20.00 kB gzip, on their budget: the next screen style needs room made first.
+- [x] **C1.4 The check that closes the loop.** A serve filmed after a drill
+  block is read against that drill's fault first, at the top of its report:
+  "After Toss and point, this serve sits inside your usual spread. No change I
+  can trust yet, so keep going." (`drillLoop.ts`)
+  - **A drill block** is a drill marked done between the last filmed serve and
+    this one. It names its fault by its ladder step, or by the card row it was
+    logged against.
+  - **Past their own noise** is `baseline.ts`'s own test (the player's usual,
+    their spread, the camera's noise), asked of the fault's card row. Towards
+    the target, away from it, past the spread but inside the band ("a change,
+    not a fix"), or inside the spread ("no change I can trust yet").
+  - **Said as one serve where it cannot be more:** with too short a history to
+    know the spread, or for a fault read off the body with no card row (the
+    tray, the elbow, the trunk), the line gives that serve's verdict and says
+    it is one serve. A serve it could not read for the fault says so.
+  - `drillLoop.test.ts`: the drill names its fault, no drill means no line, a
+    drill before the last serve does not count, and each outcome on a
+    twelve-serve history with every line through the copy lint.
+  - In Chrome at 390 and 1440 (`?demo=loop`, the season with the latest
+    serve's drill marked done before it): the line above "Work on this next",
+    console clean.
+
+## Wave 2 report
+
+Wave 2 built the held frame on a phone (B2.1) and all of area C: a guided
+set that talks the player through a drill check hands-free, ten of eleven
+faults demonstrated moving (the eleventh measured to have nothing to show), a
+cited lesson for each fault, and the loop check above. Cut: a faster read
+during recording, and the coach's review of the drill library. Waiting on the
+owner: A0.2's three inputs.
 
 ## Wave 3. The loop and the studio
 

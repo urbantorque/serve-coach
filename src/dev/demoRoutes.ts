@@ -116,6 +116,20 @@ export async function runDemoRoute(
     return
   }
   /*
+   * The loop closed (C1.4): the season of practice, with the latest serve's
+   * drill marked done just before it was filmed, opened on that serve's report.
+   */
+  if (demo === 'loop') {
+    const history = sampleHistory()
+    const byTime = [...history.sessions].sort((a, b) => b.createdAt - a.createdAt)
+    const [latest, previous] = byTime
+    const drill = progressionFor('toss_arm_drops')!.steps[0].name
+    const doneAt = previous.createdAt + (latest.createdAt - previous.createdAt) / 2
+    seedHistory({ ...history, practice: [...history.practice, { id: 'loop-log', metricId: 'tossArmHold', drill, assignedAt: previous.createdAt, doneAt }] })
+    setView({ kind: 'saved', session: latest })
+    return
+  }
+  /*
    * A guided set (C1.1), on the glance after its latest serve: `?demo=guided`
    * is four serves in with that one still showing the racket drop, and
    * `?demo=guided-done` is six in and passed, where the loop back to the

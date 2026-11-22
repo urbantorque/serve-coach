@@ -33,6 +33,7 @@ import { targetDrawn } from '../lib/analysis/targetShape'
 import TargetShape from '../components/TargetShape'
 import { drillCheckLine, progressionFor, rungFor } from '../lib/analysis/progressions'
 import { ownGoodLine } from '../lib/ownGood'
+import type { LoopRead } from '../lib/drillLoop'
 import { FAULT_NAME } from '../lib/graduation'
 import TrackPlayer from '../components/TrackPlayer'
 import { replayFrom } from '../lib/storage/poseTrack'
@@ -85,6 +86,8 @@ interface Props {
   best?: Session
   /** This serve against the player's own usual and best, past their own noise. */
   self?: SelfRead
+  /** This serve against the drill done just before it, past the player's own spread (C1.4). */
+  loop?: LoopRead
   /** What this report earned, as of the day it was filmed. */
   moment?: Moment
   /** What a coach would ask first. Worked out only if a page is asked for. */
@@ -182,6 +185,7 @@ export default function Report({
   previous,
   best,
   self,
+  loop,
   moment,
   coachContext,
   sessions,
@@ -646,6 +650,12 @@ export default function Report({
           {self?.reward && (
             <p className="hero-best">
               <Cue text={self.reward.line} />
+            </p>
+          )}
+          {/* The drill just done, read first (C1.4): did this serve move past the player's own spread? */}
+          {loop && (
+            <p className="hero-best">
+              <Cue text={loop.line} />
             </p>
           )}
           <span className="t-overline hero-kicker">Work on this next</span>
