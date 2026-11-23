@@ -783,7 +783,12 @@ three inputs, the free and Plus table and prices, and Ask the coach.
   and 1440 by 900 and the galleries rebuilt
   (`docs/lift/apex-gallery.html`, `apex-gallery-laptop.html`). `STATUS.md`
   brought up to date. `apex` merged into `main` and tagged `apex-close`;
-  nothing pushed, there is no remote.
+  then, on the owner's word, the repo made public at
+  https://github.com/urbantorque/serve-coach: every branch and tag pushed,
+  the commits rewritten to GitHub's private address first (the code
+  unchanged, so commit ids quoted in these docs before the close no longer
+  match), and the September history that was on GitHub kept as the branch
+  `old-main-2026-09`.
 
 ## Wave 6 report
 

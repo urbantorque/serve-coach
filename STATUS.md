@@ -89,7 +89,7 @@ names.
 Everything only the owner can do is in `docs/next/OWNER-STEPS.md`, in order:
 what is free and what Plus costs (the Apex proposal is
 `docs/apex/PLANS-PROPOSAL.md`), a Stripe account and its prices (monthly, and
-optionally yearly and a trial), the pass keys, a domain and a git remote, the
+optionally yearly and a trial), the pass keys, a domain (the remote is done), the
 Cloudflare Pages project, a reading of the terms and privacy page, and the
 switch to live. Also: the owner's own serves in `bench-data/own/`, more licensed
 footage, the 200 MB browser download, and whether Ask the coach may ever be
@@ -98,7 +98,8 @@ switched on.
 ## Resuming this loop
 
 The Apex programme is closed: `apex` is merged into `main` and tagged
-`apex-close` (2026-11-23); nothing is pushed and there is no remote. Its last
+`apex-close` (2026-11-23), and the repo is public at
+https://github.com/urbantorque/serve-coach with every branch and tag. Its last
 independent review, before Wave 6, scored it a player 7, a designer 7, a
 coach 6.5, an engine hunter 6 and a first-time visitor 6, out of ten against
 the brief (W5.1 fixed its findings). What is left is in "What is open" and

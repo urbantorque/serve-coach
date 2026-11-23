@@ -30,8 +30,10 @@ no paywalls, no requests to any payment service.
    It prints two lines and writes nothing. The secret one is
    `ENTITLEMENT_PRIVATE_JWK`; the public one is `VITE_ENTITLEMENT_PUBLIC_JWK`.
    Do it once: a new pair stops every pass already issued.
-4. **Buy a domain**, and make a git remote for this repo (unblocks hosting and
-   a first tagged release).
+4. **Buy a domain.** The git remote is done: the repo is public at
+   https://github.com/urbantorque/serve-coach (2026-11-23), every branch and
+   tag pushed, commits under GitHub's private address. That unblocks hosting
+   and a first tagged release.
 5. **Create the Cloudflare Pages project** from the repo. Build command
    `npm run build`, output `dist`. Build settings: `VITE_SITE_URL` (the domain,
    `https://…`, no trailing slash), `VITE_SITE_OPERATOR` (your name or
