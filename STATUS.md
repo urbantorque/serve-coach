@@ -57,6 +57,16 @@ names.
   claim, refresh and the portal, tested against a local stand-in. None of it
   makes a request until the owner switches it on.
 
+## The test site
+
+**https://urbantorque.github.io/serve-coach/**, public, built and published from
+`main` on every push (`.github/workflows/pages.yml`, GitHub Pages). A first read
+of an 18 s clip there reached the report in 40 s in Chrome on a laptop
+(2026-11-24), the basket scored behind it. Payments are off. GitHub Pages sets
+no response headers, so the content security policy in `public/_headers` does
+not apply there and the swing refine runs on one thread. Not yet opened on a
+phone.
+
 ## What is open
 
 - **Nothing has run on a real phone,** and nothing has decoded in Safari's
