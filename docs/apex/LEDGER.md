@@ -708,6 +708,37 @@ three inputs, the free and Plus table and prices, and Ask the coach.
     at 54 s on this run against 45 s in W6.9, on a different serve; the scan
     itself took 21 s as before. One run, on this laptop, not on a phone.
 
+- [x] **W6.12 Smashes and forehands kept out of the serves: the toss always
+  asked.** Peak by peak, the shape test already told most of them apart: in
+  the match clip the high forehands failed the toss, and in the clip where the
+  player only receives every peak did. But the shape was believed for a clip
+  only when most peaks passed it, a guard against a camera that moves the
+  feet, so both clips were judged on reach alone and seven non-serves were
+  called serves. The guard was right about the feet and wrong about the toss,
+  which compares a hand with the head in one picture and which no camera
+  moves. Now the toss is always asked, and the still feet only where two
+  thirds of the tossed peaks kept them still (`STILL_TRUST`; half let a
+  panning camera, seven of thirteen, turn away a real serve).
+  - **Against the marks:** 12 of 13 serves found as before; non-serves called
+    serves **7 to 2**; nothing called a serve in the receiver's clip, its five
+    moments on the not-sure list. No marked serve is put aside. Every earlier
+    scan check passes, the swaying camera's among them.
+  - **Tried and not kept:** believing the feet at half, as before. It took the
+    count to 1 but put the match clip's last real serve aside: the camera
+    follows the player and the feet drift a fifth of a body a second.
+  - **Still wrong:** the smash at 98.8 s (the pointing arm is up, and the
+    player barely moves before the jump) and a jumping forehand at 101.7 s,
+    where two readings land on the line judge.
+  - **Found and fixed in passing: a blind read refused as too short.** With
+    no serve found, a picked clip is read at its end, chosen blind, and a
+    serve failing to turn up there was already told "I could not find a
+    serve in that clip." But a read that went through and was then refused
+    by the clip check said "That clip is too short to read" and sent the
+    player to film in slow motion: the receiver's 20 s clip, in the app. A
+    blind window the check refuses now gets the same no-serve refusal
+    (`scanMissed`). Checked in the app at 390 by 844: the refusal in 44 s,
+    console clean. Not checked on a phone.
+
 ## Wave 6 report
 
 The coach's posture finding, the studio's open items (marks for the coach,
@@ -720,6 +751,7 @@ to the report instead of 73 (W6.9); the landing measured on a slow phone
 profile and its serve in sooner (W6.10). Found already met: area D's moments.
 Then serve times marked by eye in the bench clips, and the serve found at
 its hit rather than its toss: 12 of 13 marked serves found, from 9 (W6.11).
-Still open: the scan is half of a first read; in match footage it calls
-smashes and high forehands serves; a coach's review of the drill library;
-and everything waiting on the owner.
+The toss is now always asked, so rally shots called serves fell from 7 to 2
+(W6.12). Still open: the scan is half of a first read; a smash and a jumping
+forehand in the match clip are still called serves; a coach's review of the
+drill library; and everything waiting on the owner.

@@ -636,6 +636,15 @@ async function poseReader(): Promise<ReadPose | undefined> {
   }
 }
 
+/** The refusal for a clip the scan found no serve in (the window then chosen blind). */
+function scanMissed(): NotAServeError {
+  return new NotAServeError('I could not find a serve in that clip.', [
+    'Trim the video to a single serve and try again.',
+    'This app scans long clips for the serve first, and nothing in this one stood out.',
+    `Filming from the side or behind, ${PLACEMENT.distance} back, makes the swing easier to pick out.`,
+  ])
+}
+
 /**
  * One scan of the clip. Borrows the caller's element when given one.
  *
@@ -1669,11 +1678,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
         // look like a serve" about a clip that is nothing but serves, the one
         // thing they will not think to do is the thing that works — trim it.
         if (err instanceof NotAServeError && !located) {
-          const missed = new NotAServeError('I could not find a serve in that clip.', [
-            'Trim the video to a single serve and try again.',
-            'This app scans long clips for the serve first, and nothing in this one stood out.',
-            `Filming from the side or behind, ${PLACEMENT.distance} back, makes the swing easier to pick out.`,
-          ])
+          const missed = scanMissed()
           if (opts.captureOnFailure) missed.capture = { frames, fps }
           throw missed
         }
@@ -1926,6 +1931,15 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // decision for whatever is rendering, and the engine's job is to be right
   // about which one it is.
   const verdict = triage(diagnosis, resilience)
+  // A window chosen blind, and the read of it refused: as with a serve that
+  // never turned up in it, that says the scan found nothing to aim at, not
+  // that the clip was too short or too blurred (W6.12). A clip where the
+  // player only receives used to reach here as "too short to read".
+  if (!located && verdict.status === 'rejected') {
+    const missed = scanMissed()
+    if (opts.captureOnFailure) missed.capture = { frames, fps }
+    throw missed
+  }
 
   // On the file's clock, because the stills and the player seek by them.
   const phases = buildPhases(frames, skel.keys, fileTimes(skel.times, stretch.factor))

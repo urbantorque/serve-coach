@@ -247,23 +247,32 @@ export const STILL_WINDOW: [number, number] = [-0.9, -0.35]
  * purpose: a pinpoint stance brings the back foot up, about a fifth of a body
  * a second, and the tracker jitters; a smash is hit on the move, a body length
  * a second or more. A phone held by hand moves the whole picture too, which is
- * what `MIN_SHAPED` is for.
+ * what `STILL_TRUST` is for.
  */
 export const STILL_SPEED = 0.6
 
 /**
- * When a clip's shapes are believed at all: at least this many peaks with a
- * serve's shape, and most of the peaks the shape could judge.
+ * When a clip's still feet are believed: at least `MIN_SHAPED` tossed peaks
+ * with still feet, and this share of the tossed peaks the feet could judge.
  *
- * The test reads the picture, and a picture can fail it for reasons of its own:
- * a camera held by hand, or panning to follow play, moves the feet in the frame
- * when the player stood still. A swaying camera passes a serve now and then, on
- * the turn of the sway, and fails the rest; a basket with a smash in it passes
- * nearly every serve. When most judged peaks fail, the shape says more about
- * the camera than the server, and every peak is judged on its reach alone, as
- * before L2.10. So the shape can only ever take a smash out of a clip that is
- * mostly serves; it cannot take the serves out of a shaky one.
+ * The feet are read in the picture, and a picture can move them for reasons of
+ * its own: a camera held by hand, or panning to follow play, moves the feet in
+ * the frame when the player stood still. A swaying camera passes a serve now
+ * and then, on the turn of the sway, and fails the rest; a basket with a smash
+ * in it passes nearly every serve. Where too few pass, the feet say more about
+ * the camera than the server and are not asked. Two thirds rather than half
+ * (W6.11): a match clip whose camera follows play passed seven of thirteen,
+ * one real serve among the six that failed.
+ *
+ * The toss is always asked (W6.11). It compares a hand with the head in one
+ * picture, which no camera moves, and every serve marked by eye in the bench
+ * clips passed it. It used to stand or fall with the feet, so a clip of a
+ * player only receiving, every peak failing the toss, was judged on reach
+ * alone and three of its moments were called serves.
  */
+export const STILL_TRUST = 2 / 3
+
+/** The fewest tossed peaks with still feet before the feet are believed at all. */
 export const MIN_SHAPED = 2
 
 /** What the shape of a peak says: a serve, something else, or nothing to judge it by. */
@@ -274,13 +283,27 @@ export type Shape = 'serve' | 'other' | 'unknown'
  * whichever was higher at the peak; the tossing hand is the other one.
  */
 export function shapeAt(samples: readonly ReachSample[], peak: ReachSample): Shape {
-  if (!peak.pose) return 'unknown'
+  const parts = shapeParts(samples, peak)
+  if (!parts) return 'unknown'
+  return !parts.tossed || parts.still === false ? 'other' : 'serve'
+}
+
+/**
+ * The two tests apart: whether the other hand went up above the head, and
+ * whether the feet held still through the load (absent where too few feet
+ * were seen). Nothing at all where the peak cannot be judged.
+ */
+export function shapeParts(
+  samples: readonly ReachSample[],
+  peak: ReachSample,
+): { tossed: boolean; still?: boolean } | undefined {
+  if (!peak.pose) return undefined
   const racket: 'left' | 'right' = peak.pose.left >= peak.pose.right ? 'left' : 'right'
   const toss = racket === 'left' ? 'right' : 'left'
   const before = samples.filter(
     (s) => s.pose && s.t >= peak.t + SHAPE_WINDOW[0] && s.t <= peak.t + SHAPE_WINDOW[1],
   )
-  if (before.length < 3) return 'unknown'
+  if (before.length < 3) return undefined
   const tossed = before.some((s) => s.pose![toss] > s.pose!.head)
 
   const footed = before.filter(
@@ -304,8 +327,7 @@ export function shapeAt(samples: readonly ReachSample[], peak: ReachSample): Sha
     const speed = Math.hypot(slope((s) => s.pose!.feetX!), slope((s) => s.pose!.feetY!))
     still = size > 0 && speed <= STILL_SPEED * size
   }
-  if (!tossed || still === false) return 'other'
-  return 'serve'
+  return { tossed, ...(still === undefined ? {} : { still }) }
 }
 
 /**
@@ -405,7 +427,19 @@ export function classifyServes(samples: ReachSample[], onsets?: readonly number[
   // Where a peak was the toss, the serve is the hit after it: its time, and
   // the shape judged from there (W6.11). Its height stays the peak's.
   const hits = new Map(peaks.map((p) => [p, hitAfterToss(byTime, p)]))
-  const read = new Map(peaks.map((p) => [p, shapeAt(byTime, hits.get(p)!)]))
+  const parts = new Map(peaks.map((p) => [p, shapeParts(byTime, hits.get(p)!)]))
+  // The feet are asked only where most tossed peaks kept them still; the toss
+  // is always asked (`STILL_TRUST`).
+  const footed = peaks.filter((p) => parts.get(p)?.tossed && parts.get(p)!.still !== undefined)
+  const stood = footed.filter((p) => parts.get(p)!.still).length
+  const feetBelieved = stood >= MIN_SHAPED && stood >= STILL_TRUST * footed.length
+  const read = new Map<ReachSample, Shape>(
+    peaks.map((p) => {
+      const q = parts.get(p)
+      if (!q) return [p, 'unknown']
+      return [p, !q.tossed || (feetBelieved && q.still === false) ? 'other' : 'serve']
+    }),
+  )
   /*
    * The fourth agreement, an impact heard (L2.9). Believed only when the
    * offset could be learned and most peaks were heard at it: a phone too far
@@ -421,10 +455,7 @@ export function classifyServes(samples: ReachSample[], onsets?: readonly number[
       else if (read.get(p) === 'unknown') read.set(p, 'serve')
     })
   }
-  const judged = [...read.values()].filter((s) => s !== 'unknown')
-  const shaped = judged.filter((s) => s === 'serve').length
-  const trusted = shaped >= MIN_SHAPED && shaped * 2 >= judged.length
-  const shapes = new Map(peaks.map((p) => [p, trusted ? read.get(p)! : ('unknown' as Shape)]))
+  const shapes = read
   const reference = peaks.filter((p) => shapes.get(p) !== 'other').sort((a, b) => a.t - b.t)
   const localBest = rollingBest(reference, peaks, ROLLING_REACH_SECONDS)
 

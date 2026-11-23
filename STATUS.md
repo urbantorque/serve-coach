@@ -75,8 +75,8 @@ names.
 - **A first read** reaches the report in about 45 s on an 18 s clip with two
   serves, the rest of the basket scored behind it (W6.9). Half of that is the
   scan that finds the serve. Against serve times marked by eye in the four
-  bench clips it finds 12 of 13 (W6.11); in match footage it still calls
-  smashes and high forehands serves.
+  bench clips it finds 12 of 13 (W6.11), and calls 2 rally shots serves where
+  it called 7 (W6.12): a smash and a jumping forehand.
 - **The drill library** has not had a coach's full review.
 - **Recording a whole practice in the app** works where the browser can write
   a file as it records (N4.4), but has not run past 150 s in a browser or on a

@@ -91,7 +91,7 @@ function score(clip: string, judge = classifyServes): Score {
 }
 
 /** What the finder managed when the marks were made; raised as it improves, never lowered. */
-const FLOOR = { hit: 12, wrong: 7 }
+const FLOOR = { hit: 12, wrong: 2 }
 
 const clips = Object.keys(marks.clips).filter((c) => scans.clips[c])
 
@@ -161,6 +161,37 @@ check('a serve whose toss reached highest is found at its hit, and a caught toss
   assert(finds.serves.every((t, i) => Math.abs(t - [3.5, 7.5][i]) < 0.1), 'a serve was not placed at its hit')
   assert(!finds.serves.some((t) => t > 9), 'a caught toss was called a serve')
   assert(TOSS_TO_HIT < MIN_SERVE_GAP, 'the hit after a toss can land past the next serve')
+})
+
+check('a clip where nobody tosses has no serves, however high the hands go (W6.11)', () => {
+  // A receiver's swings: the racket hand high, the other never above the
+  // head, feet still. Every peak fails the toss, which no camera can fake, so
+  // none is a serve; they go to the not-sure list instead.
+  const sample = (t: number, high: number): ReachSample => ({
+    t,
+    height: high,
+    pose: { left: -0.6, right: high, head: -0.35, feetX: 0.5, feetY: 0.9 },
+  })
+  const clip = Array.from({ length: 20 * 12 }, (_, i) => {
+    const t = i / 12
+    const d = Math.min(...[4, 9, 14].map((p) => Math.abs(t - p)))
+    return sample(t, d < 0.4 ? -0.2 - d * 0.5 : -0.6)
+  })
+  const finds = classifyServes(clip)
+  note(`found ${finds.serves.length}; not sure ${finds.unsure.map((t) => t.toFixed(2)).join(', ')}`)
+  assert(finds.serves.length === 0, `called ${finds.serves.length} swings with no toss serves`)
+  assert(finds.unsure.length === 3, `${finds.unsure.length} of 3 swings were put on the not-sure list`)
+})
+
+check('the saved match clips: what the stricter shape took out, it took from the non-serves', () => {
+  // The match clip's camera follows play, so its feet are not believed, and
+  // the receiver's clip has no toss in it. Before W6.11 both were judged on
+  // reach alone: seven non-serves called serves. A marked serve on the
+  // not-sure list would mean the shape had cost a real one.
+  for (const c of clips) {
+    const s = score(c)
+    assert(s.doubted.length === 0, `${c}: the marked serve at ${s.doubted.map((x) => x.t).join(', ')} was put aside as not sure`)
+  }
 })
 
 report()
