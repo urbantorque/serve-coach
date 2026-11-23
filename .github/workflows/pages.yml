@@ -1,0 +1,56 @@
+# The public test site: every push to main is built and published to
+# https://urbantorque.github.io/serve-coach/ (GitHub Pages).
+#
+# The build fetches the pose models once (`prebuild`, scripts/fetch-assets.mjs)
+# and the site serves them from its own origin, so a player's video and
+# landmarks never leave their phone. Payments stay switched off: no VITE_PAYMENTS.
+#
+# GitHub Pages cannot set response headers, so `public/_headers` (Cloudflare
+# Pages and Netlify read it) does nothing here: no content security policy,
+# and no cross-origin isolation, so the swing refine runs on one thread, as on
+# every static host so far. A copy of index.html as 404.html lets a link deep
+# into the app (/serve-coach/practice/...) open the app.
+name: Deploy the test site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+        env:
+          BASE_PATH: /serve-coach/
+      - run: cp dist/index.html dist/404.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
