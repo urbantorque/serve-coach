@@ -1,11 +1,13 @@
-import { useEffect, useRef, useState } from 'react'
-import { modelMotion } from '../lib/figure/modelMotion'
+import { Suspense, lazy, useEffect, useRef, useState, type RefObject } from 'react'
 import { paintWorkOn } from '../lib/figure/athlete'
 import { cropOn } from '../lib/figure/stage'
 import { nearSide, statureOf } from '../lib/figure/shape'
-import type { Swing } from '../lib/figure/swing'
 import type { Frame } from '../lib/analysis/types'
-import AthleteCanvas from './AthleteCanvas'
+
+const DrawnServe = lazy(() => import('./DrawnServe'))
+
+/** Whether the browser has been asked to save data: then neither the clip nor its points are fetched. */
+const savingData = () => Boolean((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData)
 
 /**
  * The first thing a new player sees: a real serve, read by the app, played the
@@ -23,16 +25,21 @@ import AthleteCanvas from './AthleteCanvas'
  * Where the clip cannot play (no decoder, data saver on, nothing after a short
  * wait) the drawn model serve stands in, as it did before. Its own chunk, so the
  * promise beside it draws at once and the serve arrives a moment later.
+ *
+ * The clip is asked for as this mounts, beside its points rather than after
+ * them: on slow 4G and a slow phone that put the serve on screen about half a
+ * second sooner (W6.10).
  */
 export default function FirstRunStage({ racket = 'right', onDrawn }: { racket?: 'left' | 'right'; onDrawn?: () => void }) {
-  const [replay, setReplay] = useState<LandingReplay | 'drawn'>()
+  // Settled before the first render, so a saver never mounts the clip.
+  const [replay, setReplay] = useState<LandingReplay | 'drawn' | undefined>(() => (savingData() ? 'drawn' : undefined))
+  const videoRef = useRef<HTMLVideoElement>(null)
   const drawn = replay === 'drawn'
   useEffect(() => {
     if (drawn) onDrawn?.()
   }, [drawn, onDrawn])
   useEffect(() => {
-    const saver = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData
-    if (saver) return setReplay('drawn')
+    if (savingData()) return
     let gone = false
     fetch(`${import.meta.env.BASE_URL}landing/serve.json`)
       .then((r) => (r.ok ? (r.json() as Promise<LandingReplay>) : Promise.reject(new Error(String(r.status)))))
@@ -42,9 +49,28 @@ export default function FirstRunStage({ racket = 'right', onDrawn }: { racket?: 
       gone = true
     }
   }, [])
-  if (!replay) return null
-  if (replay === 'drawn') return <DrawnServe racket={racket} />
-  return <RealServe replay={replay} onFailed={() => setReplay('drawn')} />
+  if (replay === 'drawn') {
+    return (
+      <Suspense fallback={null}>
+        <DrawnServe racket={racket} />
+      </Suspense>
+    )
+  }
+  return (
+    <>
+      <video
+        ref={videoRef}
+        src={`${import.meta.env.BASE_URL}landing/serve.mp4`}
+        muted
+        playsInline
+        preload="auto"
+        onError={() => setReplay('drawn')}
+        aria-hidden="true"
+        style={{ position: 'absolute', width: 2, height: 2, opacity: 0, pointerEvents: 'none' }}
+      />
+      {replay && <RealServe replay={replay} video={videoRef} onFailed={() => setReplay('drawn')} />}
+    </>
+  )
 }
 
 /** What `scripts/landing-serve.mjs` writes: the replay's picture points, times from the trimmed clip's start. */
@@ -72,9 +98,8 @@ const REST_MS = 700
 /** How long the clip may take to give a first frame before the drawn serve stands in. */
 const PATIENCE_MS = 2500
 
-function RealServe({ replay, onFailed }: { replay: LandingReplay; onFailed: () => void }) {
+function RealServe({ replay, video: videoRef, onFailed }: { replay: LandingReplay; video: RefObject<HTMLVideoElement>; onFailed: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const videoRef = useRef<HTMLVideoElement>(null)
   const failed = useRef(onFailed)
   failed.current = onFailed
 
@@ -242,20 +267,10 @@ function RealServe({ replay, onFailed }: { replay: LandingReplay; onFailed: () =
       video.removeEventListener('seeked', hold)
       video.pause()
     }
-  }, [replay])
+  }, [replay, videoRef])
 
   return (
     <>
-      <video
-        ref={videoRef}
-        src={`${import.meta.env.BASE_URL}landing/serve.mp4`}
-        muted
-        playsInline
-        preload="auto"
-        onError={() => failed.current()}
-        aria-hidden="true"
-        style={{ position: 'absolute', width: 2, height: 2, opacity: 0, pointerEvents: 'none' }}
-      />
       <canvas
         ref={canvasRef}
         className="stage-canvas"
@@ -269,26 +284,5 @@ function RealServe({ replay, onFailed }: { replay: LandingReplay; onFailed: () =
         </a>
       </p>
     </>
-  )
-}
-
-function DrawnServe({ racket }: { racket: 'left' | 'right' }) {
-  const [swing, setSwing] = useState<Swing>()
-  useEffect(() => {
-    const m = modelMotion(racket)
-    if (m) setSwing({ frames: m.frames, moments: Object.fromEntries(m.phases.map((p) => [p.id, p.frame])), racket })
-  }, [racket])
-  if (!swing) return null
-  return (
-    <AthleteCanvas
-      swing={swing}
-      mode="loop"
-      at={swing.moments.contact ?? 0}
-      rate={0.4}
-      // Feet at 70%, not 84% (N7.6): the peek sits under the serve.
-      fit={{ height: 0.48, feet: 0.7, across: 0.44 }}
-      label="A real serve from a motion capture lab, playing slowly."
-      className="stage-canvas"
-    />
   )
 }

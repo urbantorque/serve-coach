@@ -68,9 +68,10 @@ names.
   paints the body part the fix is about, but draws the target figure on 1 of
   7 serves, by the rule that no picture-space shape is re-measured as a 3D
   angle.
-- **The front door** plays a licensed real serve with its own read; its load
-  time is not measured on the throttled profile, and Ask the coach is not
-  built (egress, the owner's call).
+- **The front door** plays a licensed real serve with its own read. On slow
+  4G with a four times slower processor its LCP is 1.7 to 1.9 s and the clip
+  is in by 2.6 s (W6.10), measured in Chrome, not on a phone. Ask the coach
+  is not built (egress, the owner's call).
 - **A first read** reaches the report in about 45 s on an 18 s clip with two
   serves, the rest of the basket scored behind it (W6.9). Half of that is the
   scan that finds the serve, which also missed two of the four serves in one

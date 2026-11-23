@@ -652,6 +652,24 @@ three inputs, the free and Plus table and prices, and Ask the coach.
     Not fixed here: the rule that judges a peak a serve is tuned on these
     samples, and changing it needs labelled serve times, which no clip has.
 
+- [x] **W6.10 The landing's load, measured on a slow phone, and the serve
+  sooner.** The production build, a fresh browser at 390 by 844, slow 4G
+  (150 ms, 1.6 Mbps down) and the processor slowed four times, three runs:
+  **LCP 1.7 to 1.9 s**, the opening paragraph (the serve plays on a canvas,
+  which LCP does not count). The serve itself came later: the stage's chunk
+  pulled in the drawn stand-in's model motion (15 kB) though the real serve
+  played, and the clip was asked for only once its points had come, so the
+  92 kB clip finished at **2.90 s** and the stage stood dark until then. Now
+  the drawn serve is its own chunk, fetched only when it stands in, and the
+  clip is asked for as the stage mounts, beside its points: the clip
+  finishes at **2.59 s** (three runs, 2.59 to 2.62), LCP unchanged.
+  - Checked in Chrome against the build: with data saver neither landing
+    file is asked for and the drawn serve plays; with the clip failing, the
+    drawn serve stands in and the peek says "A real serve I read"; normally
+    the real serve plays with its credit. Console clean. Entry chunk 383.15
+    kB raw, 130.72 kB gzip.
+  - **Not measured:** a real phone, Safari, Firefox.
+
 ## Wave 6 report
 
 The coach's posture finding, the studio's open items (marks for the coach,
