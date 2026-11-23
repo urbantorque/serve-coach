@@ -3,8 +3,20 @@ import { hearPeaks } from '../audio/fuse'
 /** Two peaks closer together than this are one serve, not two. */
 export const MIN_SERVE_GAP = 1.6
 
-/** The sample rate the peak heights are reliable at. */
+/**
+ * The rate peak heights are reliable at: each candidate is re-read at it. Not
+ * lowered with the first pass (W6.14): at 8 a second the synthetic sessions
+ * under-read a serve's peak and lost one in ten to the reach bar.
+ */
 export const SCAN_FPS = 12
+
+/**
+ * The rate the whole clip is first read at, to find where to look closer
+ * (W6.14). A serve's hand stays above the resting height for about 0.9 s, so
+ * four a second puts three or four readings into every rise. A short clip
+ * used to be read whole at 12 a second: half the wait for a first read.
+ */
+export const FIRST_PASS_FPS = 4
 
 /**
  * How many frames the locating scan may read, however long the clip is.
@@ -45,8 +57,9 @@ export interface ScanPlan {
   /** Gap between samples. */
   step: number
   /**
-   * True when the budget forced a rate below `SCAN_FPS`, so peak heights from
-   * this pass are under-read and candidates need a second look.
+   * True when peak heights from this pass are under-read and the candidates
+   * need a second look at `SCAN_FPS`: every clip since W6.14, which reads the
+   * whole clip at `FIRST_PASS_FPS` first.
    */
   coarse: boolean
 }
@@ -54,13 +67,12 @@ export interface ScanPlan {
 /**
  * Where to sample when locating the serves in a clip.
  *
- * Short clips are sampled at the full rate, exactly as before — most clips are a
- * few seconds and nothing should change for them. Long ones are spread across
- * the same fixed budget, which makes the scan slower per second of footage but
- * bounded in total.
+ * The whole clip at `FIRST_PASS_FPS`, then (`planRefinement`) a closer look
+ * around each candidate. A long clip is spread across the same fixed budget,
+ * which makes the scan slower per second of footage but bounded in total.
  */
 export function planScan(duration: number, budget = SCAN_BUDGET): ScanPlan {
-  const ideal = 1 / SCAN_FPS
+  const ideal = 1 / FIRST_PASS_FPS
   const span = Math.max(0, duration)
   const wanted = Math.max(2, Math.floor(span / ideal))
 
@@ -68,7 +80,7 @@ export function planScan(duration: number, budget = SCAN_BUDGET): ScanPlan {
     return {
       times: Array.from({ length: wanted }, (_, i) => i * ideal),
       step: ideal,
-      coarse: false,
+      coarse: true,
     }
   }
 
@@ -159,11 +171,27 @@ export const MAX_SERVES = 8
  * clip's noisiest resting moment as if it were a located serve.
  */
 function restingFloor(samples: ReachSample[]): number | null {
-  const heights = samples.map((s) => s.height).sort((a, b) => a - b)
-  const middle = heights[heights.length >> 1]
-  const highest = heights[heights.length - 1]
+  const middle = restingHeight(samples)
+  const highest = Math.max(...samples.map((s) => s.height))
   if (highest - middle < 1e-6) return null
   return middle + (highest - middle) * 0.25
+}
+
+/**
+ * The clip's resting hand height: the median of one reading per
+ * `1 / FIRST_PASS_FPS` of the clip (W6.14). The median of every reading leans
+ * towards the peaks once the closer look around them is most of the readings,
+ * as it is since a short clip's first pass is sparse: the bar a serve is held
+ * to then tightened, and two serves in a licensed clip fell below it.
+ */
+export function restingHeight(samples: readonly ReachSample[]): number {
+  const one = new Map<number, number>()
+  for (const s of [...samples].sort((a, b) => a.t - b.t)) {
+    const slot = Math.floor(s.t * FIRST_PASS_FPS)
+    if (!one.has(slot)) one.set(slot, s.height)
+  }
+  const heights = [...one.values()].sort((a, b) => a - b)
+  return heights[heights.length >> 1]
 }
 
 export function peakCandidates(samples: ReachSample[], count = Infinity): number[] {
@@ -314,15 +342,25 @@ export function shapeParts(
   if (footed.length >= 3 && span >= 0.2) {
     // The body's height in the picture: from the nose (minus its height) to the feet.
     const size = footed.map((s) => s.pose!.feetY! + s.pose!.head).sort((a, b) => a - b)[footed.length >> 1]
-    // How fast the feet travel, from a straight line through them rather than
-    // the farthest two: a speed does not depend on how much of the window the
-    // scan happened to sample, and a line through jitter is nearly flat.
+    // How fast the feet travel, from a line through them rather than the
+    // farthest two: a speed does not depend on how much of the window the scan
+    // happened to sample, and a line through jitter is nearly flat. The median
+    // of the slopes between every two readings, not a least-squares line
+    // (W6.14): one reading where the tracker jumped to another body, a third of
+    // the frame away, made a still serve in a licensed clip run at a body a
+    // second, and the median does not move for one.
     const slope = (pick: (s: ReachSample) => number) => {
-      const mt = footed.reduce((a, s) => a + s.t, 0) / footed.length
-      const mv = footed.reduce((a, s) => a + pick(s), 0) / footed.length
-      const num = footed.reduce((a, s) => a + (s.t - mt) * (pick(s) - mv), 0)
-      const den = footed.reduce((a, s) => a + (s.t - mt) ** 2, 0)
-      return den > 0 ? num / den : 0
+      const slopes: number[] = []
+      for (let i = 0; i < footed.length; i++) {
+        for (let j = i + 1; j < footed.length; j++) {
+          const dt = footed[j].t - footed[i].t
+          if (dt > 1e-6) slopes.push((pick(footed[j]) - pick(footed[i])) / dt)
+        }
+      }
+      if (!slopes.length) return 0
+      slopes.sort((a, b) => a - b)
+      const mid = slopes.length >> 1
+      return slopes.length % 2 ? slopes[mid] : (slopes[mid - 1] + slopes[mid]) / 2
     }
     const speed = Math.hypot(slope((s) => s.pose!.feetX!), slope((s) => s.pose!.feetY!))
     still = size > 0 && speed <= STILL_SPEED * size
@@ -415,7 +453,7 @@ export function classifyServes(samples: ReachSample[], onsets?: readonly number[
   if (floor === null) return { serves: [], unsure: [] }
 
   const ranked = [...samples].sort((a, b) => b.height - a.height)
-  const resting = ranked[ranked.length >> 1].height
+  const resting = restingHeight(samples)
   const byTime = [...samples].sort((a, b) => a.t - b.t)
 
   const peaks: ReachSample[] = []

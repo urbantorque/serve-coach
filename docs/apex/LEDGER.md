@@ -749,6 +749,34 @@ three inputs, the free and Plus table and prices, and Ask the coach.
   be seen (checked at 375 by 812, console clean). The remaining smash and
   forehand in the match clip are not chased further.
 
+- [x] **W6.14 A sparser first look for the serve: 23 to 37% fewer readings,
+  the same serves found.** A short clip was read whole at 12 readings a
+  second to find its serves, about half the wait for a first read. Now every
+  clip is read first at 4 a second (`FIRST_PASS_FPS`), and each candidate
+  peak is re-read at 12 for 0.9 s either side, as long clips already were.
+  - **Readings, from the scans saved in the app:** the 18 s clip 216 to 167,
+    the 48 s clip 640 to 401, the receiver's 20 s clip 241 to 178; the 2
+    minute match clip unchanged (it was already read sparse first).
+  - **Against the marks:** 12 of 13 serves at normal speed, 2 rally shots
+    called serves, as before; one slow-motion serve found that was not. The
+    saved scans of the old plan give the same 12 of 13 with the new judging.
+  - **Two weaknesses found on the way, fixed.** The feet's speed came from a
+    least-squares line, and one reading where the tracker jumped a third of
+    the frame made a still serve run at a body a second: now the median of
+    the slopes between every two readings. And the clip's resting height was
+    the median of every reading, which leans towards the peaks once the
+    closer look is most of the readings, so the bar tightened and two serves
+    fell under it: now the median of one reading per quarter second
+    (`restingHeight`). Every scan check passes, the synthetic sessions with
+    smashes, shadows and a swaying camera among them.
+  - **Tried and not kept:** re-reading the candidates at 8 a second. The
+    marks held, but the synthetic sessions under-read a serve's peak and lost
+    one in ten to the reach bar.
+  - **Not measured: the wait itself.** Four first reads in the app, old and
+    new in turn, were swamped by the laptop's load (the same framing check
+    took 6.5 to 13 s). At this clip's 21 s, 23% fewer readings is about 5 s;
+    a quiet machine or a phone would say.
+
 ## Wave 6 report
 
 The coach's posture finding, the studio's open items (marks for the coach,

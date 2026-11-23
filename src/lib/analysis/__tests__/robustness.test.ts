@@ -46,6 +46,7 @@ import { measure } from '../metrics'
 import {
   MAX_SERVES,
   MIN_SERVE_GAP,
+  FIRST_PASS_FPS,
   SCAN_BUDGET,
   SCAN_FLOOR_FPS,
   SCAN_FPS,
@@ -434,12 +435,14 @@ function basketSamples(count: number, gap: number, step: number, duration: numbe
   return { samples, peaks }
 }
 
-check('a short clip is sampled exactly as it always was', () => {
-  // Most clips are a few seconds. Nothing about them should change.
+check('a short clip is read whole at four a second, then closer around its peaks (W6.14)', () => {
+  // It was read whole at `SCAN_FPS`, half the wait for a first read. Now the
+  // first pass is sparser and the candidates are re-read at the full rate.
   const plan = planScan(4)
-  assert(!plan.coarse, 'a four-second clip was treated as needing a budget')
-  near(plan.step, 1 / SCAN_FPS, 1e-9, 'step on a short clip')
-  assert(plan.times.length === 48, `sampled ${plan.times.length} times, expected 48`)
+  assert(plan.coarse, 'a four-second clip was not given a closer look')
+  near(plan.step, 1 / FIRST_PASS_FPS, 1e-9, 'step on a short clip')
+  assert(plan.times.length === 16, `sampled ${plan.times.length} times, expected 16`)
+  assert(FIRST_PASS_FPS >= SCAN_FLOOR_FPS, 'the first pass is sparser than the floor a long clip keeps')
 })
 
 check('the scan reads the budget, or three samples a second past it, and nothing more (L2.1)', () => {
@@ -450,7 +453,7 @@ check('the scan reads the budget, or three samples a second past it, and nothing
   for (const minutes of [0.5, 1, 2, 3, 10, 30]) {
     const duration = minutes * 60
     const plan = planScan(duration)
-    const expected = duration <= SCAN_BUDGET / SCAN_FPS ? Math.max(2, Math.floor(duration * SCAN_FPS)) : Math.max(SCAN_BUDGET, Math.ceil(duration * SCAN_FLOOR_FPS))
+    const expected = duration <= SCAN_BUDGET / FIRST_PASS_FPS ? Math.max(2, Math.floor(duration * FIRST_PASS_FPS)) : Math.max(SCAN_BUDGET, Math.ceil(duration * SCAN_FLOOR_FPS))
     note(`${minutes} min: ${plan.times.length} coarse samples, one every ${plan.step.toFixed(2)} s`)
     assert(Math.abs(plan.times.length - expected) <= 1, `${minutes} min read ${plan.times.length}, expected ${expected}`)
     assert(plan.step <= 1 / SCAN_FLOOR_FPS + 1e-9, `${minutes} min was read every ${plan.step.toFixed(2)} s`)
