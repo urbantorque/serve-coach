@@ -211,6 +211,8 @@ export async function runDemoRoute(
         handedness: 'right',
         mode: 'every',
         found,
+        // Two swings that were not serves, left out and only counted (W6.13).
+        unsure: [found[3] + 6, found[17] + 6],
         chosen: found.map((_, i) => i),
         lines,
         phase: 'done',

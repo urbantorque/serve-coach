@@ -97,7 +97,7 @@ check('the finished session draws every part it has data for', () => {
   }
   assert(done.includes('data:image/jpeg;base64,AAAA'), 'the kept still was not drawn')
   const withUnsure = draw({ unsure: [40, 90] }, { state: 'done' }, false)
-  assert(withUnsure.includes('2 overheads reached like a serve'), 'the overheads left out were not counted')
+  assert(withUnsure.includes('I left out 2 swings that were not serves.'), 'the swings left out were not counted')
   const one = draw({ lines: lines.slice(0, 1) }, { state: 'done' })
   assert(!one.includes('Every serve'), 'a section with nothing to draw kept its heading')
   const none = draw({ found: [], chosen: [], lines: [] }, { state: 'done' })

@@ -68,13 +68,14 @@ export function sinceLine(now: number, before: number): string {
 export const goneLine = (flaw: FlawId): string =>
   cue(`Gone from most serves since last time: ${flawTitle(flaw).toLowerCase()}.`)
 
-/** The overheads left out, said once under the counts (L2.10). */
+/**
+ * The swings left out, said once under the counts (L2.10). Only serves are
+ * read: a smash, a forehand finishing high or a swing with no toss is counted
+ * here and never graded (W6.13). It said "hit on the move", which since the
+ * toss is always asked (W6.12) is not the only reason one is left out.
+ */
 export const unsureLine = (n: number): string =>
-  cue(
-    n === 1
-      ? 'One overhead reached like a serve but was hit on the move, so I left it out.'
-      : `${n} overheads reached like a serve but were hit on the move, so I left them out.`,
-  )
+  cue(n === 1 ? 'I left out one swing that was not a serve.' : `I left out ${n} swings that were not serves.`)
 
 /** What the fixes say when there are none to give. */
 export const noFixLine = (read: number): string =>

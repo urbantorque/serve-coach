@@ -739,6 +739,16 @@ three inputs, the free and Plus table and prices, and Ask the coach.
     (`scanMissed`). Checked in the app at 390 by 844: the refusal in 44 s,
     console clean. Not checked on a phone.
 
+- [x] **W6.13 Serves only: other shots left out, never graded.** The owner's
+  call, asked whether to chase the last smash and jumping forehand: focus on
+  serves, do not grade other shots. Checked: nothing a scan sets aside is
+  read or scored anywhere; a whole practice only counts them. Their line said
+  "overheads ... hit on the move", which since W6.12 is not the only reason a
+  swing is left out (a forehand, a return, no toss). It now says "I left out 2
+  swings that were not serves." The session demo carries two, so the line can
+  be seen (checked at 375 by 812, console clean). The remaining smash and
+  forehand in the match clip are not chased further.
+
 ## Wave 6 report
 
 The coach's posture finding, the studio's open items (marks for the coach,
@@ -752,6 +762,6 @@ profile and its serve in sooner (W6.10). Found already met: area D's moments.
 Then serve times marked by eye in the bench clips, and the serve found at
 its hit rather than its toss: 12 of 13 marked serves found, from 9 (W6.11).
 The toss is now always asked, so rally shots called serves fell from 7 to 2
-(W6.12). Still open: the scan is half of a first read; a smash and a jumping
-forehand in the match clip are still called serves; a coach's review of the
-drill library; and everything waiting on the owner.
+(W6.12). Serves only, other shots left out and never graded (W6.13). Still
+open: the scan is half of a first read; a coach's review of the drill
+library; and everything waiting on the owner.
