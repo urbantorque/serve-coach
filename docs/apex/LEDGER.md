@@ -615,6 +615,43 @@ three inputs, the free and Plus table and prices, and Ask the coach.
   **Not checked,** as N4.4 said: a practice past the 150 s session line in a
   browser, and on a phone.
 
+- [x] **W6.9 The first serve of a basket shows while the rest are scored.**
+  Timed in the app as a first visitor meets it (390 by 844, a fresh browser,
+  the dev server, `Saque_con_pelota`, 18 s, two serves found): **73 s** from
+  the pick to the report, of which the last **21 s** was the basket sweep. A
+  picked clip with more than one serve was scored serve by serve on the
+  waiting screen before the serve already read was shown. Now the report
+  comes up at **45 to 46 s** (two runs) and the sweep runs behind it: a line
+  in the basket panel says "I am scoring each serve in this clip to compare
+  them, 1 of 2 done." with a Stop, and the consistency line takes its place
+  when it lands (20 to 26 s later). The result lands only on the report it
+  started from (`sweepMayLand`, tested); a player who has moved on is not
+  pulled back, and the result is saved either way. The sweep still re-reads
+  the serve on screen, so every serve it compares is read the same way.
+  - **The report while it scores,** in Chrome on this laptop: 59 frames a
+    second against 60 after, nine long tasks in 20 s, the worst 68 ms. A
+    phone will feel it more; not measured on one.
+  - **Where the rest goes,** stage by stage in the app: the framing check 6
+    to 8 s, finding the serve 21 to 24 s, tracking the body 6 s, the key
+    positions 3 s, sharpening the swing 3 s, the ball and the racket 4 s.
+    The scan that finds the serve is half the wait.
+  - **Tried and not kept: reading the scan by playing the clip.** A scan
+    sample is a seek, and a seek restarts the decoder from a keyframe: 216
+    of them cost 16 s of seeking and 13 s of reading on this clip. Played
+    through at 4 times speed, the same scan took 4.6 s. But the pose model
+    follows the body from one reading to the next, so samples read out of
+    order (to fill what playback skipped) read up to 0.09 of the frame
+    differently, and which frames a fast playback shows changes run to run:
+    four runs found two, three or four serves in one clip. Playing at normal
+    speed, pausing for each reading, reads the same frames every run, but was
+    no faster on the 18 s clip, slower on the 40 s and 2 minute ones (85 s
+    against 67, 265 against 233), and turned a refused Sharapova clip into a
+    read with its moments collapsed together. Reverted.
+  - **Found: the scan misses serves.** By eye, `Saque_con_pelota` holds four
+    serves (near 2, 6, 10.5 and 15.8 s); the scan finds two, on every run.
+    Not fixed here: the rule that judges a peak a serve is tuned on these
+    samples, and changing it needs labelled serve times, which no clip has.
+
 ## Wave 6 report
 
 The coach's posture finding, the studio's open items (marks for the coach,

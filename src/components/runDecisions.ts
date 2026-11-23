@@ -29,6 +29,15 @@ export function sweepAfterRead(o: { glance: boolean; serves: number; refused: bo
   return !o.glance && o.serves > 1 && !o.refused && o.clipOpen
 }
 
+/**
+ * Whether a sweep running behind the report (Apex A) may put its result up:
+ * only while the report it started from is still the one on screen. A player
+ * who has moved on is not pulled back; the result is saved either way.
+ */
+export function sweepMayLand(now: { kind: string; analysis?: { id: string } }, id: string): boolean {
+  return (now.kind === 'report' || now.kind === 'glance') && now.analysis?.id === id
+}
+
 /** The largest clip read at all: past this a phone runs out of memory decoding it. */
 export const MAX_BYTES = 400 * 1024 * 1024
 

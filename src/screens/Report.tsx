@@ -156,6 +156,10 @@ interface Props {
   statedTier?: number
   /** Measure every serve in the clip and compare them. */
   onCheckConsistency?: () => void
+  /** Every serve in the basket being scored behind this report (Apex A), and how far it has got. */
+  scoring?: { done: number; total: number; stopping?: boolean }
+  /** Stop scoring; what was scored is still compared. */
+  onStopScoring?: () => void
   /** The best and worst serve as pictures, while the clip they came from is open. */
   servePair?: ServePairFrames
   /** The tightest best-against-worst gap swept across every basket. */
@@ -187,6 +191,9 @@ interface Props {
   /** The player's first serve, which any plan reads in full (N6.4). */
   firstServe?: boolean
 }
+
+/** The scoring line and its stop, on one row. Inline: the report's stylesheet is at its budget. */
+const SCORING_ROW = { display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' } as const
 
 /** A saved session has no `frames`, so the player is only offered live. */
 const isLive = (a: Analysis | Session): a is Analysis =>
@@ -232,6 +239,8 @@ export default function Report({
   onFlipHandedness,
   onPickServe,
   onCheckConsistency,
+  scoring,
+  onStopScoring,
   onPickServeType,
   onPickTier,
   statedTier,
@@ -965,6 +974,20 @@ export default function Report({
               <Cue text={consistencyHeadline(consistency)} />
             </p>
           )}
+          {scoring && !consistency && (
+            <div className="serves-scoring" style={SCORING_ROW}>
+              <p className="serves-spread" role="status">
+                {scoring.stopping
+                  ? 'Stopping. I will compare the serves already scored.'
+                  : `I am scoring each serve in this clip to compare them, ${scoring.done} of ${scoring.total} done.`}
+              </p>
+              {onStopScoring && !scoring.stopping && (
+                <button type="button" className="chip chip--button" onClick={onStopScoring} aria-label="Stop scoring the serves">
+                  Stop
+                </button>
+              )}
+            </div>
+          )}
           {onPickServe && (
             <div className="serves-pick">
               {Array.from({ length: analysis.serves.count }, (_, i) => (
@@ -1046,7 +1069,7 @@ export default function Report({
               </section>
             )}
 
-            {analysis.serves && analysis.serves.count > 1 && onCheckConsistency && !consistency && (
+            {analysis.serves && analysis.serves.count > 1 && onCheckConsistency && !consistency && !scoring && (
               <section className="serves-compare">
                 <button className="btn btn--ghost btn--full" onClick={onCheckConsistency}>
                   <Icon name="target" size={16} />

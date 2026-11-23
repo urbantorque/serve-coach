@@ -27,7 +27,7 @@ import { applyWhenIdle, onUpdateWaiting } from '../lib/updates'
 import type { SweepProgress } from '../screens/Analyzing'
 import { loadAnalysis, loadAnalyzing, loadReport, loadSessionScreen, loadSessionLive, loadGlance } from '../appLoaders'
 import type { View } from '../App'
-import { earlyRefusal, readFailure, sweepAfterRead, updateMayLand } from './runDecisions'
+import { earlyRefusal, readFailure, sweepAfterRead, sweepMayLand, updateMayLand } from './runDecisions'
 
 
 /** What the work needs from the app around it, by the names it used there. */
@@ -87,6 +87,9 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
   /** The session view as last rendered, for the callbacks that start and stop it. */
   const sessionViewRef = useRef<Extract<View, { kind: 'session' }>>()
   sessionViewRef.current = view.kind === 'session' ? view : undefined
+  /** The view as last rendered, so a sweep behind the report lands only where the player still is. */
+  const viewRef = useRef(view)
+  viewRef.current = view
 
   /*
    * Take a waiting version the moment nothing would be lost by it.
@@ -336,12 +339,22 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
    * Every serve is surfaced as it lands rather than at the end, which is what
    * makes stopping early survivable: the screen fills in serve by serve, and
    * whatever was measured before the player stopped is still compared.
+   *
+   * `behind`: the report is already up and this runs under it (Apex A, the
+   * first serve shown while the rest read). The report says how far it has got
+   * and offers a stop; what it finds lands on the report only while that
+   * report is still the one on screen, and is saved either way.
    */
   const compareServes = useCallback(
-    async (analysis: Analysis) => {
+    async (analysis: Analysis, behind = false) => {
       const file = lastFileRef.current
       const url = urlRef.current
       if (!file || !url) return
+      /** Put a report up: always for a sweep in front, only over its own report for one behind. */
+      const land = (next: View) => {
+        if (!behind) return setView(next)
+        if (sweepMayLand(viewRef.current, analysis.id)) setView(next)
+      }
 
       abortRef.current?.abort()
       const controller = new AbortController()
@@ -354,11 +367,13 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
       const { analyzeAllServes, sweepWindow, throttleProgress, withoutComparison } = await loadAnalysis()
       const { first, total } = sweepWindow(analysis.serves.count)
       setSweep({ total, firstNumber: first + 1, done: [] })
-      setProgress({ step: 'engine', ratio: 0, detail: 'Comparing your serves' })
-      liveFrames.current = []
-      void loadReport()
-      void loadGlance()
-      setView({ kind: 'analyzing', fileName: file.name || 'Your serve' })
+      if (!behind) {
+        setProgress({ step: 'engine', ratio: 0, detail: 'Comparing your serves' })
+        liveFrames.current = []
+        void loadReport()
+        void loadGlance()
+        setView({ kind: 'analyzing', fileName: file.name || 'Your serve' })
+      }
 
       try {
         const swept = await analyzeAllServes({
@@ -371,7 +386,8 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
           serveType: analysis.serveType,
           count: analysis.serves.count,
           signal: controller.signal,
-          onProgress: throttleProgress(setProgress),
+          // Behind the report, the report's own line says how far it has got.
+          onProgress: behind ? undefined : throttleProgress(setProgress),
           // Each serve as it is measured, so a run of full analysis passes is
           // visible while it happens instead of arriving all at once at the end.
           onServe: ({ number, analysis: serve }) =>
@@ -412,14 +428,14 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
           // nothing is wrong with the clip, so this is not an error screen —
           // it is the report they launched the sweep from, exactly as it was.
           if (swept.cancelled) {
-            setView({ kind: 'report', analysis, videoUrl: url })
+            if (!behind) setView({ kind: 'report', analysis, videoUrl: url })
             return
           }
           // Too few readable serves to compare. The report it started from was
           // read and saved already, so it stays on screen with a line saying
           // why there is no comparison, rather than an error screen in its
           // place (L1.7, `withoutComparison`).
-          setView({ kind: 'report', analysis: withoutComparison(analysis, swept.serves.length, swept.attempted), videoUrl: url })
+          land({ kind: 'report', analysis: withoutComparison(analysis, swept.serves.length, swept.attempted), videoUrl: url })
           return
         }
 
@@ -439,7 +455,7 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
         // that this screen no longer has by the time it gets here. Absent on a
         // sweep the player stopped, which is deliberate — see `analyzeAllServes`.
         // They still go no further than the screen.
-        setPair(swept.pair)
+        if (!behind || sweepMayLand(viewRef.current, analysis.id)) setPair(swept.pair)
 
         // The basket against the ladder of the fault the player was drilling
         // — the top of the week plan before this report (L3.4) — and only
@@ -456,11 +472,11 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
           : undefined
         const measured: Analysis = { ...analysis, consistency: result, ...(drillCheck ? { drillCheck } : {}) }
         remember({ sessionKey: measured.id, handedness: measured.handedness }, measured)
-        setView({ kind: 'report', analysis: measured, videoUrl: url })
+        land({ kind: 'report', analysis: measured, videoUrl: url })
         void trySave(measured)
       } catch (err) {
         if (abortRef.current !== controller || err instanceof Cancelled) return
-        setView({ kind: 'report', analysis, videoUrl: url })
+        if (!behind) setView({ kind: 'report', analysis, videoUrl: url })
       } finally {
         // Guarded, so a sweep that was superseded cannot wipe the rows of the
         // run that replaced it.
@@ -727,7 +743,11 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
           clipOpen: Boolean(lastFileRef.current && urlRef.current),
         })
       ) {
-        await compareServes(analysis)
+        // The serve first, the rest behind it (Apex A): a basket used to
+        // keep the player on the waiting screen through a whole pass per
+        // serve before showing the one already read.
+        show()
+        void compareServes(analysis, true)
         return
       }
       show()

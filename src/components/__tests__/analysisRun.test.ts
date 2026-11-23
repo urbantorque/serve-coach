@@ -7,7 +7,7 @@
 import fsUntyped from 'fs'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server.browser'
-import { sweepAfterRead, updateMayLand } from '../runDecisions'
+import { sweepAfterRead, sweepMayLand, updateMayLand } from '../runDecisions'
 import { useAnalysisRun, type AnalysisRunDeps } from '../useAnalysisRun'
 import { useHistoryLookups } from '../useHistoryLookups'
 import { useSets } from '../useSets'
@@ -39,6 +39,15 @@ check('a basket is swept after its first serve only when there is one to sweep',
   assert(!sweepAfterRead({ ...base, refused: true }), 'a refused read was swept six more times')
   assert(!sweepAfterRead({ ...base, clipOpen: false }), 'a clip no longer open was swept')
   assert(!sweepAfterRead({ ...base, glance: true }), 'a basket recorded on court was swept there')
+})
+
+check('a basket scored behind its report lands only on that report (Apex A)', () => {
+  const own = { id: 'clip#2' }
+  assert(sweepMayLand({ kind: 'report', analysis: own }, 'clip#2'), 'the report it started from was not updated')
+  assert(sweepMayLand({ kind: 'glance', analysis: own }, 'clip#2'), 'its glance was not updated')
+  assert(!sweepMayLand({ kind: 'report', analysis: { id: 'clip#1' } }, 'clip#2'), 'another serve report was replaced')
+  assert(!sweepMayLand({ kind: 'home' }, 'clip#2'), 'a player who went home was pulled back')
+  assert(!sweepMayLand({ kind: 'progress' }, 'clip#2'), 'a player reading their progress was pulled back')
 })
 
 /** Mount a hook in a component and hand back what it returned. */

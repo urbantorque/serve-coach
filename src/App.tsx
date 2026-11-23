@@ -1018,6 +1018,8 @@ export default function App() {
                   : undefined
               }
               servePair={liveReport ? pair : undefined}
+              scoring={liveReport && sweep ? { done: sweep.done.length, total: sweep.total, stopping: sweep.stopping } : undefined}
+              onStopScoring={stopSweep}
               saveWarning={liveReport ? saveWarning : undefined}
             />
           )}
