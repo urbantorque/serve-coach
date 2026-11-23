@@ -12,6 +12,7 @@ import {
   SEEK_END_MARGIN,
 } from '../pose/extract'
 import type { PoseSample } from './kalman'
+import type { ReachSample } from './serves'
 import { framingIssues } from './framingIssues'
 import { readServeSpeed, type SpeedReading } from './speedPass'
 import { gravityHeights, type GravityHeights } from '../vision/heights'
@@ -196,6 +197,8 @@ export interface AnalyzeOptions {
   onServesLocated?: (times: number[]) => void
   /** Peaks that reached like a serve without a serve's shape: a smash, a swing with no toss (L2.10). */
   onUnsureServes?: (times: number[]) => void
+  /** Every reading the scan took, before judging: dev tooling saves them (W6.11). */
+  onScanSamples?: (samples: readonly ReachSample[]) => void
   /** Impacts heard in the clip's sound, for the scan to look closer at and to confirm by (L2.9). */
   onsets?: readonly number[]
   /** Which serve this is meant to be, which shifts a handful of target bands. */
@@ -652,6 +655,7 @@ export async function locateServes(
     return await scanForServes(video, landmarker, {
       signal: opts.signal,
       onUnsure: opts.onUnsureServes,
+      onSamples: opts.onScanSamples,
       onsets: opts.onsets,
       people: opts.skipPlayerCrop ? undefined : await peopleFinder(),
       onProgress: (ratio) =>

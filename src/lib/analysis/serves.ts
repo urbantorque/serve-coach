@@ -309,6 +309,38 @@ export function shapeAt(samples: readonly ReachSample[], peak: ReachSample): Sha
 }
 
 /**
+ * How long after a peak the other hand may reach above the head for the peak
+ * to have been the toss rather than the hit (W6.11), in seconds.
+ *
+ * The tossing arm held straight up reaches about as high in the picture as the
+ * racket hand at contact, so the highest moment of a serve can be the toss:
+ * four of 13 marked by eye in the licensed clips, 0.15 to 0.75 s before the
+ * hit. The hand then highest is the tossing one, the shape test took the
+ * other for the toss, found it never went up, and turned the serve away as
+ * not sure: one of four in one clip, two of four in another.
+ * After a hit nothing goes back up so soon, so the margin costs nothing.
+ */
+export const TOSS_TO_HIT = 0.9
+
+/**
+ * The hit a peak belongs to: where the peak was the toss, the moment within
+ * `TOSS_TO_HIT` after it that the other hand reached highest, above the head
+ * and above the tossing hand; otherwise the peak itself.
+ */
+export function hitAfterToss(byTime: readonly ReachSample[], peak: ReachSample): ReachSample {
+  if (!peak.pose) return peak
+  const high: 'left' | 'right' = peak.pose.left >= peak.pose.right ? 'left' : 'right'
+  const other = high === 'left' ? 'right' : 'left'
+  let hit: ReachSample | undefined
+  for (const s of byTime) {
+    if (s.t <= peak.t || s.t > peak.t + TOSS_TO_HIT || !s.pose) continue
+    if (s.pose[other] <= s.pose.head || s.pose[other] <= s.pose[high]) continue
+    if (!hit || s.pose[other] > hit.pose![other]) hit = s
+  }
+  return hit ?? peak
+}
+
+/**
  * Pick out every serve in a clip from a coarse trace of hand height.
  *
  * Filming a whole basket is the natural thing to do, so a clip often holds
@@ -370,7 +402,10 @@ export function classifyServes(samples: ReachSample[], onsets?: readonly number[
     if (peaks.some((p) => Math.abs(p.t - s.t) < MIN_SERVE_GAP)) continue
     peaks.push(s)
   }
-  const read = new Map(peaks.map((p) => [p, shapeAt(byTime, p)]))
+  // Where a peak was the toss, the serve is the hit after it: its time, and
+  // the shape judged from there (W6.11). Its height stays the peak's.
+  const hits = new Map(peaks.map((p) => [p, hitAfterToss(byTime, p)]))
+  const read = new Map(peaks.map((p) => [p, shapeAt(byTime, hits.get(p)!)]))
   /*
    * The fourth agreement, an impact heard (L2.9). Believed only when the
    * offset could be learned and most peaks were heard at it: a phone too far
@@ -378,7 +413,7 @@ export function classifyServes(samples: ReachSample[], onsets?: readonly number[
    * Where it is believed, a peak with no impact is not a serve (a shadow
    * swing, a caught toss), and a heard peak the picture could not judge is.
    */
-  const hearing = onsets?.length ? hearPeaks(peaks.map((p) => p.t), onsets) : undefined
+  const hearing = onsets?.length ? hearPeaks(peaks.map((p) => hits.get(p)!.t), onsets) : undefined
   const listened = hearing !== undefined && hearing.heard.filter(Boolean).length * 2 >= peaks.length
   if (listened) {
     peaks.forEach((p, i) => {
@@ -400,8 +435,8 @@ export function classifyServes(samples: ReachSample[], onsets?: readonly number[
     const best = Math.max(localBest.get(p) ?? -Infinity, shapes.get(p) === 'other' ? -Infinity : p.height)
     const bar = Number.isFinite(best) ? best : p.height
     if (p.height < bar - REACH_TOLERANCE_SHARE * (bar - resting)) continue
-    if (shapes.get(p) === 'other') unsure.push(p.t)
-    else serves.push(p.t)
+    if (shapes.get(p) === 'other') unsure.push(hits.get(p)!.t)
+    else serves.push(hits.get(p)!.t)
   }
 
   return {

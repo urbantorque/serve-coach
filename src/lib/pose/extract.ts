@@ -491,6 +491,12 @@ export async function scanForServes(
      * to agree with, once the offset to the swing is learned.
      */
     onsets?: readonly number[]
+    /**
+     * Every sample the scan read, before they are judged: what
+     * `scripts/scan-samples.mjs` saves so the judging can be tested against
+     * serve times marked by eye, without a browser (W6.11).
+     */
+    onSamples?: (samples: readonly ReachSample[]) => void
   } = {},
 ): Promise<number[]> {
   const { onProgress = () => {}, signal } = opts
@@ -574,6 +580,7 @@ export async function scanForServes(
     samples.sort((a, b) => a.t - b.t)
   }
 
+  opts.onSamples?.(samples)
   const finds = classifyServes(samples, opts.onsets)
   if (finds.unsure.length) opts.onUnsure?.(finds.unsure)
   return finds.serves

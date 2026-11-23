@@ -670,6 +670,44 @@ three inputs, the free and Plus table and prices, and Ask the coach.
     kB raw, 130.72 kB gzip.
   - **Not measured:** a real phone, Safari, Firefox.
 
+- [x] **W6.11 Serve times marked by eye, and the serve found at its hit.**
+  The four licensed bench clips, marked from contact sheets at a quarter and
+  a tenth of a second (`docs/apex/bench/serve-times.json`): 16 serves, 13 at
+  normal speed with the whole motion in the picture, two in slow motion, one
+  fading in from black; and 11 overheads, high forehands and other moments
+  that are not serves. One clip is a coaching video (slow motion, a title
+  card, then the other clip's serves); in one the player only receives.
+  - **The scan's readings saved** (`scripts/scan-samples.mjs`, the app's own
+    `locateServes` in the dev server, player crop and sound included) so the
+    judging runs in Node against the marks (`serveTimes.test.ts`).
+  - **Found: the toss often makes the peak.** The tossing arm held straight
+    up reaches about as high in the picture as the racket hand at contact,
+    so a serve's highest reading was the toss, 0.15 to 0.75 s before the hit,
+    in four of the 13. The shape test then took the racket hand for the
+    tossing one, saw it never went up before, and set the serve aside as not
+    sure. Now a peak whose other hand goes up above the head and above it
+    within 0.9 s is the toss, and the serve is the hit after it: its time and
+    its shape are read there (`hitAfterToss`). **9 of 13 marked serves
+    found before, 12 of 13 now**, nothing more taken for a serve, every
+    earlier scan check still passing. A caught toss with no swing stays not
+    sure. The serve's time is now its hit, so the window read around it
+    holds the finish.
+  - **Still wrong, not fixed here:** in the match clip the smash and three
+    high forehands are called serves, and in the clip where the player only
+    receives, three moments are; there the shape is not believed, the camera
+    following play, and reach alone cannot tell them. One serve in the match
+    clip is missed (54.7 s). The same clip read twice does not read the same
+    numbers: in W6.9 the app found two serves in the 18 s clip, this scan
+    three before the change; the readings saved are one run.
+  - The two slow-motion serves and the one fading in are left out of the
+    count: of the slow ones, one is found and one is not.
+  - **In the app,** a first visitor picking the 18 s clip at 390 by 844: four
+    serves found where W6.9 found two, the report on the fourth (the one the
+    shape test used to turn away) with its moments in order, then "Your
+    motion repeats well across 4 serves." after the sweep. The report came up
+    at 54 s on this run against 45 s in W6.9, on a different serve; the scan
+    itself took 21 s as before. One run, on this laptop, not on a phone.
+
 ## Wave 6 report
 
 The coach's posture finding, the studio's open items (marks for the coach,
@@ -680,6 +718,8 @@ with its own read. Then the open items: whole practice was already built
 (W6.8); the first serve of a basket now shows while the rest are scored, 45 s
 to the report instead of 73 (W6.9); the landing measured on a slow phone
 profile and its serve in sooner (W6.10). Found already met: area D's moments.
-Still open: the scan that finds the serve, half of a first read and missing
-serves in one clip, which needs labelled serve times; a coach's review of the
-drill library; and everything waiting on the owner.
+Then serve times marked by eye in the bench clips, and the serve found at
+its hit rather than its toss: 12 of 13 marked serves found, from 9 (W6.11).
+Still open: the scan is half of a first read; in match footage it calls
+smashes and high forehands serves; a coach's review of the drill library;
+and everything waiting on the owner.

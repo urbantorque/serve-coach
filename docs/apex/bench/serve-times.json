@@ -1,0 +1,51 @@
+{
+  "about": "Serve contact times in the four licensed bench clips (bench-data/clips), marked by eye on 2026-11-23 from contact sheets at 0.25 s and 0.1 s steps (W6.11). Each time is the frame where the racket meets the ball, good to about 0.15 s; the WebM seeks land within a frame or two. slow marks a serve played in slow motion; part marks one whose toss is hidden (a fade in from black). notServes are overheads and high swings that are not serves, kept so a scan that counts them can be caught. Tested by src/lib/analysis/__tests__/serveTimes.test.ts.",
+  "clips": {
+    "Saque_con_pelota.webm": {
+      "note": "One player on clay, side-on from behind the baseline, 320 by 240, four serves at normal speed.",
+      "serves": [{ "t": 2.0 }, { "t": 6.0 }, { "t": 10.95 }, { "t": 16.0 }],
+      "notServes": []
+    },
+    "0SAQUE.webm": {
+      "note": "A coaching video. To 25 s, front-on slow motion: a toss with no swing, then two serves. A title card from 25.2 to 30.2 s. Then the Saque_con_pelota serves at normal speed, 30.05 s later than in that clip.",
+      "serves": [
+        { "t": 9.85, "slow": true },
+        { "t": 16.3, "slow": true },
+        { "t": 32.05 },
+        { "t": 36.05 },
+        { "t": 40.95 },
+        { "t": 46.05 }
+      ],
+      "notServes": [{ "t": 3.0, "what": "a slow-motion toss, the arm held up, no swing" }]
+    },
+    "Sharapova_Amelia_Island.webm": {
+      "note": "A match, the player receiving: nobody serves in the frame.",
+      "serves": [],
+      "notServes": [
+        { "t": 8.2, "what": "a hand to the face between points" },
+        { "t": 14.0, "what": "a return" },
+        { "t": 16.3, "what": "a forehand" }
+      ]
+    },
+    "Blaz_Rola_NCAAs_2013.webm": {
+      "note": "Match highlights from behind the far baseline, with cuts and fades: six serves among rallies, a smash and high forehands.",
+      "serves": [
+        { "t": 24.3 },
+        { "t": 36.1 },
+        { "t": 54.7 },
+        { "t": 80.15, "part": true },
+        { "t": 92.7 },
+        { "t": 125.95 }
+      ],
+      "notServes": [
+        { "t": 14.3, "what": "a jumping shot in a rally" },
+        { "t": 57.0, "what": "a jumping shot in a rally" },
+        { "t": 98.6, "what": "a smash" },
+        { "t": 101.7, "what": "a jumping forehand" },
+        { "t": 104.5, "what": "a forehand finishing high" },
+        { "t": 107.25, "what": "a shot in a rally, finishing high" },
+        { "t": 113.0, "what": "a shot in a rally, finishing high" }
+      ]
+    }
+  }
+}
