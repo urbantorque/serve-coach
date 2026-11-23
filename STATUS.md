@@ -101,7 +101,7 @@ designer 7, a coach 6.5, an engine hunter 6, a first-time visitor 6, out of
 ten against the brief) and its fixes, W5.1. The before and after galleries are
 `docs/lift/apex-gallery.html` (phone) and `docs/lift/apex-gallery-laptop.html`.
 
-The suite runs **2,435 checks** (2026-11-23, after W6.11). The last loop tag is
+The suite runs **2,437 checks** (2026-11-23, after W6.12). The last loop tag is
 `loop-green-15`, from the August loop.
 
 The entry chunk budget is 132 kB gzip and 385 kB raw (`bundle.test.ts`); it is
