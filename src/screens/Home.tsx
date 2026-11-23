@@ -374,7 +374,7 @@ export default function Home({
       {/* Sessions had no way in a player could see (N3.6). */}
       {practiceSessions.length === 0 && (
         <p className="today-tip">
-          <strong>Read a whole practice.</strong> Film it with your camera app, then pick it under Film. I find every serve in it.
+          <strong>Read a whole practice.</strong> Under Film, switch on Whole practice in Options, or pick a video from your camera app. I find every serve in it.
         </p>
       )}
 

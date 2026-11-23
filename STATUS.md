@@ -73,7 +73,9 @@ names.
   110 s on an 18 s clip, and Ask the coach is not built (egress,
   the owner's call).
 - **The drill library** has not had a coach's full review.
-- **Recording a whole practice in the app** is not started.
+- **Recording a whole practice in the app** works where the browser can write
+  a file as it records (N4.4), but has not run past 150 s in a browser or on a
+  phone.
 
 ## The owner's call
 

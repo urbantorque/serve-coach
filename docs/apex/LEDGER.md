@@ -604,6 +604,17 @@ three inputs, the free and Plus table and prices, and Ask the coach.
     and back by keyboard; console clean. **Not checked:** four different
     players' clips (the seed used one licensed clip four times).
 
+- [x] **W6.8 Whole practice was already built; the copy said it was not.**
+  STATUS listed "recording a whole practice in the app" as not started, and
+  the filming guide and the Today tip still sent a player to the camera app
+  because "the app's own recording stops at 90 seconds". N4.4 built it: a
+  "Whole practice" switch in the viewfinder's Options, written to the
+  browser's private storage a second at a time, capped at 20 minutes, offered
+  only where the browser can write such a file. The guide and the tip now name
+  the switch first and the camera app second, for a browser without it.
+  **Not checked,** as N4.4 said: a practice past the 150 s session line in a
+  browser, and on a phone.
+
 ## Wave 6 report
 
 The coach's posture finding, the studio's open items (marks for the coach,
@@ -611,5 +622,4 @@ the ghost's strength, Studio on the rail, an annotated clip, four up), the
 held frame pointing at the body part on a row-led fix, the last practice
 carried into the next session, and a landing that plays a licensed real serve
 with its own read. Found already met: area D's moments. Still open: a faster
-first read, recording a whole practice in the app, a coach's review of the
-drill library, and everything waiting on the owner.
+first read, a coach's review of the drill library, and everything waiting on the owner.

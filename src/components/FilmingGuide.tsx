@@ -28,8 +28,9 @@ const RULES = [
     title: 'Start filming before the toss',
     body:
       // Says where a practice session comes from (N3.6): the app's own
-      // recording stops at 90 seconds, so a whole practice is the camera app's.
-      'Hit record a second before the ball leaves your hand. For a whole practice, film it with your camera app and pick it: I find every serve.',
+      // one-serve recording stops at 90 seconds; a whole practice is the
+      // Whole practice switch (N4.4) where the browser can write it out, or the camera app.
+      'Hit record a second before the ball leaves your hand. For a whole practice, switch on Whole practice in Options, or use your camera app.',
   },
   {
     title: 'Use slow motion if your phone has it',
