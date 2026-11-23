@@ -676,5 +676,10 @@ The coach's posture finding, the studio's open items (marks for the coach,
 the ghost's strength, Studio on the rail, an annotated clip, four up), the
 held frame pointing at the body part on a row-led fix, the last practice
 carried into the next session, and a landing that plays a licensed real serve
-with its own read. Found already met: area D's moments. Still open: a faster
-first read, a coach's review of the drill library, and everything waiting on the owner.
+with its own read. Then the open items: whole practice was already built
+(W6.8); the first serve of a basket now shows while the rest are scored, 45 s
+to the report instead of 73 (W6.9); the landing measured on a slow phone
+profile and its serve in sooner (W6.10). Found already met: area D's moments.
+Still open: the scan that finds the serve, half of a first read and missing
+serves in one clip, which needs labelled serve times; a coach's review of the
+drill library; and everything waiting on the owner.
