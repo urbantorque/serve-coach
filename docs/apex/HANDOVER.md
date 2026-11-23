@@ -1,5 +1,9 @@
 # Serve Coach: the Apex programme (handover for Opus 5.5, extra effort)
 
+> **Closed on 2026-11-23.** Built in `docs/apex/LEDGER.md`, Waves 0 to 6;
+> the ledger's last section measures this brief's "done means" item by item.
+> Merged into `main` and tagged `apex-close`. Kept below as it was written.
+
 Written 2026-11-20 by the planning session (Fable 5.2, medium effort) after a
 review of the code, the docs, the ledger and the current screens at phone and
 laptop width. Nothing in this file has been executed. You are the building

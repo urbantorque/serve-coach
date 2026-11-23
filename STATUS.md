@@ -3,7 +3,7 @@
 Serve Coach coaches a tennis serve from one phone clip, read entirely on the
 device. This page says what works, what is open, and what is the owner's call.
 The programme that brought it here is `docs/apex/HANDOVER.md`, its ledger is
-`docs/apex/LEDGER.md` (Waves 0 to 5, closed), the visual rules are `DESIGN.md`,
+`docs/apex/LEDGER.md` (Waves 0 to 6, closed on 2026-11-23, its close at the end), the visual rules are `DESIGN.md`,
 and `README.md` says how to run it.
 
 Finished ledgers from earlier loops are in `docs/history/` and `docs/next/`, with
@@ -72,11 +72,13 @@ names.
   4G with a four times slower processor its LCP is 1.7 to 1.9 s and the clip
   is in by 2.6 s (W6.10), measured in Chrome, not on a phone. Ask the coach
   is not built (egress, the owner's call).
-- **A first read** reaches the report in about 45 s on an 18 s clip with two
-  serves, the rest of the basket scored behind it (W6.9). Half of that is the
-  scan that finds the serve. Against serve times marked by eye in the four
-  bench clips it finds 12 of 13 (W6.11), and calls 2 rally shots serves where
-  it called 7 (W6.12): a smash and a jumping forehand.
+- **A first read** reaches the report in 45 to 54 s on an 18 s clip, the
+  rest of the basket scored behind it (W6.9). The scan that finds the serve
+  was half of that; its first look is now sparser, 23% fewer readings on that
+  clip (W6.14), not yet timed on a quiet machine or a phone. Against serve
+  times marked by eye in the four bench clips it finds 12 of 13 (W6.11) and
+  calls 2 rally shots serves where it called 7 (W6.12). Only serves are
+  graded; other shots are left out and counted (W6.13).
 - **The drill library** has not had a coach's full review.
 - **Recording a whole practice in the app** works where the browser can write
   a file as it records (N4.4), but has not run past 150 s in a browser or on a
@@ -95,17 +97,19 @@ switched on.
 
 ## Resuming this loop
 
-Work is on `apex`, cut from `main` at `b4d0e80`; nothing is pushed and there is
-no remote. The programme closed with an independent review (a player 7, a
-designer 7, a coach 6.5, an engine hunter 6, a first-time visitor 6, out of
-ten against the brief) and its fixes, W5.1. The before and after galleries are
+The Apex programme is closed: `apex` is merged into `main` and tagged
+`apex-close` (2026-11-23); nothing is pushed and there is no remote. Its last
+independent review, before Wave 6, scored it a player 7, a designer 7, a
+coach 6.5, an engine hunter 6 and a first-time visitor 6, out of ten against
+the brief (W5.1 fixed its findings). What is left is in "What is open" and
+"The owner's call" above, and in the ledger's close. The before and after galleries are
 `docs/lift/apex-gallery.html` (phone) and `docs/lift/apex-gallery-laptop.html`.
 
-The suite runs **2,437 checks** (2026-11-23, after W6.12). The last loop tag is
+The suite runs **2,437 checks** (2026-11-23, after W6.14). The last loop tag is
 `loop-green-15`, from the August loop.
 
 The entry chunk budget is 132 kB gzip and 385 kB raw (`bundle.test.ts`); it is
-381.47 kB raw after W5.1 moved the restore out. The split stylesheets are at
+383.15 kB raw and 130.73 kB gzip at the close. The split stylesheets are at
 their 20 kB budget: the next screen style needs room made first. Run
 `npm run build` before trusting a size figure: `bundle.test.ts` reads `dist/`.
 

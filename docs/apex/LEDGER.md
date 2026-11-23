@@ -777,19 +777,66 @@ three inputs, the free and Plus table and prices, and Ask the coach.
     took 6.5 to 13 s). At this clip's 21 s, 23% fewer readings is about 5 s;
     a quiet machine or a phone would say.
 
+- [x] **W6.15 The close.** `npm run release` green on 2026-11-23 (typecheck,
+  lint, build, the suite with its budgets, the manifest, the worker, home and
+  the example opening offline). The `apex-after` shots retaken at 390 by 844
+  and 1440 by 900 and the galleries rebuilt
+  (`docs/lift/apex-gallery.html`, `apex-gallery-laptop.html`). `STATUS.md`
+  brought up to date. `apex` merged into `main` and tagged `apex-close`;
+  nothing pushed, there is no remote.
+
 ## Wave 6 report
 
-The coach's posture finding, the studio's open items (marks for the coach,
-the ghost's strength, Studio on the rail, an annotated clip, four up), the
-held frame pointing at the body part on a row-led fix, the last practice
-carried into the next session, and a landing that plays a licensed real serve
-with its own read. Then the open items: whole practice was already built
-(W6.8); the first serve of a basket now shows while the rest are scored, 45 s
-to the report instead of 73 (W6.9); the landing measured on a slow phone
-profile and its serve in sooner (W6.10). Found already met: area D's moments.
-Then serve times marked by eye in the bench clips, and the serve found at
-its hit rather than its toss: 12 of 13 marked serves found, from 9 (W6.11).
-The toss is now always asked, so rally shots called serves fell from 7 to 2
-(W6.12). Serves only, other shots left out and never graded (W6.13). Still
-open: the scan is half of a first read; a coach's review of the drill
-library; and everything waiting on the owner.
+Wave 6 took the open items the review left. The posture ladder now coaches
+the fault it names (W6.1); the studio gained marks for the coach, the
+ghost's strength, an entry on the rail, an annotated clip and four up (W6.2,
+W6.5, W6.7); the held frame points at the body part on a row-led fix (W6.3);
+the last practice carries into the next session (W6.4); the landing plays a
+licensed real serve with its own read (W6.6), measured on a slow phone
+profile and in sooner (W6.10). Whole practice was already built (W6.8). A
+basket's first serve shows while the rest are scored, 45 s to the report
+instead of 73 (W6.9).
+
+Then the serve finder, against serve times marked by eye in the four bench
+clips for the first time: the serve found at its hit rather than its toss,
+12 of 13 marked serves from 9 (W6.11); the toss always asked, rally shots
+called serves from 7 to 2 (W6.12); serves only, other shots left out and
+never graded (W6.13, the owner's call); a sparser first look, 23 to 37%
+fewer readings for the same serves (W6.14). Tried and not kept: reading the
+scan by playing the clip, and re-reading candidates at 8 a second.
+
+## The programme's close
+
+Against the handover's "done means" (section 9):
+
+- **A real serve from a current phone, in Chrome and every approved
+  browser:** not met. Nothing has run on a phone; four licensed clips, read
+  in Chrome; WebKit and Firefox wait on the owner's yes to the download
+  (A0.2). The accuracy page is built from the tables the engine grades with.
+- **The report's opening moment on real footage, at both sizes:** built (the
+  held frame, B2.1 and W6.3) and checked on the licensed clips; the target
+  figure is drawn on 1 of 7 serves, by the rule that no picture shape is
+  re-measured as a 3D angle. The same image carried through the glance, the
+  poster and history is not recorded as checked in this ledger.
+- **Every fault demonstrated and a guided set hands-free:** met, ten of
+  eleven faults shown moving and the eleventh measured to have nothing a
+  camera can show.
+- **Today and Progress answer their question on the first screen:** met
+  (D1.2, D1.3).
+- **The studio has ghost, draw, measure, compare and export:** met (E1.1,
+  W6.2, W6.5, W6.7).
+- **The landing demonstrates on real footage, and Plus previews on the
+  player's own serve:** met (W6.6; Wave 4).
+- **Release green, galleries rebuilt, `STATUS.md` true, the reviewers'
+  scores reported:** met (W6.15). The scores are W5's, 7, 7, 6.5, 6 and 6,
+  given before Wave 6; no review was run after it.
+
+**Left to the owner** (`docs/next/OWNER-STEPS.md`): their own serves, the
+200 MB browser download, more licensed footage (A0.2); the free and Plus
+table and prices, Stripe, the pass keys, a domain and a remote, the Pages
+project, the terms and privacy page, the switch to live; and whether Ask the
+coach may ever be switched on. **Left to a person:** a run on a real phone,
+a whole practice past 150 s, and a coach's review of the drill library.
+**Known and left:** the scan misses one serve in the match clip and calls a
+smash and a jumping forehand there serves; under the serves-only call they
+are not chased.

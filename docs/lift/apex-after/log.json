@@ -3,30 +3,30 @@
     "name": "01-first-run-home",
     "height": 3171,
     "screens": 3.8,
-    "controls": 11,
-    "firstScreenControls": 2,
-    "words": 347,
+    "controls": 12,
+    "firstScreenControls": 3,
+    "words": 356,
     "said": []
   },
   {
     "name": "02-first-run-guide",
     "height": 3171,
     "screens": 3.8,
-    "controls": 20,
-    "firstScreenControls": 11,
-    "words": 347,
+    "controls": 21,
+    "firstScreenControls": 12,
+    "words": 356,
     "said": [
-      "warning: W1122 01:49:59.803000 1905760 gl_context.cc:1060] OpenGL error checking is disabled",
-      "warning: W1122 01:50:00.210000 1905760 gl_context.cc:1060] OpenGL error checking is disabled"
+      "warning: W1123 07:28:32.900000 1905760 gl_context.cc:1060] OpenGL error checking is disabled",
+      "warning: W1123 07:28:33.047000 1905760 gl_context.cc:1060] OpenGL error checking is disabled"
     ]
   },
   {
     "name": "03-film-guide",
     "height": 3171,
     "screens": 3.8,
-    "controls": 13,
-    "firstScreenControls": 3,
-    "words": 347,
+    "controls": 14,
+    "firstScreenControls": 4,
+    "words": 356,
     "said": []
   },
   {
@@ -60,12 +60,12 @@
     "name": "07-viewfinder",
     "height": 3171,
     "screens": 3.8,
-    "controls": 18,
-    "firstScreenControls": 9,
-    "words": 347,
+    "controls": 19,
+    "firstScreenControls": 10,
+    "words": 356,
     "said": [
-      "warning: W1122 01:50:18.374000 1905760 gl_context.cc:1060] OpenGL error checking is disabled",
-      "warning: W1122 01:50:24.418000 1905760 gl_context.cc:1060] OpenGL error checking is disabled"
+      "warning: W1123 07:28:49.584000 1905760 gl_context.cc:1060] OpenGL error checking is disabled",
+      "warning: W1123 07:28:50.121000 1905760 gl_context.cc:1060] OpenGL error checking is disabled"
     ]
   },
   {
@@ -76,24 +76,24 @@
     "firstScreenControls": 1,
     "words": 42,
     "said": [
-      "warning: W1122 01:50:26.229000 1905760 gl_context.cc:1060] OpenGL error checking is disabled",
-      "warning: W1122 01:50:26.442000 1905760 gl_context.cc:1060] OpenGL error checking is disabled",
+      "warning: W1123 07:28:54.101000 1905760 gl_context.cc:1060] OpenGL error checking is disabled",
+      "warning: W1123 07:28:54.234000 1905760 gl_context.cc:1060] OpenGL error checking is disabled",
       "error: INFO: Created TensorFlow Lite XNNPACK delegate for CPU.",
-      "warning: W1122 01:50:27.983000 1905760 landmark_projection_calculator.cc:189] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAG"
+      "warning: W1123 07:28:55.251000 1905760 landmark_projection_calculator.cc:189] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAG"
     ]
   },
   {
     "name": "09-report-real-clip",
-    "height": 2116,
-    "screens": 2.5,
-    "controls": 45,
+    "height": 2632,
+    "screens": 3.1,
+    "controls": 55,
     "firstScreenControls": 7,
-    "words": 186,
+    "words": 245,
     "said": [
-      "warning: W1122 01:50:37.580000 1905760 gl_context.cc:1060] OpenGL error checking is disabled",
-      "warning: W1122 01:50:38.104000 1905760 gl_context.cc:1060] OpenGL error checking is disabled",
+      "warning: W1123 07:29:04.247000 1905760 gl_context.cc:1060] OpenGL error checking is disabled",
+      "warning: W1123 07:29:04.371000 1905760 gl_context.cc:1060] OpenGL error checking is disabled",
       "error: INFO: Created TensorFlow Lite XNNPACK delegate for CPU.",
-      "warning: W1122 01:50:40.006000 1905760 landmark_projection_calculator.cc:189] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAG"
+      "warning: W1123 07:29:05.343000 1905760 landmark_projection_calculator.cc:189] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAG"
     ]
   },
   {
@@ -178,17 +178,17 @@
     "said": [
       "pageerror: TypeError: Cannot read properties of undefined (reading 'filter')",
       "pageerror: TypeError: Cannot read properties of undefined (reading 'filter')",
-      "error: The above error occurred in the <App> component:\n\n    at App (http://localhost:5180/src/App.tsx?t=1795311266421:85:27)\n    at ErrorBoundary (http://localhost:51",
+      "error: The above error occurred in the <App> component:\n\n    at App (http://localhost:5180/src/App.tsx?t=1795418148984:85:27)\n    at ErrorBoundary (http://localhost:51",
       "error: Serve Coach hit an unrecoverable render error: TypeError: Cannot read properties of undefined (reading 'filter')\n    at http://localhost:5180/src/lib/progress.t"
     ]
   },
   {
     "name": "18-home-history",
-    "height": 1314,
-    "screens": 1.6,
+    "height": 1459,
+    "screens": 1.7,
     "controls": 14,
-    "firstScreenControls": 13,
-    "words": 179,
+    "firstScreenControls": 7,
+    "words": 203,
     "said": []
   },
   {
@@ -202,11 +202,11 @@
   },
   {
     "name": "20-settings",
-    "height": 1314,
-    "screens": 1.6,
+    "height": 1459,
+    "screens": 1.7,
     "controls": 36,
-    "firstScreenControls": 24,
-    "words": 179,
+    "firstScreenControls": 18,
+    "words": 203,
     "said": []
   },
   {
@@ -220,11 +220,11 @@
   },
   {
     "name": "22-session-done",
-    "height": 1698,
+    "height": 1729,
     "screens": 2,
     "controls": 4,
     "firstScreenControls": 1,
-    "words": 181,
+    "words": 190,
     "said": []
   },
   {
@@ -249,9 +249,9 @@
     "name": "25-glance-moved",
     "height": 844,
     "screens": 1,
-    "controls": 13,
-    "firstScreenControls": 13,
-    "words": 95,
+    "controls": 14,
+    "firstScreenControls": 14,
+    "words": 97,
     "said": []
   },
   {
@@ -267,9 +267,9 @@
     "name": "27-offline-first-open",
     "height": 3171,
     "screens": 3.8,
-    "controls": 11,
-    "firstScreenControls": 2,
-    "words": 347,
+    "controls": 12,
+    "firstScreenControls": 3,
+    "words": 356,
     "said": []
   },
   {
@@ -284,9 +284,9 @@
       "error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
       "error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
       "error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
-      "error: TypeError: Failed to fetch dynamically imported module: http://localhost:5180/src/lib/analysis/analyze.ts",
+      "error: TypeError: Failed to fetch dynamically imported module: http://localhost:5180/src/lib/analysis/analyze.ts?t=1795418148984",
       "pageerror: TypeError: Failed to fetch dynamically imported module: http://localhost:5180/src/screens/Analyzing.tsx",
-      "pageerror: TypeError: Failed to fetch dynamically imported module: http://localhost:5180/src/screens/Report.tsx",
+      "pageerror: TypeError: Failed to fetch dynamically imported module: http://localhost:5180/src/screens/Report.tsx?t=1795418148984",
       "pageerror: TypeError: Failed to fetch dynamically imported module: http://localhost:5180/src/screens/Glance.tsx",
       "error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED"
     ]
