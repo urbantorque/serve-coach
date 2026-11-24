@@ -35,7 +35,7 @@ const path: { join: (...parts: string[]) => string } = pathUntyped
 heading('Who is allowed to be called the better serve')
 
 check('a caller with no claim to make accents neither side', () => {
-  // The defect, stated as the rule that was broken. "Then, and now" passes
+  // The defect, stated as the rule that was broken. "Then and now" passes
   // nothing, because it orders by date and cannot honestly rank the two.
   assert(
     pairRankModifier(undefined) === '',
@@ -79,7 +79,7 @@ check('no rule colours a pair caption by position alone', () => {
   const positional = /\.pair-shots\s*(figure)?\s*:?(first|last)-child/.test(CSS)
   assert(
     !positional,
-    'a `.pair-shots figure:first-child` rule is back — that colours "Then, and now" by date order',
+    'a `.pair-shots figure:first-child` rule is back — that colours "Then and now" by date order',
   )
 })
 

@@ -81,7 +81,7 @@ heading('Where the line has to stop')
 check('one rubric draws one unbroken line', () => {
   const out = draw(series([70, 74, 71, 80]))
   assert((out.match(/class="ribbon-line"/g) ?? []).length === 1, 'not one line')
-  assert(rules(out).length === 0 && !out.includes('The gap is where the scoring changed'), 'a break with no change of rubric')
+  assert(rules(out).length === 0 && !out.includes('The break in the line is where I changed how I score serves'), 'a break with no change of rubric')
 })
 
 check('a recalibration splits the line rather than climbing across it', () => {
@@ -91,7 +91,7 @@ check('a recalibration splits the line rather than climbing across it', () => {
   // one line across would have had four.
   const curves = [...out.matchAll(/d="([^"]+)" class="ribbon-line"/g)].map((m) => (m[1].match(/C/g) ?? []).length)
   assert(curves.join() === '2,1', `the runs joined ${curves.join()}`)
-  assert(out.includes('The gap is where the scoring changed'), 'the gap is not explained')
+  assert(out.includes('The break in the line is where I changed how I score serves'), 'the gap is not explained')
 })
 
 check('only the run the player is not being scored under is faded', () => {
@@ -124,7 +124,7 @@ heading('Saying what it plots')
 
 check('the picture has a text version, and a trip reads out', () => {
   const out = draw(series([70, 74]))
-  assert(out.includes('aria-label="Typical score across 2 trips, most recent 74."'), 'no text version')
+  assert(out.includes('aria-label="Typical score across 2 court trips, most recent 74."'), 'no text version')
   assert(out.includes('typical 74, 4 serves from 71 to 77'), 'the newest trip does not read out')
 })
 

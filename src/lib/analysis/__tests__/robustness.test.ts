@@ -329,7 +329,7 @@ check('a dialled-in fault is still named as the thing to work on', () => {
   //
   // The legs, any of three ways: the card's knee bend, its leg drive, or since
   // the rig's hips follow its knees (L1.9) the named fault that straight legs
-  // cause, "Your legs sit the serve out". All send the player to the legs.
+  // cause, "Your legs do not push you up". All send the player to the legs.
   const { runs } = ensemble({ trophyKneeAngle: 172 }, TYPICAL_NOISE, TYPICAL_DROPOUT)
   const named = runs.filter((r) => /knee|\blegs?\b/i.test(r.focus)).length
   note(`the legs named in ${named}/${SEEDS} noisy realisations`)

@@ -377,7 +377,7 @@ check('a clip with no readable length is refused rather than measured', () => {
   // but could not size — and zero is what a still-downloading file reports.
   assert(noLength !== undefined, 'a clip with NaN duration was accepted')
   assert(zeroLength !== undefined, 'a clip with zero duration was accepted')
-  assert(/no readable length/.test(noLength!.message), `unexpected: "${noLength!.message}"`)
+  assert(/would not open properly/.test(noLength!.message), `unexpected: "${noLength!.message}"`)
 })
 
 check('the no-length advice changes with whether the browser has HEVC', () => {

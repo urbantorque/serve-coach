@@ -89,14 +89,14 @@ export const CHECK_SERVES = 6
 
 /** Steps that close several ladders, written once. */
 const POINTS: Step = {
-  name: 'Play it out',
-  how: 'Play ten points with two serves each, keeping the same feel on every one.',
+  name: 'Play ten points',
+  how: 'Play ten points, two serves each, and keep the change you have been working on in every serve.',
   reps: '10 points',
   check: ENGINE,
 }
 
 const THREE_DEPTHS: Step = {
-  name: 'Box, line, fence',
+  name: 'Serve to three lengths',
   how: 'Serve two into the box, two past the service line and two to the back fence. Repeat three times.',
   reps: '3 rounds',
   check: ENGINE,
@@ -118,14 +118,14 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
       served(DRILLS.point_and_hold),
       {
         name: 'Half pace, arm up',
-        how: 'From the service line at half pace, let the racket start up before the tossing arm tucks in.',
+        how: 'From the service line at half pace, keep your tossing arm pointing up until the racket swings up to the ball.',
         reps: '20 serves',
         check: ENGINE,
       },
       POINTS,
     ],
-    easier: 'Hold a second ball in your tossing hand after the toss, so the hand has a reason to stay up.',
-    mistake: 'Pulling the arm down to start the swing. The racket starts the swing, and the arm follows it in.',
+    easier: 'Hold two balls in your tossing hand. Toss one and keep the hand up, holding the other, until the racket starts up.',
+    mistake: 'Pulling the tossing arm down to start the swing. Start the swing with the racket, and let the tossing arm come down after.',
     pass: 4,
   },
   // A ball met over or behind the head (L5.3): the toss sent in front, then
@@ -141,15 +141,15 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
         check: { by: 'self', bar: 'Move up when twelve of fifteen land in front of your front foot.' },
       },
       {
-        name: 'Racket ahead on the court',
+        name: 'Toss onto a racket in front',
         how: 'Lay your racket a racket length in front of your front foot, and toss so the ball lands on the strings.',
         reps: '20 tosses',
         check: { by: 'self', bar: 'Move up when sixteen of twenty land on the strings.' },
       },
       served(DRILLS.step_in_toss),
       {
-        name: 'Into the court',
-        how: 'From the baseline, serve and let every toss pull you a step into the court.',
+        name: 'Serve and step into the court',
+        how: 'From the baseline, toss far enough in front that you have to step into the court to hit every serve.',
         reps: '20 serves',
         check: ENGINE,
       },
@@ -161,7 +161,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
   },
 
   waiters_tray: {
-    cue: 'Hold the racket like a hammer and let the edge lead the way up to the ball.',
+    cue: 'Hold the racket like a hammer and swing up to the ball with the edge of the frame, not the strings, facing forward.',
     say: 'Edge first, up to the ball',
     steps: [
       {
@@ -172,13 +172,13 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
       },
       {
         name: 'Edge-first swings',
-        how: 'No ball. Swing slowly and let the racket edge lead down your back and up to the ball.',
+        how: 'No ball. Swing slowly, keeping the edge of the frame facing forward as the racket goes down behind you and up.',
         reps: '15 swings',
         check: { by: 'self', bar: 'Move up when the edge leads on every swing. A window or your shadow shows it.' },
       },
       {
         name: 'Service line edge serves',
-        how: 'From the service line, swing edge first and let the strings turn to the ball only at the end.',
+        how: 'From the service line, swing edge first and turn the strings to face the ball at the last moment before you hit it.',
         reps: '25 serves',
         check: ENGINE,
       },
@@ -191,15 +191,15 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
       },
     ],
     easier:
-      'Stand side-on with the racket up behind your head, let a ball bounce, and tap it into the court edge first.',
+      'Stand side-on with the racket up behind your head. Bounce a ball up high and tap it over the net, edge of the frame first.',
     mistake:
-      'Sliding back to a frying-pan grip between serves. Check the grip before every ball and ignore where the early serves land.',
+      'Going back to holding the racket like a frying pan between serves. Check your grip before every ball and ignore where early serves land.',
     pass: 4,
   },
 
   toss_height: {
-    cue: 'Lift the ball up a narrow chimney and let it float off your fingers above your racket reach.',
-    say: 'Float it above your reach',
+    cue: 'Lift the ball straight up and let go with open fingers, so it rises higher than your racket can reach.',
+    say: 'Toss above your reach',
     steps: [
       {
         name: 'Lift and let go',
@@ -210,7 +210,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
       selfChecked(DRILLS.rail_height_toss, 'Move up when sixteen of twenty tosses peak level with the rail.'),
       {
         name: 'Swing at every toss',
-        how: 'From the service line at half pace, swing at every toss, even the bad ones. The ball should feel still when you hit it.',
+        how: 'From the service line at half pace, swing at every toss, even the bad ones. Hit the ball as it starts to come down.',
         reps: '20 serves',
         check: ENGINE,
       },
@@ -222,7 +222,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
       },
       {
         name: 'One-serve points',
-        how: 'Play ten points with one serve each, so every toss has to count.',
+        how: 'Play ten points with only one serve each, tossing to the same height every time.',
         reps: '10 points',
         check: ENGINE,
       },
@@ -241,7 +241,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
       // wandered — see `progressionFor`. This is the axis-blind one.
       selfChecked(DRILLS.one_line_toss, 'Move up when you catch sixteen of twenty without moving your feet.'),
       {
-        name: 'Racket on the court',
+        name: 'Toss onto a racket',
         how: 'Lay your racket on the court in front of your front foot. Toss without swinging and let the ball land on the strings.',
         reps: '20 tosses',
         check: { by: 'self', bar: 'Move up when sixteen of twenty tosses land on the strings.' },
@@ -260,7 +260,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
       },
       POINTS,
     ],
-    easier: 'Start with the tossing arm already at shoulder height and lift only the last part.',
+    easier: 'Start with your tossing arm already raised to shoulder height, then lift it straight up from there and let go.',
     mistake:
       'Swinging the tossing arm across your body, which sends the ball behind your head. Keep it pointing up at the ball.',
     pass: 5,
@@ -280,8 +280,8 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
     say: 'Reach tall to the ball',
     steps: [
       {
-        name: 'Shoulder over shoulder',
-        how: 'Shadow serve with the tossing arm pointing high, so your hitting shoulder dips under it, then swing through without stopping.',
+        name: 'Point high and swing',
+        how: 'No ball. Swing through your serve with the tossing arm pointing high, so your hitting shoulder dips under it.',
         reps: '15 swings',
         check: { by: 'self', bar: 'Move up when the hitting shoulder dips under the tossing arm on every swing, with no bend at the waist.' },
       },
@@ -293,14 +293,14 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
         check: ENGINE,
       },
       {
-        name: 'Eyes up on big points',
+        name: 'Eyes up on first serves',
         how: 'Play ten points and keep your eyes up until the bounce on every first serve.',
         reps: '10 points',
         check: ENGINE,
       },
     ],
     easier:
-      'Fix the toss first. A toss that wanders makes your body chase it, and the chase is what folds you over.',
+      'Fix the toss first. A toss that wanders makes you lean to reach it, and that bends you at the waist.',
     mistake:
       'Bending at the waist to get the shoulder down. The tilt comes from the shoulders, with the trunk straight, never from folding over the hips.',
     pass: 5,
@@ -311,16 +311,16 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
     say: 'Let the tip fall behind you',
     steps: [
       {
-        name: 'Start it hanging',
-        how: 'Start with the racket already hanging behind you on a loose grip, then swing up from there.',
+        name: 'Swing from behind your back',
+        how: 'Start with the racket hanging down your back, tip to the ground, on a loose grip, then swing up.',
         reps: '10 swings',
-        check: { by: 'self', bar: 'Move up when every swing starts from the hang in one smooth go.' },
+        check: { by: 'self', bar: 'Move up when every swing goes from behind your back to full reach without stopping.' },
       },
       selfChecked(DRILLS.ball_in_a_sock, 'Move up when the sock swings all the way through on all fifteen.'),
       served(DRILLS.back_scratch_drop),
       {
         name: 'Swing, then serve',
-        how: 'From the baseline, alternate one swing without a ball and one serve, keeping the racket falling as deep.',
+        how: 'From the baseline, alternate one swing with no ball and one serve. Let the racket fall as far behind you on the serve.',
         reps: '10 pairs',
         check: ENGINE,
       },
@@ -328,7 +328,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
     ],
     easier: 'Throw an old ball overhead, high and far. A good throw lets the racket arm fall behind you on its own.',
     mistake:
-      'Bending the wrist or sinking the elbow to fake the depth. Keep the grip loose and let the racket fall by itself.',
+      'Bending the wrist or lowering the elbow to get the racket lower. Keep the grip loose and let the racket fall by itself.',
     pass: 4,
   },
 
@@ -338,34 +338,34 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
     steps: [
       selfChecked(DRILLS.overhead_throw, 'Move up when twelve of fifteen throws peak well above the net.'),
       {
-        name: 'Double throw',
+        name: 'Toss one, throw one',
         how: 'Hold a ball in each hand. Lift one with the tossing hand while the other hand throws its ball into the box.',
         reps: '20 throws',
         check: { by: 'self', bar: 'Move up when sixteen of twenty throws land in the box.' },
       },
       {
         name: 'Racket-up serves',
-        how: 'From the service line, start with the racket already up behind you and serve from there.',
+        how: 'From the service line, start with the racket up behind your head, elbow at shoulder height, then toss and serve.',
         reps: '20 serves',
         check: { by: 'self', bar: 'Move up when sixteen of twenty land in the box with your elbow at shoulder height.' },
       },
       {
         name: 'Half-pace serves',
-        how: 'From the baseline at half pace, use the full motion and hit up and out.',
+        how: 'From the baseline at half pace, use your full serve and swing the racket up and forward at the ball.',
         reps: '20 serves',
         check: ENGINE,
       },
       POINTS,
     ],
-    easier: 'Kneel on one knee and serve from the racket-up position, so only your arm is working.',
+    easier: 'Kneel on one knee, start with the racket up behind your head, and serve, so only your arm does the work.',
     mistake:
-      'Hoisting the elbow high and early to look right. Throw the racket head at the ball and let the elbow sort itself out.',
+      'Lifting the elbow high too early, to look right. Throw the racket head up at the ball and let the elbow follow.',
     pass: 4,
   },
 
   early_shoulder_rotation: {
     // Not "until you hear the strings hit the ball", which asked for no trunk
-    // turn before contact and argued with this ladder's own "Turn late" (L1.5).
+    // turn before contact and argued with this ladder's own "Turn your chest late" (L1.5).
     cue: 'Keep the logo on your shirt facing the side fence until the racket starts up, then turn to the net.',
     say: 'Logo to the side fence',
     steps: [
@@ -377,13 +377,13 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
       },
       selfChecked(DRILLS.hip_lead_turn, 'Move up when your hips turn before your chest on all ten. A window shows it.'),
       {
-        name: 'Sideways longer',
+        name: 'Stay sideways longer',
         how: 'From the service line, serve into the box while staying sideways for longer than feels natural.',
         reps: '20 serves',
         check: ENGINE,
       },
       {
-        name: 'Turn late',
+        name: 'Turn your chest late',
         how: 'From the baseline at half pace, let your chest turn only as the racket comes up to the ball.',
         reps: '20 serves',
         check: ENGINE,
@@ -391,12 +391,12 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
       POINTS,
     ],
     easier: 'Throw a ball overhead from side-on, letting your chest turn only as your arm comes through.',
-    mistake: 'Hearing "stay sideways" as "never turn". Your chest still turns through the ball, only later.',
+    mistake: 'Taking "stay sideways" to mean never turn. Your chest still turns to face the net as you hit, only later.',
     pass: 4,
   },
 
   no_leg_drive: {
-    cue: 'Send the ball all the way to the back fence and let your body throw your arm.',
+    cue: 'Serve deep enough to reach the back fence, pushing up off the court with your legs to do it.',
     say: 'Send it to the back fence',
     steps: [
       selfChecked(DRILLS.push_throws, 'Move up when your legs start every throw before your arm does.'),
@@ -411,16 +411,16 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
       POINTS,
     ],
     easier: 'Serve hard into a fence from a few metres away with no target, so a miss stops mattering.',
-    mistake: 'Muscling it with the arm. A tense arm swings slower, so let your legs and hips start the swing.',
+    mistake: 'Hitting hard with only your arm. A tense arm swings slower, so let your legs and hips start the swing.',
     pass: 5,
   },
 
   low_contact: {
-    cue: 'Meet the ball with the racket as high as it can go: top floor, not halfway up.',
-    say: 'Top floor, full reach',
+    cue: 'Hit the ball at the highest point your racket can reach, with your arm fully stretched.',
+    say: 'Hit it at full reach',
     steps: [
       {
-        name: 'Find your top',
+        name: 'Find your highest point',
         how: 'Hold the racket at full stretch with a ball on the strings, then roll it off upwards to feel your highest point.',
         reps: '10 reps',
         check: { by: 'self', bar: 'Move up when the ball rolls off at the same top point ten times running.' },
@@ -471,7 +471,7 @@ export type Judged = 'clean' | 'named' | 'unread'
  * is not doing. A drill that is not a ladder step is the fault's own, and is.
  */
 export function filmable(flaw: string | undefined, drill: string): boolean {
-  const step = flaw ? PROGRESSIONS[flaw as FlawId]?.steps.find((s) => s.name === drill) : undefined
+  const step = flaw ? PROGRESSIONS[flaw as FlawId]?.steps.find((s) => s.name === currentDrillName(drill)) : undefined
   return step?.check.by !== 'self'
 }
 
@@ -512,12 +512,12 @@ export function checkDrill(
 /** The line a check earns on the report, in the copy rules' voice. */
 export function drillCheckLine(check: DrillCheck): string {
   if (check.outcome === 'passed') {
-    return `Clean on ${check.clean} of ${check.read} serves in that basket, so you have passed this step.`
+    return `${check.clean} of ${check.read} serves in that basket came back without this fault, so you have passed this step.`
   }
   if (check.outcome === 'not_yet') {
-    return `Clean on ${check.clean} of ${check.read} serves in that basket. Stay on this step for now.`
+    return `${check.clean} of ${check.read} serves in that basket came back without this fault. Stay on this step for now.`
   }
-  return `Only ${check.read} of those serves showed this clearly. Film a few more to check the step.`
+  return `I could judge only ${check.read} of those serves for this fault. Film a few more to check the step.`
 }
 
 /** The toss-drift ladder's first rung where the diagnosis knows which way the toss wandered. */
@@ -672,7 +672,42 @@ export function drillForMetric(
  * report's drill has been through storage, so neither is the same object.
  */
 export const stepOf = (progression: Progression, drill: Drill): number =>
-  progression.steps.findIndex((s) => s.name === drill.name)
+  progression.steps.findIndex((s) => s.name === currentDrillName(drill.name))
+
+/**
+ * Drills renamed for plain words (2026-11-25), old name to new. A stored
+ * report keeps the name its drill had then, and a ladder finds its step by
+ * name, so an old name is read as the new one here. A practice log keeps the
+ * old name on purpose: it records what the player was told.
+ */
+export const RENAMED_DRILLS: Readonly<Record<string, string>> = {
+  'Play it out': 'Play ten points',
+  'Box, line, fence': 'Serve to three lengths',
+  'Racket ahead on the court': 'Toss onto a racket in front',
+  'Into the court': 'Serve and step into the court',
+  'Racket on the court': 'Toss onto a racket',
+  'Eyes up on big points': 'Eyes up on first serves',
+  'Start it hanging': 'Swing from behind your back',
+  'Double throw': 'Toss one, throw one',
+  'Sideways longer': 'Stay sideways longer',
+  'Turn late': 'Turn your chest late',
+  'Find your top': 'Find your highest point',
+  'Push throws': 'Push up and throw',
+  'Hip lead turn': 'Hips turn first',
+  'Hit up and out': 'Swing up from the service line',
+  'One line toss': 'Toss and catch',
+  'Rail height toss': 'Toss to a fence rail',
+  'Swing as it turns': 'Start the swing at the peak',
+  'Shoulder over shoulder': 'Point high and swing',
+  'Land inside': 'Push up, land inside',
+  'Step-in toss': 'Toss into the court',
+  'One-beat finish': 'Speed up after the trophy',
+  'Edge-first serve': 'Lead with the racket edge',
+  'Head up hold': 'Chin up after contact',
+}
+
+/** A drill's name as it is called now. */
+export const currentDrillName = (name: string): string => RENAMED_DRILLS[name] ?? name
 
 /** Every ladder, for the tests that walk the copy. */
 export const everyProgression = (): [FlawId, Progression][] =>

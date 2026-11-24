@@ -26,7 +26,7 @@ export default function ThenNow({ then, now }: { then: Session; now: Session }) 
   return (
     <section className="then-now" aria-labelledby="then-title">
       <h2 className="t-headline" id="then-title">
-        Then, and now
+        Then and now
       </h2>
       <div className="side-pair">
         <figure className="side-cell">

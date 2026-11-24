@@ -152,13 +152,13 @@ export default function SideBySide({ swing, moment, label, work, racket, checks,
           <button
             type="button"
             className="side-play-btn"
-            aria-label={playU !== null ? 'Pause both serves' : 'Play both serves, phase for phase'}
+            aria-label={playU !== null ? 'Pause both serves' : 'Play both serves together'}
             onClick={() => setPlayU(playU !== null ? null : 0)}
           >
             <Icon name={playU !== null ? 'pause' : 'play'} size={18} />
           </button>
         )}
-        <div className="seg side-phases" role="group" aria-label="Which moment to set side by side">
+        <div className="seg side-phases" role="group" aria-label="Moment to compare">
           {phases.map((p) => (
             <button
               key={p}
@@ -177,7 +177,7 @@ export default function SideBySide({ swing, moment, label, work, racket, checks,
       </div>
 
       {options.length > 1 && (
-        <div className="seg side-choice" role="group" aria-label="What to set your serve beside">
+        <div className="seg side-choice" role="group" aria-label="Compare your serve with">
           {options.map((o) => (
             <button key={o.id} type="button" className={`seg-item${o.id === chosen.id ? ' is-on' : ''}`} aria-pressed={o.id === chosen.id} onClick={() => setBeside(o.id)}>
               {o.label}

@@ -123,7 +123,7 @@ export const LESSONS: Partial<Record<FlawId, Lesson>> = {
     costs: [
       {
         kind: 'reach',
-        text: 'Skilled servers told to drop the tossing arm at a different time met the ball with a more bent hitting arm.',
+        text: 'Skilled servers told to lower the tossing arm at a different time met the ball with a more bent hitting arm.',
         from: 'newton2025',
       },
     ],
@@ -133,7 +133,7 @@ export const LESSONS: Partial<Record<FlawId, Lesson>> = {
     costs: [
       {
         kind: 'net',
-        text: 'A ball met behind you leaves the strings climbing, so it sails long or you pull it down into the net.',
+        text: 'When you hit the ball behind your head, it flies upward off the strings, so it goes long or you pull it into the net.',
         from: COACHING,
       },
     ],
@@ -156,7 +156,7 @@ export const LESSONS: Partial<Record<FlawId, Lesson>> = {
     costs: [
       {
         kind: 'timing',
-        text: 'Beginners wait at the top for a toss to come down, and a pause there loses some of the stretch that powers the arm.',
+        text: 'Beginners wait at the top for the toss to come down, and pausing there takes some power out of the arm.',
         from: ['newton2025', 'elliott2006'],
       },
       {
@@ -174,7 +174,7 @@ export const LESSONS: Partial<Record<FlawId, Lesson>> = {
     costs: [
       {
         kind: 'timing',
-        text: 'When the toss moves, skilled servers bend the elbow differently to reach it, so the swing changes serve to serve.',
+        text: 'When the toss goes to a different spot, skilled servers bend the elbow differently to reach it, so the swing changes every serve.',
         from: 'whiteside2015',
       },
     ],
@@ -192,7 +192,7 @@ export const LESSONS: Partial<Record<FlawId, Lesson>> = {
       },
     ],
     good: {
-      text: 'The trunk stays straight and tilts as one piece, hitting shoulder over the other, rather than bending at the waist.',
+      text: 'Your body stays straight and tilts as one piece, one shoulder above the other, rather than bending at the waist.',
       from: COACHING,
     },
   },
@@ -210,7 +210,7 @@ export const LESSONS: Partial<Record<FlawId, Lesson>> = {
     costs: [
       {
         kind: 'pace',
-        text: 'The upper arm turning over gives the biggest share of racket speed at contact, and that turn starts from the racket behind you.',
+        text: 'The upper arm rolling over, as in a throw, gives the biggest share of racket speed, and it starts from the racket low behind you.',
         from: 'elliott2006',
       },
     ],

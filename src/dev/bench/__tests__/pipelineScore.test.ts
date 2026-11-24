@@ -69,9 +69,9 @@ check('a what-if read is summed on its own, never into the app', () => {
 })
 
 check('frames found and on the figure are totalled across serves', () => {
-  const s = summarise([row({ frames: 90, found: 80, onFigure: 70 }), row({ frames: 10, found: 0, onFigure: 0, framingCheck: 'You stand too far from the camera to measure.' })])
+  const s = summarise([row({ frames: 90, found: 80, onFigure: 70 }), row({ frames: 10, found: 0, onFigure: 0, framingCheck: 'You are too far from the camera for me to check.' })])
   assert(s.frames === 100 && s.found === 80 && s.onFigure === 70, `${s.frames} ${s.found} ${s.onFigure}`)
-  assert(s.framingCheck['You stand too far from the camera to measure.'] === 1, JSON.stringify(s.framingCheck))
+  assert(s.framingCheck['You are too far from the camera for me to check.'] === 1, JSON.stringify(s.framingCheck))
 })
 
 check("the bench's engine steps are held to the pipeline's first keyframe search, not to a later refusal", () => {

@@ -39,7 +39,7 @@ export default function StoragePanel({ count, onImported }: Props) {
       const n = await downloadBackup()
       setOutcome(`Saved ${n} ${n === 1 ? 'serve' : 'serves'} to a file.`)
     } catch {
-      setOutcome('That did not work. Your reports are untouched.')
+      setOutcome('The export did not work. Your reports are still here.')
     }
     setBusy(null)
   }
@@ -64,7 +64,7 @@ export default function StoragePanel({ count, onImported }: Props) {
         // rather than something to act on — and "12 taps skipped" beside a
         // successful restore reads as a loss the player is expected to do
         // something about, when the serves those taps described are gone too.
-        r.tags ? `${r.tags} ${r.tags === 1 ? 'tap' : 'taps'}` : '',
+        r.tags ? `${r.tags} ${r.tags === 1 ? 'serve result' : 'serve results'}` : '',
       ].filter(Boolean)
       setOutcome(
         (parts.length ? parts.join(', ') + '.' : 'Nothing new in that file.') +
@@ -78,7 +78,7 @@ export default function StoragePanel({ count, onImported }: Props) {
           // Said rather than left to be found (L3.3): the restore counted these
           // in, and the store then had to make room.
           (r.pruned
-            ? ` ${r.pruned} of your oldest ${r.pruned === 1 ? 'report was' : 'reports were'} removed to make room; ${r.pruned === 1 ? 'its trip stays' : 'their trips stay'} on your progress chart.`
+            ? ` ${r.pruned} of your oldest ${r.pruned === 1 ? 'report was' : 'reports were'} removed to make room. Your progress chart still shows ${r.pruned === 1 ? 'that visit' : 'those visits'}.`
             : ''),
       )
       onImported()
@@ -107,7 +107,7 @@ export default function StoragePanel({ count, onImported }: Props) {
 
       {!showIOSNudge && persisted === false && (
         <p className="storage-note">
-          Your browser has not promised to keep this data. Exporting is the only certainty.
+          Your browser may clear this data. Export a copy to keep it safe.
         </p>
       )}
 
@@ -130,8 +130,7 @@ export default function StoragePanel({ count, onImported }: Props) {
           agreeing to — this is not just a table of numbers — was the thing
           least likely to be read before the tap that creates it. */}
       <p className="sheet-note">
-        An export is one file holding your scores and real photos of you serving, not just
-        numbers.
+        The export is one file with your scores and photos of you serving.
       </p>
 
       <div className="storage-actions">
@@ -153,7 +152,7 @@ export default function StoragePanel({ count, onImported }: Props) {
           disabled={busy !== null}
         >
           <Icon name="offline" size={17} />
-          {busy === 'import' ? 'Reading…' : 'Import from a file'}
+          {busy === 'import' ? 'Importing…' : 'Import from a file'}
         </button>
         <input
           ref={fileRef}

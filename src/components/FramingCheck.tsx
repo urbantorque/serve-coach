@@ -695,7 +695,7 @@ export default function FramingCheck({ onRecorded, target, targetFlaw, rearm = f
     <p className="framer-target">
       <Icon name="target" size={15} />
       <span>
-        Checking <strong>{target}</strong>. Film six serves on it.
+        Checking <strong>{target}</strong>. Film six serves of this drill.
       </span>
     </p>
   )
@@ -822,7 +822,7 @@ export default function FramingCheck({ onRecorded, target, targetFlaw, rearm = f
           </div>
         )}
         {onHelp && idle && (
-          <button type="button" className="glass-btn" onClick={onHelp} aria-label="How to film it">
+          <button type="button" className="glass-btn" onClick={onHelp} aria-label="How to set up the phone">
             <Icon name="info" />
           </button>
         )}
@@ -834,14 +834,14 @@ export default function FramingCheck({ onRecorded, target, targetFlaw, rearm = f
           <p className="framer-target">
             <Icon name="target" size={15} />
             <span>
-              For a speed, stand the phone {SPEED_PLACEMENT.distance} back, on its side, {SPEED_PLACEMENT.where}.
+              To measure serve speed, stand the phone {SPEED_PLACEMENT.distance} back, on its side, {SPEED_PLACEMENT.where}.
             </span>
           </p>
         )}
         {rearming && handsFree && idle && (
           <p className="framer-target" role="status">
             <Icon name="camera" size={15} />
-            <span>Walk back to your spot and stand still. I start the count by myself.</span>
+            <span>Walk back to your spot and stand still. I start the countdown once you are still.</span>
           </p>
         )}
         {/* The download replaces the verdict: until the model is here there is no
@@ -880,7 +880,7 @@ export default function FramingCheck({ onRecorded, target, targetFlaw, rearm = f
                 writePrefs({ speakFraming: !speak })
               }}
             >
-              Read it aloud
+              Say tips out loud
             </button>
             {canPractice && (
               <button
@@ -889,7 +889,7 @@ export default function FramingCheck({ onRecorded, target, targetFlaw, rearm = f
                 aria-pressed={practice}
                 onClick={() => setPractice(!practice)}
               >
-                Whole practice
+                Film a whole practice
               </button>
             )}
             {handsFree && !practice && (
@@ -920,7 +920,7 @@ export default function FramingCheck({ onRecorded, target, targetFlaw, rearm = f
               type="button"
               className={`film-record${recording ? ' is-recording' : ''}${countdown !== null ? ' is-counting' : ''}`}
               onClick={toggleRecording}
-              aria-label={recording ? (practice ? 'Stop and read this practice' : 'Stop and read this serve') : countdown !== null ? 'Cancel the countdown' : practice ? 'Record a whole practice' : handsFree ? 'Start hands-free' : 'Record the serve'}
+              aria-label={recording ? (practice ? 'Stop and check this practice' : 'Stop and check this serve') : countdown !== null ? 'Cancel the countdown' : practice ? 'Record a whole practice' : handsFree ? 'Start hands-free' : 'Record the serve'}
             >
               <span />
             </button>
@@ -945,14 +945,14 @@ export default function FramingCheck({ onRecorded, target, targetFlaw, rearm = f
 
         <p className="framer-foot">
           {warming !== null
-            ? 'The same download an analysis needs, so it only happens once.'
+            ? 'The coach needs this to check any video. It only downloads once.'
             : recording && practice
-              ? `Recording your practice. Serve as many as you like, then stop. Up to ${MAX_PRACTICE_SECONDS / 60} minutes.`
+              ? `Recording your practice. Serve as many as you like, then stop (up to ${MAX_PRACTICE_SECONDS / 60} minutes).`
               : recording && handsFree
               ? `Recording. Serve, and I stop by myself once ${serveCount === 1 ? 'the serve is' : `${serveCount} serves are`} over.`
               : recording
                 ? 'Recording. Serve, then stop.'
-                : `Nothing is recorded until you press record, and a clip stays on this ${deviceNoun()}.`}
+                : `Nothing records until you press record. Your video stays on this ${deviceNoun()}.`}
         </p>
       </div>
     </div>

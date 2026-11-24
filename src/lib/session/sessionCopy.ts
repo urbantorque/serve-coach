@@ -38,13 +38,13 @@ export function driftLine(d: Drift): string {
 
 /** The one line at the top: how many were read, and the thing most worth knowing. */
 export function headlineOf(stats: SessionStats, counted = false): string {
-  if (stats.read === 0) return cue('I could not read any of these serves clearly enough to measure.')
-  const count = stats.read === 1 ? 'One serve read.' : `${stats.read} serves read.`
+  if (stats.read === 0) return cue('I could not see any of these serves clearly enough to check them.')
+  const count = stats.read === 1 ? 'One serve checked.' : `${stats.read} serves checked.`
   if (stats.drifts.length) return counted ? driftLine(stats.drifts[0]) : cue(`${count} ${driftLine(stats.drifts[0])}`)
   const top = stats.faults.find((f) => f.verdict)
   if (top) return cue(`${count} ${flawTitle(top.flaw)} on ${top.named} of them.`)
   // Under the verdict's own minimum, "most of them" is a claim about too few.
-  if (stats.read < MIN_JUDGED) return cue(`${count} Too few to say what the session as a whole shows.`)
+  if (stats.read < MIN_JUDGED) return cue(`${count} Too few to judge the whole practice.`)
   return cue(`${count} No fault showed on most of them.`)
 }
 
@@ -79,7 +79,7 @@ export const unsureLine = (n: number): string =>
 
 /** What the fixes say when there are none to give. */
 export const noFixLine = (read: number): string =>
-  cue(read < MIN_JUDGED ? 'Too few serves read to name a fault for the session.' : 'No fault showed on most of your serves.')
+  cue(read < MIN_JUDGED ? 'Too few serves checked to name a fault for this practice.' : 'No fault showed on most of your serves.')
 
 /**
  * What the last practice says about this one (W6.4): the change that showed
@@ -99,4 +99,4 @@ export function lastPracticeLine(practice: readonly PracticeSession[]): string |
 export const nextTimeLine = (drift: Drift): string => driftLine(drift)
 
 /** What to do about a drift, today. */
-export const NEXT_TIME = 'Shorter baskets today, with a rest between.'
+export const NEXT_TIME = 'Serve in shorter sets today, and rest between them.'

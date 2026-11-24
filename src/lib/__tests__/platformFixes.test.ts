@@ -29,7 +29,7 @@ check('going home lets go of the clip first, and the update gate then opens (M5.
 
 check('a clip too large or not a video is refused before the decoder is asked, with a way forward (M5.1)', () => {
   const big = earlyRefusal({ size: MAX_BYTES + 1, type: 'video/mp4' })
-  assert(big?.title === 'That video is too large to read here' && big.hints.length === 3, JSON.stringify(big))
+  assert(big?.title === 'That video is too large to open here' && big.hints.length === 3, JSON.stringify(big))
   const photo = earlyRefusal({ size: 1000, type: 'image/jpeg' })
   assert(photo?.title === 'That does not look like a video', JSON.stringify(photo))
   assert(earlyRefusal({ size: 1000, type: 'video/mp4' }) === undefined, 'a small video was refused')

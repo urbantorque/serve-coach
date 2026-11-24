@@ -1,4 +1,3 @@
-import type { ChangeScope } from '../lib/analysis/realChange'
 import {
   deltaStatus,
   shortDate,
@@ -8,67 +7,9 @@ import {
 } from '../lib/progress'
 import { steadyWidth } from './trendGeometry'
 
-/* ============================================================ delta chip === */
-
-/**
- * Colour is never the only channel here — the sign and the arrow carry the same
- * meaning, which is what keeps this readable for a colourblind reader and in
- * forced-colours mode.
- *
- * `scope` says what the change is a change of, which sets how far it has to
- * go to be the serve rather than the camera (`REAL_CHANGE`, L3.1). `alike`
- * says whether the two serves were graded on the same rows.
- */
-export function DeltaChip({
-  delta,
-  scope,
-  alike = true,
-  compact = false,
-}: {
-  delta?: number
-  scope: ChangeScope
-  alike?: boolean
-  compact?: boolean
-}) {
-  if (delta === undefined) return null
-  const state = deltaStatus(delta, scope, alike)
-
-  // A noise-level change shows the dash alone. Printing the digit as well reads
-  // as a negative number when it sits beside a score — "92" then "–1" looks
-  // like ninety-one — and the whole point of the threshold is that the digit
-  // does not mean anything.
-  if (state === 'flat') {
-    return (
-      <span className={`delta delta--flat${compact ? ' delta--compact' : ''}`}>
-        <span aria-hidden="true">–</span>
-        <span className="sr-only">no real change</span>
-      </span>
-    )
-  }
-
-  // Past the line, but the two serves were measured on different rows — the
-  // drop found on one and not the other, say — so the gap is partly the
-  // measuring. The neutral chip, with a mark that says "about" rather than the
-  // dash that says "nothing", and no digit for the same reason the dash has
-  // none.
-  if (state === 'soft') {
-    return (
-      <span className={`delta delta--flat${compact ? ' delta--compact' : ''}`} title="Measured differently, so not compared">
-        <span aria-hidden="true">≈</span>
-        <span className="sr-only">measured differently, so not compared</span>
-      </span>
-    )
-  }
-
-  const up = delta > 0
-  return (
-    <span className={`delta delta--${state}${compact ? ' delta--compact' : ''}`}>
-      <span aria-hidden="true">{up ? '▲' : '▼'}</span>
-      <span className="tnum">{Math.abs(delta)}</span>
-      <span className="sr-only">{up ? 'up' : 'down'}</span>
-    </span>
-  )
-}
+/** The change chip lives in its own file, so the screens that need only it do not load the charts. */
+import { DeltaChip } from './DeltaChip'
+export { DeltaChip }
 
 const fmtDate = shortDate
 
@@ -110,9 +51,7 @@ export function DeltaBars({ deltas }: { deltas: AreaDelta[] }) {
         )
       })}
       <li className="dbars-note">
-        A dash is a change the camera alone could make filming the same serve
-        twice. Each area has its own line, because the camera moves some far more
-        than others.
+        A dash means the change is too small to count: filming the same serve twice could give it. Some areas need a bigger change than others to count.
         {deltas.some((d) => deltaStatus(d.delta, d.id, d.alike) === 'soft') &&
           ' ≈ marks an area measured differently on the two serves, so its change is not counted.'}
       </li>
@@ -141,8 +80,8 @@ export function TrendTable({ points }: { points: TripPoint[] }) {
     <>
       <table className="dtable">
         <caption className="sr-only">
-          Typical serve score by trip, with the range the serves ran over
-          {broken ? ', and the trips scored the old way marked' : ''}
+          Typical serve score for each court trip, with the lowest and highest score
+          {broken ? ', with court trips scored the old way marked' : ''}
         </caption>
         <thead>
           <tr>
@@ -163,7 +102,7 @@ export function TrendTable({ points }: { points: TripPoint[] }) {
                 {stale(p) && <span className="chart-hint"> · scored the old way</span>}
               </td>
               <td className="tnum">
-                {p.serves === 1 ? '1' : `${p.serves}, ${p.low}–${p.high}`}
+                {p.serves === 1 ? '1' : `${p.serves}, ${p.low} to ${p.high}`}
               </td>
             </tr>
           ))}
@@ -171,7 +110,7 @@ export function TrendTable({ points }: { points: TripPoint[] }) {
       </table>
       {broken && (
         <p className="sheet-note">
-          The scoring changed partway through. Serves marked the old way sit on a different scale, so that step is the scoring, not your serve.
+          I changed how I score serves partway through. Older serves use a different scale, so a jump there is the scoring, not you.
         </p>
       )}
     </>
@@ -220,8 +159,8 @@ export function GapTrend({ points }: { points: ConsistencyPoint[] }) {
       {/* "Points" read as tennis points here, and "gap" was already doing duty
           for the scoring break two blocks up in the same sheet. */}
       <li className="gaps-note">
-        Longer is steadier: the bar grows as your best and worst serve in one clip close up. The
-        number is the points between them
+        A longer bar means steadier serves: it grows as your best and worst serve in one video get closer. The
+        number is the score gap between them
         {points.length > shown.length ? `, showing your last ${shown.length}` : ''}.
       </li>
     </ul>

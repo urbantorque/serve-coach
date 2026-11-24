@@ -252,7 +252,7 @@ interface Claimed {
 
 const CLAIMED: Record<string, Claimed> = {
   releaseHeight: {
-    stamp: '07b4fcac',
+    stamp: 'ef728d04',
     insight: {
       low: ['Let go below the eyes'],
       // Re-anchored on the coaching standard (D2.1): eye level and up is praised.
@@ -262,13 +262,13 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { low: 'Let go above the head', high: 'Let go above the head' },
   },
   tossArmHold: {
-    stamp: '1f8ea683',
+    stamp: 'b12c05a6',
     insight: {
       low: ['Arm comes down at once', 'Arm comes down early'],
-      ok: ['Arm holds to the swing', 'Arm holds through contact'],
-      high: ['Arm holds through contact'],
+      ok: ['Arm stays up until the swing', 'Arm stays up through contact'],
+      high: ['Arm stays up through contact'],
     },
-    aim: { low: 'Arm holds to the swing', high: 'Arm holds to the swing' },
+    aim: { low: 'Arm stays up until the swing', high: 'Arm stays up until the swing' },
   },
   tossPathWobble: {
     // Re-stamped when the fault line and its order stopped saying "sideways".
@@ -276,19 +276,19 @@ const CLAIMED: Record<string, Claimed> = {
     // across image x, which side-on is front-to-back — so the old wording named
     // a direction on every clip and had it right on some of them. The rungs
     // moved with it, from "wide" to "off line", for the same reason.
-    stamp: '6c55745d',
+    stamp: '4f30f6bd',
     insight: {
-      low: ['Dead straight lift'],
-      ok: ['Dead straight lift', 'Straight lift'],
-      high: ['Drifts a hand off line', 'Wanders off line'],
+      low: ['Perfectly straight toss'],
+      ok: ['Perfectly straight toss', 'Straight toss'],
+      high: ['Toss off line', 'Toss well off line'],
     },
-    aim: { high: 'Straight lift' },
+    aim: { high: 'Straight toss' },
   },
   tossPeakHeight: {
     // Re-stamped when the ceiling moved from 1.72 to 2.1 on published toss
     // heights. The middle rung became "well above the racket", and the high line
     // now only ever stands over "far above".
-    stamp: '17587504',
+    stamp: '9e2d647f',
     insight: {
       // "Peaks at racket reach" is claimed on both sides: it is the flat serve's
       // near miss and the kick serve's floor, and neither sentence denies it.
@@ -302,7 +302,7 @@ const CLAIMED: Record<string, Claimed> = {
     // Re-stamped when the band moved from 0–0.09 to 0–0.55 on published drops
     // from apex to impact: falling into the swing is praised, and only a long
     // fall is not. The high line now only ever stands over "well past".
-    stamp: '172f9d6d',
+    stamp: '2ba74b25',
     insight: {
       low: ['Struck at the peak'],
       // Re-anchored to published drops: the ball falls a fair way into a good
@@ -313,7 +313,7 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { high: 'Struck as it starts to fall' },
   },
   kneeBend: {
-    stamp: '921ad28a',
+    stamp: '9b05379f',
     insight: {
       low: ['Legs straight', 'Legs barely bent'],
       ok: ['Knees well bent'],
@@ -322,7 +322,7 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { low: 'Knees well bent', high: 'Knees well bent' },
   },
   shoulderTilt: {
-    stamp: '731bd272',
+    stamp: '894db064',
     insight: {
       low: [
         'Tossing shoulder under the ball',
@@ -344,20 +344,20 @@ const CLAIMED: Record<string, Claimed> = {
   legDrive: {
     // Re-stamped when the floor became a full extension with no jump (L3.9):
     // legs straightened out of the load are in band, and said so.
-    stamp: 'a72ea67f',
+    stamp: '319c3256',
     insight: {
       low: ['No push off the court'],
       // A big launch is praised since the band ran to the end of its axis (D2.3).
-      ok: ['Legs straighten up', 'Light push', 'Strong drive up', 'Big launch'],
-      high: ['Big launch'],
+      ok: ['Legs straighten up', 'Light push', 'Strong push up', 'Big push up'],
+      high: ['Big push up'],
     },
-    aim: { low: 'Strong drive up', high: 'Strong drive up' },
+    aim: { low: 'Strong push up', high: 'Strong push up' },
   },
   dropDepth: {
     // Re-stamped when the band moved from the hand down the back (0.16–0.34) to
     // the hand near the shoulder (−0.1–0.3), on real serve motion — and the rungs
     // were renamed for the hand, which is what is measured.
-    stamp: 'ac988acd',
+    stamp: '3f8f7af9',
     insight: {
       low: ['Hand stays above the shoulder'],
       ok: ['Hand level with the shoulder', 'Hand below the shoulder'],
@@ -366,7 +366,7 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { low: 'Hand level with the shoulder', high: 'Hand below the shoulder' },
   },
   elbowAtDrop: {
-    stamp: 'd737de98',
+    stamp: '8e5be7f5',
     insight: {
       low: ['Racket jammed on the back'],
       ok: ['Arm folded in an L'],
@@ -398,16 +398,16 @@ const CLAIMED: Record<string, Claimed> = {
     // vocabulary that clears the voice lint (it is not on the jargon list) and
     // still loses a player who has never met the term. The rungs claimed below
     // are unchanged: a racket that fires with no pause is an explosive swing.
-    stamp: '8e65b13f',
+    stamp: '990595ee',
     insight: {
-      low: ['Swing snaps through'],
-      ok: ['Explosive swing'],
-      high: ['Guided swing', 'Steered swing'],
+      low: ['Fast swing to the ball'],
+      ok: ['Quick swing to the ball'],
+      high: ['Slow swing to the ball', 'Steered, slow swing'],
     },
-    aim: { low: 'Explosive swing', high: 'Explosive swing' },
+    aim: { low: 'Quick swing to the ball', high: 'Quick swing to the ball' },
   },
   contactHeight: {
-    stamp: 'fb7baed1',
+    stamp: '95263b08',
     insight: {
       low: ['Struck at head height', 'Struck below full reach'],
       ok: ['Struck at full racket reach'],
@@ -417,7 +417,7 @@ const CLAIMED: Record<string, Claimed> = {
   },
   // The ball's height at contact, on the hand's rungs raised by the racket.
   ballContactHeight: {
-    stamp: '0f0c08cd',
+    stamp: '51eeace9',
     insight: {
       low: ['Struck at head height', 'Struck below full reach'],
       ok: ['Struck at full racket reach'],
@@ -426,18 +426,18 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { low: 'Struck at full racket reach', high: 'Struck at full racket reach' },
   },
   armExtension: {
-    stamp: '857d8f5d',
+    stamp: '3b9b1f87',
     insight: {
-      low: ['Elbow bent at contact', 'Arm short of straight'],
+      low: ['Elbow bent at contact', 'Arm almost straight'],
       // Published elbows are flexed 14–30° at impact (D2.1), so a long arm short
       // of dead straight is praised too.
-      ok: ['Arm long at contact', 'Arm dead straight'],
-      high: ['Arm dead straight'],
+      ok: ['Arm straight at contact', 'Arm fully straight'],
+      high: ['Arm fully straight'],
     },
-    aim: { low: 'Arm long at contact', high: 'Arm long at contact' },
+    aim: { low: 'Arm straight at contact', high: 'Arm straight at contact' },
   },
   contactAhead: {
-    stamp: 'ef08c32c',
+    stamp: '2efaa2be',
     insight: {
       low: ['Struck behind the head', 'Struck over the head'],
       ok: ['Struck in front of the body'],
@@ -447,13 +447,13 @@ const CLAIMED: Record<string, Claimed> = {
     aim: { low: 'Struck in front of the body' },
   },
   loadRatio: {
-    stamp: 'a701f8ed',
+    stamp: '815c7f0c',
     insight: {
-      low: ['Crammed finish'],
-      ok: ['Slow build, fast finish'],
-      high: ['Back half drifts'],
+      low: ['Rushed after the trophy'],
+      ok: ['Slow start, fast swing'],
+      high: ['Slow after the trophy'],
     },
-    aim: { low: 'Slow build, fast finish', high: 'Slow build, fast finish' },
+    aim: { low: 'Slow start, fast swing', high: 'Slow start, fast swing' },
   },
 
   /* The lines a serve type replaces, claimed where they are written. */
@@ -472,7 +472,7 @@ const CLAIMED: Record<string, Claimed> = {
     // Re-stamped when the flat instruction above the band was replaced. The
     // description is untouched and the two rungs claimed below are unchanged by
     // the edit; what moved is the order underneath them.
-    stamp: '9a39cfda',
+    stamp: '44719266',
     insight: { ok: ['Struck below full reach', 'Struck at full racket reach'] },
     // The flat order above this band sends the toss forward, which is the one
     // place a kick card must never point: its own contact-depth line orders the
@@ -494,18 +494,18 @@ const CLAIMED: Record<string, Claimed> = {
   'depth.tossPathWobble': {
     // The clean lines say which half of the toss the camera saw (N2.10), and
     // claim the same rungs as the plain clean lines they replace.
-    stamp: '420872b4',
-    insight: { low: ['Dead straight lift'], ok: ['Dead straight lift', 'Straight lift'], high: ['Drifts a hand off line', 'Wanders off line'] },
-    aim: { high: 'Straight lift' },
+    stamp: '8d71973f',
+    insight: { low: ['Perfectly straight toss'], ok: ['Perfectly straight toss', 'Straight toss'], high: ['Toss off line', 'Toss well off line'] },
+    aim: { high: 'Straight toss' },
   },
   'lateral.tossPathWobble': {
-    stamp: '2c906a26',
-    insight: { low: ['Dead straight lift'], ok: ['Dead straight lift', 'Straight lift'], high: ['Drifts a hand off line', 'Wanders off line'] },
-    aim: { high: 'Straight lift' },
+    stamp: 'beaadd9c',
+    insight: { low: ['Perfectly straight toss'], ok: ['Perfectly straight toss', 'Straight toss'], high: ['Toss off line', 'Toss well off line'] },
+    aim: { high: 'Straight toss' },
   },
 
   'kick.ballContactHeight': {
-    stamp: '2fbaab92',
+    stamp: 'f29104f5',
     insight: { ok: ['Struck at full racket reach'] },
     aim: { high: 'Struck at full racket reach' },
   },

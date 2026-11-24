@@ -36,9 +36,9 @@ export const STATUS_LABEL: Record<Status, string> = {
  */
 export function readQuality(confidence: number): string {
   if (confidence >= 0.8) return 'Saw it clearly'
-  if (confidence >= 0.6) return 'Saw it well'
-  if (confidence >= 0.4) return 'Saw it partly'
-  return 'Struggled to see it'
+  if (confidence >= 0.6) return 'Saw most of it'
+  if (confidence >= 0.4) return 'Saw only part of it'
+  return 'Could barely see it'
 }
 
 /** Below this the read is hedged on screen rather than stated flat. */
@@ -99,7 +99,7 @@ export function pairRankModifier(leftIsBetter?: boolean): PairRankModifier {
  */
 export function uncalibratedLine(id: string, from: number, to: number): string | undefined {
   if (id === 'external_rotation_deg') {
-    return `Your hitting shoulder laid back further on serve ${to} than on serve ${from}.`
+    return `Your hitting arm turned back further at the shoulder on serve ${to} than on serve ${from}.`
   }
   /*
    * The chain ratio, as a direction and no more.
@@ -112,7 +112,7 @@ export function uncalibratedLine(id: string, from: number, to: number): string |
    * by constraint 4; this says legs and arm.
    */
   if (id === 'chain_span_ratio') {
-    return `Your arm followed your legs later on serve ${to} than on serve ${from}.`
+    return `Your arm swung later after your legs pushed on serve ${to} than on serve ${from}.`
   }
   /*
    * "Further across your feet", and not a word about falling.
@@ -133,6 +133,6 @@ export function uncalibratedLine(id: string, from: number, to: number): string |
 export const VERDICT: Record<Status, string> = {
   great: 'A seriously good serve',
   good: 'A solid serve to build on',
-  fair: 'Good bones, a few gaps',
-  work: 'Plenty of free speed here',
+  fair: 'Good basics, a few things to fix',
+  work: 'Plenty of easy speed to gain',
 }

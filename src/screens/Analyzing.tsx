@@ -46,8 +46,8 @@ const TEACH: { moment: PhaseId; title: string; text: string; parts: (racket: 'le
   },
   {
     moment: 'finish',
-    title: 'My own wobble',
-    text: 'A camera is never perfectly steady, so a change only counts when it is bigger than the wobble.',
+    title: 'Camera shake',
+    text: 'No camera is perfectly steady, so I only count a change that is bigger than the shake.',
     parts: () => [],
   },
 ]
@@ -188,11 +188,11 @@ export default function Analyzing({ progress, sweep, onCancel, racket = 'right',
         )}
         {watching && <LiveBody feed={live} racket={racket} done={swingRead} onSeen={() => setSeen(true)} />}
         <div className="hero-veil" aria-hidden="true" />
-        {seen && <p className="wait-tag">{swingRead ? 'Your whole swing' : 'This is you, as I read you'}</p>}
+        {seen && <p className="wait-tag">{swingRead ? 'Your whole swing' : 'This is you, as I track you'}</p>}
       </div>
 
       <div className="wait-foot">
-        <h1 className="t-headline">{sweep ? 'Comparing your serves' : 'Reading your serve'}</h1>
+        <h1 className="t-headline">{sweep ? 'Comparing your serves' : 'Checking your serve'}</h1>
         {/* Analysis takes several seconds; without this a screen-reader user
             gets silence and no idea whether anything is happening. */}
         <p className="wait-status" role="status" aria-live="polite">
@@ -216,7 +216,7 @@ export default function Analyzing({ progress, sweep, onCancel, racket = 'right',
             number in it. */}
         {sweep && sweep.firstNumber > 1 && (
           <p className="wait-note">
-            Found {sweep.firstNumber + sweep.total - 1} serves · comparing {sweep.firstNumber}–
+            Found {sweep.firstNumber + sweep.total - 1} serves · comparing serves {sweep.firstNumber} to{' '}
             {sweep.firstNumber + sweep.total - 1}
           </p>
         )}
@@ -231,7 +231,7 @@ export default function Analyzing({ progress, sweep, onCancel, racket = 'right',
                 <li key={i} className={`sweep-cell${settled && !unreadable ? ' is-done' : ''}${unreadable ? ' is-skipped' : ''}${i === sweep.done.length ? ' is-active' : ''}`}>
                   <span className="sweep-score tnum">{settled ? (unreadable ? <Icon name="close" size={14} /> : settled.score) : ''}</span>
                   <span>Serve {number}</span>
-                  {unreadable && <span className="sr-only">too unclear to read</span>}
+                  {unreadable && <span className="sr-only">too unclear to score</span>}
                 </li>
               )
             })}

@@ -24,10 +24,10 @@ const LEDES: Record<InfoPageId, string> = {
   pricing: PRICE_LINE
     ? 'What stays free, what Plus adds, and what it costs. Your video never leaves your device on either.'
     : 'What stays free and what Plus adds. Your video never leaves your device on either.',
-  accuracy: 'What I measure, how steady each reading is, how I know, and what I cannot see. Built from the tables I grade with.',
+  accuracy: 'What I measure, how reliable each measurement is, how I know, and what I cannot see.',
   privacy: 'Your video never leaves your device. Here is everything I keep, and where it lives.',
   terms: 'What Serve Coach is, what it is not, and what you agree to by using it.',
-  credits: 'The research, the models and the tools this app stands on.',
+  credits: 'The research, models and tools this app is built on.',
 }
 
 /**
@@ -246,23 +246,23 @@ function Accuracy({ onPage }: { onPage: Go }) {
   return (
     <>
       <Section title="The number at the top">
-        <p>It sets every graded reading of your serve against its band, then weighs the areas into one number out of 100.</p>
+        <p>I compare each graded measurement of your serve with its target range, then combine the areas into one score out of 100.</p>
         <p>
-          Read again, my test serves move it <strong className="tnum">{SCORE_STEADY}</strong> points or fewer, nine times in ten.
+          When I check my test serves again, it moves <strong className="tnum">{SCORE_STEADY}</strong> points or fewer, nine times in ten.
         </p>
         <p>
-          Copies of two small, dark real clips moved it{' '}
+          On copies of two small, dark real videos, it moved{' '}
           <strong className="tnum">
             {SCORE_ON_SMALL_CLIPS[0]} to {SCORE_ON_SMALL_CLIPS[1]}
           </strong>{' '}
-          points. A change of a few points can be my camera, not your serve.
+          points. A change of a few points can come from the camera, not your serve.
         </p>
-        <p>No coach and no ranking has checked what a number means for a real player. Set it against your own serves, not anyone else&apos;s.</p>
+        <p>No coach or ranking has checked what a score means for a real player. Compare it with your own serves, not anyone else&apos;s.</p>
       </Section>
 
-      <Section title="What I grade, and how steady it is">
+      <Section title="What I grade, and how reliable it is">
         <p>
-          For each reading: how far it moves when I read the same serve again, and how often a steady serve keeps its
+          For each measurement: how much it changes when I check the same serve again, and how often an unchanged serve keeps its
           grade.
         </p>
         <ul className="acc-rows">
@@ -271,11 +271,11 @@ function Accuracy({ onPage }: { onPage: Go }) {
               <h3>{r.label}</h3>
               <dl className="acc-figures">
                 <div>
-                  <dt>Read again, it moves about</dt>
+                  <dt>Checked again, it changes by about</dt>
                   <dd className="tnum">{wobbleText(r.unit, r.wobble)}</dd>
                 </div>
                 <div>
-                  <dt>A steady serve keeps its grade</dt>
+                  <dt>An unchanged serve keeps its grade</dt>
                   <dd className="tnum">{r.keepsGrade} times in 100</dd>
                 </div>
                 {r.onSmallClips !== undefined && (
@@ -294,13 +294,13 @@ function Accuracy({ onPage }: { onPage: Go }) {
       </Section>
 
       {ball.length > 0 && (
-        <Section title="Graded, with nothing measured under it">
+        <Section title="Graded, but not yet tested for accuracy">
           <ul className="info-list">
             {ball.map((b) => (
               <li key={b.id}>{b.label}</li>
             ))}
           </ul>
-          <p>My test serves come from a lab with no ball in it, so nothing has measured how steady these are.</p>
+          <p>My test serves come from a lab with no ball in it, so I have not tested how reliable these are.</p>
         </Section>
       )}
 
@@ -310,24 +310,24 @@ function Accuracy({ onPage }: { onPage: Go }) {
       </Section>
 
       <Section title="How I know">
-        <p>I read six serves recorded in a motion capture lab, 240 times each, adding a phone camera's noise every time.</p>
-        <p>Every take goes through the same steps as your clip. That shows how far a reading wobbles on one serve.</p>
-        <p>Lab serves come from a motion capture lab. My test serve is one I build to make each fault on purpose.</p>
-        <p>It does not prove a reading matches the lab. One camera cannot reach that, and I do not claim it.</p>
-        <p>A real camera can wobble more than the noise I add, so every figure here is the least it moves.</p>
-        <p>I also re-read two small public clips darker, further away, smaller and a frame later.</p>
-        <p>Heights moved most there, because the body I measure them against moved with them. Those figures wait for sharper footage.</p>
+        <p>I checked six serves recorded in a motion capture lab, 240 times each, adding typical phone camera errors every time.</p>
+        <p>Each copy goes through the same steps as your video. That shows how much a measurement varies on one serve.</p>
+        <p>Besides the lab serves, I use a test serve I built to show each fault on purpose.</p>
+        <p>This does not prove my measurements match the lab. One camera cannot be that accurate, and I do not claim it is.</p>
+        <p>A real camera can be less accurate than my test, so every figure here is the smallest error to expect.</p>
+        <p>I also checked two small public videos again, made darker, further away, smaller and a frame later.</p>
+        <p>Heights changed most there, because I measure them against your body, which changed too. Those figures need sharper footage to test.</p>
       </Section>
 
       <Section title="What I cannot see">
         <ul className="info-list">
-          <li>Depth. One camera sees a flat picture, so a part moving toward it or away reads less well.</li>
+          <li>Depth. One camera sees a flat picture, so I measure movement toward or away from it less well.</li>
           <li>Slow motion: my figures come from normal-speed video. Slow motion gives me more frames of the swing, which is why I suggest it.</li>
-          <li>A racket drop the camera blurs. I can miss one entirely, and that gap is still open.</li>
+          <li>A racket drop the camera blurs. I can miss it entirely, and I have not fixed that yet.</li>
           <li>Your real height. I measure heights against your own body in the picture, never in metres.</li>
         </ul>
         <p>
-          When a clip cannot support a reading, I hedge it or leave it out. The{' '}
+          When a video is not clear enough to measure something, I mark it as unsure or leave it out. The{' '}
           <a href={pathFor({ kind: 'page', page: 'privacy' }, import.meta.env.BASE_URL)} onClick={onPage('privacy')}>
             privacy page
           </a>{' '}
@@ -345,17 +345,17 @@ function Privacy() {
   return (
     <>
       <Section title="Your video stays here">
-        <p>I read your serve inside this browser, on this {here}. The video never goes to a server, mine or anyone else's.</p>
+        <p>I check your serve inside this browser, on this {here}. The video never goes to a server, mine or anyone else's.</p>
         <p>A clip you choose to keep stays in this browser's own storage, on this {here}.</p>
       </Section>
       <Section title="What I keep, and where">
-        <p>Your scores, the joint positions I read and your settings live in this browser, on this {here}.</p>
+        <p>Your scores, the joint positions I track and your settings live in this browser, on this {here}.</p>
         <p>Clearing this site's data in your browser deletes them. A backup file you export stays yours to keep or delete.</p>
       </Section>
       <Section title="What leaves, and when">
-        <p>The pose models download from this site the first time you read a serve. After that the app works with no signal.</p>
-        <p>Nothing about your serve leaves unless you send it yourself: a poster, a clip or a report for your coach.</p>
-        <p>A poster or a clip shows a drawn figure, never a photo of you.</p>
+        <p>The body tracking files download from this site the first time you check a serve. After that the app works with no signal.</p>
+        <p>Nothing about your serve leaves unless you send it yourself: a picture, a clip or a report for your coach.</p>
+        <p>A picture or a clip shows a drawn figure, never a photo of you.</p>
       </Section>
       <Section title="No tracking">
         <p>No analytics, no advertising and no cookies that follow you. I do not know who you are.</p>
@@ -363,7 +363,7 @@ function Privacy() {
       {PAYMENTS !== 'off' && (
         <Section title="If you buy Plus">
           <p>Stripe takes the payment on its own page and keeps your card and email. I never see either.</p>
-          <p>This {here} keeps a signed pass saying Plus runs until a date. It holds no name, no email and nothing about a serve.</p>
+          <p>This {here} keeps a small file that says when your Plus ends. It holds no name, no email and nothing about a serve.</p>
         </Section>
       )}
       <Section title="Questions">
@@ -380,7 +380,7 @@ function Terms({ onPage }: { onPage: Go }) {
   return (
     <>
       <Section title="What this is">
-        <p>Serve Coach reads a tennis serve from a video and suggests what to work on. It is a coaching aid, not a coach.</p>
+        <p>Serve Coach checks a tennis serve from a video and suggests what to work on. It is a coaching aid, not a coach.</p>
         {SITE.operator && <p>{SITE.operator} runs Serve Coach.</p>}
       </Section>
       <Section title="How far to trust it">
@@ -391,13 +391,13 @@ function Terms({ onPage }: { onPage: Go }) {
           </a>{' '}
           sets out how I know.
         </p>
-        <p>Treat a reading as a guide, not a lab measurement or a radar reading.</p>
+        <p>Treat every number as a guide, not a lab measurement or a radar reading.</p>
       </Section>
       <Section title="Look after your body">
         <p>Stop if anything hurts, and see someone qualified about pain. A drill on this app is no answer to an injury.</p>
       </Section>
-      <Section title="Your videos and readings">
-        <p>Your videos and readings stay yours, on your own device. You can delete them from your browser at any time.</p>
+      <Section title="Your videos and results">
+        <p>Your videos and results stay yours, on your own device. You can delete them from your browser at any time.</p>
       </Section>
       <Section title="Fair use">
         <p>Use the app for your own serve, or for someone else's with their permission. Do not try to break, copy or resell it.</p>
@@ -408,7 +408,7 @@ function Terms({ onPage }: { onPage: Go }) {
           <p>Cancel any time from the plans page. Plus then runs to the end of the period you paid for.</p>
         </Section>
       )}
-      <Section title="As it is">
+      <Section title="No guarantee">
         <p>The app comes as it is, with no promise that it suits your purpose.</p>
         <p>As far as the law allows, liability goes no further than what you paid.</p>
       </Section>
@@ -426,7 +426,7 @@ function Terms({ onPage }: { onPage: Go }) {
 const CREDITS: { what: string; who: string; licence: string }[] = [
   { what: 'Pose Landmarker', who: 'Google, MediaPipe', licence: 'Apache License 2.0' },
   { what: 'EfficientDet-Lite0, the racket finder', who: 'Google, MediaPipe', licence: 'Apache License 2.0' },
-  { what: 'RTMPose-s, the sharper swing model', who: 'OpenMMLab', licence: 'Apache License 2.0' },
+  { what: 'RTMPose-s, the more accurate swing tracker', who: 'OpenMMLab', licence: 'Apache License 2.0' },
   { what: 'MediaPipe Tasks', who: 'Google', licence: 'Apache License 2.0' },
   { what: 'ONNX Runtime Web', who: 'Microsoft', licence: 'MIT License' },
   { what: 'React', who: 'Meta and contributors', licence: 'MIT License' },

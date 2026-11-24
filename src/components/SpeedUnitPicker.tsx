@@ -13,7 +13,7 @@ interface Props {
 export default function SpeedUnitPicker({ value, onChange }: Props) {
   return (
     <fieldset className="hand-pick">
-      <legend>Speed in</legend>
+      <legend>Show speeds in</legend>
       <div className="hand-pick-options">
         {(['kmh', 'mph'] as const).map((unit) => (
           <button

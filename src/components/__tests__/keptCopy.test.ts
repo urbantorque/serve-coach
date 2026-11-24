@@ -33,12 +33,12 @@ check('a reopened report with its clip kept says it is kept, not that it was nev
 check('with the setting on and this clip not kept, the lines say so', () => {
   const out = reopened({ keepsClips: true })
   assert(out.includes('this video was not kept'), 'a clip that was not kept was not said to be')
-  assert(out.includes('This clip was not kept on your phone') && !out.includes(NEVER), 'the replay note still said never saved')
+  assert(out.includes('This video was not saved on your phone') && !out.includes(NEVER), 'the replay note still said never saved')
 })
 
 check('with the setting off, the old promise stands', () => {
   const out = reopened({})
-  assert(out.includes(NEVER) && out.includes('Your clip never left your phone'), 'the never-saved lines went missing')
+  assert(out.includes(NEVER) && out.includes('Your video never left your phone'), 'the never-saved lines went missing')
 })
 
 check('a live report says when its clip could not be kept', () => {

@@ -66,5 +66,5 @@ export function takeInterrupted(store: Store | undefined = tabStore()): Interrup
 
 /** What the home screen says about it. */
 export function interruptedLine(): string {
-  return 'Your last reading stopped part way, most likely because the screen locked. Pick the clip again to read it.'
+  return 'Your last check stopped part way, most likely because the screen locked. Pick the video again to check it.'
 }

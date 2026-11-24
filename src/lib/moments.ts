@@ -151,7 +151,7 @@ function newBestTrip(sessions: Session[], more: MomentContext): Found | undefine
     kind: 'best_trip',
     key: `best_trip:${record.from}`,
     at: record.to,
-    title: 'Best trip yet',
+    title: 'Best court trip yet',
     body: cue(bestTripLine(record, record.to)),
   }
 }
@@ -167,8 +167,8 @@ function streakMilestone(sessions: Session[], prefs: Prefs, now: number, more: M
     kind: 'streak',
     key: `streak:${n}:${at}`,
     at,
-    title: `${n} trips in a row`,
-    body: cue(`${capital(CADENCE_WORDS[cadence])}, and every one of them on film.`),
+    title: `${n} court trips in a row`,
+    body: cue(`${capital(CADENCE_WORDS[cadence])}, and you filmed every trip.`),
   }
 }
 
@@ -263,7 +263,7 @@ function derive(sessions: Session[], prefs: Prefs, now: number, evidence: readon
       key: 'first_serve',
       at: first,
       title: 'First serve filmed',
-      body: 'Your history starts here. Film another next trip and I can start comparing.',
+      body: 'Your history starts here. Film again on your next court trip and I can start comparing.',
     })
   }
 
@@ -376,7 +376,7 @@ function faultsMoved(sessions: Session[], prefs: Prefs, evidence: readonly Sessi
     const held = graduation(pool, flaw)
     if (!held || held.since < from) continue
     fixed.add(flaw)
-    out.push({ flaw, moved: 'fixed', line: cue(`${FAULT_NAME[flaw]}: clean on ${held.clean} of your last ${held.read} serves.`) })
+    out.push({ flaw, moved: 'fixed', line: cue(`${FAULT_NAME[flaw]}: not seen on ${held.clean} of your last ${held.read} serves.`) })
   }
   const era = currentRubricEra([...pool].sort((a, b) => a.createdAt - b.createdAt))
   for (const flaw of NAMED) {
@@ -443,7 +443,7 @@ export function weekRecap(
   const unit = prefs.speedUnit ?? defaultSpeedUnit()
 
   const count = week.serves === 1 ? '1 serve' : `${week.serves} serves`
-  const where = trips === 1 ? 'on one trip' : `over ${trips} trips`
+  const where = trips === 1 ? 'on one court trip' : `over ${trips} court trips`
   return {
     from,
     to,

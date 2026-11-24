@@ -110,11 +110,6 @@ interface Ruling {
 const RULINGS: Ruling[] = [
   /* ------------------------------------------------------------- exempt -- */
   {
-    text: 'Overall, serve by serve',
-    verdict: 'exempt',
-    why: 'A chart label on the basket panel, not a cue. `voice.ts` reads a leading "overall" as a preamble, which it is in a sentence and is not in a heading.',
-  },
-  {
     text: 'Every clip in the folder is analysed here',
     verdict: 'exempt',
     why: '`?corpus` is dev-only and says so in `App.tsx` — a tool for building the engine, not a surface a player reaches.',
@@ -128,11 +123,6 @@ const RULINGS: Ruling[] = [
     text: 'Nothing here is sent anywhere',
     verdict: 'exempt',
     why: 'Same sentence, same reason, on the `?check` panel.',
-  },
-  {
-    text: 'An export is one file holding your scores and real photos',
-    verdict: 'exempt',
-    why: '"not just numbers" — the hedge carries the meaning, and dropping it inverts the sentence. R30 wrote this line to be read before the Export button.',
   },
 ]
 

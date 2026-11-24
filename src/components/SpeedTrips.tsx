@@ -53,7 +53,7 @@ export default function SpeedTrips({ trips, unit }: { trips: readonly SpeedSumma
       className="speed-trips"
       viewBox={`0 0 ${W} ${H}`}
       role="img"
-      aria-label={`Typical first serve by trip, ${shown.length} trips, from about ${figs[0].best} to about ${last.best} ${last.unit}. Each bar is the likely range.`}
+      aria-label={`Typical first serve speed each time you played, ${shown.length} times, from about ${figs[0].best} to about ${last.best} ${last.unit}. Each bar is the likely range.`}
     >
       {lines.map((v) => (
         <g key={v}>

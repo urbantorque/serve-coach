@@ -468,12 +468,12 @@ export function withoutComparison(analysis: Analysis, readable: number, attempte
   // read: a sweep that read two of six said it read the other serves (H46).
   const note =
     readable === 1
-      ? 'I could read only this serve in the clip, so there is nothing to compare it with.'
+      ? 'I could check only this serve in the video, so there is nothing to compare it with.'
       : readable >= 2 && readable >= attempted
-        ? 'I read the other serves, but too little of them clearly enough to compare, so this report covers this serve alone.'
+        ? 'I checked the other serves, but could not see enough of them to compare, so this report covers this serve alone.'
         : readable >= 2
-          ? `I read ${readable} of the ${attempted} serves, and too little of them clearly enough to compare, so this report covers this serve alone.`
-          : 'I could not read the other serves in this clip, so this report covers this serve alone.'
+          ? `I checked ${readable} of the ${attempted} serves, but could not see enough of them to compare, so this report covers this serve alone.`
+          : 'I could not check the other serves in this video, so this report covers this serve alone.'
   return { ...analysis, quality: { ...analysis.quality, warnings: [...analysis.quality.warnings, cue(note)] } }
 }
 

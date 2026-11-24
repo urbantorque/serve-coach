@@ -22,12 +22,12 @@ export function CourtCard({ item, onClose }: { item: Pick<WeekItem, 'drill' | 'f
     speakLocally([item.drill.name, item.drill.how, feel, item.check].filter(Boolean).join('. '))
   }
   return (
-    <div className="court-card" role="dialog" aria-modal="true" aria-label={`Court card: ${item.drill.name}`}>
+    <div className="court-card" role="dialog" aria-modal="true" aria-label={`Drill: ${item.drill.name}`}>
       <div className="court-card-top">
         <button type="button" className="btn btn--ghost" onClick={say}>
           Read aloud
         </button>
-        <button type="button" className="icon-btn" onClick={onClose} aria-label="Close the court card">
+        <button type="button" className="icon-btn" onClick={onClose} aria-label="Close the drill">
           <Icon name="close" size={20} />
         </button>
       </div>

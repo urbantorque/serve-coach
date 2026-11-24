@@ -101,7 +101,7 @@ check('the bar grows as the gap closes, and the note says so', () => {
   note(`bars ${widths.join(', ')} for gaps 20, 12, 30 (newest first)`)
   // Newest first: gaps 20, 12, 30.
   assert(widths[1] > widths[0] && widths[0] > widths[2], 'the bars do not grow with steadiness')
-  assert(out.includes('Longer is steadier'), 'the note still reads the old way round')
+  assert(out.includes('A longer bar means steadier serves'), 'the note still reads the old way round')
 })
 
 heading('One share button')

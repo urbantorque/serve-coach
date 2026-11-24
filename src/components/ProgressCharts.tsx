@@ -76,7 +76,7 @@ export function ScoreRibbon({ points }: { points: TripPoint[] }) {
       <svg
         viewBox={`0 0 ${W} ${H}`}
         role="img"
-        aria-label={`Typical score across ${points.length} trips, most recent ${newest.overall}.`}
+        aria-label={`Typical score across ${points.length} court trips, most recent ${newest.overall}.`}
         onPointerDown={pick}
         // A mouse reads a trip by hovering, a finger by touching (N5.4).
         onPointerMove={(e) => (e.buttons || e.pointerType === 'mouse') && pick(e)}
@@ -132,7 +132,7 @@ export function ScoreRibbon({ points }: { points: TripPoint[] }) {
       <figcaption>
         <strong>{shortDate(shown.createdAt)}</strong>: typical {shown.overall}
         {shown.serves < 2 ? ', one serve' : shown.low === shown.high ? `, ${shown.serves} serves, all ${shown.overall}` : `, ${shown.serves} serves from ${shown.low} to ${shown.high}`}
-        {breaks.length > 0 && <span className="ribbon-note">The gap is where the scoring changed.</span>}
+        {breaks.length > 0 && <span className="ribbon-note">The break in the line is where I changed how I score serves.</span>}
       </figcaption>
     </figure>
   )
@@ -158,7 +158,7 @@ export function FaultGrid({ faults }: { faults: readonly FaultTrend[] }) {
               {f.step ? `, step ${f.step.at} of ${f.step.of}` : ''}
             </span>
           </div>
-          <div className="fault-cells" role="img" aria-label={`${f.title}: named on ${f.named} of ${f.judged} serves, oldest first.`}>
+          <div className="fault-cells" role="img" aria-label={`${f.title}: seen on ${f.named} of ${f.judged} serves, oldest first.`}>
             {f.sequence.map((named, i) => (
               <span key={i} className={`fault-cell${named ? ' is-named' : ''}`} />
             ))}

@@ -71,20 +71,20 @@ heading('Every stage draws')
 check('the plan, before the file is timed and after', () => {
   const fresh = { found: undefined, chosen: undefined, lines: [], phase: 'locating' as const, duration: 600 }
   const timing = draw(fresh, { state: 'planning', timed: false })
-  assert(timing.includes('Timing your phone on this video…'), 'the timing line is missing')
+  assert(timing.includes('Working out how long this takes on your phone…'), 'the timing line is missing')
   const priced = draw(fresh, { state: 'planning', timed: true, perSampleMs: 120 })
   assert(priced.includes('A sample of 12') && priced.includes('Every serve'), 'a choice is missing')
   assert(/About \d+ minutes|About a minute/.test(priced), 'no time was quoted on a timed file')
   const untimed = draw(fresh, { state: 'planning', timed: true })
-  assert(untimed.includes('I could not time your phone'), 'an untimed file did not say so')
+  assert(untimed.includes('I could not work out how fast your phone is'), 'an untimed file did not say so')
 })
 
 check('reading, paused, and a session reopened without its file', () => {
   const half = { phase: 'reading' as const, lines: lines.slice(0, 5) }
   const running = draw(half, { state: 'running', ratio: 0.5, detail: 'Reading serve 6 of 14' })
-  assert(running.includes('Reading serve 6 of 14') && running.includes('Stop and keep what is read'), 'the reading screen is incomplete')
+  assert(running.includes('Reading serve 6 of 14') && running.includes('Stop and keep the serves done so far'), 'the reading screen is incomplete')
   const paused = draw(half, { state: 'paused', reason: 'hidden', perSampleMs: 120 })
-  assert(paused.includes('went into the background') && paused.includes('5 of 14 serves read'), 'the pause did not say why or where')
+  assert(paused.includes('went into the background') && paused.includes('5 of 14 serves checked'), 'the pause did not say why or where')
   const reopened = draw({ ...half, phase: 'stopped' }, { state: 'paused', reason: 'player' }, false)
   assert(reopened.includes('Pick the video') && reopened.includes('9 to go'), 'a reopened session did not ask for its file')
 })
@@ -172,7 +172,7 @@ check("each fix names the drill at the player's own step, with how to do it, and
   assert(moved.includes(esc(ladder.steps[on].name)), "the fix did not name the player's own step")
   assert(moved.includes(`step ${on + 1} of ${ladder.steps.length}`), 'the step was not placed on its ladder')
   assert(moved.includes(esc(ladder.steps[on].how)), 'the drill came without how to do it')
-  assert((moved.match(/Open the court card/g) ?? []).length === 1, 'the court card is offered on more than the first fix, or not at all')
+  assert((moved.match(/Show the drill in big print/g) ?? []).length === 1, 'the court card is offered on more than the first fix, or not at all')
   const fresh = renderToStaticMarkup(createElement(SessionDashboard, { session }))
   const start = startingRung(ladder)
   assert(fresh.includes(`step ${start + 1} of ${ladder.steps.length}`), 'a ladder never moved did not start where the plan starts it')

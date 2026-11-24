@@ -40,7 +40,7 @@ check('a first trip has nothing to be a best against', () => {
 check('reaching the target rung for the first time is a best, said as the body position', () => {
   const bests = bodyBests([...trip(0, [-0.2, -0.18, -0.22]), ...trip(3, [0.15, 0.18, 0.2])])
   note(bests.map(bodyBestLine).join(' | ') || 'none')
-  assert(bests.length === 1 && bodyBestLine(bests[0]) === 'Racket drop: first trip at "Hand below the shoulder".', JSON.stringify(bests))
+  assert(bests.length === 1 && bodyBestLine(bests[0]) === 'Racket drop: first court trip at "Hand below the shoulder".', JSON.stringify(bests))
 })
 
 check('a rung reached before is not a best again', () => {
@@ -95,7 +95,7 @@ check('the progress screen lists it with the records', () => {
   const html = renderToStaticMarkup(
     createElement(Progress, { sessions, onBack: () => {}, onLogDrill: () => {}, onUndoDrill: () => {}, seeded: false }),
   )
-  assert(html.includes('first trip at &quot;Hand below the shoulder&quot;'), 'the best did not render')
+  assert(html.includes('first court trip at &quot;Hand below the shoulder&quot;'), 'the best did not render')
 })
 
 report()

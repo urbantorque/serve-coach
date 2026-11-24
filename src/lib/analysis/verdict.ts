@@ -75,7 +75,7 @@ const REFUSALS: Record<RejectReason, { title: string; hints: string[] }> = {
   too_blurry: {
     title: 'Your racket arm blurred out',
     hints: [
-      'Film in brighter light. Most of this is the camera holding the shutter open indoors or at dusk.',
+      'Film in brighter light. Indoors or at dusk the camera keeps its shutter open longer, which blurs a fast arm.',
       'Slow motion fixes it too, because each frame gets a shorter exposure.',
     ],
   },
@@ -83,7 +83,7 @@ const REFUSALS: Record<RejectReason, { title: string; hints: string[] }> = {
     title: 'I could not work out where the camera was',
     hints: [
       `Rest the phone on something steady ${PLACEMENT.height}, ${PLACEMENT.distance} to your side.`,
-      'Keep it still. A hand-held pan moves the reference every measurement is taken against.',
+      'Keep it still. If the phone moves, every measurement moves with it.',
     ],
   },
 }
@@ -144,7 +144,7 @@ const INJURIES: Record<InjuryFlag, { title: string; body: string }> = {
   },
   shoulder_load_no_drop: {
     title: 'Watch your shoulder',
-    body: 'You reach high without letting the racket fall behind you first, so the shoulder makes up the difference.',
+    body: 'You reach high without letting the racket fall behind you first, so your shoulder does the extra work.',
   },
 }
 
@@ -192,8 +192,8 @@ export function injuryNotes(triage: Triage | undefined): InjuryNote[] {
  */
 const RECURRING: Record<InjuryFlag, string> = {
   wrist_strain_forced_pronation: 'Your palm has faced the sky under the racket',
-  lumbar_load_posture_collapse: 'Your lower back has folded under the swing',
-  shoulder_load_no_drop: 'Your shoulder has covered a high reach',
+  lumbar_load_posture_collapse: 'Your upper body has tipped sideways as you hit',
+  shoulder_load_no_drop: 'You have reached high without the racket falling behind you',
 }
 
 /**
@@ -225,7 +225,7 @@ export function strainLine(record: Pick<StrainRecord, 'flag' | 'trips' | 'of'>):
  */
 const CLEARED: Record<InjuryFlag, string> = {
   wrist_strain_forced_pronation: 'Your palm has stopped facing the sky under the racket',
-  lumbar_load_posture_collapse: 'Your lower back has held straight under the swing',
+  lumbar_load_posture_collapse: 'Your upper body has stayed upright as you hit',
   shoulder_load_no_drop: 'Your racket has fallen behind you before you reach',
 }
 
@@ -296,7 +296,7 @@ export function strainGlanceLine(
  */
 export function strainBehindLine(record: { trips: number; of: number }): string | undefined {
   if (record.trips < 1 || record.of < 1) return undefined
-  const trips = record.of === 1 ? 'trip' : 'trips'
+  const trips = record.of === 1 ? 'court trip' : 'court trips'
   return cue(`Also on ${record.trips} of your ${record.of} ${trips} before this one.`)
 }
 
@@ -308,8 +308,8 @@ export function strainBehindLine(record: { trips: number; of: number }): string 
  * not a fault, so it says that and gives no order to change anything.
  */
 export function legLeadLine(lead: Pick<LegLead, 'order'>): string {
-  if (lead.order === 'legs_first') return cue('Your legs pushed up first and your arm followed, which hands the speed up to the racket.')
-  if (lead.order === 'level') return cue('Your legs and your arm came through together, too close for me to say which led.')
+  if (lead.order === 'legs_first') return cue('Your legs pushed up first and your arm followed, so your legs added speed to the racket.')
+  if (lead.order === 'level') return cue('Your legs and arm moved at almost the same moment, too close for me to say which went first.')
   return cue('Your arm swung before your legs finished pushing up. Let the legs start the swing.')
 }
 
@@ -356,7 +356,7 @@ const FLAW_COPY: Record<FlawId, FlawCopy> = {
     title: 'Your toss is too low',
     low: 'The ball peaks below your full reach, so you bend your arm or rush the swing to meet it.',
     highTitle: 'Your toss goes too high',
-    high: 'The ball hangs above your reach, so you wait for it and the swing loses its rhythm.',
+    high: 'The ball goes far above your reach, so you wait for it and your swing slows or stops.',
   },
   toss_drift: {
     // Axis-neutral, because this is what the report says when it does not know
@@ -384,35 +384,35 @@ const FLAW_COPY: Record<FlawId, FlawCopy> = {
     },
   },
   posture_collapse: {
-    title: 'Your body folds sideways',
-    low: 'Your upper body tips over instead of stacking up, so the swing loses height and your lower back takes the load.',
+    title: 'Your upper body bends sideways',
+    low: 'Your upper body bends sideways instead of staying tall, so you hit lower and your lower back takes the strain.',
   },
   collapsed_elbow: {
-    title: 'Your hitting elbow falls',
-    low: 'Your elbow sinks below your shoulder, so the arm swings from the elbow instead of unwinding from the shoulder.',
+    title: 'Your hitting elbow sits too low',
+    low: 'Your elbow sits below your shoulder, so your forearm does the swinging instead of your whole arm.',
   },
   shallow_drop: {
-    title: 'The racket stops short behind you',
+    title: 'The racket does not fall behind your back',
     // The racket head falls; the hand stays near the shoulder (D7.1). The old
     // line asked for the hand down the back, the picture the band dropped.
-    low: 'Your racket head never falls behind your back, so the swing starts halfway up and arrives slow.',
+    low: 'Your racket head never falls behind your back, so the swing starts halfway up and meets the ball slower.',
   },
   early_shoulder_rotation: {
-    title: 'Your shoulders open too early',
+    title: 'Your chest turns to the net too early',
     // True of both readings (D3.6): a chest open past the hips at the trophy,
     // from a corner, and a chest half turned before the racket's low point,
     // from the side. "Before your hips do" was true of the first only.
-    low: 'Your chest turns to the court before the racket drops, so the legs and trunk add nothing to the swing.',
+    low: 'Your chest turns to the court before the racket drops, so your legs and body add nothing to the swing.',
   },
   no_leg_drive: {
-    title: 'Your legs sit the serve out',
+    title: 'Your legs do not push you up',
     low: 'Your hips barely rise between the knee bend and the hit, so your arm does the work your legs should.',
   },
   // Not named any more — see `arming_the_ball` in flaws.ts. Kept for the reports
   // that were filed with it.
   arming_the_ball: {
     title: 'The arm goes first',
-    low: 'Your shoulders fire before your hips, so the serve runs on arm strength and the speed stops there.',
+    low: 'Your shoulders turn before your hips, so the serve relies on arm strength alone.',
   },
   // Unreachable today, and kept rather than deleted. `pancake_contact` carries
   // `notNamed` in flaws.ts — see `UNDER_RESOLVED.pronation_deg` in tiers.ts for
@@ -642,9 +642,9 @@ export function tierLabel(triage: Triage | undefined): string | undefined {
  */
 const MOVE_COPY: Record<MoveVerdict, string> = {
   cleared: 'Not on this one.',
-  closer: 'Closer this time.',
+  closer: 'Better this time.',
   same: 'Still there.',
-  wider: 'Further out this time.',
+  wider: 'Worse this time.',
 }
 
 /**
@@ -666,7 +666,7 @@ const MOVE_AGAIN_COPY: Record<MoveVerdict, string> = {
   cleared: 'This fault is gone since your last serve.',
   closer: 'This fault is closer to fixed than on your last serve.',
   same: 'This fault looks the same as on your last serve.',
-  wider: 'This fault is further off than on your last serve.',
+  wider: 'This fault is worse than on your last serve.',
 }
 
 /**
@@ -799,6 +799,6 @@ export const VERDICT_TABLES = {
  */
 export function rotationMoveLine(move: RotationMove): string {
   return move.delta > 0
-    ? cue('Your racket laid back further than on your last serve.')
-    : cue('Your racket laid back less than on your last serve.')
+    ? cue('Your racket fell further back behind you than on your last serve.')
+    : cue('Your racket fell less far back behind you than on your last serve.')
 }

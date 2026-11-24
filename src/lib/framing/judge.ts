@@ -175,7 +175,7 @@ const RANKING: {
     // something a player can act on.
     call: 'hands-unseen',
     grade: 'refused',
-    say: '**Move the phone closer** until your body fills the frame. Every swing reading comes off your racket hand.',
+    say: '**Move the phone closer** until you fill the picture. I need to see your racket hand to check the swing.',
     fires: (r) => r.issues.includes('hands-unseen'),
   },
   {
@@ -201,7 +201,7 @@ const RANKING: {
   {
     call: 'feet-cropped',
     grade: 'hedged',
-    say: '**Tilt the phone down or step back** until your feet fit. Your own height is the ruler.',
+    say: '**Tilt the phone down or step back** until your feet fit. I measure everything against your height.',
     fires: (r) => r.issues.includes('feet-cropped'),
   },
   {
@@ -222,7 +222,7 @@ const RANKING: {
     // hands with it, which is `hands-unseen`, four rows above.
     call: 'too-far',
     grade: 'hedged',
-    say: '**Move the phone closer** until your body fills the frame height.',
+    say: '**Move the phone closer** until you fill the picture from head to feet.',
     // Not in the speed placement, which is far on purpose (C4). The cost does
     // not go away — the report still hedges what distance blurs — so the speed
     // placement's own ready line says it instead of this one asking the player
@@ -246,7 +246,7 @@ const RANKING: {
     // hedged for it.
     call: 'turn-off-square',
     grade: 'hedged',
-    say: `**Move the phone round to your side**, ${PLACEMENT.where}. A front view loses how far in front you hit.`,
+    say: `**Move the phone round to your side**, ${PLACEMENT.where}. From the front, I cannot see how far in front you hit.`,
     fires: (r) => collapsed(r) === 'depth',
   },
   {
@@ -283,10 +283,10 @@ const RANKING: {
 ]
 
 /** What the good state says. Kept beside the table so the editor sees them together. */
-const READY_CUE = '**Film from here.** The camera can read your whole body and the angle.'
+const READY_CUE = '**Film from here.** I can see all of you, from a good angle.'
 
 /** The good state in the speed placement (C4), saying what the distance costs. */
-const SPEED_READY_CUE = '**Film from here.** Keep the net side clear for the ball, and expect rougher swing readings from this far.'
+const SPEED_READY_CUE = '**Film from here.** Keep the net side clear for the ball, and expect a rougher swing check from this far.'
 
 /** And what it says before there is anything to judge. */
 const LOOKING_CUE = '**Stand where you will serve** and hold still while I look.'

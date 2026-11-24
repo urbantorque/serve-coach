@@ -519,7 +519,7 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
       if (!hints) console.error(err)
       setView({
         kind: 'error',
-        title: hints ? (err as Error).message : 'Something went wrong reading that video',
+        title: hints ? (err as Error).message : 'Something went wrong checking that video',
         hints: hints ?? [
           'Try it again. A long video can stall when the phone is busy.',
           'If it fails again, trim it into clips of a few minutes and pick one.',

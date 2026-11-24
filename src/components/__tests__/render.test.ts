@@ -178,7 +178,7 @@ check('a report carrying a basket renders its comparison', () => {
     createElement(Report, { analysis: basket(), onBack: noop, onAnalyzeAnother: noop }),
   )
   assert(out.includes('serves in this clip'), 'the serve count never reached the page')
-  assert(out.includes('best serve against your worst'), 'the comparison never reached the page')
+  assert(out.includes('best serve compared with your worst'), 'the comparison never reached the page')
 })
 
 check('a reopened basket renders — the shape that used to blank the app', () => {
@@ -189,7 +189,7 @@ check('a reopened basket renders — the shape that used to blank the app', () =
   const out = html(
     createElement(Report, { analysis: stored(basket()), onBack: noop, onAnalyzeAnother: noop }),
   )
-  assert(out.includes('best serve against your worst'), 'a reopened comparison did not render')
+  assert(out.includes('best serve compared with your worst'), 'a reopened comparison did not render')
 })
 
 check('a stored basket with no serve numbers still renders, numbered by position', () => {
@@ -216,8 +216,8 @@ check('a stored basket with half a gap renders without the gap', () => {
       onAnalyzeAnother: noop,
     }),
   )
-  assert(!out.includes('best serve against your worst'), 'half a gap was drawn rather than dropped')
-  assert(out.includes('Overall, serve by serve'), 'the rest of the comparison went with the gap')
+  assert(!out.includes('best serve compared with your worst'), 'half a gap was drawn rather than dropped')
+  assert(out.includes('Score for each serve'), 'the rest of the comparison went with the gap')
 })
 
 heading('One place to start (L1.6)')
@@ -294,9 +294,9 @@ check('a soft read says so beside the score, and a clear one does not', () => {
   const clear: Analysis = { ...a, quality: { ...a.quality, confidence: 0.9 } }
   const softOut = html(createElement(Report, { analysis: soft, onBack: noop, onAnalyzeAnother: noop }))
   const clearOut = html(createElement(Report, { analysis: clear, onBack: noop, onAnalyzeAnother: noop }))
-  assert(softOut.includes('Rough read'), 'a soft read looked as sure as any other')
-  assert(softOut.indexOf('Rough read') < softOut.indexOf('What to do now'), 'the rough-read line is not up by the score')
-  assert(!clearOut.includes('Rough read'), 'a clear read was called rough')
+  assert(softOut.includes('Rough result'), 'a soft read looked as sure as any other')
+  assert(softOut.indexOf('Rough result') < softOut.indexOf('What to do now'), 'the rough-read line is not up by the score')
+  assert(!clearOut.includes('Rough result'), 'a clear read was called rough')
 })
 
 check('the basket line beside the chips defers to the first fix', () => {
@@ -371,7 +371,7 @@ check('a drill that has stopped moving says so on the goal it is about, and only
     onShowExample: noop,
   })
   const on = html(createElement(Home, props(stuck('dropDepth'))))
-  assert(on.includes('class="next-stuck"') && on.includes('has not moved'), 'a stuck drill on the goal said nothing on the goal')
+  assert(on.includes('class="next-stuck"') && on.includes('has not improved'), 'a stuck drill on the goal said nothing on the goal')
   const off = html(createElement(Home, props(stuck('kneeBend'))))
   assert(!off.includes('class="next-stuck"'), 'a stuck drill on another row spoke on the goal')
 })
@@ -407,7 +407,7 @@ check('the analysing screen names the serves a sweep is comparing (L2.2)', () =>
       sweep: { total: 6, firstNumber: 5, done: [] },
     }),
   )
-  assert(out.includes('Found 10 serves · comparing 5–'), 'the sweep did not say which serves it was reading')
+  assert(out.includes('Found 10 serves · comparing serves 5 to'), 'the sweep did not say which serves it was reading')
   const all = html(
     createElement(Analyzing, {
       progress: { step: 'engine', ratio: 0.2 },
@@ -430,7 +430,7 @@ check('a basket where nothing moved says so at its foot, and names no row', () =
     uncalibrated: undefined,
   }
   const out = html(createElement(ConsistencyPanel, { consistency: still, onDismiss: noop, createdAt: 0 }))
-  assert(out.includes('Nothing here moved more than the camera does on its own.'), 'a still basket did not say nothing moved')
+  assert(out.includes('Every change here is small enough to be the camera, not you.'), 'a still basket did not say nothing moved')
   assert(!out.includes('Worst first'), 'a still basket pointed at a worst row')
 })
 
@@ -440,14 +440,14 @@ check('a basket whose least steady row still held says so at its foot', () => {
   const held = { ...c, metrics: c.metrics.map((m, i) => ({ ...m, score: i ? 100 : 90 })) }
   held.weakest = held.metrics[0]
   const out = html(createElement(ConsistencyPanel, { consistency: held, onDismiss: noop, createdAt: 0 }))
-  assert(out.includes('Every row held steady. The least steady is first.'), 'a basket that held did not say so')
+  assert(out.includes('Every part stayed steady. The least steady part is at the top.'), 'a basket that held did not say so')
   assert(!out.includes('Worst first'), 'a basket that held pointed at a worst row')
 })
 
 check('the consistency panel renders on its own', () => {
   const c = basket().consistency!
   const out = html(createElement(ConsistencyPanel, { consistency: c, onDismiss: noop, createdAt: 0 }))
-  assert(out.includes('Overall, serve by serve'), 'the panel rendered nothing recognisable')
+  assert(out.includes('Score for each serve'), 'the panel rendered nothing recognisable')
 })
 
 check('a steady fault in a basket is called off target, not praised (L1.8)', () => {
@@ -479,12 +479,12 @@ check('the report answers on its first screen, then the plan, the serve, and one
     ['the score', 'class="hero"'],
     ['the fix', '<h1>'],
     ['what to do now', 'What to do now'],
-    ['the rest of the plan', 'Then, in this order'],
+    ['the rest of the plan', 'Then work on these, in order'],
     ['the serve', 'side by side'],
     ['the tags', 'What you said about this serve'],
     ['the fold', 'Everything I measured'],
-    ['the basket', 'best serve against your worst'],
-    ['how it was read', 'How I read this clip'],
+    ['the basket', 'best serve compared with your worst'],
+    ['how it was read', 'What I saw in this video'],
     ['the areas', 'Every area I scored'],
   ] as const
   for (let i = 1; i < order.length; i++) {
@@ -558,9 +558,9 @@ check('a live report draws the best serve under the video, and says so (L4.8)', 
   const analysis = sampleAnalysis(DEMO_DIALS.example)
   const best = { ...stored(sampleAnalysis()), id: 'serve-best-0', createdAt: analysis.createdAt - 86_400_000 }
   const live = html(createElement(Report, { analysis, videoUrl: 'blob:clip', best, onBack: noop, onAnalyzeAnother: noop }))
-  assert(live.includes('The dashed body is your best serve so far'), 'the live report does not draw the best serve')
+  assert(live.includes('The dashed outline is your best serve so far'), 'the live report does not draw the best serve')
   const alone = html(createElement(Report, { analysis, videoUrl: 'blob:clip', onBack: noop, onAnalyzeAnother: noop }))
-  assert(!alone.includes('The dashed body is'), 'a dashed body was promised with no serve to draw')
+  assert(!alone.includes('The dashed outline is'), 'a dashed body was promised with no serve to draw')
 })
 
 check("today's session is timed, in the order the hit runs, and ends on a filmed check (N1.4, Q9, lift)", () => {
@@ -573,9 +573,9 @@ check("today's session is timed, in the order the hit runs, and ends on a filmed
   assert(at('Warm up with easy serves') < at('session-block--drill') && at('session-block--drill') < at('Serve freely'), 'the hit is not in the order it runs')
   // A check where the step has a served ball to read; a plain serve where it has none (W5.2).
   const first = programme.plan.items[0]
-  const want = !first || filmable(first.flaw, first.drill.name) ? 'Film a check' : 'Film a serve'
+  const want = !first || filmable(first.flaw, first.drill.name) ? 'Film serves to check it' : 'Film a serve'
   assert(out.includes(want), `the session does not end on "${want}"`)
-  assert(out.includes('Open the court card') && out.includes('Add to calendar'), 'the tools went')
+  assert(out.includes('Show the drill in big print') && out.includes('Add to calendar'), 'the tools went')
 })
 
 check('today knows a returning player, and a new one gets one thing to do (L4.10, lift)', () => {
@@ -608,7 +608,7 @@ check('the glance renders', () => {
   const out = html(
     createElement(Glance, { analysis: sampleAnalysis(), onOpenReport: noop, onBack: noop }),
   )
-  assert(out.includes('Show me everything'), 'the glance lost its way out')
+  assert(out.includes('Open the full report'), 'the glance lost its way out')
 })
 
 /** Render with these prefs in storage, and the window a phone or a desk would have. */
@@ -632,11 +632,11 @@ check('on court, the next serve sits under the figure, not under every tag (Q8)'
   const props = { analysis: sampleAnalysis(), onOpenReport: noop, onBack: noop, onRecordAnother: noop, onTagServe: noop, onTagOutcome: noop }
   const court = withPrefs({ handsFree: true }, false, () => html(createElement(Glance, props)))
   assert(court.includes('court-readout'), 'hands-free did not open the court glance')
-  assert((court.match(/Record another/g) ?? []).length === 1, 'the next serve is offered twice, or not at all')
-  assert(court.indexOf('Record another') < court.indexOf('Which serve was it?'), 'the next serve is still under the tags')
+  assert((court.match(/Film another serve/g) ?? []).length === 1, 'the next serve is offered twice, or not at all')
+  assert(court.indexOf('Film another serve') < court.indexOf('Which serve was it?'), 'the next serve is still under the tags')
   const desk = withPrefs({ handsFree: false }, false, () => html(createElement(Glance, props)))
   assert(!desk.includes('court-readout'), 'a glance with hands-free off opened in court mode')
-  assert(desk.indexOf('Record another') > desk.indexOf('Where did it land?'), 'the footer lost its order off court')
+  assert(desk.indexOf('Film another serve') > desk.indexOf('Where did it land?'), 'the footer lost its order off court')
 })
 
 check("a phone player who never set hands-free gets the court glance, as the viewfinder filmed (Q8)", () => {
@@ -723,9 +723,9 @@ check('the trip chart draws each trip with the range its serves ran over (L3.2)'
   const chart = html(createElement(ScoreRibbon, { points: trips }))
   // A range for each trip with a spread, and none for the trip of one.
   assert((chart.match(/class="ribbon-range"/g) ?? []).length === 2, 'the ranges were not one per spread trip')
-  assert(chart.includes('across 3 trips, most recent 74'), 'the chart did not name what it plots')
+  assert(chart.includes('across 3 court trips, most recent 74'), 'the chart did not name what it plots')
   const table = html(createElement(TrendTable, { points: trips }))
-  assert(table.includes('6, 66–80') && table.includes('>1<'), 'the table lost the serves or the range')
+  assert(table.includes('6, 66 to 80') && table.includes('>1<'), 'the table lost the serves or the range')
 })
 
 check('the glance refuses rather than scoring an unreadable clip', () => {
@@ -881,8 +881,8 @@ check('progress keeps first and second serves apart, and counts the weeks (D5.3,
     }),
   )
   assert(out.includes('First and second serves'), 'no serve-number block')
-  assert(out.includes('First serves: 4 tagged'), 'first serves were not counted on their own')
-  assert(out.includes('Second serves: 4 tagged'), 'second serves were not counted on their own')
+  assert(out.includes('First serves: 4 marked'), 'first serves were not counted on their own')
+  assert(out.includes('Second serves: 4 marked'), 'second serves were not counted on their own')
   assert(out.includes('in on 6 of 8 tagged'), 'no in-rate for the serve type')
   assert(out.includes('Serves per week'), 'no weekly count')
   const bare = html(createElement(Progress, { sessions: history, onLogDrill: noop, onUndoDrill: noop, seeded: false, onBack: noop }))
@@ -899,7 +899,7 @@ check('progress leads its faults and serves with pictures, and folds the prose (
   }))
   const tags = history.map((s, i) => ({ id: s.id, serveNumber: (i % 2 ? 2 : 1) as 1 | 2, outcome: i % 3 ? ('in' as const) : ('net' as const), taggedAt: s.createdAt }))
   const out = html(createElement(Progress, { sessions: history, tags, onLogDrill: noop, onUndoDrill: noop, seeded: false, onBack: noop }))
-  assert(/class="fault-cells"[^>]*role="img"[^>]*aria-label="[^"]+named on \d+ of \d+/.test(out), 'no fault grid with a text version')
+  assert(/class="fault-cells"[^>]*role="img"[^>]*aria-label="[^"]+seen on \d+ of \d+/.test(out), 'no fault grid with a text version')
   assert((out.match(/class="fault-cell is-named"/g) ?? []).length > 0, 'the grid drew no named serve')
   assert(out.includes('class="inrate-bars"') && /aria-label="First serves: in on \d+ of \d+"/.test(out), 'no in-rate bar with a text version')
   const open = (out.match(/<section class="block"/g) ?? []).length
@@ -954,10 +954,10 @@ check('home points a player with reports at reading a whole practice, until they
     onShowProgress: noop,
     onShowExample: noop,
   }
-  assert(html(createElement(Home, { ...base, sessions: [last] })).includes('Read a whole practice'), 'no way into sessions was offered')
-  assert(!html(createElement(Home, { ...base, sessions: [] })).includes('Read a whole practice'), 'a new player was offered sessions before a serve')
+  assert(html(createElement(Home, { ...base, sessions: [last] })).includes('Check a whole practice'), 'no way into sessions was offered')
+  assert(!html(createElement(Home, { ...base, sessions: [] })).includes('Check a whole practice'), 'a new player was offered sessions before a serve')
   const withSession = html(createElement(Home, { ...base, sessions: [last], practiceSessions: [{ id: 'p1', createdAt: last.createdAt, updatedAt: last.createdAt, fileName: 'p.mp4', duration: 600, serveType: 'flat', handedness: 'right', mode: 'sample', found: [10, 20], lines: [], phase: 'done' } as never] }))
-  assert(!withSession.includes('Read a whole practice'), 'a player with a session was still told how to make one')
+  assert(!withSession.includes('Check a whole practice'), 'a player with a session was still told how to make one')
 })
 
 check('Today is easier to get around: Upload at the top, plain numbers, one note, a labelled Film', () => {
@@ -979,7 +979,7 @@ check('Today is easier to get around: Upload at the top, plain numbers, one note
   assert(today.includes('aria-label="Upload a video"'), 'Today has no way to upload a clip')
   // Dismissed, the whole-practice tip stays gone.
   const seen = html(createElement(Home, { ...base, sessions: [last], prefs: { ...DEFAULTS, practiceTipSeenAt: 1 } }))
-  assert(!seen.includes('Read a whole practice'), 'a dismissed tip came back')
+  assert(!seen.includes('Check a whole practice'), 'a dismissed tip came back')
   assert(today.includes('Got it'), 'the tip cannot be dismissed')
   // The one action between the two places says what it does.
   const bar = html(createElement(TabBar, { on: 'today', onTab: noop, onFilm: noop }))
@@ -1006,9 +1006,9 @@ check('the first run says the download with its size, only while it is needed (N
         onShowExample: noop,
       }),
     )
-  assert(/downloads the coach once, \d+\u00a0MB/.test(first(false)), 'the download was not said with its size')
-  assert(!first(true).includes('downloads the coach'), 'said a download already stored')
-  assert(!first(undefined).includes('downloads the coach'), 'said a download before the cache answered')
+  assert(/needs a one-time download of \d+\u00a0MB/.test(first(false)), 'the download was not said with its size')
+  assert(!first(true).includes('one-time download'), 'said a download already stored')
+  assert(!first(undefined).includes('one-time download'), 'said a download before the cache answered')
 })
 
 check('the history groups serves by trip, newest first, each with its typical score (N3.5)', () => {
@@ -1018,7 +1018,7 @@ check('the history groups serves by trip, newest first, each with its typical sc
   const sessions = [at('a', 100, 9, 60), at('b', 100, 10, 70), at('c', 100, 11, 80), at('d', 103, 9, 75)]
   const out = html(createElement(HistoryList, { sessions, onOpen: noop, onDelete: noop }))
   assert((out.match(/history-trip"/g) ?? []).length === 2, 'serves three days apart were one trip')
-  assert(out.includes('3 serves, typical 70'), 'the trip of three did not lead with its median')
+  assert(out.includes('3 serves, typical score 70'), 'the trip of three did not lead with its median')
   assert(out.indexOf('1 serve') < out.indexOf('3 serves'), 'the older trip came first')
 })
 
@@ -1101,9 +1101,9 @@ check('a basket\'s drill check leads the focus card, above the drill (N4.2)', ()
 
 check('a first read says so, with the full read a tap away; a full read says nothing (M1.3)', () => {
   const first = html(createElement(Report, { analysis: { ...sampleAnalysis(), firstRead: true }, onBack: noop, onAnalyzeAnother: noop, onReadFully: noop }))
-  assert(first.includes('A first read.') && first.includes('Read it in full'), 'a first read was not said, or had no way to the full read')
+  assert(first.includes('A quick check.') && first.includes('Check it again in full'), 'a first read was not said, or had no way to the full read')
   const full = html(createElement(Report, { analysis: sampleAnalysis(), onBack: noop, onAnalyzeAnother: noop, onReadFully: noop }))
-  assert(!full.includes('A first read.'), 'a full read was called a first read')
+  assert(!full.includes('A quick check.'), 'a full read was called a first read')
 })
 
 check('tagging is one short row above the fold, under the fix (N1.9, lift)', () => {

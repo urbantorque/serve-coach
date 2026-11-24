@@ -56,7 +56,7 @@ export default function FirstRunMore({ onShowPage }: Props) {
           <li>
             <Icon name="gauge" size={22} />
             <div>
-              <strong>I read every joint, on this {here}.</strong>
+              <strong>I track every joint, on this {here}.</strong>
               <span>Your toss, your legs, the racket drop and contact, frame by frame.</span>
             </div>
           </li>
@@ -64,7 +64,7 @@ export default function FirstRunMore({ onShowPage }: Props) {
             <Icon name="target" size={22} />
             <div>
               <strong>You get two to four drills, worst first.</strong>
-              <span>Then film again and watch the fault fade.</span>
+              <span>Then film again to see if the fault is going away.</span>
             </div>
           </li>
         </ol>
@@ -81,21 +81,21 @@ export default function FirstRunMore({ onShowPage }: Props) {
             <Icon name="shield" size={22} />
             <div>
               <strong>No account. Your video stays on this {here}.</strong>
-              <span>I read it in the browser, even with no signal.</span>
+              <span>I check it in your browser, and it works with no signal.</span>
             </div>
           </li>
           <li>
             <Icon name="check" size={22} />
             <div>
-              <strong>Free to read every serve.</strong>
-              <span>{GATED ? 'Your score and the top fix, free. Plus adds the whole breakdown.' : 'Everything is open while Plus is not on sale.'}</span>
+              <strong>Every serve checked for free.</strong>
+              <span>{GATED ? 'Your score and the top fix are free. Plus adds the full results.' : 'Everything is free while Plus is not on sale.'}</span>
             </div>
           </li>
         </ul>
 
         <details className="first-more-details">
           <summary className="link-btn" style={SUMMARY}>
-            More: how sure I am, privacy and plans
+            More about accuracy, privacy and plans
           </summary>
           <div style={MORE}>
           <h3 className="t-subhead">What I grade, and what I only show</h3>
@@ -113,28 +113,28 @@ export default function FirstRunMore({ onShowPage }: Props) {
               <em>A likely range, never a grade</em>
             </li>
             <li>
-              <span>Anything the camera cannot support</span>
-              <em>Hedged, or left out</em>
+              <span>Anything the camera cannot see well</span>
+              <em>Marked as unsure, or left out</em>
             </li>
           </ul>
           {onShowPage && (
             <a className="first-more-link" href={pathFor({ kind: 'page', page: 'accuracy' }, import.meta.env.BASE_URL)} onClick={open('accuracy')}>
-              Every reading, how steady it is and what it rests on
+              How accurate each measurement is, and how I know
               <Icon name="chevron" size={16} />
             </a>
           )}
 
           <h3 className="t-subhead">Where your video goes</h3>
           <p className="first-more-lede">
-            Nowhere. I read your serve in the browser on this {here}, and the video stays where you filmed it. Uploading a video only opens it here.
+            Nowhere. I check your serve in the browser on this {here}, and the video never leaves it, even one you upload.
           </p>
 
           {onShowPage && (
             <>
               <h3 className="t-subhead">Free and Plus</h3>
-              <p className="first-more-lede">Your score and the top fix on every serve, free. Plus adds the whole breakdown, a plan in steps and more.</p>
+              <p className="first-more-lede">Your score and the top fix for every serve are free. Plus adds the full results, a step-by-step plan and more.</p>
               {PRICE_LINE && <p className="first-more-lede">Plus is {PRICE_LINE}.</p>}
-              {!GATED && <p className="first-more-lede">Everything is open while Plus is not on sale.</p>}
+              {!GATED && <p className="first-more-lede">Everything is free while Plus is not on sale.</p>}
               <a className="first-more-link" href={pathFor({ kind: 'page', page: 'pricing' }, import.meta.env.BASE_URL)} onClick={open('pricing')}>
                 See the plans
                 <Icon name="chevron" size={16} />

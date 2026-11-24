@@ -124,7 +124,7 @@ check('the fastest is the serve surest to be fast; the typical needs two', () =>
 
 check('a session with speeds says them; one read for speeds with none says how; one without says nothing', () => {
   const read = renderToStaticMarkup(createElement(SessionDashboard, { session }))
-  assert(read.includes('id="session-speed"') && /(Fastest serve|Your serves) about/.test(read) && /over 8 serves/.test(read), 'the speeds are not said')
+  assert(read.includes('id="session-speed"') && /(Fastest serve|Your serves were all) about/.test(read) && /across 8 serves/.test(read), 'the speeds are not said')
   const none = { ...session, withSpeed: true, lines: found.map((t, i) => lineOf(noSpeedAnalysis, i + 1, t)) }
   assert(renderToStaticMarkup(createElement(SessionDashboard, { session: none })).includes(NO_SESSION_SPEED), 'no word on a speed session that read none')
   const plain = { ...session, lines: none.lines }

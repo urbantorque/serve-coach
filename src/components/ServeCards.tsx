@@ -57,10 +57,10 @@ export default function ServeCards({ sessions, history, tags, practice = [], onO
             <Icon name="film" size={30} />
           </span>
           <span className="serve-card-text">
-            <span className="serve-card-title">A whole practice</span>
+            <span className="serve-card-title">A whole practice video</span>
             <span className="serve-card-meta">
               <span>
-                {shortDate(p.createdAt)}, {p.lines.filter((l) => l.status === 'read').length} serves read
+                {shortDate(p.createdAt)}, {p.lines.filter((l) => l.status === 'read').length} serves checked
               </span>
             </span>
           </span>

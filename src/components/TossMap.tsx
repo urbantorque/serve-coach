@@ -145,7 +145,7 @@ export default function TossMap({ map }: { map: TossMapData }) {
             </span>
           </>
         ) : (
-          <span className="chart-hint">Touch the strip to read any serve</span>
+          <span className="chart-hint">Touch the strip to see any serve</span>
         )}
       </figcaption>
 

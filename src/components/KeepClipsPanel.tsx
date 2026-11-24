@@ -37,9 +37,7 @@ export default function KeepClipsPanel({ keep, onChange }: Props) {
     <section className="storage">
       <h3 className="block-title">Your videos</h3>
       <p className="sheet-note">
-        Keep each clip you analyse on this {deviceNoun()}, so an old report plays your real video. Nothing
-        leaves the {deviceNoun()}. I keep the newest {MAX_KEPT_CLIPS}, and clear them before any report
-        when space runs short.
+        Save each video on this {deviceNoun()}, never uploaded, so old reports can play it. I keep the newest {MAX_KEPT_CLIPS} and delete videos before reports if space runs low.
       </p>
       <div className="storage-actions">
         <button className="btn btn--ghost btn--full" aria-pressed={keep} onClick={() => onChange(!keep)}>

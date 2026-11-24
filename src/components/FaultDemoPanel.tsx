@@ -52,8 +52,7 @@ export default function FaultDemoPanel({ flaw, racket }: Props) {
       {/* A view other than side-on, said, so nobody holds it against their own clip (C1.2). */}
       {demo && VIEW_LINE[demo.view] && <p className="player-note">{VIEW_LINE[demo.view]}</p>}
       <p className="player-note">
-        A model serve, not yours. On the left the fault shows in red with its fix dashed, and the
-        right body serves it fixed.
+        A demo serve, not yours. The left figure shows the fault in red and the fix dashed, and the right one shows it fixed.
       </p>
     </div>
   )

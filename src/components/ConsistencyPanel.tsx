@@ -106,7 +106,7 @@ function BestAgainstWorst({ gap }: { gap: ServeGap }) {
 
   return (
     <div className="best-worst">
-      <span className="t-overline consistency-label">Your best serve against your worst</span>
+      <span className="t-overline consistency-label">Your best serve compared with your worst</span>
 
       <p className="best-worst-lead">
         Serve <strong>#{gap.best}</strong> scored <strong className="tnum">{gap.bestScore}</strong>.
@@ -132,8 +132,8 @@ function BestAgainstWorst({ gap }: { gap: ServeGap }) {
            who can see the scores differ deserves to be told that rather than
            left to assume the list failed to load. */
         <p className="best-worst-none">
-          Those two serves did the same things, as far as this can see. The difference is
-          somewhere it does not measure.
+          As far as I can see, those two serves moved the same way. The difference is
+          in something I do not measure.
         </p>
       )}
     </div>
@@ -213,7 +213,7 @@ export default function ConsistencyPanel({ consistency: c, onDismiss, pair, crea
      */
     <section className={`consistency consistency--${c.status}`}>
       <div className="consistency-head">
-        <span className="t-overline consistency-kicker">How repeatable</span>
+        <span className="t-overline consistency-kicker">How consistent</span>
         <span className="consistency-score">
           <span className="tnum">{c.score}</span>
           <span className="consistency-out-of">/100</span>
@@ -237,13 +237,13 @@ export default function ConsistencyPanel({ consistency: c, onDismiss, pair, crea
           stand, only the comparison between them is in doubt. */}
       {c.possibleHandoff && (
         <p className="note">
-          These serves don't measure as the same height. If someone else served in this clip,
-          the comparison below is two people, not your consistency.
+          These serves look like they came from people of different heights. If someone else served in this video,
+          the comparison below mixes two players.
         </p>
       )}
 
       <div className="consistency-scores">
-        <span className="t-overline consistency-label">Overall, serve by serve</span>
+        <span className="t-overline consistency-label">Score for each serve</span>
         <div className="consistency-chips">
           {c.overallScores.map((s, i) => (
             <span key={i} className="cchip">
@@ -305,8 +305,8 @@ export default function ConsistencyPanel({ consistency: c, onDismiss, pair, crea
            * rather than on every report that never had one.
            */
           <p className="pair-absent">
-            Those pictures need the clip, and clips are never saved. What they showed is in
-            the words above.
+            The pictures need the video, and videos are never saved. The words above
+            say what they showed.
           </p>
         )
       )}
@@ -322,9 +322,9 @@ export default function ConsistencyPanel({ consistency: c, onDismiss, pair, crea
           {c.weakest && c.weakest.score < STEADY_ENOUGH ? (
             <>A low score means that part of the serve changes every time. Worst first, so the top row is the one to start on.</>
           ) : c.weakest ? (
-            <>Every row held steady. The least steady is first.</>
+            <>Every part stayed steady. The least steady part is at the top.</>
           ) : (
-            <>Nothing here moved more than the camera does on its own.</>
+            <>Every change here is small enough to be the camera, not you.</>
           )}
         </p>
       )}
@@ -347,7 +347,7 @@ export default function ConsistencyPanel({ consistency: c, onDismiss, pair, crea
         aria-live="polite"
       >
         <Icon name={sharing === 'done' ? 'check' : 'share'} size={17} />
-        {sharing === 'working' ? 'Preparing…' : sharing === 'done' ? 'Saved' : 'Share this basket'}
+        {sharing === 'working' ? 'Preparing…' : sharing === 'done' ? 'Saved' : 'Share these results'}
       </button>
 
       <button className="btn btn--ghost btn--full" onClick={onDismiss}>

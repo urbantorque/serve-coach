@@ -99,8 +99,8 @@ export default function SessionDashboard({ session, previous, videoUrl, onPickAg
           <p>
             <strong>{stats.overall ? 'Typical serve' : 'Your practice'}</strong>
             <span className="tnum">
-              {found} found, {stats.read} read
-              {stats.unclear > 0 ? `, ${stats.unclear} too unclear` : ''}
+              {found} serves found, {stats.read} checked
+              {stats.unclear > 0 ? `, ${stats.unclear} too unclear to check` : ''}
             </span>
             {before && stats.overall && before.overall && <span className="tnum">{sinceLine(stats.overall.median, before.overall.median)}</span>}
           </p>
@@ -146,7 +146,7 @@ export default function SessionDashboard({ session, previous, videoUrl, onPickAg
                             onClick={() => setCard({ drill, flaw: f.flaw, check: bar })}
                           >
                             <Icon name="target" size={14} />
-                            Open the court card
+                            Show the drill in big print
                           </button>
                         )}
                       </>
@@ -182,7 +182,7 @@ export default function SessionDashboard({ session, previous, videoUrl, onPickAg
       {(stats.driftOver === 0 || stats.drifts.length !== 1) && (
         <section className="block" aria-labelledby="session-change">
           <h2 className="block-title" id="session-change">
-            Start against end
+            Start and end compared
           </h2>
           {stats.driftOver === 0 ? (
             <p className="session-meta">{cue('Too few serves from one spot to compare the start with the end.')}</p>
@@ -193,7 +193,7 @@ export default function SessionDashboard({ session, previous, videoUrl, onPickAg
               </p>
             ))
           ) : (
-            <p className="session-meta">{cue('Held steady from start to end.')}</p>
+            <p className="session-meta">{cue('Your serve stayed the same from start to end.')}</p>
           )}
         </section>
       )}
@@ -435,7 +435,7 @@ function ServeStrip({ lines, id }: { lines: readonly ServeLine[]; id: string }) 
 function TossStrip({ lines }: { lines: readonly ServeLine[] }) {
   const { across, points } = tossPoints(lines)
   if (points.length < 2) return null
-  const label = across ? 'Toss across your front foot' : 'Toss in front of your front foot'
+  const label = across ? 'Toss: left or right of your front foot' : 'Toss: in front of or behind your front foot'
   const values = points.map((p) => p.v)
   const lo = Math.min(0, ...values) - 0.05
   const hi = Math.max(0, ...values) + 0.05
@@ -481,9 +481,9 @@ export function ServeGrid({ session }: { session: PracticeSession }) {
         const status = line?.overall !== undefined ? statusOf(line.overall) : undefined
         const state = !line ? (index === next ? ' is-next' : '') : line.status === 'unclear' ? ' is-unclear' : ` is-${status}`
         const spoken = !line
-          ? `Serve at ${at}, not read yet`
+          ? `Serve at ${at}, not checked yet`
           : line.status === 'unclear'
-            ? `Serve at ${at}, too unclear to read`
+            ? `Serve at ${at}, too unclear to check`
             : `Serve at ${at}, ${line.overall}`
         return (
           <li key={index} className={`session-serve${state}`} aria-label={spoken}>

@@ -59,10 +59,11 @@ const JARGON =
  * month cannot picture. `LOOP.md` has named these since the rule was written,
  * and until this pattern existed nothing enforced it — "Steep cartwheel" was
  * on screen as a readout tag and "is the brake" as an area headline, both
- * passing every check above.
+ * passing every check above. The plain-words pass (2026-11-25) added the images
+ * it took out: "cram", "linger", "fires", "cashed it in", "top floor", "one-beat".
  */
 const COACH_JARGON =
-  /\b(windmill\w*|cartwheel\w*|back[- ]?scratch\w*|kinetic chain|the chain|head speed|the brake|groov\w*)\b/i
+  /\b(windmill\w*|cartwheel\w*|back[- ]?scratch\w*|kinetic chain|the chain|head speed|the brake|groov\w*|cram\w*|linger\w*|fir(e|es|ed|ing)|cash(ed)? it in|on the table|chimney|top floor|one-beat|back half|the drive|good bones)\b/i
 
 /**
  * "Drop" is the racket drop and nothing else (LOOP.md §4), which is the only

@@ -42,8 +42,8 @@ const LADDERS: Record<string, Stop[]> = {
   tossArmHold: [
     { under: 25, tag: 'Arm comes down at once' },
     { under: 55, tag: 'Arm comes down early' },
-    { under: 85, tag: 'Arm holds to the swing' },
-    { under: Infinity, tag: 'Arm holds through contact' },
+    { under: 85, tag: 'Arm stays up until the swing' },
+    { under: Infinity, tag: 'Arm stays up through contact' },
   ],
   // The top two rungs used to say "wide", which is a direction, and this ladder
   // is not entitled to one. The number underneath is drift along whichever body
@@ -55,10 +55,10 @@ const LADDERS: Record<string, Stop[]> = {
   // So these rungs say how far the hand left its line and stop there, which is
   // the one thing true of both.
   tossPathWobble: [
-    { under: 1.5, tag: 'Dead straight lift' },
-    { under: 3, tag: 'Straight lift' },
-    { under: 6, tag: 'Drifts a hand off line' },
-    { under: Infinity, tag: 'Wanders off line' },
+    { under: 1.5, tag: 'Perfectly straight toss' },
+    { under: 3, tag: 'Straight toss' },
+    { under: 6, tag: 'Toss off line' },
+    { under: Infinity, tag: 'Toss well off line' },
   ],
   tossPeakHeight: [
     { under: 1.2, tag: 'Peaks below the racket' },
@@ -89,10 +89,10 @@ const LADDERS: Record<string, Stop[]> = {
   hipShoulderSeparation: [
     { under: -12, tag: 'Chest opens ahead of the hips' },
     { under: -3, tag: 'Chest leads the hips' },
-    { under: 8, tag: 'Hips and chest locked' },
-    { under: 15, tag: 'Slight coil' },
+    { under: 8, tag: 'Hips and chest turn together' },
+    { under: 15, tag: 'Hips a little ahead of the chest' },
     { under: 38, tag: 'Hips lead the chest' },
-    { under: Infinity, tag: 'Extreme coil' },
+    { under: Infinity, tag: 'Hips far ahead of the chest' },
   ],
   shoulderTilt: [
     { under: -12, tag: 'Tossing shoulder under the ball' },
@@ -108,8 +108,8 @@ const LADDERS: Record<string, Stop[]> = {
     { under: 0.032, tag: 'No push off the court' },
     { under: 0.06, tag: 'Legs straighten up' },
     { under: 0.1, tag: 'Light push' },
-    { under: 0.24, tag: 'Strong drive up' },
-    { under: Infinity, tag: 'Big launch' },
+    { under: 0.24, tag: 'Strong push up' },
+    { under: Infinity, tag: 'Big push up' },
   ],
 
   /* ------------------------------------------------------------------ swing */
@@ -143,10 +143,10 @@ const LADDERS: Record<string, Stop[]> = {
     { under: Infinity, tag: 'Hand hangs under the elbow' },
   ],
   dropToContact: [
-    { under: 110, tag: 'Swing snaps through' },
-    { under: 230, tag: 'Explosive swing' },
-    { under: 320, tag: 'Guided swing' },
-    { under: Infinity, tag: 'Steered swing' },
+    { under: 110, tag: 'Fast swing to the ball' },
+    { under: 230, tag: 'Quick swing to the ball' },
+    { under: 320, tag: 'Slow swing to the ball' },
+    { under: Infinity, tag: 'Steered, slow swing' },
   ],
 
   /* ---------------------------------------------------------------- contact */
@@ -166,9 +166,9 @@ const LADDERS: Record<string, Stop[]> = {
   ],
   armExtension: [
     { under: 130, tag: 'Elbow bent at contact' },
-    { under: 145, tag: 'Arm short of straight' },
-    { under: 165, tag: 'Arm long at contact' },
-    { under: Infinity, tag: 'Arm dead straight' },
+    { under: 145, tag: 'Arm almost straight' },
+    { under: 165, tag: 'Arm straight at contact' },
+    { under: Infinity, tag: 'Arm fully straight' },
   ],
   bodyExtension: [
     { under: 0.02, tag: 'Feet stay on the court' },
@@ -190,15 +190,15 @@ const LADDERS: Record<string, Stop[]> = {
   /* ----------------------------------------------------------------- rhythm */
   // A reading now (`READINGS`), so the words describe and do not judge.
   totalTime: [
-    { under: 900, tag: 'Quick motion' },
-    { under: 1800, tag: 'Even tempo' },
-    { under: 2400, tag: 'Long motion' },
-    { under: Infinity, tag: 'Very long motion' },
+    { under: 900, tag: 'Quick serve' },
+    { under: 1800, tag: 'Normal pace' },
+    { under: 2400, tag: 'Slow serve' },
+    { under: Infinity, tag: 'Long, slow serve' },
   ],
   loadRatio: [
-    { under: 22, tag: 'Crammed finish' },
-    { under: 42, tag: 'Slow build, fast finish' },
-    { under: Infinity, tag: 'Back half drifts' },
+    { under: 22, tag: 'Rushed after the trophy' },
+    { under: 42, tag: 'Slow start, fast swing' },
+    { under: Infinity, tag: 'Slow after the trophy' },
   ],
   syncAtRelease: [
     { under: -0.05, tag: 'Racket still by the leg' },

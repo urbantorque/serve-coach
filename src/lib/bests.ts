@@ -101,4 +101,4 @@ export function bodyBests(sessions: readonly Session[], serveType?: ServeType): 
 }
 
 /** A best in words. */
-export const bodyBestLine = (b: BodyBest): string => `${b.label}: first trip at "${b.tag}".`
+export const bodyBestLine = (b: BodyBest): string => `${b.label}: first court trip at "${b.tag}".`

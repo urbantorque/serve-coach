@@ -14,7 +14,7 @@ const RULES = [
   {
     title: `Phone side-on, ${PLACEMENT.distance} away`,
     body:
-      'Line the phone up with the baseline, looking across at the player. Only a side view sees how far in front contact happens.',
+      'Line the phone up with the baseline, pointing across at you. Only a side view shows how far in front of you the ball is hit.',
   },
   {
     title: 'Fit the whole body in, feet included',
@@ -22,7 +22,7 @@ const RULES = [
     // phone on its side for a speed, and two flat instructions read as the
     // guide contradicting itself.
     body:
-      'For the swing, stand the phone upright with room above the racket at full stretch. Every height uses your own body as the ruler.',
+      'For the swing, stand the phone upright with space above your racket at full reach. I measure every height against your own body.',
   },
   {
     title: 'Start filming before the toss',
@@ -35,19 +35,19 @@ const RULES = [
   {
     title: 'Use slow motion if your phone has it',
     body:
-      'The racket travels from behind your back to the ball in a fraction of a second. More frames make that part sharper.',
+      'The racket swings up to the ball very fast. Slow motion shows that part more clearly.',
   },
   {
     // N2.7: the one placement that gives an ordinary clip a serve speed.
     title: 'For a serve speed, stand the phone further back',
-    body: `This one is the exception to step 2: turn it on its side, ${SPEED_PLACEMENT.distance} away, ${SPEED_PLACEMENT.where}. The ball then stays in the picture long enough to time.`,
+    body: `Unlike step 2, turn the phone on its side, ${SPEED_PLACEMENT.distance} away, ${SPEED_PLACEMENT.where}. That keeps the ball in the picture long enough for me to time it.`,
   },
 ]
 
 const AVOID = [
   'Other players moving in the background',
   'Filming into the sun, or heavy shade across the court',
-  'Holding the phone by hand if you can prop it on a fence or bag',
+  'Holding the phone. Prop it on a fence or bag instead',
 ]
 
 /**
@@ -108,7 +108,7 @@ function PlacementDiagram() {
         <path d="M34 139 v10 M200 139 v10" />
       </g>
       <text x="117" y="140" textAnchor="middle" className="guide-diagram-label guide-diagram-label--strong">
-        4–5 m
+        4 to 5 m
       </text>
     </svg>
   )
@@ -134,7 +134,7 @@ export default function FilmingGuide({ racket = 'right' }: { racket?: 'left' | '
       </ol>
 
       <div className="guide-avoid">
-        <h3 className="t-overline">Worth avoiding</h3>
+        <h3 className="t-overline">Try to avoid</h3>
         <ul>
           {AVOID.map((a) => (
             <li key={a}>{a}</li>
@@ -143,8 +143,7 @@ export default function FilmingGuide({ racket = 'right' }: { racket?: 'left' | '
       </div>
 
       <p className="guide-note">
-        A front or back view still works. You lose one reading: how far in front of you the
-        ball is hit.
+        Filming from the front or back still works, but I cannot see how far in front of you the ball is hit.
       </p>
 
       <details className="guide-model" onToggle={(e) => setWatching((e.currentTarget as HTMLDetailsElement).open)}>

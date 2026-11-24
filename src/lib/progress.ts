@@ -531,7 +531,7 @@ export function sixWeekMilestone(progress: Progress, span = MILESTONE_SPAN_MS): 
   if (latest.createdAt - first.createdAt < span) return undefined
 
   const n = Math.floor((latest.createdAt - first.createdAt) / (7 * 24 * 60 * 60 * 1000))
-  const weeks = n > 1 ? `${n} weeks` : n ? 'A week' : `${full.length} trips`
+  const weeks = n > 1 ? `${n} weeks` : n ? 'A week' : `${full.length} court trips`
   const delta = latest.overall - first.overall
   if (Math.abs(delta) < REAL_CHANGE.trip) {
     return `${weeks} in, a typical serve scores ${latest.overall}, about where you started.`
@@ -1152,8 +1152,8 @@ export function longestStreakLine(
   if (longest < 2) return undefined
   const current = tripStreak(sessions, now, gap, ledger, practice)
   return current === longest
-    ? `Your longest run yet: ${longest} trips in a row.`
-    : `Your longest run was ${longest} trips in a row.`
+    ? `Your longest run yet: ${longest} court trips in a row.`
+    : `Your longest run was ${longest} court trips in a row.`
 }
 
 /**
@@ -1292,7 +1292,7 @@ export function streakLine(
   const { gap, cadence, ledger, practice } = streakTerms(sessions, ctx)
   const n = tripStreak(sessions, now, gap, ledger, practice)
   if (n < 2) return undefined
-  return `${n} trips to the court in a row, ${CADENCE_WORDS[cadence]}.`
+  return `${n} court trips in a row, ${CADENCE_WORDS[cadence]}.`
 }
 
 /**
@@ -1366,8 +1366,8 @@ export function bestTrip(
  */
 export function bestTripLine(record: BestTrip, viewedAt: number): string {
   return viewedAt >= record.from && viewedAt <= record.to
-    ? `Your best trip yet: a typical serve scored ${record.score}.`
-    : `Your best trip so far: a typical serve scored ${record.score}, on ${shortDate(record.from)}.`
+    ? `Your best court trip yet: a typical serve scored ${record.score}.`
+    : `Your best court trip so far: a typical serve scored ${record.score}, on ${shortDate(record.from)}.`
 }
 
 /**
@@ -1375,7 +1375,7 @@ export function bestTripLine(record: BestTrip, viewedAt: number): string {
  * progress sheet has no single report on screen to ask "is *this* the one".
  */
 export function bestTripEverLine(record: BestTrip): string {
-  return `Your best trip yet: a typical serve scored ${record.score}, on ${shortDate(record.from)}.`
+  return `Your best court trip yet: a typical serve scored ${record.score}, on ${shortDate(record.from)}.`
 }
 
 /**

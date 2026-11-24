@@ -6,7 +6,7 @@ interface Props {
 }
 
 const OPTIONS: { value: Cadence | undefined; label: string }[] = [
-  { value: undefined, label: 'Work it out' },
+  { value: undefined, label: 'Work it out for me' },
   { value: 'weekly', label: 'Weekly' },
   { value: 'fortnightly', label: 'Fortnightly' },
   { value: 'monthly', label: 'Monthly' },
@@ -37,7 +37,7 @@ export default function CadencePicker({ value, onChange }: Props) {
           </button>
         ))}
       </div>
-      <p className="hand-pick-note">I count your run of trips at this pace, with a few days to spare.</p>
+      <p className="hand-pick-note">I keep your streak going while you play at this pace, with a few days to spare.</p>
     </fieldset>
   )
 }

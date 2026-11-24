@@ -39,7 +39,7 @@ function endOf(axis: TossAxis, v: number): string {
  * (L4.7).
  */
 export function targetLine(axis: TossAxis, band: [number, number], inside: number, total: number): string {
-  return `Aim inside the dashed band: ${endOf(axis, band[0])} to ${endOf(axis, band[1])}. ${inside} of ${total} tosses peaked there.`
+  return `Aim inside the dashed area: ${endOf(axis, band[0])} to ${endOf(axis, band[1])}. ${inside} of ${total} tosses peaked there.`
 }
 
 export function placeLine(axis: TossAxis, v: number): string {

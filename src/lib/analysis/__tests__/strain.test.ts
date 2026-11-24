@@ -393,9 +393,9 @@ check('it looks back exactly as far as the sheet does', () => {
 
 check('the sentence is plain, fits the editor, and gets its plural right', () => {
   const one = strainBehindLine({ trips: 1, of: 1 })
-  assert(one === 'Also on 1 of your 1 trip before this one.', `read "${one}"`)
+  assert(one === 'Also on 1 of your 1 court trip before this one.', `read "${one}"`)
   const many = strainBehindLine({ trips: 2, of: 5 })
-  assert(many === 'Also on 2 of your 5 trips before this one.', `read "${many}"`)
+  assert(many === 'Also on 2 of your 5 court trips before this one.', `read "${many}"`)
   for (const text of [one!, many!]) {
     assert(cueIssues(text).length === 0, cueIssues(text).join('; '))
     assert(wordCount(text) <= MAX_WORDS, `runs to ${wordCount(text)} words`)

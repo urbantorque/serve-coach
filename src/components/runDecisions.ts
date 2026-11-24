@@ -52,7 +52,7 @@ export function earlyRefusal(file: { size: number; type: string }): { title: str
       // Said for a session as well as a single serve (L2.2). "Three to five
       // seconds is all it needs" told somebody who filmed a whole practice
       // that it was the wrong thing to have done.
-      title: 'That video is too large to read here',
+      title: 'That video is too large to open here',
       hints: [
         'For one serve, trim the clip to a few seconds around it.',
         'For a whole session, trim it into clips of a few minutes, or film at 1080p rather than 4K.',
@@ -94,7 +94,7 @@ export function leaveForHome(steps: { releaseVideo: () => void; showHome: () => 
 export function readFailure(online: boolean): { title: string; hints: string[] } {
   return online
     ? {
-        title: 'Something went wrong reading that video',
+        title: 'Something went wrong checking that video',
         hints: ['Try a clip straight from your camera roll, not a shared link.', 'MP4 or MOV clips from a phone camera work best.'],
       }
     : {

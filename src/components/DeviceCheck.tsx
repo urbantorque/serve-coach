@@ -53,7 +53,7 @@ export default function DeviceCheck() {
     void safely(listSummaries, []).then(setHistory)
   }, [])
 
-  if (!report) return <p className="sheet-note">Asking this {deviceNoun()} about itself…</p>
+  if (!report) return <p className="sheet-note">Checking this {deviceNoun()}…</p>
 
   const { recording, decode, camera, storage, hardware, offline } = report
   const verdict = recording.chosen ? YES : NO
@@ -67,10 +67,10 @@ export default function DeviceCheck() {
         <Icon name={verdict.name} size={15} />
         <span>
           {recording.chosen
-            ? 'This phone can record a serve and read it back.'
+            ? 'This phone can record a serve and check it.'
             : recording.deadEnd
               ? 'This browser only records files it cannot open, so there is no record button. Film with your camera app.'
-              : 'This browser will not record. Film with your camera app and pick the video, which is unaffected.'}
+              : 'This browser cannot record here. Film with your camera app, then pick the video.'}
         </span>
       </p>
 
@@ -118,7 +118,7 @@ export default function DeviceCheck() {
         }
       />
       <Row
-        label="Promised not to clear it"
+        label="Browser will keep your data"
         value={
           storage.persisted === undefined ? 'unknown' : storage.persisted ? 'yes' : 'no'
         }
@@ -152,8 +152,8 @@ export default function DeviceCheck() {
         */}
       {timing && (
         <>
-          <h3 className="block-title">What a serve costs here</h3>
-          <Row label="Reading one serve" value={timing} />
+          <h3 className="block-title">How long a serve takes here</h3>
+          <Row label="Checking one serve" value={timing} />
           {coldTiming && <Row label="First run" value={coldTiming} />}
         </>
       )}
@@ -179,7 +179,7 @@ export default function DeviceCheck() {
         }}
       >
         <Icon name="share" size={17} />
-        {copied === 'done' ? 'Copied' : 'Copy this'}
+        {copied === 'done' ? 'Copied' : 'Copy these details'}
       </button>
       {/* The button's own label already says the outcome, which is enough for
           anyone looking at it — but nothing told anyone listening. The same

@@ -17,7 +17,7 @@ import { tagsById } from '../lib/storage/db'
 import type { TripRecord } from '../lib/storage/ledger'
 import { readPrefs, type Prefs } from '../lib/storage/prefs'
 import type { PracticeSession } from '../lib/session/session'
-import { DeltaChip } from '../components/Trend'
+import { DeltaChip } from '../components/DeltaChip'
 import { deviceNoun } from '../lib/device'
 import type { InfoPageId } from '../lib/routes'
 import { useCan } from '../components/usePlan'
@@ -167,7 +167,7 @@ export default function Home({
       <p role="status">{recovery}</p>
       <div className="recovery-actions">
         <button className="btn btn--primary btn--full" onClick={onRestore}>
-          Bring them back
+          Restore my serves
         </button>
         <button className="btn btn--quiet btn--full" onClick={onStartFresh}>
           Start fresh
@@ -185,7 +185,7 @@ export default function Home({
         </button>
       ) : (
         <button className="link-btn" onClick={onExportBackup}>
-          Export now
+          Save a backup now
         </button>
       )}
       {nudge === 'move' && (
@@ -224,7 +224,7 @@ export default function Home({
               <strong className="tnum">{LANDING_PEEK.score}</strong>/100
             </span>
             <span className="first-peek-text">
-              <span className="first-peek-label">{drawn ? 'A real serve I read: work on this next' : 'On this serve, work on this next'}</span>
+              <span className="first-peek-label">{drawn ? 'A real serve I checked: work on this next' : 'On this serve, work on this next'}</span>
               <strong>{LANDING_PEEK.fix}</strong>
               <span>
                 {LANDING_PEEK.drill}, {LANDING_PEEK.reps}
@@ -234,7 +234,7 @@ export default function Home({
         </div>
         <div className="first-copy">
           <h1 className="t-display">Film one serve. See what to fix first.</h1>
-          <p>I read your toss, legs, swing and contact on this {deviceNoun()}, then draw the fix on your own serve.</p>
+          <p>I check your toss, legs, swing and contact on this {deviceNoun()}, then show the fix drawn on your own serve.</p>
         </div>
         <div className="first-actions" id="first-actions">
           <button className="btn btn--primary btn--big btn--full" onClick={onFilm}>
@@ -255,7 +255,7 @@ export default function Home({
         </div>
         <p className="first-foot">
           Your video never leaves this {deviceNoun()}.
-          {offlineReady === false ? ` Your first serve downloads the coach once, ${engineMegabytes()}${NBSP}MB.` : ''}
+          {offlineReady === false ? ` Your first serve needs a one-time download of ${engineMegabytes()}${NBSP}MB.` : ''}
         </p>
         {storage}
       </div>
@@ -336,7 +336,7 @@ export default function Home({
           {/* How long it takes, and a drill that has stopped moving, one tap down: the card says the goal and the next thing. A stalled drill names itself on the tap. */}
           <details className="next-more">
             <summary className="link-btn" style={SUMMARY}>
-              {stuck ? 'This drill has stalled. What now?' : 'How long this takes'}
+              {stuck ? 'This drill is not working yet. What now?' : 'How long this takes'}
             </summary>
             <p className="next-pace">{programme.pace}</p>
             {stuck && <p className="next-stuck">{stuck}</p>}
@@ -357,7 +357,7 @@ export default function Home({
                 onLadderStep(m.flaw, m.to, m.from)
               }}
             >
-              You passed this step. Move up
+              You passed this step. Go to the next one
             </button>
           )}
           <button className="btn btn--primary btn--big btn--full" onClick={() => setSheet('session')}>
@@ -433,7 +433,7 @@ export default function Home({
       {storage ||
         (practiceSessions.length === 0 && !prefs.practiceTipSeenAt && (
           <p className="today-tip">
-            <strong>Read a whole practice.</strong> Switch on Whole practice under Film, or upload a video. I find every serve in it.{' '}
+            <strong>Check a whole practice.</strong> Turn on Whole practice when you film, or upload a video. I find every serve in it.{' '}
             <button className="link-btn" onClick={() => onPrefs({ practiceTipSeenAt: Date.now() })}>
               Got it
             </button>

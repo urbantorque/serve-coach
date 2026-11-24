@@ -207,7 +207,7 @@ check('no serve reads straight legs beside a strong drive', () => {
     const drive = get('legDrive')?.readout
     if (knee === readoutOf('kneeBend', 175)) {
       assert(
-        drive !== 'Strong drive up' && drive !== 'Big launch',
+        drive !== 'Strong push up' && drive !== 'Big push up',
         `knees at ${trophyKneeAngle}° read "${knee}" beside "${drive}"`,
       )
     }
@@ -222,7 +222,7 @@ check('the example report shows a ranked plan, and agrees with itself', () => {
   const rows = a.fundamentals.flatMap((f) => f.metrics)
   const knee = rows.find((m) => m.id === 'kneeBend')?.readout
   const drive = rows.find((m) => m.id === 'legDrive')?.readout
-  assert(!(knee === 'Legs straight' && drive === 'Strong drive up'), 'the example still reads straight legs beside a strong drive')
+  assert(!(knee === 'Legs straight' && drive === 'Strong push up'), 'the example still reads straight legs beside a strong drive')
 })
 
 heading('What the share is actually reading')

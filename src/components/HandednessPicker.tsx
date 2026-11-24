@@ -37,8 +37,7 @@ export default function HandednessPicker({ value, onChange }: Props) {
         ))}
       </div>
       <p className="hand-pick-note">
-        This decides which arm the app measures, so it is worth getting right. You can change it
-        on any report.
+        This tells me which arm holds the racket. You can change it on any report.
       </p>
     </fieldset>
   )

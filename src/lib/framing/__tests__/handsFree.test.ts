@@ -190,7 +190,7 @@ check('a verdict is spoken when it changes, and never twice inside the gap', () 
 })
 
 check('a spoken cue loses its bold markers and stays a plain sentence', () => {
-  const line = spoken('**Film from here.** The camera can read your whole body and the angle.')
+  const line = spoken('**Film from here.** I can see all of you, from a good angle.')
   assert(!line.includes('*') && cueIssues(line).length === 0, line)
 })
 

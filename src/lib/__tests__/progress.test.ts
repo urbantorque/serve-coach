@@ -107,7 +107,7 @@ check('a custom gap is honoured, not just the default', () => {
   assert(sameTrip(a, b, 2 * 60 * 60 * 1000) === true, 'a ninety-minute gap failed a two-hour window')
 })
 
-heading('Then, and now')
+heading('Then and now')
 
 check('two reports from the same trip never become a then-and-now pair', () => {
   const sessions = [savedServe(0, 'a'), savedServe(30 * 60 * 1000, 'b')]
@@ -189,7 +189,7 @@ check('a six-week move the camera could make on its own is "about where you star
 check('Today says it from the second trip: in trips under a week, in weeks after (D1.3)', () => {
   const days = [...trip(0, [60, 61, 62], 'f'), ...trip(3 * DAY, [70, 71, 72], 'r')]
   const short = sixWeekMilestone(buildProgress(days)!, 0)
-  assert(short !== undefined && short.startsWith('2 trips in'), `two trips three days apart: "${short}"`)
+  assert(short !== undefined && short.startsWith('2 court trips in'), `two trips three days apart: "${short}"`)
   assert(sixWeekMilestone(buildProgress(days)!) === undefined, 'Progress spoke before six weeks')
   const one = [...trip(0, [60, 61, 62], 'f'), ...trip(8 * DAY, [70, 71, 72], 'r')]
   assert(sixWeekMilestone(buildProgress(one)!, 0)!.startsWith('A week in'), 'a week is not one weeks')
@@ -293,7 +293,7 @@ check('seeded fortnightly trips show a streak, said at their pace', () => {
   assert(inferCadence(fortnightly) === 'fortnightly', `inferred ${inferCadence(fortnightly)}`)
   const line = streakLine(fortnightly, now)
   note(line ?? 'no line')
-  assert(line === '6 trips to the court in a row, roughly every two weeks.', `"${line}"`)
+  assert(line === '6 court trips in a row, roughly every two weeks.', `"${line}"`)
 })
 
 check('a weekly player is read as weekly, and one missed week does not make them fortnightly', () => {

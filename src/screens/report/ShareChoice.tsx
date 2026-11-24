@@ -29,8 +29,8 @@ export default function ShareChoice({ card, onCard, coach, onCoach, clip, onClip
           <Icon name={card === 'done' ? 'check' : 'trophy'} size={22} />
         </span>
         <span>
-          <strong>{card === 'working' ? 'Preparing…' : card === 'done' ? 'Saved' : 'A card of this serve'}</strong>
-          <span>A picture to send to a friend.</span>
+          <strong>{card === 'working' ? 'Preparing…' : card === 'done' ? 'Saved' : 'A picture of this serve'}</strong>
+          <span>To send to a friend.</span>
         </span>
       </button>
       {onClip && (
@@ -40,7 +40,7 @@ export default function ShareChoice({ card, onCard, coach, onCoach, clip, onClip
           </span>
           <span>
             <strong>{clip === 'working' ? 'Making your clip…' : clip === 'done' ? 'Saved' : 'A slow-motion clip'}</strong>
-            <span>{clip === 'working' ? 'It records as it plays, about ten seconds.' : 'Your swing, drawn. Never the video itself.'}</span>
+            <span>{clip === 'working' ? 'It records as it plays, about ten seconds.' : 'An animated drawing of your swing, not your video.'}</span>
           </span>
         </button>
       )}

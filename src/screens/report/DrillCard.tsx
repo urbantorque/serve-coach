@@ -72,7 +72,7 @@ export default function DrillCard({ item, racket, check, rung, onLadderStep, dri
               )}
               {check.outcome === 'not_yet' && check.clean <= check.need / 2 && rung > 0 && (
                 <button className="btn btn--ghost btn--full" onClick={() => move(rung - 1)}>
-                  Try the step before
+                  Go back a step
                 </button>
               )}
             </>
@@ -94,7 +94,7 @@ export default function DrillCard({ item, racket, check, rung, onLadderStep, dri
           <p>{now ?? stepCheckLine(ladder, ladder.steps[rung])}</p>
           {onLadderStep && flaw && movedTo === undefined && ladder.steps[rung].check.by === 'self' && rung < ladder.steps.length - 1 && (
             <button className="btn btn--ghost btn--full" onClick={() => move(rung + 1)}>
-              I can do this
+              I can do this, move up a step
             </button>
           )}
         </div>
@@ -106,7 +106,7 @@ export default function DrillCard({ item, racket, check, rung, onLadderStep, dri
       {onFilmCheck && filmable(flaw, drill.name) && (
         <button className="btn btn--primary btn--big btn--full" onClick={onFilmCheck}>
           <Icon name="camera" size={20} />
-          Film a check
+          Film serves to check it
         </button>
       )}
 
@@ -162,7 +162,7 @@ export default function DrillCard({ item, racket, check, rung, onLadderStep, dri
             <strong>Watch for:</strong> <Cue text={ladder.mistake} />
           </p>
           <p className="drill-note">
-            A step you film moves up when {ladder.pass} of {CHECK_SERVES} serves come back without this fault.
+            For a step you film, you move up when {ladder.pass} of {CHECK_SERVES} serves show none of this fault.
           </p>
         </details>
       )}

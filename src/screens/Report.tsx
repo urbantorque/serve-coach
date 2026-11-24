@@ -17,7 +17,7 @@ import { useCan } from '../components/usePlan'
 import LevelPicker from '../components/LevelPicker'
 import PosePlayer from '../components/PosePlayer'
 import PracticeCard from '../components/PracticeCard'
-import { DeltaChip } from '../components/Trend'
+import { DeltaChip } from '../components/DeltaChip'
 import { Cue, Icon, Sheet } from '../components/primitives'
 import type { SelfRead } from '../lib/selfRead'
 import type { CoachContext } from '../lib/share/coachContext'
@@ -482,7 +482,7 @@ export default function Report({
             </span>
           </p>
           <p className="hero-speed-range">
-            <Term id="likelyRange">Likely</Term> {figures.low}–{figures.high}
+            <Term id="likelyRange">Likely</Term> {figures.low} to {figures.high}
             {NBSP}
             {figures.unit}. No radar has checked it.
           </p>
@@ -511,7 +511,7 @@ export default function Report({
             {figures.unit}
           </p>
           <p className="hero-tally-range">
-            <Term id="likelyRange">Likely</Term> {figures.low}–{figures.high}
+            <Term id="likelyRange">Likely</Term> {figures.low} to {figures.high}
             {NBSP}
             {figures.unit}. No radar has checked it.
           </p>
@@ -581,7 +581,7 @@ export default function Report({
               ))}
             </ul>
             <p className="refusal-note">
-              I measured this clip and I do not trust what came out. Numbers off footage this hard to read look exactly
+              I measured this video, but I do not trust the results. Numbers from footage this hard to see look
               like real ones.
             </p>
             <button className="link-btn link-btn--quiet" onClick={() => setOverrode(true)}>
@@ -688,7 +688,7 @@ export default function Report({
                 )}
               </p>
             ) : (
-              <p className="hero-delta">The scoring changed between these two serves, so this one starts a fresh run.</p>
+              <p className="hero-delta">I changed how I score serves since your last one, so I cannot compare the two.</p>
             ))}
           {bestScore && <p className="hero-best">{bestTripLine(bestScore, analysis.createdAt)}</p>}
           {self?.reward && (
@@ -719,23 +719,23 @@ export default function Report({
           {!refusal && analysis.quality.confidence < SOFT_READ && (
             <p className="hero-rough">
               <Icon name="warn" size={15} />
-              <span>Rough read: I only saw part of this serve. Film it again side-on to be sure.</span>
+              <span>Rough result: I only saw part of this serve. Film it again from the side to be sure.</span>
             </p>
           )}
           {refusal && (
             <p className="hero-rough">
               <Icon name="warn" size={15} />
               <span>
-                <strong>{refusal.title}.</strong> Everything here came off that clip, so read it as a rough sketch.
+                <strong>{refusal.title}.</strong> Everything here comes from that video, so treat it as a rough guess.
               </span>
             </p>
           )}
           {analysis.firstRead && (
             <p className="hero-note">
-              <strong>A first read.</strong> I read your swing before the sharper swing model finished downloading.{' '}
+              <strong>A quick check.</strong> I checked your swing before the more accurate tracker finished downloading.{' '}
               {onReadFully && (
                 <button type="button" className="link-btn" onClick={onReadFully}>
-                  Read it in full
+                  Check it again in full
                 </button>
               )}
             </p>
@@ -772,7 +772,7 @@ export default function Report({
       {fullRead && plan.length > 1 && (
         <section className="plan" aria-labelledby="plan-title">
           <h2 className="t-headline" id="plan-title">
-            Then, in this order
+            Then work on these, in order
           </h2>
           <ol className="plan-list">
             {plan.slice(1).map((item, i) => (
@@ -838,7 +838,7 @@ export default function Report({
       {self && self.usual.length + self.best.length > 0 && (
         <section className="own-read" aria-labelledby="own-title">
           <h2 className="t-headline" id="own-title">
-            Against your own serve
+            Compared with your usual serve
           </h2>
           <ul>
             {[...self.usual, ...self.best].map((f) => (
@@ -898,8 +898,8 @@ export default function Report({
           {ghost && !analysis.tilt && (
             <p className="player-note">
               {ghost.who === 'best'
-                ? 'The dashed body is your best serve so far, lined up at the moment you hit the ball.'
-                : 'The dashed body is your last serve, lined up at the moment you hit the ball.'}
+                ? 'The dashed outline is your best serve so far, lined up at the moment you hit the ball.'
+                : 'The dashed outline is your last serve, lined up at the moment you hit the ball.'}
             </p>
           )}
         </section>
@@ -924,7 +924,7 @@ export default function Report({
             four={showCompare}
             racket={analysis.handedness}
           />
-          <p className="player-note">You kept this clip on this {deviceNoun()}. It goes when you delete this report, or first when space runs short.</p>
+          <p className="player-note">This video is saved on this {deviceNoun()}. It is deleted with this report, or sooner if space runs short.</p>
         </section>
       )}
 
@@ -944,12 +944,12 @@ export default function Report({
           />
           <p className="player-note">
             {keepsClips
-              ? `This clip was not kept on your ${deviceNoun()}, so this is your tracked body, moving as you filmed it.`
-              : `Your clip never left your ${deviceNoun()}, so this is your tracked body, moving as you filmed it.`}
+              ? `This video was not saved on your ${deviceNoun()}, so this is an outline of your body, moving as you filmed it.`
+              : `Your video never left your ${deviceNoun()} and was not saved, so this is an outline of your body, moving as you filmed it.`}
             {ghost
               ? ghost.who === 'best'
-                ? ' The dashed body is your best serve so far, lined up at the moment you hit the ball.'
-                : ' The dashed body is your last serve, lined up at the moment you hit the ball.'
+                ? ' The dashed outline is your best serve so far, lined up at the moment you hit the ball.'
+                : ' The dashed outline is your last serve, lined up at the moment you hit the ball.'
               : ''}
           </p>
         </section>
@@ -1049,7 +1049,7 @@ export default function Report({
 
       {/* The two moment names a club player is least likely to know, defined on a tap. */}
       <p className="terms-row">
-        <span>Tap a word:</span>
+        <span>Tap a word to see what it means:</span>
         <Term id="trophy" />
         <Term id="racketDrop" />
         <Term id="score" />
@@ -1109,11 +1109,11 @@ export default function Report({
               </section>
             )}
 
-            <section className="reading" aria-label="How this clip was read">
-              <h2 className="block-title">How I read this clip</h2>
+            <section className="reading" aria-label="What I saw in this video">
+              <h2 className="block-title">What I saw in this video</h2>
               <div className="reading-chips">
                 {onFlipHandedness ? (
-                  <button className="chip chip--button" onClick={onFlipHandedness} aria-label={`${analysis.handedness === 'right' ? 'Right-handed' : 'Left-handed'}. Tap if I read the wrong hand`}>
+                  <button className="chip chip--button" onClick={onFlipHandedness} aria-label={`${analysis.handedness === 'right' ? 'Right-handed' : 'Left-handed'}. Tap if I got your hand wrong`}>
                     {analysis.handedness === 'right' ? 'Right-handed' : 'Left-handed'}
                     <Icon name="chevron" size={13} />
                   </button>
@@ -1184,7 +1184,7 @@ export default function Report({
                   />
                   {!isLive(analysis) && (
                     <p className="levelled-note">
-                      This report has no footage behind it, so its verdict stays as it is. The level applies from your next clip on.
+                      The video for this report was not saved, so I cannot score it again. Your new level applies from your next video.
                     </p>
                   )}
                 </>
@@ -1224,7 +1224,7 @@ export default function Report({
             {analysis.diagnosis?.firingOrder && (
               <section className="block">
                 <h2 className="block-title">
-                  <Term id="firingOrder">The order you fired in</Term>
+                  <Term id="firingOrder">The order your body moved in</Term>
                 </h2>
                 <FiringTimeline chain={analysis.diagnosis.chain} order={analysis.diagnosis.firingOrder} />
               </section>
@@ -1397,7 +1397,7 @@ function DrilledLine({
 
 /** What the held frame is stopped on, in words under it. */
 function heldAt(phase: PhaseId): string {
-  return phase === 'contact' ? 'Held at contact' : phase === 'ready' ? 'Held at the ready position' : `Held at the ${PHASE_NAME[phase]}`
+  return phase === 'contact' ? 'Paused at contact' : phase === 'ready' ? 'Paused at the ready position' : `Paused at the ${PHASE_NAME[phase]}`
 }
 
 const PHASE_NAME: Record<PhaseId, string> = {

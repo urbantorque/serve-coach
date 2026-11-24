@@ -252,7 +252,7 @@ function ProgressBody({
               sentence on an empty field (N5.2). Each line is a section the
               full screen has: the ribbon, Fixed lately, then and now. */}
           <ul className="progress-promise">
-            <li>Your usual score, trip by trip, as a range rather than one lucky serve.</li>
+            <li>Your usual score each time you play, as a range, not one lucky serve.</li>
             <li>The faults you have fixed, and any that keep coming back.</li>
             <li>Your serve then and now, set at the same moment.</li>
           </ul>
@@ -268,7 +268,7 @@ function ProgressBody({
                 <ModelExposure racket={readPrefs().handedness === 'left' ? 'left' : 'right'} />
               </Suspense>
             </div>
-            <figcaption>A model serve, drawn as one picture. Not yours.</figcaption>
+            <figcaption>This is a model serve, not yours.</figcaption>
           </figure>
         )}
         {sessions.length > 0 && onOpen && <HistoryList sessions={open} tags={tagMap} onOpen={onOpen} onDelete={remove} />}
@@ -296,7 +296,7 @@ function ProgressBody({
             <span>{[tripDay(trip.createdAt), range].filter(Boolean).join(', ')}</span>
             {form.tripDelta !== undefined && deltaStatus(form.tripDelta, 'trip') !== 'flat' && (
               <span className="shape-delta">
-                <DeltaChip delta={form.tripDelta} scope="trip" /> on your last trip
+                <DeltaChip delta={form.tripDelta} scope="trip" /> on your last court trip
               </span>
             )}
           </p>
@@ -322,7 +322,7 @@ function ProgressBody({
             {sheetBestScore && (
               <div className="record-tile">
                 <span className="t-figure tnum">{sheetBestScore.score}</span>
-                <span>best trip</span>
+                <span>best court trip</span>
               </div>
             )}
             <div className="record-tile">
@@ -334,7 +334,7 @@ function ProgressBody({
       </section>
 
       {!usualReady && (
-        <p className="progress-foot">After a dozen serves over three trips, I can read each new serve against your own usual.</p>
+        <p className="progress-foot">After a dozen serves over three court trips, I can compare each new serve with your usual serve.</p>
       )}
 
       {thenNow && (
@@ -345,9 +345,9 @@ function ProgressBody({
 
       {faults.length > 0 && (
         <section className="block">
-          <h2 className="block-title">Serve by serve</h2>
+          <h2 className="block-title">Faults, serve by serve</h2>
           <FaultGrid faults={faults} />
-          <p className="progress-foot">Each square is a serve, oldest first. Lime means it was not there.</p>
+          <p className="progress-foot">Each square is a serve, oldest first. Lime means the fault was not there.</p>
         </section>
       )}
 
@@ -356,7 +356,7 @@ function ProgressBody({
           {fastest && <p>{fastestLine(fastest, unit)}</p>}
           {tripSpeeds.length > 0 && (
             <p>
-              <strong className="tnum">{tripSpeeds.length}</strong> {tripSpeeds.length === 1 ? 'trip' : 'trips'} with a speed to set side by side.
+              <strong className="tnum">{tripSpeeds.length}</strong> {tripSpeeds.length === 1 ? 'court trip' : 'court trips'} with a speed to compare.
             </p>
           )}
         </Locked>
@@ -368,7 +368,7 @@ function ProgressBody({
             <>
               <SpeedTrips trips={tripSpeeds} unit={unit} />
               <p className="progress-foot">
-                Your typical first serve each trip, in {UNIT_LABEL[unit]}. Each bar is its likely range. Not checked against a radar.
+                Your typical first serve speed each court trip, in {UNIT_LABEL[unit]}, with each bar showing its likely range. Not checked against a radar.
               </p>
             </>
           )}
@@ -384,7 +384,7 @@ function ProgressBody({
           <h2 className="block-title">What changed</h2>
           {fixedCards.length > 0 && (
             <div className="progress-part" id="progress-fixed">
-              <h3 className="t-subhead">Fixed lately</h3>
+              <h3 className="t-subhead">Faults you fixed recently</h3>
               {fixedCards.map((c) => (
                 <FixedPair key={c.flaw} then={c.then} now={c.now} title={c.name} line={c.line} />
               ))}
@@ -393,7 +393,7 @@ function ProgressBody({
 
           {(strain.length > 0 || strainCleared.length > 0) && (
             <div className="progress-part">
-              <h3 className="t-subhead">{strain.length > 0 ? 'What keeps coming back' : 'What has stopped'}</h3>
+              <h3 className="t-subhead">{strain.length > 0 ? 'Injury warnings that keep coming back' : 'Injury warnings that have stopped'}</h3>
               {strain.map((record) => {
                 const line = strainLine(record)
                 return line ? (
@@ -415,13 +415,13 @@ function ProgressBody({
 
           {links.length > 0 && (
             <div className="progress-part">
-              <h3 className="t-subhead">What your best serves share</h3>
+              <h3 className="t-subhead">What your best serves have in common</h3>
               {links.map((l) => (
                 <p key={`${l.kind}${l.metricId}`} className="strain-line strain-line--clear">
                   <Cue text={l.line} />
                 </p>
               ))}
-              <p className="progress-foot">From your own serves, and past what chance would give. It says what goes together, not what causes what.</p>
+              <p className="progress-foot">Based on your own serves, and more often than chance. It shows what goes together, not what causes what.</p>
             </div>
           )}
         </section>
@@ -430,7 +430,7 @@ function ProgressBody({
       {/* Everything else, in one fold (D1.2): the serves by number, the weeks, the path, the records and the tables. */}
       <details className="block progress-more progress-deeper">
         <summary className="block-title">
-          Go deeper
+          More detail
           <Icon name="chevron" size={16} />
         </summary>
         {(numbers.length > 0 || inRates.length > 0 || slowSecond || misses.length > 0) && (
@@ -443,7 +443,7 @@ function ProgressBody({
             />
             {numbers.map((n) => (
               <p key={n.serveNumber} className="progress-foot">
-                {SERVE_NUMBER_LABEL[n.serveNumber]}s: {n.serves} tagged, averaging {n.average}
+                {SERVE_NUMBER_LABEL[n.serveNumber]}s: {n.serves} marked, average score {n.average}
                 {n.outcomes >= MIN_OUTCOMES_FOR_RATE ? `, in on ${n.inServes} of the ${n.outcomes} you said where they landed.` : '.'}
               </p>
             ))}
@@ -476,7 +476,7 @@ function ProgressBody({
         {path && (
           <div className="progress-part" id="progress-path">
             <h3 className="t-subhead">
-              Your serve path
+              How each part of your serve is going
             </h3>
             <p className="path-headline">{path.headline}</p>
             <ol className="path">
@@ -515,7 +515,7 @@ function ProgressBody({
         {practice && (
           <div className="progress-part">
             <h3 className="t-subhead">
-              The season's weakest spot
+              Your weakest part lately
             </h3>
             <PracticeCard focus={practice} onLogDrill={onLogDrill} onUndoDrill={practice.drilled ? onUndoDrill : undefined} />
           </div>
@@ -549,13 +549,13 @@ function ProgressBody({
         {spread && spread.points.length > 1 && (
           <div className="progress-part">
             <h3 className="t-subhead">
-              How repeatable, over time
+              How consistent, over time
             </h3>
             <GapTrend points={spread.points} />
             {sheetGapDelta && <p className="sheet-note">{sheetGapDelta}</p>}
             {spread.recurring && (
               <p className="sheet-note">
-                {spread.recurring.label} has been your least repeatable part in {spread.recurring.sessions} of these. That is the one to practise most.
+                {spread.recurring.label} has been your least consistent part in {spread.recurring.sessions} of these. That is the one to practise most.
               </p>
             )}
             {sheetBestGap && <p className="sheet-note">{bestGapEverLine(sheetBestGap)}</p>}

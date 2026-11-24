@@ -48,7 +48,7 @@ export default function TabBar({ on, onTab, onFilm, loading, onStudio }: Props) 
         <span>Progress</span>
       </button>
       {onStudio && (
-        <button className="tab tab--rail" onClick={onStudio} aria-label="Studio: your latest serve, to review">
+        <button className="tab tab--rail" onClick={onStudio} aria-label="Studio: review your latest serve">
           <Icon name="film" size={24} />
           <span>Studio</span>
         </button>

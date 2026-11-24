@@ -61,7 +61,7 @@ export function OfflineRow({ ready, warming, metered, onDownload }: Props['offli
             : 'Download failed. Try again'
           : warming?.stage === 'unkept'
             ? 'This browser will not keep the download'
-            : `Download for no signal, ${size}${NBSP}MB`
+            : `Download to use with no signal, ${size}${NBSP}MB`
   return (
     <>
       <button className="btn btn--ghost btn--full" onClick={onDownload} disabled={busy}>

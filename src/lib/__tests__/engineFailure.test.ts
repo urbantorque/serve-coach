@@ -64,8 +64,8 @@ check('the first run says the download only while there is one to make', () => {
     )
     return html.slice(html.indexOf('first-foot'))
   }
-  assert(!foot(true).includes('downloads the coach'), 'a downloaded coach was offered again')
-  assert(foot(false).includes('downloads the coach once'), 'the download is not said before it happens')
+  assert(!foot(true).includes('one-time download'), 'a downloaded coach was offered again')
+  assert(foot(false).includes('one-time download'), 'the download is not said before it happens')
   assert(!foot(undefined).includes('signal'), 'said something about the signal before the cache had answered')
 })
 

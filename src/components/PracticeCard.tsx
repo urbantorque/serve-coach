@@ -4,8 +4,8 @@ import { Cue, Icon } from './primitives'
 
 const VERDICT: Record<PracticeFocus['verdict'], { label: string; icon: IconName }> = {
   improving: { label: 'Improving', icon: 'check' },
-  stuck: { label: 'Not moving', icon: 'clock' },
-  slipping: { label: 'Going backwards', icon: 'warn' },
+  stuck: { label: 'No change', icon: 'clock' },
+  slipping: { label: 'Getting worse', icon: 'warn' },
 }
 
 /**
@@ -115,7 +115,7 @@ export default function PracticeCard({ focus, onLogDrill, onUndoDrill, sameAsFoc
 
       <div className="drill">
         {sameAsFocus ? (
-          <span className="drill-kicker">The drill above · {focus.drill.name}</span>
+          <span className="drill-kicker">Same drill as above: {focus.drill.name}</span>
         ) : (
           <>
             <span className="drill-kicker">Drill · {focus.fundamentalLabel}</span>
@@ -149,8 +149,8 @@ export default function PracticeCard({ focus, onLogDrill, onUndoDrill, sameAsFoc
         {focus.drilled ? (
           <div className="drill-logged">
             <p>
-              Logged {focus.drilled} {focus.drilled === 1 ? 'time' : 'times'} since your{' '}
-              {focus.sessionsConsidered}-serve run started.
+              Marked done {focus.drilled} {focus.drilled === 1 ? 'time' : 'times'} since the first of these{' '}
+              {focus.sessionsConsidered} serves.
             </p>
             {onUndoDrill && (
               <button type="button" className="btn btn--ghost" onClick={onUndoDrill}>

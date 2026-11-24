@@ -61,13 +61,13 @@ export function SessionBody({
       </ol>
       {first && (
         <button type="button" className="btn btn--primary btn--big btn--full" onClick={() => setCard(true)}>
-          Open the court card
+          Show the drill in big print
         </button>
       )}
       {/* A step with no served ball has no check to film (W5.2): the session ends on a plain serve instead. */}
       <button type="button" className="btn btn--ghost btn--full" onClick={onFilmCheck}>
         <Icon name="camera" size={18} />
-        {!first || filmable(first.flaw, first.drill.name) ? 'Film a check' : 'Film a serve'}
+        {!first || filmable(first.flaw, first.drill.name) ? 'Film serves to check it' : 'Film a serve'}
       </button>
       <button
         type="button"

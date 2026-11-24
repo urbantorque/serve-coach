@@ -141,11 +141,11 @@ check('the home screen says each one, with the action that answers it', () => {
       }),
     )
   const move = home('move')
-  assert(move.includes(NUDGE_COPY.move) && move.includes('Export now') && move.includes('Not now'), 'the move lost its words or its buttons')
+  assert(move.includes(NUDGE_COPY.move) && move.includes('Save a backup now') && move.includes('Not now'), 'the move lost its words or its buttons')
   const restore = home('restore')
   assert(restore.includes('Restore a backup') && !restore.includes('Export now'), 'the restore offered an export')
   const remind = home('remind')
-  assert(remind.includes('Export now') && !remind.includes('Not now'), 'the reminder can be waved away without a backup')
+  assert(remind.includes('Save a backup now') && !remind.includes('Not now'), 'the reminder can be waved away without a backup')
   assert(!home().includes('home-nudge'), 'a nudge shown with nothing to say')
 })
 

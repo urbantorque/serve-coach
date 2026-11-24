@@ -169,8 +169,8 @@ export const GOAL_TITLE: Record<FlawId, string> = {
   toss_drift: 'Toss up one straight line',
   toss_arm_drops: 'Keep your tossing arm up',
   contact_behind: 'Meet the ball in front of you',
-  no_leg_drive: 'Get your legs into the serve',
-  posture_collapse: 'Stay tall through the ball',
+  no_leg_drive: 'Push up with your legs',
+  posture_collapse: 'Stay tall as you hit',
   shallow_drop: 'Let the racket fall behind you',
   collapsed_elbow: 'Throw the racket head up at the ball',
   early_shoulder_rotation: 'Stay sideways for longer',
@@ -382,7 +382,7 @@ type Row = Omit<ProgrammeWeek, 'label' | 'from' | 'to'> & { trips: number }
 /** How the player will know a step is passed. */
 const knowLine = (ladder: Progression, step: Step): string =>
   step.check.by === 'engine'
-    ? `I will say so on the report when ${ladder.pass} of ${CHECK_SERVES} come back clean.`
+    ? `I will say so on the report when ${ladder.pass} of ${CHECK_SERVES} come back without this fault.`
     : 'You judge this one yourself. I have no served ball to read on this step.'
 
 const stepRow = (ladder: Progression, index: number, state: WeekState): Row => {
@@ -403,11 +403,11 @@ const stepRow = (ladder: Progression, index: number, state: WeekState): Row => {
 const holdRow = (ladder: Progression, state: WeekState): Row => ({
   kind: 'hold',
   state,
-  title: 'Hold it across two trips',
+  title: 'Keep it fixed for two court trips',
   drill: ladder.steps[ladder.steps.length - 1],
   check: `Film a basket of ${CHECK_SERVES} on each of two trips.`,
   filmed: true,
-  know: `I call it fixed when ${ladder.pass} of your last ${CHECK_SERVES} serves come back clean, across two trips.`,
+  know: `I call it fixed when ${ladder.pass} of your last ${CHECK_SERVES} serves come back without this fault, across two trips.`,
   trips: GRADUATION_TRIPS,
 })
 
@@ -418,7 +418,7 @@ const secondRow = (from: InRate, state: WeekState): Row => ({
   drill: SECOND_DRILL,
   check: `Tag at least ${MIN_TAGGED} second serves, and where each landed.`,
   filmed: false,
-  know: cue(`You will know when a trip's second serves go in clearly more often than ${inLine(from)}.`),
+  know: cue(`You will know when your second serves on a court trip go in clearly more often than ${inLine(from)}.`),
   trips: 1,
 })
 
@@ -429,7 +429,7 @@ const speedRow = (from: SpeedRange, unit: SpeedUnit, state: WeekState): Row => (
   drill: SPEED_DRILL,
   check: `Film ${CHECK_SERVES} first serves from the side.`,
   filmed: true,
-  know: `You will know when a trip's range sits above this one: ${aboutSpeed(from, unit)}.`,
+  know: `You will know when your speeds on a court trip come out clearly faster than this one: ${aboutSpeed(from, unit)}.`,
   trips: 1,
 })
 
@@ -512,13 +512,13 @@ function nextLine(row: ProgrammeWeek, behind: boolean): string {
 
 function paceLine(weeksLeft: number, cadence: Cadence): string {
   const left = weeksLeft === 1 ? 'a week' : `${weeksLeft} weeks`
-  return cue(`About ${left} left if each step takes one trip, ${CADENCE_WORDS[cadence]}.`)
+  return cue(`About ${left} left if you get to the court ${CADENCE_WORDS[cadence]} and pass a step each trip.`)
 }
 
 function whyLine(goal: Goal, chosen: boolean, unit: SpeedUnit): string {
-  if (goal.kind === 'speed') return cue(`The trip to beat: ${aboutSpeed(goal.from, unit)}.`)
-  if (goal.kind === 'second') return cue(`The trip to beat: ${inLine(goal.from)} second serves in.`)
-  return chosen ? 'You picked this one.' : 'First in your plan: the others often follow from it.'
+  if (goal.kind === 'speed') return cue(`The court trip to beat: ${aboutSpeed(goal.from, unit)}.`)
+  if (goal.kind === 'second') return cue(`The court trip to beat: ${inLine(goal.from)} second serves in.`)
+  return chosen ? 'You picked this one.' : 'First in your plan, because fixing it often helps fix the others.'
 }
 
 /**

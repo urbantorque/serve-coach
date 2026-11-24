@@ -11,13 +11,13 @@
 import type { ServeSpeed, SpeedMiss } from './vision/serveSpeed'
 
 export const SPEED_MISS_LINE: Record<SpeedMiss, string> = {
-  frame_rate: 'For a speed, film in slow motion or stand the phone further back. At normal speed the ball is gone in two frames.',
+  frame_rate: 'To get a speed, film in slow motion or move the phone further back. At normal speed the ball leaves the picture in two frames.',
   view: 'Film from the side to get a speed. From behind, the ball flies straight away from the camera.',
-  no_toss: 'I could not follow your toss, so I had nothing to measure the picture with. Keep the whole toss in shot.',
+  no_toss: 'I could not follow your toss, and I need it to measure distances in the picture. Keep the whole toss in shot.',
   timing: 'This video does not carry the time of each frame, so I cannot time the ball.',
-  not_found: 'I lost the ball after the hit. Turn the phone on its side, step it back and leave the net side of the picture open.',
+  not_found: 'I lost the ball after the hit. Hold the phone sideways, move it further back and leave clear space on the net side.',
   clip_end: 'The clip stops right after the hit, so the ball had no flight to time. Keep filming until it lands.',
-  unsure: 'I saw the ball after the hit, but not clearly enough to stand behind a speed.',
+  unsure: 'I saw the ball after the hit, but not clearly enough to give a speed I trust.',
 }
 
 export type SpeedUnit = 'kmh' | 'mph'
@@ -85,7 +85,7 @@ export const NBSP = '\u00a0'
 
 /** The glance's line for a reading. */
 export function speedGlanceLine(f: SpeedFigures): string {
-  return `About ${f.best}${NBSP}${f.unit} off the racket, likely ${f.low}–${f.high}.`
+  return `About ${f.best}${NBSP}${f.unit} off the racket, likely ${f.low} to ${f.high}.`
 }
 
 type Ranged = Pick<ServeSpeed, 'ms' | 'low' | 'high'>
@@ -93,7 +93,7 @@ type Ranged = Pick<ServeSpeed, 'ms' | 'low' | 'high'>
 /** A reading as "about 130 km/h, likely 122–139". */
 export function aboutSpeed(s: Ranged, unit: SpeedUnit): string {
   const f = speedFigures(s, unit)
-  return `about ${f.best}${NBSP}${f.unit}, likely ${f.low}–${f.high}`
+  return `about ${f.best}${NBSP}${f.unit}, likely ${f.low} to ${f.high}`
 }
 
 /** A reading as a short label: "81 mph". */
@@ -109,7 +109,7 @@ export function fastestLine(s: Ranged & { isNew: boolean }, unit: SpeedUnit): st
 
 /** The newest trip against the one before, said only when their ranges are apart (N2.8). */
 export function speedTrendLine(t: { direction: 'faster' | 'slower'; now: Ranged; then: Ranged }, unit: SpeedUnit): string {
-  return `Serving ${t.direction} than your last trip: ${aboutSpeed(t.now, unit)}, against ${aboutSpeed(t.then, unit)}.`
+  return `Serving ${t.direction} than your last time on court: ${aboutSpeed(t.now, unit)}, compared with ${aboutSpeed(t.then, unit)}.`
 }
 
 /** Tagged first and second serves side by side (N2.8). */
@@ -124,10 +124,10 @@ export function sessionSpeedLine(s: { read: number; fastest: Ranged; typical?: R
   const top = aboutSpeed(s.fastest, unit)
   const usual = s.typical && aboutSpeed(s.typical, unit)
   // Two readings that round the same are one reading.
-  if (usual === top) return `Your serves ${top}, over ${s.read} serves.`
+  if (usual === top) return `Your serves were all ${top}, across ${s.read} serves.`
   return usual ? `Fastest serve ${top}. Typical serve ${usual}, over ${s.read} serves.` : `Fastest serve ${top}.`
 }
 
 /** A session read for speeds where no serve gave one. */
 export const NO_SESSION_SPEED =
-  'No serve in this practice gave a speed. Turn the phone on its side, step it back and leave the net side of the picture open.'
+  'I could not get a speed from any serve in this practice. Hold the phone sideways, move it further back and leave clear space on the net side.'

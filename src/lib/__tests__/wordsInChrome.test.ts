@@ -60,8 +60,8 @@ check('trophy, racket drop, stance and firing order are each a tap away on the r
   note(`terms on the report: ${words.join(', ')}`)
   for (const w of ['Trophy', 'Racket drop']) assert(words.includes(w), `${w} is not defined on a tap`)
   assert(words.some((w) => /stance/i.test(w)) === Boolean(a.diagnosis?.stance), 'the stance chip is not a term')
-  assert(words.includes('The order you fired in') === html.includes('The order you fired in'), 'firing order is not a term')
-  assert(html.includes('The order you fired in') && a.diagnosis?.stance !== undefined, 'the fixture shows neither stance nor firing order')
+  assert(words.includes('The order your body moved in') === html.includes('The order your body moved in'), 'firing order is not a term')
+  assert(html.includes('The order your body moved in') && a.diagnosis?.stance !== undefined, 'the fixture shows neither stance nor firing order')
 })
 
 heading('Renamed, and one narrator')
@@ -74,7 +74,7 @@ check('the coil row is named for what it shows', () => {
 
 check('the lint holds the coach to "I"', () => {
   assert(cueIssues('Every serve since we changed how we mark.').some((i) => i.startsWith('two narrators')), 'we passed')
-  assert(cueIssues('How I read this clip.').every((i) => !i.startsWith('two narrators')), 'I failed')
+  assert(cueIssues('What I saw in this video.').every((i) => !i.startsWith('two narrators')), 'I failed')
 })
 
 check('no string in a component says we, our or us', () => {

@@ -7,7 +7,7 @@ import { usePillInView } from './usePillInView'
 export const WATCH_SPEEDS = [
   { rate: 0.5, label: 'Slow' },
   { rate: 0.25, label: 'Very slow' },
-  { rate: 1, label: 'Real speed' },
+  { rate: 1, label: 'Normal speed' },
 ] as const
 
 export type WatchRate = (typeof WATCH_SPEEDS)[number]['rate']

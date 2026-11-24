@@ -67,7 +67,7 @@ export function storageNudge(o: {
 
 /** What the home screen says for each. */
 export const NUDGE_COPY: Record<StorageNudge, string> = {
-  move: 'Safari clears this after a week away. Export your serves, add Serve Coach to your Home Screen, then restore them there.',
+  move: 'Safari deletes your serves after a week without a visit. Export them, add Serve Coach to your Home Screen, then restore them there.',
   restore: 'Moving over from Safari? Restore the backup you exported there.',
-  remind: 'No backup file in a while. Only a file survives a browser clearing your serves.',
+  remind: 'You have not saved a backup file in a while. If your browser clears your serves, only that file brings them back.',
 }

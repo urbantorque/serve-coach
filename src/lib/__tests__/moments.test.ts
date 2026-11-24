@@ -190,7 +190,7 @@ check('a best trip beats every trip before it by more than the camera moves a tr
   const past = at(64 + REAL_CHANGE.trip)
   const m = has(momentsFor(past, prefs(), 171 * DAY), 'best_trip')!
   note(`${m.title}: ${m.body}`)
-  assert(/best trip yet/.test(m.body), m.body)
+  assert(/best court trip yet/.test(m.body), m.body)
   const thin = history(trip(150, 3, { overall: 60 }), trip(160, 3, { overall: 64 }), trip(170, 2, { overall: 90 }))
   assert(!has(momentsFor(thin, prefs(), 171 * DAY), 'best_trip'), 'a trip of two set a best')
   const single = history(trip(170, 3, { overall: 90 }))
@@ -201,7 +201,7 @@ check('a new body position is the one bests.ts names', () => {
   const h = history(trip(160, 3, { drop: -0.2 }), trip(170, 3, { drop: 0.18 }))
   const m = has(momentsFor(h, prefs(), 171 * DAY), 'body_best')!
   note(`${m.title}: ${m.body}`)
-  assert(m.body === 'Racket drop: first trip at "Hand below the shoulder".', m.body)
+  assert(m.body === 'Racket drop: first court trip at "Hand below the shoulder".', m.body)
   assert(!has(momentsFor(history(trip(160, 3, { drop: -0.2 }), trip(170, 3, { drop: -0.19 })), prefs(), 171 * DAY), 'body_best'), 'the same serve again set a best')
 })
 
@@ -211,9 +211,9 @@ check('a streak speaks on its milestones and nowhere between', () => {
   assert(!has(momentsFor(weekly(2), prefs(), at(2)), 'streak'), 'two trips were a milestone')
   const three = has(momentsFor(weekly(3), prefs(), at(3)), 'streak')!
   note(`${three.title}: ${three.body}`)
-  assert(three.title === '3 trips in a row', three.title)
+  assert(three.title === '3 court trips in a row', three.title)
   assert(!has(momentsFor(weekly(4), prefs(), at(4)), 'streak'), 'four trips were a milestone')
-  assert(has(momentsFor(weekly(5), prefs(), at(5)), 'streak')?.title === '5 trips in a row', 'five trips went unsaid')
+  assert(has(momentsFor(weekly(5), prefs(), at(5)), 'streak')?.title === '5 court trips in a row', 'five trips went unsaid')
   assert(STREAK_MILESTONES[0] === 3, 'the first milestone moved')
   // Spaced for a monthly player, three visits run; a weekly reading would break it.
   const monthly = history(trip(100, 1), trip(130, 1), trip(160, 1))

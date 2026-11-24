@@ -47,7 +47,7 @@ interface Props {
 function choiceCopy(choice: PlanChoice): { title: string; body: string } {
   return choice.mode === 'sample'
     ? { title: `A sample of ${SESSION_SAMPLE}`, body: 'Five from the start, two from the middle and five from the end.' }
-    : { title: 'Every serve', body: `About ${choice.reading} serves, read one at a time.` }
+    : { title: 'Every serve', body: `About ${choice.reading} serves, checked one at a time.` }
 }
 
 /** "About 4 minutes", capitalised to stand as a label or open a sentence. */
@@ -93,7 +93,7 @@ export default function Session({
           ) : (
             <Locked feature="sessions">
               <p>
-                About <strong className="tnum">{guessServes(session.duration)}</strong> serves in {length} of video, each read and set against the rest.
+                About <strong className="tnum">{guessServes(session.duration)}</strong> serves in {length} of video, each checked and compared with the others.
               </p>
             </Locked>
           )}
@@ -104,7 +104,7 @@ export default function Session({
               </button>
             ) : (
               <>
-                <p className="session-note">The video is not kept on your {deviceNoun()}. Pick the same one to carry on.</p>
+                <p className="session-note">The video is not saved on your {deviceNoun()}. Choose the same video again to carry on.</p>
                 <button className="btn btn--primary btn--full" onClick={onPickAgain}>
                   Pick the video
                 </button>
@@ -112,7 +112,7 @@ export default function Session({
             ))}
           {(resuming || allow('sessions')) && (
             <p className="session-note">
-              Keep the app open while it reads. If you leave, it pauses and keeps its place.
+              Keep the app open while I check the video. If you leave, I pause and keep my place.
             </p>
           )}
           <button className="btn btn--ghost btn--full" onClick={onLeave}>
@@ -131,7 +131,7 @@ export default function Session({
           <div className="pulse">
             <span className="pulse-ball" />
           </div>
-          <h1>Reading your session</h1>
+          <h1>Checking your practice video</h1>
           <p className="analyzing-file">{label}</p>
           <div
             className="progress"
@@ -144,16 +144,16 @@ export default function Session({
             <div className="progress-fill" style={{ transform: `scaleX(${stage.ratio})` }} />
           </div>
           <p className="analyzing-detail" role="status" aria-live="polite">
-            {stage.detail ?? (locating ? 'Finding every serve in the video…' : 'Reading…')}
+            {stage.detail ?? (locating ? 'Finding every serve in the video…' : 'Checking…')}
           </p>
           {!locating && <ServeGrid session={session} />}
           <p className="analyzing-aside">
             {locating
               ? 'On a long video this is the longest step.'
-              : 'Each serve is saved as it is read, so stopping loses none of them.'}
+              : 'Each serve is saved as soon as I check it, so stopping loses none of them.'}
           </p>
           <button className="btn btn--ghost" onClick={onStop}>
-            {stage.stopping ? 'Stopping…' : 'Stop and keep what is read'}
+            {stage.stopping ? 'Stopping…' : 'Stop and keep the serves done so far'}
           </button>
         </div>
       </div>
@@ -164,10 +164,10 @@ export default function Session({
     const at = chosen ? `${session.lines.length} of ${chosen}` : undefined
     const why =
       stage.reason === 'hidden'
-        ? 'The app went into the background, so the reading paused.'
+        ? 'The app went into the background, so I paused.'
         : stage.reason === 'warm'
-          ? 'Your phone is running hot, so the reading paused to let it cool.'
-          : 'You stopped the reading.'
+          ? 'Your phone is running hot, so I paused to let it cool.'
+          : 'You paused the check.'
     const left = timeOf(costLeft(session, stage.perSampleMs))
     return (
       <div className="screen session">
@@ -176,7 +176,7 @@ export default function Session({
           <p className="analyzing-file">{label}</p>
           <p className="session-lede">{why}</p>
           <p className="session-meta tnum">
-            {at ? `${at} serves read, and saved.` : 'Nothing was read yet.'}
+            {at ? `${at} serves checked and saved.` : 'No serves checked yet.'}
             {left && ` ${left} left.`}
           </p>
           {session.found !== undefined && <ServeGrid session={session} />}
@@ -250,9 +250,9 @@ function Choices({
       </p>
       <p className="session-meta" role="status" aria-live="polite">
         {!timed
-          ? `Timing your ${deviceNoun()} on this video…`
+          ? `Working out how long this takes on your ${deviceNoun()}…`
           : perSampleMs === undefined
-            ? `I could not time your ${deviceNoun()} on this video, so I cannot say how long it will take.`
+            ? `I could not work out how fast your ${deviceNoun()} is, so I cannot say how long this will take.`
             : `Times are from your ${deviceNoun()}, on this video.`}
       </p>
       {/* Off by default: a speed costs the ball's pass on every serve. */}
@@ -299,8 +299,8 @@ function Resume({ session, perSampleMs }: { session: PracticeSession; perSampleM
   return (
     <p className="session-lede tnum">
       {chosen === undefined
-        ? 'The serves were still being found when it stopped.'
-        : `${session.lines.length} of ${chosen} serves read, ${toRead(session).length} to go.`}
+        ? 'I was still finding the serves when it stopped.'
+        : `${session.lines.length} of ${chosen} serves checked, ${toRead(session).length} to go.`}
       {left && ` ${left} left.`}
     </p>
   )

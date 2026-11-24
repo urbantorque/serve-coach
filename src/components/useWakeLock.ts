@@ -66,6 +66,6 @@ export function useWakeLock(active: boolean): WakeLockStatus {
 /** The one line a player needs when the screen may lock, or nothing. */
 export function wakeLockLine(status: WakeLockStatus): string | undefined {
   return status === 'refused' || status === 'unsupported'
-    ? 'Keep the screen on until this finishes. If it locks, the reading pauses until you come back.'
+    ? 'Keep the screen on until this finishes. If it locks, the check pauses until you come back.'
     : undefined
 }

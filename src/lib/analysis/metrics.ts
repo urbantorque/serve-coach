@@ -887,7 +887,7 @@ function headlineFor(metrics: Metric[], label: string, areaScore: number): strin
   if (!weakest) return cue('Not measured on this clip, so it does not count towards your score.')
   const area = label.toLowerCase()
   const weak = weakest.label.toLowerCase()
-  if (weakest.score >= 85) return cue(`Your ${area} holds up. Leave it alone.`)
+  if (weakest.score >= 85) return cue(`Your ${area} is good. Leave it alone.`)
   if (weakest.score >= 70) return cue(`Solid ${area}. Next to work on: ${weak}.`)
   if (areaScore >= 70) return cue(`Decent ${area}. ${weakest.label} is holding it back.`)
   return weakest.insight

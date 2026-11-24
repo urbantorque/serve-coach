@@ -122,7 +122,7 @@ await check('the file is still pictures of a person, which is what the panel say
    * If the reports ever stopped carrying stills this would go red — and the
    * right response would be to soften the panel's warning, not to delete this.
    *
-   * `StoragePanel`: "An export is one file holding your scores and real photos
+   * `StoragePanel`: "The export is one file with your scores and photos
    * of you serving, not just numbers."
    */
   const personal = RULINGS.filter((r) => r.personal)

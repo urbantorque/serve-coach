@@ -163,15 +163,15 @@ export const HANDS_SEEN_FLOOR = 0.3
 export function blockingFramingIssue(issues: string[]): NotAServeError | undefined {
   if (issues.includes('nobody-visible')) {
     return new NotAServeError('I found no player in that clip.', [
-      'Put one person fully in frame, well lit.',
+      'Get one person fully in the picture, in good light.',
       `Stand the phone side-on, ${PLACEMENT.distance} away, ${PLACEMENT.where}.`,
       'Fit head to feet in the shot, with room above the racket.',
     ])
   }
   if (issues.includes('feet-cropped') && issues.includes('head-cropped')) {
-    return new NotAServeError('Your body does not fit the shot.', [
+    return new NotAServeError('Your head and feet are both out of the picture.', [
       'Turn the phone upright and step back until head and feet both fit.',
-      'Every height uses your own body as the ruler, so show both ends.',
+      'I measure against your own height, so I need to see your head and feet.',
     ])
   }
   // No wrist ever found, so there is no swing here to measure whatever else is
@@ -187,11 +187,11 @@ export function blockingFramingIssue(issues: string[]): NotAServeError | undefin
   if (issues.includes('hands-unseen')) {
     return new NotAServeError(
       issues.includes('too-far-away')
-        ? 'You stand too far from the camera to measure.'
+        ? 'You are too far from the camera for me to check.'
         : 'I could not see your racket hand.',
       [
-        `Move the phone to ${PLACEMENT.distance} away, so your body fills the frame height.`,
-        'Every swing measurement comes off your racket hand, so it has to be visible.',
+        `Move the phone to ${PLACEMENT.distance} away, so you fill the picture from head to feet.`,
+        'I check the swing by following your racket hand, so it must be in view.',
       ],
     )
   }

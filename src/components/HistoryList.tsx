@@ -37,7 +37,7 @@ export default function HistoryList({ sessions, tags, onOpen, onDelete }: Props)
             <h3 className="history-trip-head">
               <span>{day}</span>
               <span className="tnum">
-                {trip.length === 1 ? '1 serve' : `${trip.length} serves, typical ${median(trip.map((s) => s.overall))}`}
+                {trip.length === 1 ? '1 serve' : `${trip.length} serves, typical score ${median(trip.map((s) => s.overall))}`}
               </span>
             </h3>
             <ul>

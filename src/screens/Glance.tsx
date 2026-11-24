@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Cue, Icon, ScoreRing } from '../components/primitives'
-import { DeltaChip } from '../components/Trend'
+import { DeltaChip } from '../components/DeltaChip'
 import { causalPlan, faultMoveLine, refusalFor, rotationMoveLine } from '../lib/analysis/verdict'
 import type { FaultMove, RotationMove } from '../lib/analysis/carryForward'
 import { SERVE_OUTCOMES, type ServeOutcome } from '../lib/storage/db'
@@ -338,7 +338,7 @@ export default function Glance({
           {court && onRecordAnother && (
             <button className="btn btn--primary btn--big btn--full" onClick={onRecordAnother}>
               <Icon name="camera" size={20} />
-              Record another
+              Film another serve
             </button>
           )}
           {court && nextRow}
@@ -574,7 +574,7 @@ export default function Glance({
       )}
       {onTagOutcome && onStartSet && !set?.running && !refusal && (
         <details className="glance-more">
-          <summary>Start a set of 10</summary>
+          <summary>Start a set of 10 serves</summary>
           <div className="reading-chips">
             {([1, 2] as const).map((n) => (
               <button key={n} className="chip chip--button" onClick={() => onStartSet(n)}>
@@ -591,11 +591,11 @@ export default function Glance({
         {onRecordAnother && !court && (
           <button className="btn btn--primary btn--full" onClick={onRecordAnother}>
             <Icon name="camera" size={18} />
-            Record another
+            Film another serve
           </button>
         )}
         <button className="btn btn--quiet btn--full" onClick={onOpenReport}>
-          Show me everything
+          Open the full report
         </button>
       </footer>
     </div>

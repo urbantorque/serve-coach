@@ -2030,7 +2030,7 @@ check('a sweep with nothing to compare leaves the report, with one line saying w
     assert(cueIssues(added[0]).length === 0, `"${added[0]}": ${cueIssues(added[0]).join('; ')}`)
     assert(added[0].includes('compare') || added[0].includes('alone'), `the line does not say why: "${added[0]}"`)
     if (readable >= 2) {
-      const said = readable < attempted ? added[0].includes(`${readable} of the ${attempted}`) : added[0].includes('read the other serves')
+      const said = readable < attempted ? added[0].includes(`${readable} of the ${attempted}`) : added[0].includes('checked the other serves')
       assert(said, `${readable} of ${attempted} read: "${added[0]}"`)
     }
   }
@@ -2661,7 +2661,7 @@ check('every practice headline reads as a sentence at one, two and five drills (
       }
     }
   }
-  const old = cueIssues('Knee bend at trophy has not moved after twice of its drill.')
+  const old = cueIssues('Knee bend at trophy has not improved after twice of its drill.')
   assert(old.some((i) => i.startsWith('a count used as a noun')), `the lint let the old line through: ${old.join('; ')}`)
 })
 
@@ -2676,7 +2676,7 @@ check('reads a genuine improvement as improving', () => {
   // the camera moves that row a long way on a serve whose drop collapses.
   const f = findPracticeFocus(persistentWeakness([20, 24, 50, 70, 80]))
   assert(f!.verdict === 'improving', `verdict was ${f!.verdict} (trend ${f!.trend})`)
-  assert(practiceHeadline(f!).includes('right direction'), 'headline does not acknowledge progress')
+  assert(practiceHeadline(f!).includes('getting better'), 'headline does not acknowledge progress')
 })
 
 check('a move the camera makes on its own is not progress', () => {
@@ -2833,7 +2833,7 @@ check('reads a flat run as stuck', () => {
 check('reads a decline as slipping', () => {
   const f = findPracticeFocus(persistentWeakness([80, 74, 50, 30, 20]))
   assert(f!.verdict === 'slipping', `verdict was ${f!.verdict} (trend ${f!.trend})`)
-  assert(practiceHeadline(f!).includes('backwards'), 'headline does not flag the decline')
+  assert(practiceHeadline(f!).includes('got worse'), 'headline does not flag the decline')
 })
 
 check('ignores a measurement that is not in every session', () => {

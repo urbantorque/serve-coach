@@ -146,7 +146,7 @@ heading('Drawn on the progress screen')
 check('the path renders with its headline and a row per part', () => {
   const sessions = [...on, ...off].sort((a, b) => b.createdAt - a.createdAt)
   const html = renderToStaticMarkup(createElement(Progress, { sessions, onBack: () => {}, onLogDrill: () => {}, onUndoDrill: () => {}, seeded: false }))
-  assert(html.includes('Your serve path'), 'the block did not render')
+  assert(html.includes('How each part of your serve is going'), 'the block did not render')
   assert(/\d of 7 parts holding/.test(html), 'the headline did not render')
   assert((html.match(/class="path-part /g) ?? []).length === 7, 'not one row per part')
   assert(html.includes('Holding') && html.includes('Working on'), 'the states were not said')

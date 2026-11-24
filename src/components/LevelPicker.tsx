@@ -34,7 +34,7 @@ interface Props {
 export default function LevelPicker({ value, onChange, estimated }: Props) {
   return (
     <fieldset className="level-pick">
-      <legend>Which faults should I point out?</legend>
+      <legend>What level do you play at?</legend>
       <div className="level-pick-options">
         <button
           type="button"
@@ -45,8 +45,8 @@ export default function LevelPicker({ value, onChange, estimated }: Props) {
           <strong>Work it out for me</strong>
           <span>
             {estimated === undefined
-              ? 'From the serve itself'
-              : `Reading you as ${rungName(estimated)}`}
+              ? 'I judge it from your serve'
+              : `My guess: ${rungName(estimated)}`}
           </span>
         </button>
         {RUNGS.map((r) => (

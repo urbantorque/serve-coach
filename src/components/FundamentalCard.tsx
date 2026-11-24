@@ -4,7 +4,7 @@ import type { Fundamental, Metric } from '../lib/analysis/types'
 import type { AreaChange } from '../lib/progress'
 import { breakdownLines, type AreaBreakdown } from '../lib/analysis/breakdown'
 import TargetShape from './TargetShape'
-import { DeltaChip } from './Trend'
+import { DeltaChip } from './DeltaChip'
 import { Cue, Icon, MetricBar, ScoreRing } from './primitives'
 import { STATUS_LABEL } from './statusLabels'
 
@@ -185,7 +185,7 @@ export default function FundamentalCard({
                   </li>
                 ))}
               </ul>
-              <p className="unscored-note">Nothing published gives a target for these yet, so they carry no score.</p>
+              <p className="unscored-note">There is no published target for these yet, so I do not score them.</p>
             </div>
           ) : null}
 
