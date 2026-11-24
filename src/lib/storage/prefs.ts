@@ -36,6 +36,8 @@ export interface Prefs {
   tier?: number
   /** Whether the filming guide has been shown unprompted. */
   seenFilmingGuide: boolean
+  /** When Today's whole-practice tip was dismissed ("Got it"); absent until then. */
+  practiceTipSeenAt?: number
   /** Whether persistent storage has been requested from the browser. */
   askedToPersist: boolean
   /** When it last was, so a refusal can be asked about again in time (`protect.ts`). */

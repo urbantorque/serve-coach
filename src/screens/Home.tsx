@@ -3,7 +3,7 @@ import { Icon, Sheet } from '../components/primitives'
 import { engineMegabytes } from '../lib/engineManifest'
 import { NUDGE_COPY, type StorageNudge } from '../lib/storage/nudge'
 import { sessionEvidence } from '../lib/session/evidence'
-import { buildProgress, currentRubricEra, streakLine, tripDay, deltaStatus, sixWeekMilestone } from '../lib/progress'
+import { buildProgress, currentRubricEra, streakLine, deltaStatus, sixWeekMilestone } from '../lib/progress'
 import { momentsFor, weekRecap } from '../lib/moments'
 import MomentCard from '../components/MomentCard'
 import { programmeFor } from '../lib/programme'
@@ -24,6 +24,18 @@ import { useCan } from '../components/usePlan'
 
 const FirstRunStage = lazy(() => import('../components/FirstRunStage'))
 const FirstRunMore = lazy(() => import('../components/FirstRunMore'))
+/** The landing's top links, out of the entry chunk; a box of their height holds the place, so nothing moves when they arrive. */
+const FirstRunTop = lazy(() => import('../components/FirstRunChrome'))
+const TOP_ROOM = { minHeight: 44 } as const
+/** Only wanted once the top buttons scroll away: kept out of the entry chunk. */
+const StickyFilmBar = lazy(() => import('../components/StickyFilmBar'))
+
+/** The sticky bar's height and margin, kept clear at the foot of the landing. */
+const BAR_ROOM = { height: 84 } as const
+/** Today's header: Upload beside Settings, so a clip on the phone is one tap from the top. */
+const TOP_ACTIONS = { display: 'flex', alignItems: 'center', gap: 4 } as const
+/** The goal card's tap-down: a link, without the browser's triangle. */
+const SUMMARY = { listStyle: 'none', cursor: 'pointer', minHeight: 44, display: 'flex', alignItems: 'center' } as const
 
 /**
  * Upload and the sample, side by side under the one main action: a clip the
@@ -194,6 +206,9 @@ export default function Home({
     return (
       <>
       <div className="screen first-run">
+        <Suspense fallback={<div style={TOP_ROOM} />}>
+          <FirstRunTop onShowPage={onShowPage} />
+        </Suspense>
         {restore}
         {cutOff}
         <div className="first-stage">
@@ -221,7 +236,7 @@ export default function Home({
           <h1 className="t-display">Film one serve. See what to fix first.</h1>
           <p>I read your toss, legs, swing and contact on this {deviceNoun()}, then draw the fix on your own serve.</p>
         </div>
-        <div className="first-actions">
+        <div className="first-actions" id="first-actions">
           <button className="btn btn--primary btn--big btn--full" onClick={onFilm}>
             <Icon name="camera" size={21} />
             Film my serve
@@ -245,7 +260,12 @@ export default function Home({
         {storage}
       </div>
       <Suspense fallback={null}>
-        <FirstRunMore onFilm={onFilm} onUpload={onUpload} onShowExample={onShowExample} onShowPage={onShowPage} />
+        <FirstRunMore onShowPage={onShowPage} />
+      </Suspense>
+      {/* Room at the foot for the bar below, so it never covers the last links. */}
+      <div aria-hidden="true" style={BAR_ROOM} />
+      <Suspense fallback={null}>
+        <StickyFilmBar watchId="first-actions" onFilm={onFilm} onUpload={onUpload} />
       </Suspense>
       </>
     )
@@ -266,9 +286,17 @@ export default function Home({
     <div className="screen today">
       <header className="today-top">
         <h1 className="t-display">Today</h1>
-        <button className="icon-btn" onClick={onShowSettings} aria-label="Settings and backups">
-          <Icon name="settings" size={22} />
-        </button>
+        <div style={TOP_ACTIONS}>
+          {onUpload && (
+            <button className="btn btn--quiet" style={SECOND_BUTTON} onClick={onUpload} aria-label="Upload a video">
+              <Icon name="upload" size={18} />
+              Upload
+            </button>
+          )}
+          <button className="icon-btn" onClick={onShowSettings} aria-label="Settings and backups">
+            <Icon name="settings" size={22} />
+          </button>
+        </div>
       </header>
 
       {restore}
@@ -304,9 +332,15 @@ export default function Home({
                 <span key={w.label} className={`next-tick next-tick--${w.state}`} />
               ))}
             </span>
-            <span className="next-pace">{programme.pace}</span>
           </button>
-          {stuck && <p className="next-stuck">{stuck}</p>}
+          {/* How long it takes, and a drill that has stopped moving, one tap down: the card says the goal and the next thing. A stalled drill names itself on the tap. */}
+          <details className="next-more">
+            <summary className="link-btn" style={SUMMARY}>
+              {stuck ? 'This drill has stalled. What now?' : 'How long this takes'}
+            </summary>
+            <p className="next-pace">{programme.pace}</p>
+            {stuck && <p className="next-stuck">{stuck}</p>}
+          </details>
           <div className="next-today">
             <span className="next-label">Next on court</span>
             <strong>{current.drill.name}</strong>
@@ -338,7 +372,7 @@ export default function Home({
           <span className="momentum-stat">
             <span className="t-figure tnum">{form.latestTrip.overall}</span>
             <span>
-              typical, {tripDay(form.latestTrip.createdAt)}{' '}
+              typical score{' '}
               {form.tripDelta !== undefined && deltaStatus(form.tripDelta, 'trip') !== 'flat' && <DeltaChip delta={form.tripDelta} scope="trip" />}
             </span>
           </span>
@@ -348,18 +382,18 @@ export default function Home({
                 <span className="momentum-about">about</span>
                 {speedFigures(fastest, unit).best}
               </span>
-              <span>{speedFigures(fastest, unit).unit} fastest</span>
+              <span>{speedFigures(fastest, unit).unit}, fastest serve</span>
             </span>
           )}
           <span className="momentum-stat">
             <span className="t-figure tnum">{eraTrips}</span>
-            <span>{eraTrips === 1 ? 'trip' : 'trips'}</span>
+            <span>{eraTrips === 1 ? 'court trip' : 'court trips'}</span>
           </span>
         </button>
       )}
       {/* Is it getting better (D1.3): said in a line, even when the change is too small for a chip. */}
-      {form && sixWeekMilestone(form, 0) && <p className="today-streak">{sixWeekMilestone(form, 0)}</p>}
-      {streak && <p className="today-streak">{streak}</p>}
+      {/* One line under the numbers, not two: the six-week read where there is one, else the streak. */}
+      {(form && sixWeekMilestone(form, 0)) || streak ? <p className="today-streak">{(form && sixWeekMilestone(form, 0)) || streak}</p> : null}
 
       {recapFresh && recap && (
         <section className="recap" aria-label={recap.label}>
@@ -391,14 +425,20 @@ export default function Home({
         </section>
       )}
 
-      {/* Sessions had no way in a player could see (N3.6). */}
-      {practiceSessions.length === 0 && (
-        <p className="today-tip">
-          <strong>Read a whole practice.</strong> Under Film, switch on Whole practice in Options, or pick a video from your camera app. I find every serve in it.
-        </p>
-      )}
-
-      {storage}
+      {/*
+       * One note at the foot, not two: the backup nudge when there is one (it
+       * protects the serves), else the whole-practice tip (N3.6) until it is
+       * dismissed.
+       */}
+      {storage ||
+        (practiceSessions.length === 0 && !prefs.practiceTipSeenAt && (
+          <p className="today-tip">
+            <strong>Read a whole practice.</strong> Switch on Whole practice under Film, or upload a video. I find every serve in it.{' '}
+            <button className="link-btn" onClick={() => onPrefs({ practiceTipSeenAt: Date.now() })}>
+              Got it
+            </button>
+          </p>
+        ))}
 
       <Sheet open={sheet === 'session'} onClose={() => setSheet(null)} title="Today's session">
         <Suspense fallback={null}>

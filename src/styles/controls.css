@@ -59,7 +59,8 @@
 }
 
 @media (hover: hover) {
-  .btn--quiet:hover {
+  .btn--quiet:hover,
+  .first-top a:hover {
     color: var(--fg);
   }
 }

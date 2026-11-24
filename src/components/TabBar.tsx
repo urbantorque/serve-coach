@@ -15,6 +15,10 @@ interface Props {
   onStudio?: () => void
 }
 
+/** The camera and the word under it, inside the lime circle: the one action is labelled like the two places. */
+const FILM_STACK = { flexDirection: 'column', gap: 1 } as const
+const FILM_WORD = { fontSize: 14, fontWeight: 700, lineHeight: 1 } as const
+
 /**
  * The app's structure: two places, and one action between them.
  *
@@ -30,13 +34,14 @@ export default function TabBar({ on, onTab, onFilm, loading, onStudio }: Props) 
         <Icon name="home" size={24} />
         <span>Today</span>
       </button>
-      <button className="tab-film" onClick={onFilm} aria-label="Film a serve">
+      <button className="tab-film" style={FILM_STACK} onClick={onFilm} aria-label="Film a serve">
         {ring !== undefined && (
           <svg className="tab-film-ring" viewBox="0 0 76 76" aria-hidden="true">
             <circle cx="38" cy="38" r="35" pathLength={1} strokeDasharray={`${ring} 1`} />
           </svg>
         )}
-        <Icon name="camera-solid" size={28} />
+        <Icon name="camera-solid" size={26} />
+        <span style={FILM_WORD}>Film</span>
       </button>
       <button className={`tab${on === 'progress' ? ' is-on' : ''}`} aria-current={on === 'progress' ? 'page' : undefined} onClick={() => onTab('progress')}>
         <Icon name="progress" size={24} />

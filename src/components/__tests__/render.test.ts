@@ -42,6 +42,8 @@ import { ScoreRibbon } from '../ProgressCharts'
 import type { TripPoint } from '../../lib/progress'
 import Glance from '../../screens/Glance'
 import Home from '../../screens/Home'
+import TabBar from '../TabBar'
+import FirstRunTop from '../FirstRunChrome'
 import Progress from '../../screens/Progress'
 import Report from '../../screens/Report'
 import DrillCard from '../../screens/report/DrillCard'
@@ -956,6 +958,35 @@ check('home points a player with reports at reading a whole practice, until they
   assert(!html(createElement(Home, { ...base, sessions: [] })).includes('Read a whole practice'), 'a new player was offered sessions before a serve')
   const withSession = html(createElement(Home, { ...base, sessions: [last], practiceSessions: [{ id: 'p1', createdAt: last.createdAt, updatedAt: last.createdAt, fileName: 'p.mp4', duration: 600, serveType: 'flat', handedness: 'right', mode: 'sample', found: [10, 20], lines: [], phase: 'done' } as never] }))
   assert(!withSession.includes('Read a whole practice'), 'a player with a session was still told how to make one')
+})
+
+check('Today is easier to get around: Upload at the top, plain numbers, one note, a labelled Film', () => {
+  const last = stored(sampleAnalysis(DEMO_DIALS.injury))
+  const base = {
+    offlineReady: true,
+    sessionsLoaded: true,
+    prefs: DEFAULTS,
+    onPrefs: noop,
+    onFilm: noop,
+    onOpen: noop,
+    onShowHistory: noop,
+    onShowSettings: noop,
+    onShowProgress: noop,
+    onShowExample: noop,
+    onUpload: noop,
+  }
+  const today = html(createElement(Home, { ...base, sessions: [last] }))
+  assert(today.includes('aria-label="Upload a video"'), 'Today has no way to upload a clip')
+  // Dismissed, the whole-practice tip stays gone.
+  const seen = html(createElement(Home, { ...base, sessions: [last], prefs: { ...DEFAULTS, practiceTipSeenAt: 1 } }))
+  assert(!seen.includes('Read a whole practice'), 'a dismissed tip came back')
+  assert(today.includes('Got it'), 'the tip cannot be dismissed')
+  // The one action between the two places says what it does.
+  const bar = html(createElement(TabBar, { on: 'today', onTab: noop, onFilm: noop }))
+  assert(bar.includes('>Film</span>'), 'the film button has no word under it')
+  // A first visitor can find their way: how it works, at the top of the landing.
+  const top = html(createElement(FirstRunTop, { onShowPage: noop }))
+  assert(top.includes('href="#first-how"') && top.includes('Plans') && top.includes('Privacy'), 'the landing has no way around at the top')
 })
 
 check('the first run says the download with its size, only while it is needed (N3.7, lift)', () => {

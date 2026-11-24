@@ -8,38 +8,30 @@ import { GATED, PRICE_LINE } from '../lib/billing/config'
 import { FEATURES } from '../lib/plans'
 import { FEATURE_COPY, FREE_COPY } from '../lib/planCopy'
 
-/**
- * Upload and the sample, side by side under the one main action: a clip the
- * player already has is on the first screen, not behind the camera, and the
- * screen still has one main action and no third stacked exit (DESIGN.md).
- */
-const SECOND_ROW = { display: 'flex', flexWrap: 'wrap', justifyContent: 'center', columnGap: 4 } as const
-/** Each label on one line: at 375 px the two fit side by side; narrower, they stack whole. */
-const SECOND_BUTTON = { paddingInline: 6, whiteSpace: 'nowrap' } as const
-
 interface Props {
-  onFilm: () => void
-  /** The file picker, for a clip already on the device. */
-  onUpload?: () => void
-  onShowExample: () => void
   /** How sure I am, privacy, terms and credits, linked from the foot (N6.3). */
   onShowPage?: (page: InfoPageId) => void
 }
 
+/** The "More" tap: a link, without the browser's triangle; what it opens, spaced like a section. */
+const MORE = { display: 'grid', gap: 14, marginTop: 8 } as const
+const SUMMARY = { listStyle: 'none', cursor: 'pointer', minHeight: 44, display: 'flex', alignItems: 'center' } as const
+
 /**
  * What a first-time visitor reads under the promise (N6.1).
  *
- * The first run used to be one screen and one action, which is right on a phone
- * a player has already chosen to open, and thin on a website someone has just
- * landed on. This says how it works, what I can and cannot see, and where the
- * video goes, and ends on the same two choices the promise offered, under the
- * same names (N5.2): one label for one intent. Only what the app
- * does today: no prices, no programmes it does not have yet.
+ * One short "How it works": the three steps, then the three things a visitor
+ * asks before trying it (what I cannot see, where the video goes, what it
+ * costs), a line each. The detail behind those lines (the reading table, the
+ * privacy paragraph, Free and Plus side by side) is one tap down, under More.
+ * It was four sections and a second pair of buttons, nearly four phone screens;
+ * the buttons now follow the reader in the sticky bar (Home), so they are not
+ * repeated here. Only what the app does today: no prices it does not have.
  *
  * Lazily loaded below the fold, so the first screen and the entry chunk are
  * exactly what they were.
  */
-export default function FirstRunMore({ onFilm, onUpload, onShowExample, onShowPage }: Props) {
+export default function FirstRunMore({ onShowPage }: Props) {
   const here = deviceNoun()
   // A plain click stays in the app; a modified one opens the address as the browser would.
   const open = (p: InfoPageId) => (e: MouseEvent<HTMLAnchorElement>) => {
@@ -51,14 +43,14 @@ export default function FirstRunMore({ onFilm, onUpload, onShowExample, onShowPa
     <div className="first-more">
       <section className="first-more-section" aria-labelledby="first-how">
         <h2 id="first-how" className="t-headline">
-          From the baseline to a plan in a few minutes.
+          How it works
         </h2>
         <ol className="first-steps">
           <li>
             <Icon name="camera" size={22} />
             <div>
               <strong>Prop your phone on a bag, {PLACEMENT.distance} to your side.</strong>
-              <span>I check the framing out loud before you serve.</span>
+              <span>I check the framing out loud before you serve. Or upload a video you already have.</span>
             </div>
           </li>
           <li>
@@ -76,106 +68,106 @@ export default function FirstRunMore({ onFilm, onUpload, onShowExample, onShowPa
             </div>
           </li>
         </ol>
-      </section>
 
-      <section className="first-more-section" aria-labelledby="first-honest">
-        <h2 id="first-honest" className="t-headline">
-          I tell you what I cannot see.
-        </h2>
-        <p className="first-more-lede">
-          Every number comes with how sure I am. When one camera cannot support a reading, I say so instead of
-          guessing.
-        </p>
-        <ul className="first-honest">
+        <ul className="first-steps first-steps--plain" aria-label="Good to know">
           <li>
-            <span>Knee bend, toss, contact height</span>
-            <em>Graded against published serves</em>
+            <Icon name="info" size={22} />
+            <div>
+              <strong>I tell you what I cannot see.</strong>
+              <span>Every number says how sure I am. Speed is a likely range, never a grade.</span>
+            </div>
           </li>
           <li>
-            <span>Hip and shoulder turn</span>
-            <em>Shown, never graded</em>
+            <Icon name="shield" size={22} />
+            <div>
+              <strong>No account. Your video stays on this {here}.</strong>
+              <span>I read it in the browser, even with no signal.</span>
+            </div>
           </li>
           <li>
-            <span>Serve speed</span>
-            <em>A likely range, never a grade</em>
-          </li>
-          <li>
-            <span>Anything the camera cannot support</span>
-            <em>Hedged, or left out</em>
+            <Icon name="check" size={22} />
+            <div>
+              <strong>Free to read every serve.</strong>
+              <span>{GATED ? 'Your score and the top fix, free. Plus adds the whole breakdown.' : 'Everything is open while Plus is not on sale.'}</span>
+            </div>
           </li>
         </ul>
-        {onShowPage && (
-          <a className="first-more-link" href={pathFor({ kind: 'page', page: 'accuracy' }, import.meta.env.BASE_URL)} onClick={open('accuracy')}>
-            Every reading, how steady it is and what it rests on
-            <Icon name="chevron" size={16} />
-          </a>
-        )}
-      </section>
 
-      <section className="first-more-section first-more-privacy" aria-labelledby="first-private">
-        <Icon name="shield" size={26} />
-        <h2 id="first-private" className="t-headline">
-          No account, and no upload.
-        </h2>
-        <p className="first-more-lede">I read your serve in the browser on this {here}, even with no signal. The video stays where you filmed it.</p>
-      </section>
-
-      {onShowPage && (
-        <section className="first-more-section first-more-price" aria-labelledby="first-price">
-          <h2 id="first-price" className="t-headline">
-            Free to read every serve.
-          </h2>
-          <p className="first-more-lede">Your score and the top fix on every serve, free. Plus adds the whole breakdown, a plan in steps and more.</p>
-          {PRICE_LINE && <p className="first-more-lede">Plus is {PRICE_LINE}.</p>}
-          {!GATED && <p className="first-more-lede">Everything is open while Plus is not on sale.</p>}
-          <a className="first-more-link" href={pathFor({ kind: 'page', page: 'pricing' }, import.meta.env.BASE_URL)} onClick={open('pricing')}>
-            See the plans
-            <Icon name="chevron" size={16} />
-          </a>
-          <div className="first-tiers">
-            <div>
-              <h3>Free</h3>
-              <ul>
-                {FREE_COPY.map((line) => (
-                  <li key={line}>
-                    <Icon name="check" size={15} />
-                    {line}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h3>Plus adds</h3>
-              <ul>
-                {FEATURES.map((f) => (
-                  <li key={f}>
-                    <Icon name="lightning" size={15} />
-                    {FEATURE_COPY[f].name}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </section>
-      )}
-
-      <div className="first-more-foot">
-        <button className="btn btn--primary btn--big btn--full" onClick={onFilm}>
-          <Icon name="camera" size={21} />
-          Film my serve
-        </button>
-        <div style={onUpload ? SECOND_ROW : undefined}>
-          {onUpload && (
-            <button className="btn btn--quiet" style={SECOND_BUTTON} onClick={onUpload}>
-              <Icon name="upload" size={18} />
-              Upload a video
-            </button>
+        <details className="first-more-details">
+          <summary className="link-btn" style={SUMMARY}>
+            More: how sure I am, privacy and plans
+          </summary>
+          <div style={MORE}>
+          <h3 className="t-subhead">What I grade, and what I only show</h3>
+          <ul className="first-honest">
+            <li>
+              <span>Knee bend, toss, contact height</span>
+              <em>Graded against published serves</em>
+            </li>
+            <li>
+              <span>Hip and shoulder turn</span>
+              <em>Shown, never graded</em>
+            </li>
+            <li>
+              <span>Serve speed</span>
+              <em>A likely range, never a grade</em>
+            </li>
+            <li>
+              <span>Anything the camera cannot support</span>
+              <em>Hedged, or left out</em>
+            </li>
+          </ul>
+          {onShowPage && (
+            <a className="first-more-link" href={pathFor({ kind: 'page', page: 'accuracy' }, import.meta.env.BASE_URL)} onClick={open('accuracy')}>
+              Every reading, how steady it is and what it rests on
+              <Icon name="chevron" size={16} />
+            </a>
           )}
-          <button className={onUpload ? "btn btn--quiet" : "btn btn--quiet btn--full"} style={onUpload ? SECOND_BUTTON : undefined} onClick={onShowExample}>
-            See a sample report
-          </button>
-        </div>
-      </div>
+
+          <h3 className="t-subhead">Where your video goes</h3>
+          <p className="first-more-lede">
+            Nowhere. I read your serve in the browser on this {here}, and the video stays where you filmed it. Uploading a video only opens it here.
+          </p>
+
+          {onShowPage && (
+            <>
+              <h3 className="t-subhead">Free and Plus</h3>
+              <p className="first-more-lede">Your score and the top fix on every serve, free. Plus adds the whole breakdown, a plan in steps and more.</p>
+              {PRICE_LINE && <p className="first-more-lede">Plus is {PRICE_LINE}.</p>}
+              {!GATED && <p className="first-more-lede">Everything is open while Plus is not on sale.</p>}
+              <a className="first-more-link" href={pathFor({ kind: 'page', page: 'pricing' }, import.meta.env.BASE_URL)} onClick={open('pricing')}>
+                See the plans
+                <Icon name="chevron" size={16} />
+              </a>
+              <div className="first-tiers">
+                <div>
+                  <h4>Free</h4>
+                  <ul>
+                    {FREE_COPY.map((line) => (
+                      <li key={line}>
+                        <Icon name="check" size={15} />
+                        {line}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h4>Plus adds</h4>
+                  <ul>
+                    {FEATURES.map((f) => (
+                      <li key={f}>
+                        <Icon name="lightning" size={15} />
+                        {FEATURE_COPY[f].name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </>
+          )}
+          </div>
+        </details>
+      </section>
 
       {onShowPage && (
         <nav className="first-more-pages" aria-label="About Serve Coach">
