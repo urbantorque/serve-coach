@@ -109,7 +109,7 @@ try {
   const home = await page.waitForSelector('text=Film my serve', { timeout: 15000 }).then(() => true, () => false)
   let example = false
   if (home) {
-    await page.click('text=See a sample report first').catch(() => undefined)
+    await page.click('text=See a sample report').catch(() => undefined)
     example = await page.waitForSelector('text=This is an example', { timeout: 20000 }).then(() => true, () => false)
   }
   gate('offline', home && example, `home ${home ? 'opened' : 'did not open'}, example ${example ? 'opened' : 'did not open'} with the network off`)

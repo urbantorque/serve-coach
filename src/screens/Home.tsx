@@ -24,6 +24,15 @@ import { useCan } from '../components/usePlan'
 
 const FirstRunStage = lazy(() => import('../components/FirstRunStage'))
 const FirstRunMore = lazy(() => import('../components/FirstRunMore'))
+
+/**
+ * Upload and the sample, side by side under the one main action: a clip the
+ * player already has is on the first screen, not behind the camera, and the
+ * screen still has one main action and no third stacked exit (DESIGN.md).
+ */
+const SECOND_ROW = { display: 'flex', flexWrap: 'wrap', justifyContent: 'center', columnGap: 4 } as const
+/** Each label on one line: at 375 px the two fit side by side; narrower, they stack whole. */
+const SECOND_BUTTON = { paddingInline: 6, whiteSpace: 'nowrap' } as const
 // Only when a gate is shut, which the app never does until paid plans are on (N6.4).
 const Locked = lazy(() => import('../components/Locked'))
 const ServeCards = lazy(() => import('../components/ServeCards'))
@@ -61,6 +70,8 @@ interface Props {
   onShowHistory: () => void
   /** Render a report from a simulated serve, so the app can be seen with nothing filmed. */
   onShowExample: () => void
+  /** The file picker, for a clip already on the device: on the first screen, beside the sample. */
+  onUpload?: () => void
   /** How sure I am, privacy, terms or credits (N6.3). */
   onShowPage?: (page: InfoPageId) => void
   /** `undefined` while the cache is still being asked. */
@@ -107,6 +118,7 @@ export default function Home({
   onShowProgress,
   onShowHistory,
   onShowExample,
+  onUpload,
   onShowPage,
   offlineReady,
   interrupted,
@@ -214,9 +226,17 @@ export default function Home({
             <Icon name="camera" size={21} />
             Film my serve
           </button>
-          <button className="btn btn--quiet btn--full" onClick={onShowExample}>
-            See a sample report first
-          </button>
+          <div style={onUpload ? SECOND_ROW : undefined}>
+            {onUpload && (
+              <button className="btn btn--quiet" style={SECOND_BUTTON} onClick={onUpload}>
+                <Icon name="upload" size={18} />
+                Upload a video
+              </button>
+            )}
+            <button className={onUpload ? "btn btn--quiet" : "btn btn--quiet btn--full"} style={onUpload ? SECOND_BUTTON : undefined} onClick={onShowExample}>
+              See a sample report
+            </button>
+          </div>
         </div>
         <p className="first-foot">
           Your video never leaves this {deviceNoun()}.
@@ -225,7 +245,7 @@ export default function Home({
         {storage}
       </div>
       <Suspense fallback={null}>
-        <FirstRunMore onFilm={onFilm} onShowExample={onShowExample} onShowPage={onShowPage} />
+        <FirstRunMore onFilm={onFilm} onUpload={onUpload} onShowExample={onShowExample} onShowPage={onShowPage} />
       </Suspense>
       </>
     )

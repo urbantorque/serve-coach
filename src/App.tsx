@@ -305,14 +305,15 @@ export default function App() {
 
   /**
    * Film: the camera where the page can have one, the phone's own camera app
-   * where it cannot, and the file picker on a machine with neither.
+   * where it cannot, and the file picker on a machine with neither. Upload
+   * (`pick`, from the first screen): the picker, inside the tap. Either way the
+   * coach comes down when first wanted, unless the connection costs money,
+   * where Settings offers it with its size.
    */
-  const startFilming = useCallback(() => {
+  const startFilming = useCallback((pick?: 'pick') => {
     unlockEarcons()
-    // The coach comes down when it is first wanted, unless the connection costs
-    // money, where Settings offers it with its size.
     if (offlineReady === false && !metered && !warming) void makeOffline()
-    if (previewSupported()) setFilm({ rearm: false })
+    if (pick !== 'pick' && previewSupported()) setFilm({ rearm: false })
     else firstRunPickRef.current?.click()
   }, [offlineReady, metered, warming, makeOffline])
 
@@ -767,6 +768,7 @@ export default function App() {
               onShowProgress={() => setView({ kind: 'progress' })}
               onShowHistory={() => setView({ kind: 'progress', serves: true })}
               onShowExample={() => void showExample()}
+              onUpload={() => startFilming('pick')}
             />
           )}
 

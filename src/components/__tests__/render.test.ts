@@ -752,10 +752,15 @@ check('the home screen renders with no history at all', () => {
       onShowSettings: noop,
       onShowProgress: noop,
       onShowExample: noop,
+      onUpload: noop,
     }),
   )
   assert(out.includes('Film my serve'), 'the first-run screen lost its one button')
-  assert(out.includes('See a sample report first'), 'a first-time player lost the example report')
+  assert(out.includes('See a sample report'), 'a first-time player lost the example report')
+  // A clip already on the phone, from the first screen, not behind the camera.
+  assert(out.includes('Upload a video'), 'a first-time player cannot upload a clip from the first screen')
+  // Still one main action: the upload and the sample are quiet, side by side.
+  assert((out.match(/btn--primary/g) ?? []).length === 1, 'the first screen has more than one main action')
 })
 
 check('before storage answers, a returning player is not invited to see an example', () => {

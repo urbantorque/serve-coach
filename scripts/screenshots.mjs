@@ -46,7 +46,7 @@ const phone = { width: 360, height: 780 }
 try {
   await shoot('home.png', phone, async () => {})
   await shoot('report.png', phone, async (p) => {
-    await p.click('text=See a sample report first')
+    await p.click('text=See a sample report')
     await p.waitForSelector('text=This is an example')
   })
   await shoot('guide.png', phone, async (p) => {
