@@ -91,7 +91,7 @@ const colourOf = (name: string, behind?: RGB): RGB => {
   const raw = TOKENS.get(name)
   assert(raw !== undefined, `no token called ${name} — this audit is measuring a colour that moved`)
   const c = parse(raw!)
-  assert(c !== undefined, `${name} is "${raw}", which this audit cannot read`)
+  assert(c !== undefined, `${name} is "${raw}", which this audit can’t read`)
   return c!.a < 1 && behind ? over(c!, behind) : c!
 }
 
@@ -156,7 +156,7 @@ check('every pair clears its WCAG AA floor', () => {
     failing.length === 0,
     `below AA: ${failing
       .map((f) => `${f.what} at ${f.ratio.toFixed(2)}:1, needs ${f.floor}`)
-      .join('; ')}. A colour change is not this loop's to make — record it in SHORTFALLS with its number.`,
+      .join('; ')}. A colour change isn’t this loop's to make — record it in SHORTFALLS with its number.`,
   )
 })
 
@@ -194,7 +194,7 @@ check('a translucent tint is measured against what is behind it', () => {
   const composited = over(raw!, ink())
   assert(
     composited.r > raw!.r * raw!.a && composited.a === 1,
-    'compositing did not put the surface behind the tint',
+    'compositing didn’t put the surface behind the tint',
   )
   // And it must land between the tint's own colour and the surface, which is
   // what "14% of that colour over this one" means.
@@ -226,7 +226,7 @@ check('the narrowest margin in the palette is named, not just passed', () => {
     `narrowest: ${narrowest.what} at ${narrowest.ratio.toFixed(2)}:1 against ${narrowest.floor} — ` +
       `${(headroom * 100).toFixed(0)}% of headroom`,
   )
-  assert(headroom > 0, `${narrowest.what} does not clear its floor at all`)
+  assert(headroom > 0, `${narrowest.what} doesn’t clear its floor at all`)
   assert(
     headroom < 0.25,
     `the tightest pair now has ${(headroom * 100).toFixed(0)}% of headroom, so the palette moved ` +

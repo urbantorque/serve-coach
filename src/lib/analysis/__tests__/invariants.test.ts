@@ -82,7 +82,7 @@ for (const serve of SERVES) {
       if (t.flipsHandedness) {
         assert(
           read.skel.racket !== base.skel.racket,
-          `${t.name} did not change which hand was read: still ${read.skel.racket}`,
+          `${t.name} didn’t change which hand was read: still ${read.skel.racket}`,
         )
       } else {
         assert(
@@ -218,7 +218,7 @@ check('levelling has no edge for a stance to sit on', () => {
   // jumped 0.044 between the two (H37). So the correction grows from nothing, from
   // 5°, past the 3.2° to 5.1° real stances read on a level phone.
   assert(levelled(NOTABLE_ROLL) === 0 && levelled(5) === 0 && levelled(2) === 0, 'a roll under the ramp was corrected')
-  assert(levelled(7) === 7 && levelled(-7) === -7 && levelled(12) === 12, 'a phone seven degrees off was not corrected whole')
+  assert(levelled(7) === 7 && levelled(-7) === -7 && levelled(12) === 12, 'a phone seven degrees off wasn’t corrected whole')
   assert(levelled(6) === -levelled(-6), 'the two sides are corrected differently')
   // A thousandth of a degree of reading never moves the correction by more than
   // the ramp's own slope allows, 4.5 at the top: there is no edge in it.
@@ -340,7 +340,7 @@ check('the rotation is gone again by the racket drop', () => {
   const apart = (i: number) =>
     Math.hypot(at(clean, i).x - at(turned, i).x, at(clean, i).y - at(turned, i).y, at(clean, i).z - at(turned, i).z)
 
-  assert(apart(skel.keys.trophy) > 0.01, 'the trophy frame did not move at all')
+  assert(apart(skel.keys.trophy) > 0.01, 'the trophy frame didn’t move at all')
   assert(apart(skel.keys.contact) < 1e-9, `contact moved by ${apart(skel.keys.contact).toFixed(6)} m`)
   note(`trophy moved ${apart(skel.keys.trophy).toFixed(3)} m, contact ${apart(skel.keys.contact).toFixed(6)} m`)
 })
@@ -578,7 +578,7 @@ check('the landing is clamped where the leg runs out rather than stretching', ()
     `an over-asked landing stretched the leg: thigh ${far.thigh.toFixed(6)}, shin ${far.shin.toFixed(6)}`,
   )
   // Straight, or as near as the clamp's own margin allows.
-  assert(far.kneeAngle > 170, `the clamped leg is not straight (knee ${far.kneeAngle.toFixed(1)}°)`)
+  assert(far.kneeAngle > 170, `the clamped leg isn’t straight (knee ${far.kneeAngle.toFixed(1)}°)`)
   note(`0.6 m asked, leg clamped straight at ${far.kneeAngle.toFixed(1)}° with segments intact`)
 })
 

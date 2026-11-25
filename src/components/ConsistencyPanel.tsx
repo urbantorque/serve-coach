@@ -133,7 +133,7 @@ function BestAgainstWorst({ gap }: { gap: ServeGap }) {
            left to assume the list failed to load. */
         <p className="best-worst-none">
           As far as I can see, those two serves moved the same way. The difference is
-          in something I do not measure.
+          in something I don’t measure.
         </p>
       )}
     </div>

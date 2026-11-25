@@ -99,7 +99,7 @@ check('a player who hits first serves in a row is never told a second', () => {
   assert(guess?.serveNumber !== 2, `told ${JSON.stringify(guess)}`)
 })
 
-check('a serve the player tagged is not guessed', () => {
+check('a serve the player tagged isn’t guessed', () => {
   const { sessions, tags } = matchFlow('fff', WEEK)
   const last = sessions[sessions.length - 1]
   const next = report_('fff', WEEK.length, WEEK.length * 20)
@@ -107,7 +107,7 @@ check('a serve the player tagged is not guessed', () => {
   assert(guessServeNumber(last, sessions, tags) === undefined, 'a tagged serve was guessed')
 })
 
-check('serves that may not be consecutive are not a sequence', () => {
+check('serves that may not be consecutive aren’t a sequence', () => {
   const { sessions, tags } = matchFlow('ggg', WEEK)
   const fault = report_('hhh', 0, 0)
   const said = [...tags, tagOf(fault.id, 1, 'net')]
@@ -143,17 +143,17 @@ check('reports from before a clip’s serves were counted cost nothing', () => {
   assert(guessServeNumber(next, [old, ...sessions], tags) === undefined, 'a serve with nothing before it was guessed')
 })
 
-check('a short record cannot be sure: the bound rises with the cases', () => {
+check('a short record can’t be sure: the bound rises with the cases', () => {
   note(`5 of 5 ${rateFloor(5, 5).toFixed(2)}, 6 of 6 ${rateFloor(6, 6).toFixed(2)}, 12 of 12 ${rateFloor(12, 12).toFixed(2)}, 9 of 12 ${rateFloor(9, 12).toFixed(2)}`)
   assert(rateFloor(5, 5) < FAIR_BOUND, 'five cases were enough')
-  assert(rateFloor(6, 6) >= FAIR_BOUND && rateFloor(6, 6) < LIKELY_BOUND, 'six cases were not fair')
-  assert(rateFloor(12, 12) >= LIKELY_BOUND, 'twelve straight were not likely')
+  assert(rateFloor(6, 6) >= FAIR_BOUND && rateFloor(6, 6) < LIKELY_BOUND, 'six cases weren’t fair')
+  assert(rateFloor(12, 12) >= LIKELY_BOUND, 'twelve straight weren’t likely')
   assert(rateFloor(9, 12) < FAIR_BOUND, 'three in four over twelve cases spoke')
 })
 
 heading('A guess goes nowhere')
 
-check('it cannot become a tag, and no statistic moves when one is made', () => {
+check('it can’t become a tag, and no statistic moves when one is made', () => {
   const { sessions, tags } = matchFlow('nnn', WEEK)
   const fault = report_('ooo', 0, 0)
   const next = report_('ooo', 1, 18)
@@ -298,12 +298,12 @@ check('a reading whose range straddles the midpoint says nothing', () => {
     sessions.push(s)
     tags.push(tagOf(s.id, i % 2 ? 2 : 1))
   }
-  assert(guessServeNumber(report_('x', 0, 0, speed(44.5, 0.04)), sessions, tags)?.serveNumber === 1, 'a clear first was not guessed')
+  assert(guessServeNumber(report_('x', 0, 0, speed(44.5, 0.04)), sessions, tags)?.serveNumber === 1, 'a clear first wasn’t guessed')
   assert(guessServeNumber(report_('x', 0, 0, speed(41, 0.04)), sessions, tags) === undefined, 'a serve on the midpoint was guessed')
   assert(guessServeNumber(report_('x', 0, 0, speed(44.5, 0.12)), sessions, tags) === undefined, 'a wide range was guessed')
 })
 
-check('a player whose second serves read faster than their firsts is not guessed from the ball', () => {
+check('a player whose second serves read faster than their firsts isn’t guessed from the ball', () => {
   const sessions: Session[] = []
   const tags: ServeTag[] = []
   for (let i = 0; i < 12; i++) {

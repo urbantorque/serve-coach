@@ -158,7 +158,7 @@ check('the guard puts back what the tracker traded, and trades none of its own',
   }
   note(Object.entries(tally).map(([p, t]) => `${p} ${t.swapped}→${t.left}`).join(' · ') + ', from the side')
   for (const [part, t] of Object.entries(tally)) {
-    assert(t.made <= frames * 0.001, `${part}: the guard traded ${t.made} pairs that were not traded`)
+    assert(t.made <= frames * 0.001, `${part}: the guard traded ${t.made} pairs that weren’t traded`)
   }
   // The arms, which most faults are named from, are put back all but whole.
   // The legs and hips less: side-on each pair nearly overlaps, so a swap is a

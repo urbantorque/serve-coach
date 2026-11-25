@@ -40,7 +40,7 @@ check('a v4 report re-scored equals the same serve scored fresh, row by row', ()
     const fresh = stored(dials)
     const old = scoredUnderOlder(fresh, SCORING_VERSION - 1)
     const again = rescoreStoredSession(old, BANDS_ONLY)!
-    assert(again !== undefined, `${name}: a band-only history was not re-scored`)
+    assert(again !== undefined, `${name}: a band-only history wasn’t re-scored`)
     note(`${name}: ${old.overall} under v${old.scoringVersion} → ${again.overall} under v${again.scoringVersion}, fresh ${fresh.overall}`)
     assert(again.overall === fresh.overall && again.scoringVersion === SCORING_VERSION, `${name}: overall ${again.overall}`)
     for (const f of fresh.fundamentals) {
@@ -75,7 +75,7 @@ check('re-scored, the history has no break in it', () => {
 
 heading('A measurement change still starts a new era')
 
-check('on the real table, a v4 report is not re-scored', () => {
+check('on the real table, a v4 report isn’t re-scored', () => {
   note(`kinds: ${JSON.stringify(SCORING_KINDS)}`)
   assert(!rescorable(SCORING_VERSION - 1), 'a report across a measurement change was declared re-scorable')
   assert(rescoreStoredSession(scoredUnderOlder(stored(), SCORING_VERSION - 1)) === undefined, 'it was re-scored anyway')
@@ -84,7 +84,7 @@ check('on the real table, a v4 report is not re-scored', () => {
 
 check('every scoring version says which kind of change it was', () => {
   for (let v = 2; v <= SCORING_VERSION; v++) {
-    assert(SCORING_KINDS[v] === 'card-bands' || SCORING_KINDS[v] === 'measurement', `version ${v} is not classed`)
+    assert(SCORING_KINDS[v] === 'card-bands' || SCORING_KINDS[v] === 'measurement', `version ${v} isn’t classed`)
   }
   assert(!(SCORING_VERSION + 1 in SCORING_KINDS), 'a version past the current one is classed')
 })

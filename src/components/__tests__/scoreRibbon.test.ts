@@ -53,12 +53,12 @@ check('every point lands inside the box', () => {
 
 check('a higher score is drawn higher up', () => {
   const d = dots(draw(series([70, 80, 60])))
-  assert(d[1].y < d[0].y && d[0].y < d[2].y, 'the heights do not follow the scores')
+  assert(d[1].y < d[0].y && d[0].y < d[2].y, 'the heights don’t follow the scores')
 })
 
 check('a single trip is centred, not pinned to the left', () => {
   const d = dots(draw(series([72])))
-  assert(d.length === 1 && Math.abs(d[0].x - W / 2) < 0.01, 'one point is not in the middle')
+  assert(d.length === 1 && Math.abs(d[0].x - W / 2) < 0.01, 'one point isn’t in the middle')
 })
 
 check('no trips draws nothing', () => {
@@ -73,7 +73,7 @@ check('the axis fits the player, and a wobble is never a mountain', () => {
   assert(rise / plot <= 3 / 24 + 0.001, 'the axis spans fewer than twenty-four points')
   const climb = dots(draw(series([40, 55, 70, 85])))
   const span = Math.max(...climb.map((d) => d.y)) - Math.min(...climb.map((d) => d.y))
-  assert(span > plot * 0.6, 'a real climb does not fill the chart')
+  assert(span > plot * 0.6, 'a real climb doesn’t fill the chart')
 })
 
 heading('Where the line has to stop')
@@ -91,10 +91,10 @@ check('a recalibration splits the line rather than climbing across it', () => {
   // one line across would have had four.
   const curves = [...out.matchAll(/d="([^"]+)" class="ribbon-line"/g)].map((m) => (m[1].match(/C/g) ?? []).length)
   assert(curves.join() === '2,1', `the runs joined ${curves.join()}`)
-  assert(out.includes('The break in the line is where I changed how I score serves'), 'the gap is not explained')
+  assert(out.includes('The break in the line is where I changed how I score serves'), 'the gap isn’t explained')
 })
 
-check('only the run the player is not being scored under is faded', () => {
+check('only the run the player isn’t being scored under is faded', () => {
   const out = draw(recalibrated)
   assert((out.match(/class="is-stale"/g) ?? []).length === 1, 'not one run faded')
   assert(out.indexOf('class="is-stale"') < out.indexOf('<g><path') || out.includes('class="is-stale"'), 'the wrong run faded')
@@ -106,7 +106,7 @@ check('the break sits between the two serves, not on either', () => {
   const out = draw(recalibrated)
   const d = dots(out)
   const [rule] = rules(out)
-  assert(Math.abs(rule - (d[2].x + d[3].x) / 2) < 0.1, 'the rule is not halfway')
+  assert(Math.abs(rule - (d[2].x + d[3].x) / 2) < 0.1, 'the rule isn’t halfway')
 })
 
 check('two recalibrations draw three runs and two rules', () => {
@@ -124,8 +124,8 @@ heading('Saying what it plots')
 
 check('the picture has a text version, and a trip reads out', () => {
   const out = draw(series([70, 74]))
-  assert(out.includes('aria-label="Typical score across 2 court trips, most recent 74."'), 'no text version')
-  assert(out.includes('typical 74, 4 serves from 71 to 77'), 'the newest trip does not read out')
+  assert(out.includes('aria-label="Typical score across 2 sessions, most recent 74."'), 'no text version')
+  assert(out.includes('typical 74, 4 serves from 71 to 77'), 'the newest trip doesn’t read out')
 })
 
 report()

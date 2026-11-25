@@ -62,7 +62,7 @@ check('the target is always exactly one tier up', () => {
   // Nobody is handed a rung that does not exist. A player at the ceiling stays
   // there rather than being given an invented eleventh level.
   assert(nextTier(MAX_TIER) === MAX_TIER, 'invented a tier above the top of the ladder')
-  assert(nextTier(MAX_TIER + 5) === MAX_TIER, 'a rating past the ladder was not clamped')
+  assert(nextTier(MAX_TIER + 5) === MAX_TIER, 'a rating past the ladder wasn’t clamped')
 })
 
 check('a club player is never handed a strong sectional target', () => {
@@ -106,7 +106,7 @@ check('the bands interpolate between the anchors rather than jumping at them', (
   const at5 = bandFor('separation_deg', 5)[0]
   const at6 = bandFor('separation_deg', 6)[0]
   const at7 = bandFor('separation_deg', 7)[0]
-  near(at6, (at5 + at7) / 2, 1e-6, 'tier 6 is not between its anchors')
+  near(at6, (at5 + at7) / 2, 1e-6, 'tier 6 isn’t between its anchors')
 })
 
 check('no rung of any flexibility band asks for a tour-level body', () => {
@@ -118,12 +118,12 @@ check('no rung of any flexibility band asks for a tour-level body', () => {
   assert(bandFor('contact_height_ratio', MAX_TIER)[0] <= 1.36, 'top rung demands tour reach')
 })
 
-check('a rating the player gives is used, and one they do not is inferred', () => {
+check('a rating the player gives is used, and one they don’t is inferred', () => {
   const stated = run({}, 4).diagnosis
   assert(stated.tier.source === 'stated' && stated.tier.current === 4, 'a stated rating was ignored')
 
   const inferred = run({}).diagnosis
-  assert(inferred.tier.source === 'inferred', 'a missing rating was not inferred')
+  assert(inferred.tier.source === 'inferred', 'a missing rating wasn’t inferred')
   assert(
     inferred.tier.target === inferred.tier.current + 1,
     'an inferred rating left the player with no rung above them',
@@ -139,14 +139,14 @@ check('a serve with nothing to read falls back rather than guessing high', () =>
 
 heading('Naming the breakdown')
 
-check('a clean serve at its own level is not told to fix anything', () => {
+check('a clean serve at its own level isn’t told to fix anything', () => {
   const { diagnosis } = run({}, 4)
   assert(flagged(diagnosis).length === 0, `clean serve flagged: ${flagged(diagnosis).join(', ')}`)
 })
 
 check('the waiter’s tray is caught, and the grip flag follows it', () => {
   const clean = run({}, 5).diagnosis
-  assert(clean.grip.continental_grip_detected, 'a neutral hand was not read as continental')
+  assert(clean.grip.continental_grip_detected, 'a neutral hand wasn’t read as continental')
 
   const tray = run({ palmToSky: 80, trophyArmLayOver: 1, trophyForearmDrop: 0.22 }, 5).diagnosis
   assert(flagged(tray).includes('waiters_tray'), `tray missed: ${flagged(tray).join(', ')}`)
@@ -158,10 +158,10 @@ check('the order the two lines fire in is measured, and no longer named', () => 
   // Retired as a named fault on the research — see `arming_the_ball` in
   // flaws.ts. The measurement still has to work: it is data, and it is shown.
   const clean = run({}, 5).diagnosis
-  assert(clean.sequence.lead_ms > 0, `hips did not lead on a clean serve: ${clean.sequence.lead_ms}`)
+  assert(clean.sequence.lead_ms > 0, `hips didn’t lead on a clean serve: ${clean.sequence.lead_ms}`)
 
   const armed = run({ hipLead: -0.09 }, 5).diagnosis
-  assert(armed.sequence.lead_ms < 0, 'the shoulders firing first was not seen')
+  assert(armed.sequence.lead_ms < 0, 'the shoulders firing first wasn’t seen')
   assert(!flagged(armed).includes('arming_the_ball'), 'the retired fault was named')
   note(`lead ${clean.sequence.lead_ms}ms clean, ${armed.sequence.lead_ms}ms armed`)
 })
@@ -275,18 +275,18 @@ check('a low contact off a low toss is blamed on the toss', () => {
   }
   const { diagnosis } = run({ contactReach: 1.0 }, 5, ball)
   const contact = findingFor(diagnosis, 'low_contact')
-  assert(Boolean(contact?.detected), 'a low contact was not caught')
+  assert(Boolean(contact?.detected), 'a low contact wasn’t caught')
   assert(
     Boolean(findingFor(diagnosis, 'toss_height')?.detected),
-    'a toss that never reached contact height was not caught',
+    'a toss that never reached contact height wasn’t caught',
   )
   assert(
     contact?.caused_by === 'toss_height',
-    `the contact fault was not traced to the toss: ${contact?.caused_by ?? 'nothing'}`,
+    `the contact fault wasn’t traced to the toss: ${contact?.caused_by ?? 'nothing'}`,
   )
 })
 
-check('a kick toss the card calls fine is not the fault a flat serve would be told', () => {
+check('a kick toss the card calls fine isn’t the fault a flat serve would be told', () => {
   // D2.4. The card lets a kick toss peak at racket reach, 0.18 lower than a
   // flat one, and the diagnosis reads the same number — so the same toss, at
   // a height a kick is hit from, is a fault only when the serve was flat.
@@ -299,7 +299,7 @@ check('a kick toss the card calls fine is not the fault a flat serve would be to
   const flat = run({}, 4, ball, 'flat').diagnosis
   const kick = run({}, 4, ball, 'kick').diagnosis
   note(`toss peak ${flat.signals.toss_peak_ratio}: flat ${flagged(flat).join(', ') || 'nothing'}, kick ${flagged(kick).join(', ') || 'nothing'}`)
-  assert(flagged(flat).includes('toss_height'), 'a flat serve tossed to racket reach was not told')
+  assert(flagged(flat).includes('toss_height'), 'a flat serve tossed to racket reach wasn’t told')
   assert(!flagged(kick).includes('toss_height'), 'a kick tossed where a kick is hit from was told to toss higher')
   // And nothing else moved: the serve type touches only the toss band.
   const others = (d: typeof flat) => flagged(d).filter((f) => f !== 'toss_height').join(',')
@@ -370,14 +370,14 @@ check('every card row that carries a diagnosis signal is listed as sharing its b
   }
   note(`shared: ${found.join(', ')}`)
   const listed = Object.entries(CARD_SIGNAL).map(([card, signal]) => `${card}=${signal}`)
-  for (const pair of found) assert(listed.includes(pair), `${pair} carry one number and are not in CARD_SIGNAL`)
-  for (const pair of listed) assert(found.includes(pair), `${pair} is listed but the two did not read the same number`)
+  for (const pair of found) assert(listed.includes(pair), `${pair} carry one number and aren’t in CARD_SIGNAL`)
+  for (const pair of listed) assert(found.includes(pair), `${pair} is listed but the two didn’t read the same number`)
 })
 
 check('a low contact off a good toss is left as a contact fault', () => {
   const { diagnosis } = run({ contactReach: 1.0 }, 5)
   const contact = findingFor(diagnosis, 'low_contact')
-  assert(Boolean(contact?.detected), 'a low contact was not caught')
+  assert(Boolean(contact?.detected), 'a low contact wasn’t caught')
   assert(!contact?.caused_by, 'a contact fault was blamed on a toss nobody measured')
 })
 
@@ -398,7 +398,7 @@ check('a cause is only named when it was itself detected', () => {
     if (!f.caused_by) continue
     assert(
       diagnosis.flaws.some((c) => c.flaw === f.caused_by && c.detected),
-      `${f.flaw} was blamed on ${f.caused_by}, which was not detected`,
+      `${f.flaw} was blamed on ${f.caused_by}, which wasn’t detected`,
     )
   }
 })
@@ -433,7 +433,7 @@ check('root causes are listed ahead of the symptoms they explain', () => {
   const order = diagnosis.flaws.filter((f) => f.detected).map((f) => f.flaw)
   const cause = order.indexOf('toss_drift')
   const symptom = order.indexOf('posture_collapse')
-  assert(cause >= 0 && symptom >= 0, 'the pair under test did not both fire')
+  assert(cause >= 0 && symptom >= 0, 'the pair under test didn’t both fire')
   assert(cause < symptom, 'the symptom was listed ahead of its own cause')
 })
 
@@ -475,14 +475,14 @@ check('severity grows with how far outside the band the serve is', () => {
   const near = severityOf('palm_to_sky_deg', 36, band)
   const far = severityOf('palm_to_sky_deg', 70, band)
   const rank = { none: 0, low: 1, medium: 2, high: 3 } as const
-  assert(rank[far] > rank[near], `a big miss (${far}) did not outrank a small one (${near})`)
+  assert(rank[far] > rank[near], `a big miss (${far}) didn’t outrank a small one (${near})`)
 })
 
 /* ===================================================== evidence and cost == */
 
 heading('Evidence, jitter and cost')
 
-check('a signal the tracker could not see does not name a flaw', () => {
+check('a signal the tracker couldn’t see doesn’t name a flaw', () => {
   const findings = evaluateFlaws(
     {
       palm_to_sky_deg: { value: 85, confidence: MIN_EVIDENCE - 0.01 },
@@ -497,7 +497,7 @@ check('a signal the tracker could not see does not name a flaw', () => {
   assert(findings.some((f) => f.flaw === 'shallow_drop'), 'a well-seen fault was dropped too')
 })
 
-check('a hand that was never visible does not certify a grip either', () => {
+check('a hand that was never visible doesn’t certify a grip either', () => {
   const frames = buildServe({}, FPS)
   const skel = detectServe(frames, FPS)
   for (const f of frames) {
@@ -510,7 +510,7 @@ check('a hand that was never visible does not certify a grip either', () => {
   )
 })
 
-check('tracker jitter does not change what is reported', () => {
+check('tracker jitter doesn’t change what is reported', () => {
   const clean = new Set(flagged(run({ noise: 0.006, seed: 11 }, 5).diagnosis))
   for (const seed of [3, 19, 47, 101]) {
     const noisy = flagged(run({ noise: 0.006, seed }, 5).diagnosis)
@@ -553,12 +553,12 @@ check('the pass costs a fraction of the budget on a phone', () => {
   note(`${diagnosis.cost.ms}ms over ${diagnosis.cost.frames} frames`)
 })
 
-check('nothing but numbers comes back, so a stored report cannot pin the clip', () => {
+check('nothing but numbers comes back, so a stored report can’t pin the clip', () => {
   const { diagnosis } = run({}, 5)
   const round = JSON.parse(JSON.stringify(diagnosis))
   assert(
     JSON.stringify(round) === JSON.stringify(diagnosis),
-    'the diagnosis does not survive being stored as JSON',
+    'the diagnosis doesn’t survive being stored as JSON',
   )
   const text = JSON.stringify(diagnosis)
   assert(!text.includes('"visibility"'), 'a landmark was carried out inside the diagnosis')
@@ -645,9 +645,9 @@ check('the palm alone, the arm alone and both: only both are named, at every run
     const both = tray({ ...palm, ...arm })
     note(`rung ${tier}: palm alone ${palmOnly.value}° on an arm at ${palmOnly.witness?.abductionDeg}°, arm alone ${armOnly.witness?.abductionDeg}°, both ${both.value}° at ${both.witness?.abductionDeg}°`)
     assert(!palmOnly.detected && palmOnly.severity === 'none', `rung ${tier}: a palm on a high arm was named a tray`)
-    assert(palmOnly.witness!.abductionDeg >= TRAY_ABDUCTION_MAX, 'the palm-only arm was not cocked high')
+    assert(palmOnly.witness!.abductionDeg >= TRAY_ABDUCTION_MAX, 'the palm-only arm wasn’t cocked high')
     assert(!armOnly.detected, `rung ${tier}: a laid-over arm with a sound palm was named a tray`)
-    assert(both.detected && both.witness!.abductionDeg < TRAY_ABDUCTION_MAX, `rung ${tier}: the tray with its arm was not named`)
+    assert(both.detected && both.witness!.abductionDeg < TRAY_ABDUCTION_MAX, `rung ${tier}: the tray with its arm wasn’t named`)
   }
 })
 
@@ -659,7 +659,7 @@ check('no Bath serve is named a tray, from any side, and every one cocks above t
         const frames = filmMocap(serve, { fps, bearing })
         const tray = diagnose(frames, detectServe(frames, fps), { tier: 9 }).flaws.find((f) => f.flaw === 'waiters_tray')!
         assert(!tray.detected, `a Bath serve was named a tray at ${fps} fps from ${bearing}°`)
-        assert(tray.witness !== undefined, 'a Bath arm was not read')
+        assert(tray.witness !== undefined, 'a Bath arm wasn’t read')
         arms.push(tray.witness!.abductionDeg)
       }
     }
@@ -671,7 +671,7 @@ check('no Bath serve is named a tray, from any side, and every one cocks above t
 check('an arm nobody saw leaves the tray unnamed, whatever the palm says', () => {
   const readings = { palm_to_sky_deg: { value: 80, confidence: 0.95 } }
   assert(!evaluateFlaws(readings, 5).find((f) => f.flaw === 'waiters_tray')!.detected, 'a tray was named with no arm read')
-  assert(evaluateFlaws(readings, 5, { cockingAbductionDeg: 55 }).find((f) => f.flaw === 'waiters_tray')!.detected, 'a tray with its arm read low was not named')
+  assert(evaluateFlaws(readings, 5, { cockingAbductionDeg: 55 }).find((f) => f.flaw === 'waiters_tray')!.detected, 'a tray with its arm read low wasn’t named')
 })
 
 
@@ -704,16 +704,16 @@ check('the rig met 0.25 m back is named on a flat serve and not a kick; 0.45 m o
   const kick45 = behindFinding({ contactBehind: 0.45 }, 'kick')
   note(`clean ${clean?.value}, 0.25 m back ${flat25?.value} (kick floor ${kick25?.target[0]}), 0.45 m back ${flat45?.value}`)
   assert(clean !== undefined && !clean.detected, 'the clean serve was named or not read')
-  assert(flat25?.detected === true, 'a flat serve met 0.25 m back was not named')
+  assert(flat25?.detected === true, 'a flat serve met 0.25 m back wasn’t named')
   assert(kick25?.detected === false && kick25.target[0] === 0, 'a kick met over the head was named against a floor above 0')
-  assert(flat45?.detected === true && kick45?.detected === true, 'a ball met behind the head was not named')
+  assert(flat45?.detected === true && kick45?.detected === true, 'a ball met behind the head wasn’t named')
 })
 
 check('read from the side only, filed with the toss, and its copy names the toss', () => {
   const behind = run({ contactBehind: 0.35, cameraYaw: 8 }).diagnosis.flaws.find((f) => f.flaw === 'contact_behind')
   assert(behind === undefined, 'contact in front was read from behind the baseline')
   assert(HIERARCHY.find((h) => h.group === 'toss')!.flaws.includes('contact_behind'), 'not in the toss group')
-  assert(/toss/.test(FLAW_COPY_FOR('contact_behind')), 'the copy does not say where it starts')
+  assert(/toss/.test(FLAW_COPY_FOR('contact_behind')), 'the copy doesn’t say where it starts')
 })
 
 check('no Bath serve is named, and each reads inside the cited band', () => {
@@ -735,14 +735,14 @@ check('no Bath serve is named, and each reads inside the cited band', () => {
 
 heading('The tossing arm, named (L5.4)')
 
-check('the rig arm let down early is named from the side and from behind; a held arm is not', () => {
+check('the rig arm let down early is named from the side and from behind; a held arm isn’t', () => {
   for (const cameraYaw of [82, 8]) {
     const arm = (dials: Partial<ServeDials>) =>
       run({ ...dials, cameraYaw }, 5).diagnosis.flaws.find((f) => f.flaw === 'toss_arm_drops')!
     const dropped = arm({ tossArmHold: 0.2 })
     const held = arm({})
     note(`yaw ${cameraYaw}: held ${held.value}%, dropped ${dropped.value}%, against ${dropped.target.join('–')}`)
-    assert(dropped.detected, `yaw ${cameraYaw}: the dropped arm was not named`)
+    assert(dropped.detected, `yaw ${cameraYaw}: the dropped arm wasn’t named`)
     assert(!held.detected, `yaw ${cameraYaw}: a held arm was named`)
   }
   assert(HIERARCHY.find((h) => h.group === 'toss')!.flaws.includes('toss_arm_drops'), 'not in the toss group')

@@ -56,9 +56,9 @@ check('without a ball the hand stands in, and says so at half the confidence', (
   const skel = detectServe(frames, FPS)
   const hand = readTossPlacement(frames, skel, 'side')
   note(JSON.stringify(hand))
-  assert(hand?.from === 'hand' && hand.confidence === 0.5, 'the hand fallback did not say what it was')
+  assert(hand?.from === 'hand' && hand.confidence === 0.5, 'the hand fallback didn’t say what it was')
   // And the diagnosis carries it.
-  assert(diagnose(frames, skel).tossPlacement?.from === 'hand', 'the diagnosis did not carry the placement')
+  assert(diagnose(frames, skel).tossPlacement?.from === 'hand', 'the diagnosis didn’t carry the placement')
 })
 
 report()

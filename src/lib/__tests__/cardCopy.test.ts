@@ -74,7 +74,7 @@ check('every sentence drawn on a share card answers to the editor', () => {
     failing
       .map((f) => `"${f}" fails the editor: ${cueIssues(f).join('; ')}`)
       .join(' · ') +
-      '. This is the one copy in the app that cannot be taken back — it is a PNG in somebody ' +
+      '. This is the one copy in the app that can’t be taken back — it is a PNG in somebody ' +
       "else's chat.",
   )
   note(`${LITERALS.length} drawn literals read, ${RULINGS.length} ruled exempt`)

@@ -40,7 +40,7 @@ check('real serves read the same height from every place a phone stands', () => 
   // Within the noise floor of their own midpoint: as close as the same camera
   // filming the same serve twice.
   assert(spread('corrected') / 2 <= NOISE_FLOOR.contact_height_ratio, `the placements still disagree by ${spread('corrected').toFixed(3)}`)
-  assert(spread('corrected') < spread('pictured') / 3, 'the correction did not close the gap the picture left')
+  assert(spread('corrected') < spread('pictured') / 3, 'the correction didn’t close the gap the picture left')
 })
 
 check('the rig, which has no perspective to remove, reads what it read', () => {
@@ -58,7 +58,7 @@ check('with no world skeleton, it is the picture as before', () => {
   const R = sided(skel.racket)
   const f = blind[skel.keys.contact]
   const pictured = (skel.groundY - f.image[R.wrist].y) / skel.bodyHeight
-  assert(handHeightAt(blind, skel, f, R.wrist) === pictured, 'a missing skeleton was not answered by the picture')
+  assert(handHeightAt(blind, skel, f, R.wrist) === pictured, 'a missing skeleton wasn’t answered by the picture')
 })
 
 report()

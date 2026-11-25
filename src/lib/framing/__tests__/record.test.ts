@@ -25,7 +25,7 @@ const supporting = (...types: string[]) => ({
 
 heading('What this browser will record')
 
-check('a browser with no MediaRecorder is not offered the button', () => {
+check('a browser with no MediaRecorder isn’t offered the button', () => {
   // The control disappears entirely rather than appearing and failing. Both
   // shapes of absence are the same answer: no API, and an API with no
   // capability check on it.
@@ -33,7 +33,7 @@ check('a browser with no MediaRecorder is not offered the button', () => {
   assert(recordingType({}) === undefined, 'offered recording with no isTypeSupported')
 })
 
-check('a browser that supports nothing is not offered the button', () => {
+check('a browser that supports nothing isn’t offered the button', () => {
   assert(recordingType(supporting()) === undefined, 'offered a container nothing supports')
 })
 
@@ -52,7 +52,7 @@ check('the H.264 question carries a profile, because a bare family answers maybe
   )
 })
 
-check('a container this browser will not play back is not chosen', () => {
+check('a container this browser won’t play back isn’t chosen', () => {
   // The ordering above is a statement about which containers are *likely*
   // readable. For a long time it was the whole of the reasoning: whatever the
   // encoder took first was handed back, and nothing asked the decoder. On the
@@ -62,7 +62,7 @@ check('a container this browser will not play back is not chosen', () => {
   const opensMp4Only = { canPlayType: (q: string) => (q.startsWith('video/mp4') ? 'probably' : '') }
   assert(
     recordingType(encodesWebmOnly, opensMp4Only) === undefined,
-    'handed back a container this browser cannot open',
+    'handed back a container this browser can’t open',
   )
 })
 
@@ -135,9 +135,9 @@ check('the extension matches what was actually recorded', () => {
   // on it and the report prints it — so an .mp4 holding WebM is the kind of
   // wrong that only surfaces much later.
   const at = new Date(2026, 7, 13, 9, 5, 3)
-  assert(recordingFileName('video/mp4;codecs=avc1', at).endsWith('.mp4'), 'mp4 was not named .mp4')
-  assert(recordingFileName('video/mp4', at).endsWith('.mp4'), 'bare mp4 was not named .mp4')
-  assert(recordingFileName('video/webm;codecs=vp9', at).endsWith('.webm'), 'webm was not named .webm')
+  assert(recordingFileName('video/mp4;codecs=avc1', at).endsWith('.mp4'), 'mp4 wasn’t named .mp4')
+  assert(recordingFileName('video/mp4', at).endsWith('.mp4'), 'bare mp4 wasn’t named .mp4')
+  assert(recordingFileName('video/webm;codecs=vp9', at).endsWith('.webm'), 'webm wasn’t named .webm')
 })
 
 check('two recordings in one afternoon get two different names', () => {
@@ -211,7 +211,7 @@ check('the cap is long enough for a basket and short enough to be a backstop', (
   // basket of six well under a minute. It exists because MediaRecorder holds
   // its chunks in memory until something stops it.
   assert(MAX_RECORDING_SECONDS >= 60, `a cap of ${MAX_RECORDING_SECONDS}s would cut a basket short`)
-  assert(MAX_RECORDING_SECONDS <= 180, `a cap of ${MAX_RECORDING_SECONDS}s is not a backstop`)
+  assert(MAX_RECORDING_SECONDS <= 180, `a cap of ${MAX_RECORDING_SECONDS}s isn’t a backstop`)
 })
 
 report()

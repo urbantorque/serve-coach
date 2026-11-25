@@ -218,7 +218,7 @@ check('things far too big to be a ball are ignored', () => {
   )
 })
 
-check('the region below the shoulders is not searched', () => {
+check('the region below the shoulders isn’t searched', () => {
   const a = render([], 31)
   // A yellow shirt down where the player is; the ball is never down there.
   const b = render([{ x: 0.5, y: 0.8, r: 0.012, colour: BALL }], 32)
@@ -419,7 +419,7 @@ check('an object rising the whole time is rejected', () => {
  */
 heading('A stationary ball-like object already in frame')
 
-check('a spare ball resting near court level does not disturb the fit', () => {
+check('a spare ball resting near court level doesn’t disturb the fit', () => {
   const clean = trackBall(
     candidatesFor(tossFrames({ apexT: 0.45, apexY: 0.16, gravity: GRAVITY, x0: 0.45, driftX: 0.05 })),
     { expectedGravity: GRAVITY },
@@ -576,7 +576,7 @@ check('the same bend is rejected on a track too short to measure a curvature', (
   near(clean!.apex.y, BEND_APEX_Y, 0.01, 'six-detection control apex height')
 })
 
-check('an ascending-only track is not reported from an extrapolated apex', () => {
+check('an ascending-only track isn’t reported from an extrapolated apex', () => {
   // The ball leaves the top of the frame, or is lost against bright sky before
   // it turns over. The curvature is exactly right, every point is on the curve,
   // and the vertex is 0.4s past the last thing anyone saw — at y = −0.2, which
@@ -707,7 +707,7 @@ function acceptance(
  */
 const FAR_PLAYER_GRAVITY = (9.81 * 0.32) / 1.78
 
-check('a short track is not rejected for a curvature it could never have measured', () => {
+check('a short track isn’t rejected for a curvature it could never have measured', () => {
   // Five detections over 0.13s is the minimum this function advertises. A ball
   // at this scale falls about four millimetres of image across the whole window
   // — under the centroid noise — so its curvature is not measured at all, and a
@@ -755,7 +755,7 @@ check('an apex a frame past the last detection survives the noise that put it th
   within(full.softest, 0.45, 1, 'confidence of the least convincing accepted fit')
 })
 
-check('a longer, cleaner track is not given a smaller apex allowance', () => {
+check('a longer, cleaner track isn’t given a smaller apex allowance', () => {
   // The vertex a quarter of a sampling interval past the last detection, which
   // at this curvature leaves the ball four hundredths of a pixel below its own
   // turning point — an extrapolation of nothing. Scaled by the vertex's standard
@@ -850,7 +850,7 @@ check('an ordinarily filmed toss is missed only rarely, not routinely', () => {
  * search itself, now that there is a real number behind it rather than an
  * assumption.
  */
-check('fully decorrelated noise is not stitched into a false toss', () => {
+check('fully decorrelated noise isn’t stitched into a false toss', () => {
   const trials = 300
   let falsePositives = 0
   for (let i = 0; i < trials; i++) {
@@ -983,7 +983,7 @@ check('a club serve gives a handful of frames, and a fast one barely any', () =>
    * falls as the quantity rises is one that will be worst exactly where a player
    * cares most.
    */
-  assert(strong < club, 'a faster serve did not give fewer frames, so the arithmetic is wrong')
+  assert(strong < club, 'a faster serve didn’t give fewer frames, so the arithmetic is wrong')
   assert(
     strong < 5,
     `a strong serve gives ${strong.toFixed(1)} frames at 30 fps — enough that the sampling ` +
@@ -1009,12 +1009,12 @@ check('the ball is a streak rather than a disc, which is what the tracker looks 
   )
 })
 
-check('sixty frames a second helps, and does not solve it', () => {
+check('sixty frames a second helps, and doesn’t solve it', () => {
   // Worth stating because "film it at 60" is the first thing anybody suggests.
   const at60 = framesInShot(STRONG_SERVE_MS, 60)
   const smear60 = blurMetres(STRONG_SERVE_MS, 60)
   note(`  at 60 fps: ${at60.toFixed(1)} frames, ${smear60.toFixed(2)} m of smear`)
-  assert(at60 > framesInShot(STRONG_SERVE_MS, 30), '60 fps did not give more frames')
+  assert(at60 > framesInShot(STRONG_SERVE_MS, 30), '60 fps didn’t give more frames')
   assert(
     smear60 / FRAME_WIDTH_M > 0.08,
     'the smear at 60 fps is now small enough that the detector objection weakens',

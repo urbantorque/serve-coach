@@ -155,7 +155,7 @@ check('a severely rotated clip is refused, not measured through a 25° clamp', (
     const reason = rejectionFor(resilience)
     assert(
       reason !== undefined,
-      `a clip rotated ${deg}° was not refused — spatial confidence ${resilience.spatial.confidence}`,
+      `a clip rotated ${deg}° wasn’t refused — spatial confidence ${resilience.spatial.confidence}`,
     )
   }
 })
@@ -205,7 +205,7 @@ check('past the point detectServe fails on its own, it still fails safely rather
     } catch (err) {
       outcome = err instanceof NotAServeError ? 'refused' : `crashed: ${err}`
     }
-    assert(outcome === 'refused' || outcome === 'rejected', `${deg}° did not fail safely: ${outcome}`)
+    assert(outcome === 'refused' || outcome === 'rejected', `${deg}° didn’t fail safely: ${outcome}`)
   }
 })
 
@@ -240,7 +240,7 @@ check('a phone tilted past levelling is told so, from a lean to upside down', ()
   )
 })
 
-check('a body the tracker barely saw is not called upside down', () => {
+check('a body the tracker barely saw isn’t called upside down', () => {
   // A clip the pose model could not read: its "shoulders" sit below its "hips" in
   // every frame, steadily, at visibility under a half in three frames of four.
   // A picture the pose model cannot read is not a phone on its side, so it gets
@@ -389,7 +389,7 @@ check('a frozen drop-to-contact window is refused, not reported as a number', ()
   const reason = rejectionFor(resilience)
   assert(
     reason === 'too_blurry' || reason === 'too_few_frames',
-    `a frozen swing was not refused at all: got ${reason}`,
+    `a frozen swing wasn’t refused at all: got ${reason}`,
   )
 })
 
@@ -414,7 +414,7 @@ check('the wildness statistic alone misses a frozen track — this is why the se
 
 /* ============================================================= refusal ==== */
 
-heading('Refusing a clip it cannot read')
+heading('Refusing a clip it can’t read')
 
 check('a body nobody can see is refused before anything is measured', () => {
   const r: Resilience = base({ visibility: 0.2 })
@@ -438,19 +438,19 @@ check('a smeared clip is refused rather than guessed at', () => {
 
 check('an unusable camera angle is refused last, after the clip itself', () => {
   const both = base({ visibility: 0.2, spatial: 0.1 })
-  assert(rejectionFor(both) === 'body_not_visible', 'the deeper problem was not reported first')
+  assert(rejectionFor(both) === 'body_not_visible', 'the deeper problem wasn’t reported first')
 })
 
 check('a refusal carries no findings at all', () => {
   const frames = buildServe({}, FPS)
   const skel = detectServe(frames, FPS)
   const out = triage(diagnose(frames, skel, { tier: 5 }), base({ blur: 0.95 }))
-  assert(out.status === 'rejected' && out.reason === 'too_blurry', 'the clip was not refused')
+  assert(out.status === 'rejected' && out.reason === 'too_blurry', 'the clip wasn’t refused')
   assert(!out.primary_flaw && !out.drill_id && !out.tier, 'a refusal still handed out advice')
   assert(out.injury_risk.length === 0 && out.suppressed_count === 0, 'a refusal leaked findings')
 })
 
-check('a good clip is not refused', () => {
+check('a good clip isn’t refused', () => {
   const { result } = pipeline()
   assert(result.status === 'ok', `a clean serve was refused as ${result.reason}`)
 })
@@ -487,7 +487,7 @@ check('the grip outranks everything below it', () => {
     hipLead: -0.09,
   })
   assert(result.primary_flaw?.flaw === 'waiters_tray', `chose ${result.primary_flaw?.flaw}`)
-  assert(result.primary_flaw?.group === 'grip', 'the grip was not reported as the grip')
+  assert(result.primary_flaw?.group === 'grip', 'the grip wasn’t reported as the grip')
 })
 
 check('a bad toss outranks the swing faults underneath it', () => {
@@ -496,7 +496,7 @@ check('a bad toss outranks the swing faults underneath it', () => {
   assert(result.primary_flaw?.group === 'toss', `chose ${result.primary_flaw?.group}`)
 })
 
-check('a player with a terrible toss is not lectured on sequencing', () => {
+check('a player with a terrible toss isn’t lectured on sequencing', () => {
   const { result } = pipeline({ tossWobble: 0.09, spineLean: 34, hipLead: -0.09 })
   assert(
     result.primary_flaw?.flaw !== 'arming_the_ball',
@@ -575,7 +575,7 @@ check('every flaw the engine can name has a drill that exists', () => {
   for (const flaw of named) {
     const id = FLAW_DRILL[flaw]
     assert(Boolean(id), `${flaw} has no drill`)
-    assert(Boolean(DRILLS[id]), `${flaw} points at a drill that does not exist: ${id}`)
+    assert(Boolean(DRILLS[id]), `${flaw} points at a drill that doesn’t exist: ${id}`)
   }
   for (const [flaw, id] of Object.entries(FLAW_DRILL)) {
     assert(named.has(flaw as FlawId), `${flaw} has a drill but sits in no hierarchy group`)
@@ -596,7 +596,7 @@ check('a tray grip is flagged as an elbow and wrist risk', () => {
   note(risks.join(', ') || 'none')
   assert(
     risks.includes('wrist_strain_forced_pronation'),
-    `a tray grip rotated hard through the ball was not flagged: ${risks.join(', ') || 'none'}`,
+    `a tray grip rotated hard through the ball wasn’t flagged: ${risks.join(', ') || 'none'}`,
   )
 })
 
@@ -604,7 +604,7 @@ check('a clean serve raises no injury flags', () => {
   assert(pipeline({}).result.injury_risk.length === 0, 'a clean serve was called dangerous')
 })
 
-check('an injury flag survives triage even when its flaw is not the one chosen', () => {
+check('an injury flag survives triage even when its flaw isn’t the one chosen', () => {
   // The forearm drop is what actually turns the palm up on this rig — the
   // `palmToSky` dial alone left the measured grip three degrees outside its
   // band, which the noise floor in `tiers.ts` now correctly declines to call a
@@ -620,7 +620,7 @@ check('an injury flag survives triage even when its flaw is not the one chosen',
     spineLean: 34,
     tossWobble: 0.09,
   })
-  assert(result.primary_flaw?.group === 'grip', 'the grip did not win the hierarchy')
+  assert(result.primary_flaw?.group === 'grip', 'the grip didn’t win the hierarchy')
   assert(result.injury_risk.length > 0, 'the injury flag was suppressed along with its flaw')
 })
 
@@ -640,7 +640,7 @@ check("no joint warning is raised on real serves from the guide's placement", ()
   assert(raised.length === 0, `${raised.map((r) => r.injuries.join('+')).join(', ')}`)
 })
 
-check('from the back fence, a real serve that does not fold raises no lower-back warning', () => {
+check('from the back fence, a real serve that doesn’t fold raises no lower-back warning', () => {
   /*
    * Was KNOWN until N2.12: the fold's reading moves about ±10° between takes
    * of one real serve from behind, it was named at 29°, and the noisiest takes
@@ -757,7 +757,7 @@ check('the same jitter reads the same blur at every frame rate', () => {
   assert(spread < 0.3, `blur moved ${spread.toFixed(2)} across frame rate on one clip`)
 })
 
-check('an ordinary phone clip is not called blurred', () => {
+check('an ordinary phone clip isn’t called blurred', () => {
   // The rig's own figure for a well-lit clip from a modern phone.
   for (const fps of [30, 60, 120]) {
     const { resilience, result } = pipeline({ noise: 0.008, seed: 11 }, fps)
@@ -808,7 +808,7 @@ check('a smeared swing is measured and hedged, not thrown away', () => {
   assert(knee > SOFT_MEASUREMENT, `a knee angle was hedged for a blurred racket hand (${knee})`)
 })
 
-check('a shaky, low-light, phone-rate clip does not crash and reports honestly', () => {
+check('a shaky, low-light, phone-rate clip doesn’t crash and reports honestly', () => {
   const { result } = pipeline({ noise: 0.012, dropout: 0.2, seed: 31, cameraYaw: 58 }, PHONE_FPS)
   assert(result.schema === 1, 'the output lost its shape')
   if (result.status === 'rejected') {
@@ -905,7 +905,7 @@ check('the output is still raw data, with no prose anywhere in it', () => {
   for (const s of strings) assert(/^[a-z0-9_]+$/.test(s), `the output carries prose: "${s}"`)
   assert(
     JSON.stringify(JSON.parse(JSON.stringify(result))) === JSON.stringify(result),
-    'the triage does not survive being stored as JSON',
+    'the triage doesn’t survive being stored as JSON',
   )
 })
 

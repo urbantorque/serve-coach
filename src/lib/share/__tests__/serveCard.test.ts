@@ -89,7 +89,7 @@ await check('a soft read says so on the picture', async () => {
 
 await check('a record, when there is one, takes the foot', async () => {
   const all = (await draw(base, 'Your best trip yet.')).texts.join(' | ')
-  assert(all.includes('Your best trip yet.'), 'the record is not on the card')
+  assert(all.includes('Your best trip yet.'), 'the record isn’t on the card')
 })
 
 await check('it draws a figure and no photograph, even with stills on the report', async () => {
@@ -107,7 +107,7 @@ await check('it draws a figure and no photograph, even with stills on the report
 await check('the card is in the app\'s own face', async () => {
   const { fonts } = await draw(fast)
   assert(fonts.every((f) => f.includes('Archivo')), 'a line fell back to the system face')
-  assert(fonts.some((f) => f.includes('extra-condensed')), 'the numerals are not the score face')
+  assert(fonts.some((f) => f.includes('extra-condensed')), 'the numerals aren’t the score face')
 })
 
 report()

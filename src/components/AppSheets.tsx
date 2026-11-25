@@ -60,7 +60,7 @@ export function OfflineRow({ ready, warming, metered, onDownload }: Props['offli
             ? 'The download stopped. Try again'
             : 'Download failed. Try again'
           : warming?.stage === 'unkept'
-            ? 'This browser will not keep the download'
+            ? 'This browser won’t keep the download'
             : `Download to use with no signal, ${size}${NBSP}MB`
   return (
     <>
@@ -68,7 +68,7 @@ export function OfflineRow({ ready, warming, metered, onDownload }: Props['offli
         <Icon name="offline" size={18} />
         {label}
       </button>
-      {metered && !busy && <p className="sheet-note">You are on {metered === 'saveData' ? 'Data Saver' : 'mobile data'}, so wait for Wi-Fi if you can.</p>}
+      {metered && !busy && <p className="sheet-note">You’re on {metered === 'saveData' ? 'Data Saver' : 'mobile data'}, so wait for Wi-Fi if you can.</p>}
     </>
   )
 }

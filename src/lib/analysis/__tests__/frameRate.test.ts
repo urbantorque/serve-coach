@@ -46,11 +46,11 @@ check('a pose between two samples lies on the line between them', () => {
   near(mid.image[0].x, 2, 1e-12, 'x between the second and third samples')
   near(mid.image[0].y, 4, 1e-12, 'y between the second and third samples')
   near(mid.world[0].x, -2, 1e-12, 'the world skeleton too')
-  assert(mid.t === 0.15, 'the moment asked for was not the moment returned')
+  assert(mid.t === 0.15, 'the moment asked for wasn’t the moment returned')
   assert(poseAt(frames, -1) === frames[0] && poseAt(frames, 9) === frames[2], 'a moment off the end was invented')
 })
 
-check('the top of a rounded peak is found between samples, and a sharp one is not overshot', () => {
+check('the top of a rounded peak is found between samples, and a sharp one isn’t overshot', () => {
   // A parabola peaking at t = 0.43 with height 2, sampled every 0.1 s.
   const ts = [0.2, 0.3, 0.4, 0.5, 0.6]
   const round = ts.map((t) => 2 - 30 * (t - 0.43) ** 2)
@@ -232,7 +232,7 @@ check('a 30 fps file read on its frames is the film itself, half a frame later',
   const read = appRead(film, 30)
   assert(read.length === film.length, `read ${read.length} samples of ${film.length} frames`)
   read.forEach((sample, i) => {
-    assert(sample.image === film[i].image, `sample ${i} is not frame ${i}`)
+    assert(sample.image === film[i].image, `sample ${i} isn’t frame ${i}`)
     near(sample.t, film[i].t + 1 / 60, 1e-9, `sample ${i}'s stamp`)
   })
 })

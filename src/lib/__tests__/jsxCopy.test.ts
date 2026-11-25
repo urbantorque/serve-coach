@@ -119,11 +119,6 @@ const RULINGS: Ruling[] = [
     verdict: 'exempt',
     why: 'A button on the same dev-only corpus screen.',
   },
-  {
-    text: 'Nothing here is sent anywhere',
-    verdict: 'exempt',
-    why: 'Same sentence, same reason, on the `?check` panel.',
-  },
 ]
 
 heading('Copy written straight into a component')
@@ -147,7 +142,7 @@ check('the scan is finding something to scan', () => {
   assert(ALL.length > 60, `only ${ALL.length} readable lines found — has the pattern broken?`)
 })
 
-check('no line fails the editor that has not been ruled on', () => {
+check('no line fails the editor that hasn’t been ruled on', () => {
   /*
    * THE CHECK THAT DOES THE WORK. Everything else here is scaffolding; this is
    * what stops the next line written into a component from being unchecked. It
@@ -156,7 +151,7 @@ check('no line fails the editor that has not been ruled on', () => {
   const unruled = FAILING.filter((t) => !RULINGS.some((r) => t.startsWith(r.text)))
   assert(
     unruled.length === 0,
-    `${unruled.length} line(s) in a component fail the editor and are not ruled on:\n` +
+    `${unruled.length} line(s) in a component fail the editor and aren’t ruled on:\n` +
       unruled
         .map((t) => `      ${wordCount(t)} words — ${cueIssues(t).join('; ')}\n        "${t}"`)
         .join('\n') +

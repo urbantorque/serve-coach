@@ -58,14 +58,14 @@ const part = (path: ReturnType<typeof servePath>, group: string) => path!.parts.
 
 heading('On seeded diagnoses')
 
-check('a part never judged is not seen yet, and the headline counts the parts holding', () => {
+check('a part never judged isn’t seen yet, and the headline counts the parts holding', () => {
   const sessions = [...trip(0, 3, [], ['toss_height', 'toss_drift']), ...trip(3, 3, [], ['toss_height', 'toss_drift'])]
   const path = servePath(sessions)!
   note(path.headline)
   assert(path.parts.length === 7, `${path.parts.length} parts`)
   assert(part(path, 'toss').state === 'holding', `the toss is ${part(path, 'toss').state}`)
   assert(part(path, 'legs').state === 'not_seen', 'a part nothing judged was given a state')
-  assert(path.headline === '1 of 7 parts holding.', `headline "${path.headline}"`)
+  assert(path.headline === '1 of 7 parts going well.', `headline "${path.headline}"`)
 })
 
 check('a part being worked on shows the ladder step the player is on', () => {
@@ -79,11 +79,11 @@ check('a part being worked on shows the ladder step the player is on', () => {
 
 check('held across four more trips, a part is locked in', () => {
   const fixed = [...trip(0, 3, ['shallow_drop']), ...trip(3, 3, [], ['shallow_drop']), ...trip(6, 3, [], ['shallow_drop'])]
-  assert(part(servePath(fixed), 'drop').state === 'holding', 'a freshly fixed part was not holding')
+  assert(part(servePath(fixed), 'drop').state === 'holding', 'a freshly fixed part wasn’t holding')
   const later = [...fixed, ...[9, 12, 15, 18].flatMap((d) => trip(d, 1, [], ['shallow_drop']))]
   const path = servePath(later)!
   assert(part(path, 'drop').state === 'locked', `four trips on, the drop is ${part(path, 'drop').state}`)
-  assert(/1 of them locked in/.test(path.headline), path.headline)
+  assert(/1 of them fixed/.test(path.headline), path.headline)
 })
 
 check('a relapse moves the part back and says so plainly', () => {
@@ -146,10 +146,10 @@ heading('Drawn on the progress screen')
 check('the path renders with its headline and a row per part', () => {
   const sessions = [...on, ...off].sort((a, b) => b.createdAt - a.createdAt)
   const html = renderToStaticMarkup(createElement(Progress, { sessions, onBack: () => {}, onLogDrill: () => {}, onUndoDrill: () => {}, seeded: false }))
-  assert(html.includes('How each part of your serve is going'), 'the block did not render')
-  assert(/\d of 7 parts holding/.test(html), 'the headline did not render')
+  assert(html.includes('How each part of your serve is going'), 'the block didn’t render')
+  assert(/\d of 7 parts going well/.test(html), 'the headline didn’t render')
   assert((html.match(/class="path-part /g) ?? []).length === 7, 'not one row per part')
-  assert(html.includes('Holding') && html.includes('Working on'), 'the states were not said')
+  assert(html.includes('Going well') && html.includes('Working on'), 'the states weren’t said')
 })
 
 report()

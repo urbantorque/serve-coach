@@ -54,11 +54,11 @@ check('each spec name lands on the answer that helps', () => {
     err.name = name
     return previewBlockFor(err)
   }
-  assert(named('NotAllowedError') === 'denied', 'a blocked camera was not read as blocked')
-  assert(named('SecurityError') === 'denied', 'a security refusal was not read as blocked')
-  assert(named('NotFoundError') === 'missing', 'a device with no camera was not read as missing')
-  assert(named('NotReadableError') === 'busy', 'a camera another app holds was not read as busy')
-  assert(named('AbortError') === 'busy', 'an aborted capture was not read as busy')
+  assert(named('NotAllowedError') === 'denied', 'a blocked camera wasn’t read as blocked')
+  assert(named('SecurityError') === 'denied', 'a security refusal wasn’t read as blocked')
+  assert(named('NotFoundError') === 'missing', 'a device with no camera wasn’t read as missing')
+  assert(named('NotReadableError') === 'busy', 'a camera another app holds wasn’t read as busy')
+  assert(named('AbortError') === 'busy', 'an aborted capture wasn’t read as busy')
 })
 
 check('anything unrecognised is called unknown rather than guessed at', () => {

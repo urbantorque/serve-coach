@@ -36,13 +36,13 @@ heading('Kept with the serve')
 
 check('marks go on the serve’s tag, and a tag of only marks is kept', () => {
   const tag = withServeTag(undefined, 'r1', { marks: [line([0.1, 0.1], [0.2, 0.2])] }, 5)
-  assert(tag?.marks?.length === 1, 'the mark was not kept')
+  assert(tag?.marks?.length === 1, 'the mark wasn’t kept')
   assert(withServeTag(tag, 'r1', { marks: [] }, 6) === undefined, 'clearing every mark left an empty row')
   const both = withServeTag(tag, 'r1', { serveNumber: 2 }, 7)
   assert(both?.marks?.length === 1 && both.serveNumber === 2, 'tagging the serve lost its marks')
 })
 
-check('a reload keeps good marks and drops what cannot be drawn, part by part', () => {
+check('a reload keeps good marks and drops what can’t be drawn, part by part', () => {
   const stored = {
     id: 'r1',
     taggedAt: 5,
@@ -58,7 +58,7 @@ check(`no more than ${MAX_MARKS} marks a serve`, () => {
   assert(withServeTag(undefined, 'r', { marks: many }, 1)!.marks!.length === MAX_MARKS, 'too many kept')
 })
 
-check('two taps on one spot are not a mark (W5.1)', () => {
+check('two taps on one spot aren’t a mark (W5.1)', () => {
   const dot = line([0.5, 0.5], [0.502, 0.501])
   assert(normaliseServeTag({ id: 'd', taggedAt: 1, marks: [dot] }) === undefined, 'a dot-sized line was kept')
 })

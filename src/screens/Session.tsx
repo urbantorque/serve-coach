@@ -104,7 +104,7 @@ export default function Session({
               </button>
             ) : (
               <>
-                <p className="session-note">The video is not saved on your {deviceNoun()}. Choose the same video again to carry on.</p>
+                <p className="session-note">The video isn’t saved on your {deviceNoun()}. Choose the same video again to carry on.</p>
                 <button className="btn btn--primary btn--full" onClick={onPickAgain}>
                   Pick the video
                 </button>
@@ -202,7 +202,7 @@ export default function Session({
         </p>
         {found === 0 ? (
           <>
-            <p className="session-lede">I could not find a serve in this video.</p>
+            <p className="session-lede">I couldn’t find a serve in this video.</p>
             <p className="session-note">
               Film from {PLACEMENT.distance} away with your whole body in the picture, and keep the phone still.
             </p>
@@ -252,7 +252,7 @@ function Choices({
         {!timed
           ? `Working out how long this takes on your ${deviceNoun()}…`
           : perSampleMs === undefined
-            ? `I could not work out how fast your ${deviceNoun()} is, so I cannot say how long this will take.`
+            ? `I couldn’t work out how fast your ${deviceNoun()} is, so I can’t say how long this will take.`
             : `Times are from your ${deviceNoun()}, on this video.`}
       </p>
       {/* Off by default: a speed costs the ball's pass on every serve. */}

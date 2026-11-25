@@ -434,7 +434,7 @@ const PROGRESSIONS: Partial<Record<FlawId, Progression>> = {
       },
       POINTS,
     ],
-    easier: 'If your toss is low, fix that first. You cannot reach high for a ball that never got there.',
+    easier: 'If your toss is low, fix that first. You can’t reach high for a ball that never got there.',
     mistake: 'Ducking your head, or reaching forwards for a toss that went too far in front. Toss up, then hit up.',
     pass: 5,
   },

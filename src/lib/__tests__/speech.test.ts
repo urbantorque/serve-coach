@@ -23,9 +23,9 @@ check('a remote voice is never chosen, even when it is the default and the only 
 
 check("the player's language and region first, then their language, then the device default", () => {
   const voices = [voice('fr-FR', true, true), voice('en-US', true), voice('en-GB', true), voice('en-GB', false)]
-  assert(pickLocalVoice(voices, 'en-GB')?.lang === 'en-GB', 'the exact region was not preferred')
-  assert(pickLocalVoice(voices, 'en-AU')?.lang === 'en-US', 'the language in another region was not next')
-  assert(pickLocalVoice(voices, 'de-DE')?.lang === 'fr-FR', 'the device default was not the fallback')
+  assert(pickLocalVoice(voices, 'en-GB')?.lang === 'en-GB', 'the exact region wasn’t preferred')
+  assert(pickLocalVoice(voices, 'en-AU')?.lang === 'en-US', 'the language in another region wasn’t next')
+  assert(pickLocalVoice(voices, 'de-DE')?.lang === 'fr-FR', 'the device default wasn’t the fallback')
   assert(pickLocalVoice([], 'en-GB') === undefined, 'a voice was found where there are none')
 })
 

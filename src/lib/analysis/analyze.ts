@@ -470,10 +470,10 @@ export function withoutComparison(analysis: Analysis, readable: number, attempte
     readable === 1
       ? 'I could check only this serve in the video, so there is nothing to compare it with.'
       : readable >= 2 && readable >= attempted
-        ? 'I checked the other serves, but could not see enough of them to compare, so this report covers this serve alone.'
+        ? 'I checked the other serves, but couldn’t see enough of them to compare, so this report covers this serve alone.'
         : readable >= 2
-          ? `I checked ${readable} of the ${attempted} serves, but could not see enough of them to compare, so this report covers this serve alone.`
-          : 'I could not check the other serves in this video, so this report covers this serve alone.'
+          ? `I checked ${readable} of the ${attempted} serves, but couldn’t see enough of them to compare, so this report covers this serve alone.`
+          : 'I couldn’t check the other serves in this video, so this report covers this serve alone.'
   return { ...analysis, quality: { ...analysis.quality, warnings: [...analysis.quality.warnings, cue(note)] } }
 }
 
@@ -638,7 +638,7 @@ async function poseReader(): Promise<ReadPose | undefined> {
 
 /** The refusal for a clip the scan found no serve in (the window then chosen blind). */
 function scanMissed(): NotAServeError {
-  return new NotAServeError('I could not find a serve in that clip.', [
+  return new NotAServeError('I couldn’t find a serve in that clip.', [
     'Trim the video to a single serve and try again.',
     'This app scans long clips for the serve first, and nothing in this one stood out.',
     `Filming from the side or behind, ${PLACEMENT.distance} back, makes the swing easier to pick out.`,
@@ -1043,7 +1043,7 @@ export function assessQuality(
     warnings.push(cue('Your feet sat outside the frame, so heights are estimated. Step back until your whole body fits.'))
   }
   if (skel.handednessConfidence < 0.35) {
-    warnings.push(cue('I could not lock which hand holds your racket. Check the badge below and switch it if wrong.'))
+    warnings.push(cue('I couldn’t lock which hand holds your racket. Check the badge below and switch it if wrong.'))
   }
   // The player told us which hand, and the clip disagrees — confidently. Almost
   // always the wrong clip, somebody else serving, or a front-facing camera that
@@ -1666,7 +1666,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
         // says to tap the hand badge on the report, and there is no report
         // here to tap: the retry above already did what the badge would do.
         if (err instanceof NotAServeError && err.suggestedHand) {
-          const neither = new NotAServeError('I could not follow your racket arm in that clip.', [
+          const neither = new NotAServeError('I couldn’t follow your racket arm in that clip.', [
             `Film side-on from ${PLACEMENT.distance} away, with your whole body and the racket in frame.`,
             'Front cameras often mirror the picture, so use the back camera if you can.',
           ])
@@ -1848,7 +1848,7 @@ async function runAnalysis(video: HTMLVideoElement, opts: AnalyzeOptions): Promi
   // than as a blocking complaint about a clip that worked perfectly well.
   // Said once, plainly, beside the timings it hedges — see `looksSlowedDown`.
   if (looksSlowedDown(engine(), skel)) {
-    quality.warnings.push(cue('This clip looks like slow motion, so I show the timings but do not score them.'))
+    quality.warnings.push(cue('This clip looks like slow motion, so I show the timings but don’t score them.'))
   }
   // Said when the stretch was found and undone, so a player who filmed in slow
   // motion knows the timings are the serve's and not the file's.

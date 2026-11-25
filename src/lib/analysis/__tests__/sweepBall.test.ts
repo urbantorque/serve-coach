@@ -44,7 +44,7 @@ check('a basket sweep reads the ball', () => {
   }
 })
 
-await check('with the ball, a basket judges the toss height step; without it, it cannot', async () => {
+await check('with the ball, a basket judges the toss height step; without it, it can’t', async () => {
   const low = await basket(1.2, true)
   const good = await basket(1.8, true)
   const blind = await basket(1.2, false)

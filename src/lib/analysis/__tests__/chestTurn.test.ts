@@ -30,15 +30,15 @@ check('a chest that turns ahead of the swing reads before the drop, at every sid
       assert(row[i].turn!.shouldersMs <= row[i - 1].turn!.shouldersMs, `${cameraYaw}°: an earlier turn read later`)
     }
     assert(row[0].turn!.shouldersMs > 0 && !named(row[0]), `${cameraYaw}°: the clean serve was read as opening early`)
-    assert(row[3].turn!.shouldersMs < 0 && named(row[3]), `${cameraYaw}°: the open chest was not named from the side`)
+    assert(row[3].turn!.shouldersMs < 0 && named(row[3]), `${cameraYaw}°: the open chest wasn’t named from the side`)
   }
 })
 
-check('the hips are read on their own line, and do not move the shoulders', () => {
+check('the hips are read on their own line, and don’t move the shoulders', () => {
   const row = [30, 56, 90].map((hipYaw) => read({ hipYaw }))
   note(`hips half turned at ${row.map((r) => r.turn?.hipsMs).join(' / ')} ms, shoulders at ${row.map((r) => r.turn?.shouldersMs).join(' / ')}`)
   assert(new Set(row.map((r) => r.turn?.shouldersMs)).size === 1, 'turning the hips moved the shoulders')
-  assert(row[2].turn!.hipsMs > row[0].turn!.hipsMs, 'hips wound further back did not turn later')
+  assert(row[2].turn!.hipsMs > row[0].turn!.hipsMs, 'hips wound further back didn’t turn later')
 })
 
 check('tracker noise never names a clean serve', () => {
@@ -67,7 +67,7 @@ check('real serves turn after the racket drops, from both sides', () => {
   assert(Math.min(...ms) > 21, 'a real serve turned within the noise floor of the drop')
 })
 
-check('from a corner or from behind it is not read, and the corner reads the coil instead', () => {
+check('from a corner or from behind it isn’t read, and the corner reads the coil instead', () => {
   const corner = read({ cameraYaw: 45, shoulderYaw: 82, hipYaw: 116 })
   assert(corner.turn === undefined, 'the turn was read from a corner')
   assert(corner.finding?.signal === 'separation_deg' && corner.finding.detected, 'the corner lost the coil reading')

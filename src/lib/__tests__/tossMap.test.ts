@@ -22,7 +22,7 @@ check("it holds this basket's serves and nobody else's, in serve order", () => {
   note(map.points.map((p) => `${p.serve}:${p.value}`).join(' '))
   assert(map.axis === 'ahead', `axis ${map.axis}`)
   assert(map.points.map((p) => p.serve).join(',') === '1,3,5', 'the wrong serves, or out of order')
-  assert(map.points.find((p) => p.serve === 3)!.current, 'the serve on screen was not marked')
+  assert(map.points.find((p) => p.serve === 3)!.current, 'the serve on screen wasn’t marked')
 })
 
 check('one serve, a clip with no serve numbers, or another axis is no map', () => {
@@ -42,11 +42,11 @@ check('each outcome is drawn as its own shape and word, not colour alone', () =>
   ]
   const map = tossMapFor(serve('serve-abc-2', ahead(0.3)), [serve('serve-abc-0', ahead(0.2)), serve('serve-abc-4', ahead(0.4))], tags)!
   const html = renderToStaticMarkup(createElement(TossMap, { map }))
-  assert(/<circle[^>]*fill="var\(--great\)"/.test(html), 'a serve that went in was not a filled dot')
-  assert(/<path[^>]*fill="var\(--work\)"/.test(html), 'a missed serve was not a diamond')
-  assert(/<circle[^>]*fill="var\(--ink-1\)"[^>]*stroke="var\(--fg-faint\)"/.test(html), 'an untagged serve was not an empty ring')
-  assert(html.includes('Serve 3: about two foot-lengths in front of your front foot, net.'), 'the list does not read the strip out')
-  assert(html.includes('Not tagged'), 'the legend does not name the empty ring')
+  assert(/<circle[^>]*fill="var\(--great\)"/.test(html), 'a serve that went in wasn’t a filled dot')
+  assert(/<path[^>]*fill="var\(--work\)"/.test(html), 'a missed serve wasn’t a diamond')
+  assert(/<circle[^>]*fill="var\(--ink-1\)"[^>]*stroke="var\(--fg-faint\)"/.test(html), 'an untagged serve wasn’t an empty ring')
+  assert(html.includes('Serve 3: about two foot-lengths in front of your front foot, net.'), 'the list doesn’t read the strip out')
+  assert(html.includes('Not marked'), 'the legend doesn’t name the empty ring')
 })
 
 report()

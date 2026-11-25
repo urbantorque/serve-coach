@@ -76,7 +76,7 @@ const DIALS: Partial<Record<FlawId, Partial<ServeDials>>> = {
 
 heading('Evidence on the frame')
 
-check('every fault either shows its measurement on its still or says why one frame cannot', () => {
+check('every fault either shows its measurement on its still or says why one frame can’t', () => {
   for (const [flaw, evidence] of Object.entries(STILL_EVIDENCE) as [FlawId, (typeof STILL_EVIDENCE)[FlawId]][]) {
     if ('none' in evidence) {
       assert(evidence.none.length > 20, `${flaw} has no picture and no reason`)
@@ -114,7 +114,7 @@ check('a low contact keeps its target when the ball was tracked, measured at the
   const skel = detectServe(frames, FPS)
   const ball = tossedBall(frames, skel, skel.times.contact + 0.02)
   const metrics = measure(frames, skel, true, { ball, contact: readContact(frames, skel, ball) }).flatMap((f) => f.metrics)
-  assert(metrics.some((m) => m.id === 'ballContactHeight'), 'the ball was not read at contact')
+  assert(metrics.some((m) => m.id === 'ballContactHeight'), 'the ball wasn’t read at contact')
   assert(!metrics.some((m) => m.id === 'contactHeight'), "the hand's row stayed beside the ball's")
   const { texts } = still(dials, 'contact', { ball: true })
   assert(texts.includes('Aim for'), 'a low contact with a tracked ball carries no target')

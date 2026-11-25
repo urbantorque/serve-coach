@@ -157,7 +157,8 @@ export default function Home({
     () => (known ? streakLine(sessions, Date.now(), { ledger, cadence: prefs.cadence, practice: practiceSessions }) : undefined),
     [known, sessions, ledger, prefs.cadence, practiceSessions],
   )
-  const eraTrips = form ? currentRubricEra(form.trips).length : 0
+  // Serves recorded on the current scoring, a count a player recognises (2026-11-25): it was court trips.
+  const eraServes = form ? currentRubricEra(form.trips).reduce((n, t) => n + t.serves, 0) : 0
   const fastest = useMemo(() => (known ? fastestServe(sessions) : undefined), [known, sessions])
   const unit = readPrefs().speedUnit ?? defaultSpeedUnit()
   const tagMap = useMemo(() => tagsById(tags), [tags])
@@ -336,7 +337,7 @@ export default function Home({
           {/* How long it takes, and a drill that has stopped moving, one tap down: the card says the goal and the next thing. A stalled drill names itself on the tap. */}
           <details className="next-more">
             <summary className="link-btn" style={SUMMARY}>
-              {stuck ? 'This drill is not working yet. What now?' : 'How long this takes'}
+              {stuck ? 'This drill isn’t working yet. What now?' : 'How long this takes'}
             </summary>
             <p className="next-pace">{programme.pace}</p>
             {stuck && <p className="next-stuck">{stuck}</p>}
@@ -386,8 +387,8 @@ export default function Home({
             </span>
           )}
           <span className="momentum-stat">
-            <span className="t-figure tnum">{eraTrips}</span>
-            <span>{eraTrips === 1 ? 'court trip' : 'court trips'}</span>
+            <span className="t-figure tnum">{eraServes}</span>
+            <span>{eraServes === 1 ? 'serve recorded' : 'serves recorded'}</span>
           </span>
         </button>
       )}

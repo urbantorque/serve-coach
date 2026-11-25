@@ -898,7 +898,7 @@ function assertPlausible(
   // that as `too_few_frames` and offers the numbers anyway, which is a better
   // answer than a dead end for a player whose phone simply sampled slowly.
   if (keys.contact <= keys.ready) {
-    throw new NotAServeError('I could not find a serve in that clip.', filming)
+    throw new NotAServeError('I couldn’t find a serve in that clip.', filming)
   }
 
   // Contact on the toss: the racket never came over. A clip that stops after
@@ -970,14 +970,14 @@ function assertPlausible(
       // just proved to itself that it is, helps nobody.
       const swung = other(context.racket)
       const err = new NotAServeError(`This looks like a ${swung}-handed serve.`, [
-        `Tap the hand badge on the report to switch to ${swung}-handed, and I will re-read it.`,
+        `Tap the hand badge on the report to switch to ${swung}-handed, and I’ll re-read it.`,
         'Front cameras often mirror the picture, which flips which hand you appear to serve with.',
       ])
       err.suggestedHand = swung
       throw err
     }
 
-    throw new NotAServeError('That does not look like a serve.', [
+    throw new NotAServeError('That doesn’t look like a serve.', [
       'The clip needs a full service motion: toss, load, swing and contact.',
       ...filming,
     ])

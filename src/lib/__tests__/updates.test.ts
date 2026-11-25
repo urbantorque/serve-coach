@@ -27,7 +27,7 @@ check('a waiting version is taken when the app is idle', () => {
     activated++
   })
   assert(applyWhenIdle(() => true), 'an idle app refused a waiting update')
-  assert(activated === 1, `the waiting worker was not activated: ${activated} calls`)
+  assert(activated === 1, `the waiting worker wasn’t activated: ${activated} calls`)
 })
 
 check('a waiting version is held while the app is busy', () => {

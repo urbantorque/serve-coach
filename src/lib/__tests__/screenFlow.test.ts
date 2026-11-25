@@ -49,7 +49,7 @@ check('every screen has a route back to home', () => {
   // The claim R7's hand-walk was making. On a phone there is no address bar to
   // retreat to, so a screen with no exit is the end of the session.
   const stuck = stranded()
-  assert(stuck.length === 0, `these screens cannot reach home: ${stuck.join(', ')}`)
+  assert(stuck.length === 0, `these screens can’t reach home: ${stuck.join(', ')}`)
 })
 
 check('every screen is reachable from home', () => {
@@ -86,11 +86,11 @@ check('every screen App.tsx names is in the graph', () => {
   for (const m of APP.matchAll(/\bkind: '([a-z-]+)'/g)) named.add(m[1])
   assert(named.size > 0, 'found no screen kinds in App.tsx at all — has the scan broken?')
   const missing = [...named].filter((k) => !(SCREENS as readonly string[]).includes(k))
-  assert(missing.length === 0, `App.tsx has screens the graph does not: ${missing.join(', ')}`)
+  assert(missing.length === 0, `App.tsx has screens the graph doesn’t: ${missing.join(', ')}`)
   note(`${named.size} screen kinds found in App.tsx`)
 })
 
-check('the graph names no screen App.tsx does not have', () => {
+check('the graph names no screen App.tsx doesn’t have', () => {
   // The opposite drift, and the one that was actually present: the prose listed
   // `analyzing` → `saved`, a move nothing in the file makes.
   const named = new Set<string>()
@@ -130,7 +130,7 @@ check('the error screen is reachable without passing through analyzing', () => {
   for (const from of ['home', 'report'] as Screen[]) {
     assert(
       MOVES[from].some((m) => m.to === 'error'),
-      `${from} cannot reach the error screen directly, but run() sends it there`,
+      `${from} can’t reach the error screen directly, but run() sends it there`,
     )
   }
   // And the code still does it, checked rather than remembered: both refusals
@@ -268,14 +268,14 @@ check('every function that reads a whole history is on the list R55 must cover',
   const missing = [...found].filter((f) => !HISTORY_CONSUMERS.includes(f))
   assert(
     missing.length === 0,
-    `${missing.length} function(s) read the whole history and are not on R55's list:\n` +
+    `${missing.length} function(s) read the whole history and aren’t on R55's list:\n` +
       missing.map((m) => `      ${m}(sessions…)`).join('\n') +
       '\n      Add them to HISTORY_CONSUMERS, and to whatever R55 filters.',
   )
   note(`  ${found.size} functions read the whole history in App.tsx`)
 })
 
-check('the list has not gone stale in the other direction', () => {
+check('the list hasn’t gone stale in the other direction', () => {
   // The opposite failure, and the one `egress.test.ts` guards on its own allow
   // list: a consumer removed leaves a stale name here, and the next reader
   // trusts a list describing an app that no longer exists.

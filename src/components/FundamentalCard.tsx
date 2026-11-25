@@ -185,7 +185,7 @@ export default function FundamentalCard({
                   </li>
                 ))}
               </ul>
-              <p className="unscored-note">There is no published target for these yet, so I do not score them.</p>
+              <p className="unscored-note">There is no published target for these yet, so I don’t score them.</p>
             </div>
           ) : null}
 

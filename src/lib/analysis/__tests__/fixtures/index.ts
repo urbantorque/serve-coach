@@ -138,7 +138,7 @@ export function fixtureGate(
       lines: [
         `0 of ${minimum} recorded fixtures — every engine check is synthetic.`,
         'Hip–shoulder separation and shoulder tilt are computed from world-space z,',
-        'which the rig models as exact and MediaPipe does not: they are unvalidated',
+        'which the rig models as exact and MediaPipe doesn’t: they are unvalidated',
         'against any real footage. See __tests__/fixtures/README.md.',
       ],
     }
@@ -216,7 +216,7 @@ function spreadGaps(recorded: readonly Fixture[]): string[] {
   if (unlabelled.length) {
     gaps.push(
       `${unlabelled.map((f) => f.id).join(', ')}: no handedness or view labelled — ` +
-        'the spread cannot be counted without them',
+        'the spread can’t be counted without them',
     )
   }
 
@@ -225,7 +225,7 @@ function spreadGaps(recorded: readonly Fixture[]): string[] {
 
   const hands = distinct((f) => f.expect.handedness)
   if (hands < SPREAD.hands) {
-    gaps.push(`only ${hands} handedness — a left-hander is not a mirrored right-hander to a pose model`)
+    gaps.push(`only ${hands} handedness — a left-hander isn’t a mirrored right-hander to a pose model`)
   }
 
   const views = distinct((f) => f.expect.view)

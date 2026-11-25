@@ -20,14 +20,14 @@ const enc = new TextEncoder()
 heading('A calendar file a phone will take')
 
 check('every line ends in CRLF and none passes 75 octets', () => {
-  assert(ics.endsWith('\r\n'), 'the file does not end in CRLF')
+  assert(ics.endsWith('\r\n'), 'the file doesn’t end in CRLF')
   assert(!/[^\r]\n/.test(ics), 'a bare LF line ending')
   for (const line of ics.split('\r\n')) assert(enc.encode(line).length <= 75, `a line of ${enc.encode(line).length} octets: ${line.slice(0, 40)}`)
 })
 
 check('folding is undone by a reader, and splits no character', () => {
   const long = 'DESCRIPTION:' + 'Toss and point — '.repeat(12)
-  assert(fold(long).replace(/\r\n /g, '') === long, 'unfolding did not give the line back')
+  assert(fold(long).replace(/\r\n /g, '') === long, 'unfolding didn’t give the line back')
 })
 
 check('text values escape what RFC 5545 reserves', () => {
@@ -48,12 +48,12 @@ check('three sessions a cadence apart, each with a start, an end, an alarm an ho
   const uids = (s: string) => [...s.matchAll(/UID:(\S+)/g)].map((m) => m[1])
   assert(uids(again).join() === uids(ics).join(), 'exporting again later the same day changed the UIDs, so events would duplicate')
   const [a, b] = sessionDates(now, 'fortnightly')
-  assert(Math.round((b.getTime() - a.getTime()) / 86_400_000) === 14, 'fortnightly sessions were not two weeks apart')
+  assert(Math.round((b.getTime() - a.getTime()) / 86_400_000) === 14, 'fortnightly sessions weren’t two weeks apart')
 })
 
 check("today's plan is in the notes", () => {
   const unfolded = ics.replace(/\r\n /g, '')
-  assert(unfolded.includes('min: Toss and point\\, then catch: 15 tosses\\; rest\\, then repeat.'), 'the drills are not in the notes')
+  assert(unfolded.includes('min: Toss and point\\, then catch: 15 tosses\\; rest\\, then repeat.'), 'the drills aren’t in the notes')
 })
 
 report()

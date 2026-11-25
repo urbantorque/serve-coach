@@ -31,8 +31,8 @@ check('every sample is its own frame, in the middle of it, and the gaps are even
       const frames = times.map((t) => Math.floor(t * fps))
       assert(new Set(frames).size === frames.length, `${fps} fps over ${start}–${end} read one frame twice`)
       for (const [i, t] of times.entries()) {
-        near((t * fps) % 1, 0.5, 1e-6, `${fps} fps, sample ${i} is not mid-frame`)
-        if (i > 0) near(t - times[i - 1], 1 / rate, 1e-9, `${fps} fps, step ${i} is not even`)
+        near((t * fps) % 1, 0.5, 1e-6, `${fps} fps, sample ${i} isn’t mid-frame`)
+        if (i > 0) near(t - times[i - 1], 1 / rate, 1e-9, `${fps} fps, step ${i} isn’t even`)
       }
     }
   }
@@ -61,8 +61,8 @@ check('the rate is the fastest whole step under the ceiling', () => {
 
 check('a located window costs five reads, not a change in the budget', () => {
   assert(readingPlan(0, 2.7).times.length === 86, 'the even read of the located window moved')
-  assert(readingPlan(0, 2.7, 30).times.length === 81, 'the located window is not 81 reads at 30 fps')
-  assert(readingPlan(0, 2.7, 60).times.length === 81, 'the located window is not 81 reads at 60 fps')
+  assert(readingPlan(0, 2.7, 30).times.length === 81, 'the located window isn’t 81 reads at 30 fps')
+  assert(readingPlan(0, 2.7, 60).times.length === 81, 'the located window isn’t 81 reads at 60 fps')
 })
 
 check('a read starts from where the file’s frames really are', () => {
@@ -178,7 +178,7 @@ check('every planned moment shows its own frame, even where the seek is clamped'
   assert(at30.times[at30.times.length - 1] > 2.98, 'a 30 fps clip lost the last frame the seek can still show')
 })
 
-heading('Where the step cannot be taken')
+heading('Where the step can’t be taken')
 
 check('a 30 fps clip the budget would walk at 15 a second is read at the grid’s count, each sample a frame of its own', () => {
   /*
@@ -188,7 +188,7 @@ check('a 30 fps clip the budget would walk at 15 a second is read at the grid’
    * the even grid itself, whose stamps slid against the film, and clean serves
    * were told a fault on 52 takes where these reads now tell 14 (`rate.ts`).
    */
-  assert(readingPlan(0, 3.9, 30).rate === 30, 'a 3.9 s clip is not walked frame by frame')
+  assert(readingPlan(0, 3.9, 30).rate === 30, 'a 3.9 s clip isn’t walked frame by frame')
   for (const [fps, start, end, phase] of [
     [30, 0, 4.4, 0],
     [30, 2.31, 6.4, 0.011],
@@ -200,10 +200,10 @@ check('a 30 fps clip the budget would walk at 15 a second is read at the grid’
     const plan = readingPlan(start, end, fps, { phase })
     const grid = readingPlan(start, end)
     const frames = plan.times.map((t) => Math.round((t - phase) * fps - 0.5))
-    assert(plan.onFrames, `${fps} fps over ${start}–${end} was not put on the frames`)
-    assert(plan.times.length === grid.times.length && plan.rate === grid.rate, `${fps} fps over ${start}–${end} did not take the grid's count`)
+    assert(plan.onFrames, `${fps} fps over ${start}–${end} wasn’t put on the frames`)
+    assert(plan.times.length === grid.times.length && plan.rate === grid.rate, `${fps} fps over ${start}–${end} didn’t take the grid's count`)
     for (const [i, t] of plan.times.entries()) {
-      near(((t - phase) * fps) % 1, 0.5, 1e-6, `${fps} fps, sample ${i} is not mid-frame`)
+      near(((t - phase) * fps) % 1, 0.5, 1e-6, `${fps} fps, sample ${i} isn’t mid-frame`)
       if (i > 0) assert(frames[i] > frames[i - 1], `${fps} fps, sample ${i} read a frame again or went back`)
     }
     const widest = Math.max(...frames.slice(1).map((k, i) => k - frames[i]))
@@ -221,7 +221,7 @@ check('nobody knows the rate: the old grid, to the digit', () => {
       const fps = samplingRateFor(span)
       const count = Math.max(8, Math.round(span * fps))
       const plan = readingPlan(start, end, known)
-      assert(!plan.onFrames && plan.rate === fps, `${known} did not fall back`)
+      assert(!plan.onFrames && plan.rate === fps, `${known} didn’t fall back`)
       assert(plan.times.length === count, `${known} read ${plan.times.length} samples, not ${count}`)
       plan.times.forEach((t, i) => assert(t === start + (span * i) / (count - 1), `${known}, sample ${i} moved`))
     }

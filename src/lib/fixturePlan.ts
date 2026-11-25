@@ -74,7 +74,7 @@ export const FIXTURE_PLAN: readonly PlannedClip[] = [
   {
     n: 3,
     what: 'The same player again, this time face-on or from behind.',
-    why: 'Says whether the app leaves out the readings it cannot take, rather than guessing them.',
+    why: 'Says whether the app leaves out the readings it can’t take, rather than guessing them.',
     handedness: 'right',
     view: 'front',
     fps: 30,
@@ -82,7 +82,7 @@ export const FIXTURE_PLAN: readonly PlannedClip[] = [
   {
     n: 4,
     what: 'A left-handed serve, filmed side-on, at 30 fps.',
-    why: 'A left-hander is not a right-hander mirrored. The torso hides the other arm.',
+    why: 'A left-hander isn’t a right-hander mirrored. The torso hides the other arm.',
     handedness: 'left',
     view: 'side',
     fps: 30,
@@ -98,7 +98,7 @@ export const FIXTURE_PLAN: readonly PlannedClip[] = [
   {
     n: 6,
     what: 'A right-handed serve, side-on, with the feet out of frame.',
-    why: 'Heights should come back marked approximate. That is this clip passing.',
+    why: 'Heights should come back marked approximate. That’s this clip passing.',
     handedness: 'right',
     view: 'side',
     fps: 30,

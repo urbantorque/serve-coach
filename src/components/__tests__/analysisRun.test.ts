@@ -34,7 +34,7 @@ check('a waiting update lands only on an idle home screen', () => {
 
 check('a basket is swept after its first serve only when there is one to sweep', () => {
   const base = { glance: false, serves: 6, refused: false, clipOpen: true }
-  assert(sweepAfterRead(base), 'a believed basket with its clip open was not swept')
+  assert(sweepAfterRead(base), 'a believed basket with its clip open wasn’t swept')
   assert(!sweepAfterRead({ ...base, serves: 1 }), 'a single serve was swept')
   assert(!sweepAfterRead({ ...base, refused: true }), 'a refused read was swept six more times')
   assert(!sweepAfterRead({ ...base, clipOpen: false }), 'a clip no longer open was swept')
@@ -43,8 +43,8 @@ check('a basket is swept after its first serve only when there is one to sweep',
 
 check('a basket scored behind its report lands only on that report (Apex A)', () => {
   const own = { id: 'clip#2' }
-  assert(sweepMayLand({ kind: 'report', analysis: own }, 'clip#2'), 'the report it started from was not updated')
-  assert(sweepMayLand({ kind: 'glance', analysis: own }, 'clip#2'), 'its glance was not updated')
+  assert(sweepMayLand({ kind: 'report', analysis: own }, 'clip#2'), 'the report it started from wasn’t updated')
+  assert(sweepMayLand({ kind: 'glance', analysis: own }, 'clip#2'), 'its glance wasn’t updated')
   assert(!sweepMayLand({ kind: 'report', analysis: { id: 'clip#1' } }, 'clip#2'), 'another serve report was replaced')
   assert(!sweepMayLand({ kind: 'home' }, 'clip#2'), 'a player who went home was pulled back')
   assert(!sweepMayLand({ kind: 'progress' }, 'clip#2'), 'a player reading their progress was pulled back')
@@ -79,7 +79,7 @@ const deps = (view: View): AnalysisRunDeps => ({
 check('the reading mounts on its own, with nothing running', () => {
   const home = mounted(() => useAnalysisRun(deps({ kind: 'home' })))
   for (const k of ['run', 'openClip', 'compareServes', 'cancel', 'stopSweep', 'startSession', 'stopSession', 'releaseVideo'] as const) {
-    assert(typeof home[k] === 'function', `${k} is not handed back`)
+    assert(typeof home[k] === 'function', `${k} isn’t handed back`)
   }
   assert(home.progress.step === 'engine' && home.sweep === undefined, 'a fresh mount showed work in flight')
   assert(home.sessionRunning === false && home.urlRef.current === undefined, 'a fresh mount held a clip or a session')
@@ -88,14 +88,14 @@ check('the reading mounts on its own, with nothing running', () => {
       deps({ kind: 'session', session: { id: 's' } as never, stage: { state: 'running' } as never, canRead: true }),
     ),
   )
-  assert(reading.sessionRunning === true, 'a running session was not seen as one')
+  assert(reading.sessionRunning === true, 'a running session wasn’t seen as one')
 })
 
 check('the history lookups and the sets read what they are given', () => {
   const at = (createdAt: number, serveType: 'flat' | 'kick') => ({ id: `s${createdAt}`, createdAt, serveType }) as unknown as Session
   const sessions = [at(1, 'flat'), at(2, 'kick'), at(3, 'flat'), at(5, 'flat')]
   const lookups = mounted(() => useHistoryLookups({ sessions, tripLedger: [] }))
-  assert(lookups.priorTo(4, 'flat')?.createdAt === 3, 'the serve before was not the latest earlier one of its type')
+  assert(lookups.priorTo(4, 'flat')?.createdAt === 3, 'the serve before wasn’t the latest earlier one of its type')
   assert(lookups.priorTo(1, 'flat') === undefined, 'a first serve found one before it')
   const sets = mounted(() => useSets({ prefs: { ...DEFAULTS }, setPrefs: noop, sessions, serveTags: [] }))
   assert(sets.glanceSet({ createdAt: 9 } as never) === undefined, 'a glance with no set running said one was')

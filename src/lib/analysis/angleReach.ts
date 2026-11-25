@@ -71,7 +71,7 @@ export function unseenLines(diagnosis: Pick<Diagnosis, 'flaws'> | undefined): st
   for (const b of unseenBy(diagnosis)) byPlace.set(b.filmFrom, [...(byPlace.get(b.filmFrom) ?? []), b.what])
   return [...byPlace.entries()].map(([place, whats]) =>
     whats.length === 1
-      ? cue(`From this angle I could not see ${whats[0]}. Film ${WHERE[place]} to check it.`)
-      : cue(`From this angle I could not see ${whats.join(' or ')}. Film ${WHERE[place]} to check.`),
+      ? cue(`From this angle I couldn’t see ${whats[0]}. Film ${WHERE[place]} to check it.`)
+      : cue(`From this angle I couldn’t see ${whats.join(' or ')}. Film ${WHERE[place]} to check.`),
   )
 }

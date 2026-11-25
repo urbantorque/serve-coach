@@ -34,11 +34,11 @@ check('a short history says nothing', () => {
 
 check('the season names the move dialled into its newest serve', () => {
   const read = selfRead(newest, sessions)
-  assert(read !== undefined, 'the demo season did not reach a baseline')
+  assert(read !== undefined, 'the demo season didn’t reach a baseline')
   note(read!.usual.map((f) => f.line).join(' | '))
   const knees = read!.usual.find((f) => f.metricId === 'kneeBend')
   assert(knees?.direction === 'higher', 'the knee bend went unsaid')
-  assert(knees!.line.includes('bend the knees further'), 'the line did not say so')
+  assert(knees!.line.includes('bend the knees further'), 'the line didn’t say so')
 })
 
 check('a row is said once, however it is read', () => {
@@ -60,7 +60,7 @@ check('every row the baseline can name has a headline, either way', () => {
     for (const direction of ['higher', 'lower'] as const) {
       const title = movedTitle({ metricId: id, direction })
       assert(title !== undefined && title.endsWith('than usual'), `${id} ${direction} has no headline`)
-      assert(!/[—–]/.test(title!) && title!.length <= 44, `${title} does not fit a card`)
+      assert(!/[—–]/.test(title!) && title!.length <= 44, `${title} doesn’t fit a card`)
     }
   }
 })
@@ -86,15 +86,15 @@ check('a speed record needs the whole range past every earlier range', () => {
 check('the best of a trip must be alone at the top, of three or more', () => {
   const trip = [71, 75, 73].map((overall, i) => serve({ id: `t${i}`, createdAt: NOW + i * 60_000, overall }))
   const story = serveStory(trip[1], trip)
-  assert(story.title === 'Best of that trip' && story.best, 'the best of the trip went unsaid')
+  assert(story.title === 'Best of that session' && story.best, 'the best of the trip went unsaid')
   const tied = [75, 75, 73].map((overall, i) => serve({ id: `t${i}`, createdAt: NOW + i * 60_000, overall }))
-  assert(serveStory(tied[1], tied).title !== 'Best of that trip', 'a tie was called the best')
-  assert(serveStory(trip[1], trip.slice(0, 2)).title !== 'Best of that trip', 'two serves were called a trip')
+  assert(serveStory(tied[1], tied).title !== 'Best of that session', 'a tie was called the best')
+  assert(serveStory(trip[1], trip.slice(0, 2)).title !== 'Best of that session', 'two serves were called a trip')
 })
 
 check('a tagged second serve says so', () => {
   const tags = new Map<string, ServeTag>([['b', { id: 'b', serveNumber: 2 } as unknown as ServeTag]])
-  assert(serveStory(SAME, [OLD, SAME], tags).title === 'Second serve', 'the tag was not used')
+  assert(serveStory(SAME, [OLD, SAME], tags).title === 'Second serve', 'the tag wasn’t used')
 })
 
 check('the newest serve of the season says what it did differently', () => {
@@ -103,7 +103,7 @@ check('the newest serve of the season says what it did differently', () => {
   assert(story.title === 'Deeper knee bend than usual' || story.best, `the season's newest serve said "${story.title}"`)
 })
 
-check('a rough read does not claim a move, and says what it is', () => {
+check('a rough read doesn’t claim a move, and says what it is', () => {
   const rough = { ...SAME, quality: { ...SAME.quality, confidence: 0.3 } }
   assert(serveStory(rough, [OLD, rough]).title === 'A rough read', 'a rough read was given a headline')
 })

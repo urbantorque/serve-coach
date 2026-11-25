@@ -105,7 +105,7 @@ export function servePath(
     holding,
     locked,
     headline:
-      `${holding} of ${parts.length} parts holding` + (locked ? `, ${locked} of them locked in` : '') + '.',
+      `${holding} of ${parts.length} parts going well` + (locked ? `, ${locked} of them fixed` : '') + '.',
   }
 }
 
@@ -113,9 +113,9 @@ export function servePath(
 export function partLabel(part: PathPart): string {
   switch (part.state) {
     case 'locked':
-      return 'Locked in'
+      return 'Fixed'
     case 'holding':
-      return 'Holding'
+      return 'Going well'
     case 'working':
       return part.step ? `Working on, step ${part.step.at} of ${part.step.of}` : 'Working on'
     default:

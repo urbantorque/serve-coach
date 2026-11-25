@@ -26,9 +26,9 @@ import { assert, check, heading, note, report } from '../../analysis/__tests__/h
 heading('Whether a declared type already rules out a video')
 
 check('a document or a photo is caught', () => {
-  assert(looksLikeNonVideo('text/plain'), 'a text file was not caught')
-  assert(looksLikeNonVideo('image/jpeg'), 'a photo was not caught')
-  assert(looksLikeNonVideo('application/pdf'), 'a PDF was not caught')
+  assert(looksLikeNonVideo('text/plain'), 'a text file wasn’t caught')
+  assert(looksLikeNonVideo('image/jpeg'), 'a photo wasn’t caught')
+  assert(looksLikeNonVideo('application/pdf'), 'a PDF wasn’t caught')
 })
 
 check('a real video container is never caught, whatever the codec inside it', () => {
@@ -40,7 +40,7 @@ check('a real video container is never caught, whatever the codec inside it', ()
   assert(!looksLikeNonVideo('video/webm'), 'a WebM container was caught')
 })
 
-check('an empty type is not evidence of anything, so it is not caught', () => {
+check('an empty type isn’t evidence of anything, so it isn’t caught', () => {
   // Absence of evidence must not remove a working path — the same rule
   // `recordingType` already applies to a missing capability check, applied
   // here to a missing MIME type instead of a missing API.
@@ -241,7 +241,7 @@ const failed = (code: number | undefined, hevc: boolean) =>
     describeDecodeFailure({ error: code === undefined ? null : { code } } as unknown as HTMLVideoElement),
   )
 
-heading('What a clip the browser cannot open is told to do about it')
+heading('What a clip the browser can’t open is told to do about it')
 
 check('every refusal carries something the player can actually do', () => {
   // The point of this whole function. "This video could not be decoded" is a
@@ -285,8 +285,8 @@ check('a browser with no HEVC decoder is told about High Efficiency and the sett
   for (const code of [MEDIA_ERR.DECODE, MEDIA_ERR.SRC_NOT_SUPPORTED]) {
     const err = failed(code, false)
     const all = err.hints.join(' ')
-    assert(/High Efficiency/.test(all), `code ${code} did not name the format`)
-    assert(/Settings › Camera › Formats/.test(all), `code ${code} did not give the fix`)
+    assert(/High Efficiency/.test(all), `code ${code} didn’t name the format`)
+    assert(/Settings › Camera › Formats/.test(all), `code ${code} didn’t give the fix`)
     // The escape hatch for a clip already filmed, which the setting cannot help.
     assert(/WhatsApp|email/.test(all), `code ${code} left an existing clip with nowhere to go`)
   }
@@ -311,7 +311,7 @@ check('the two decodable-browser failures are told apart, not merged', () => {
   assert(unsupported.message !== decode.message, 'both failures produced the same sentence')
   assert(
     /incomplete|iCloud|Google Photos/.test(decode.hints.join(' ')),
-    'a part-way decode failure did not mention an unfinished download',
+    'a part-way decode failure didn’t mention an unfinished download',
   )
 })
 
@@ -368,7 +368,7 @@ const fine = await refusalFrom(loadedVideo({}), true)
 
 heading('Refusals the decoder reaches before a single frame is read')
 
-check('a readable clip is not refused', () => {
+check('a readable clip isn’t refused', () => {
   assert(fine === undefined, `a perfectly ordinary clip was refused: ${fine?.message}`)
 })
 
@@ -377,7 +377,7 @@ check('a clip with no readable length is refused rather than measured', () => {
   // but could not size — and zero is what a still-downloading file reports.
   assert(noLength !== undefined, 'a clip with NaN duration was accepted')
   assert(zeroLength !== undefined, 'a clip with zero duration was accepted')
-  assert(/would not open properly/.test(noLength!.message), `unexpected: "${noLength!.message}"`)
+  assert(/wouldn’t open properly/.test(noLength!.message), `unexpected: "${noLength!.message}"`)
 })
 
 check('the no-length advice changes with whether the browser has HEVC', () => {
@@ -386,8 +386,8 @@ check('the no-length advice changes with whether the browser has HEVC', () => {
   const withHevc = (noLength as unknown as { hints: string[] }).hints.join(' ')
   const without = (noLengthNoHevc as unknown as { hints: string[] }).hints.join(' ')
   assert(!/HEVC/.test(withHevc), 'a browser that decodes HEVC was told its clip was HEVC')
-  assert(/HEVC/.test(without), 'a browser with no HEVC decoder was not told the likely cause')
-  note('no-length refusal names HEVC only where the browser cannot decode it')
+  assert(/HEVC/.test(without), 'a browser with no HEVC decoder wasn’t told the likely cause')
+  note('no-length refusal names HEVC only where the browser can’t decode it')
 })
 
 check('an audio-only file gets the specific answer, not a guess about the codec', () => {
@@ -397,7 +397,7 @@ check('an audio-only file gets the specific answer, not a guess about the codec'
   assert(/no picture in that file/.test(noPicture!.message), `unexpected: "${noPicture!.message}"`)
   assert(
     /audio recording/.test((noPicture as unknown as { hints: string[] }).hints.join(' ')),
-    'the no-picture refusal does not mention the likeliest cause',
+    'the no-picture refusal doesn’t mention the likeliest cause',
   )
 })
 

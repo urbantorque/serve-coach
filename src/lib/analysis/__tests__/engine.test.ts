@@ -96,19 +96,19 @@ function run(dials: Partial<ServeDials> = {}) {
 
 const metric = (fundamentals: Fundamental[], id: string): Metric => {
   const m = fundamentals.flatMap((f) => f.metrics).find((x) => x.id === id)
-  if (!m) throw new Error(`metric "${id}" was not produced`)
+  if (!m) throw new Error(`metric "${id}" wasn’t produced`)
   return m
 }
 /** A value off the card, graded or not: a row since D2.1 can be a reading. */
 const measured = (fundamentals: Fundamental[], id: string): { value: number; confidence: number } => {
   const m = fundamentals.flatMap((f) => [...f.metrics, ...(f.readings ?? [])]).find((x) => x.id === id)
-  if (!m) throw new Error(`"${id}" was not measured`)
+  if (!m) throw new Error(`"${id}" wasn’t measured`)
   return m
 }
 /** An ungraded row off the card, with its words. */
 const reading = (fundamentals: Fundamental[], id: string): Reading => {
   const r = fundamentals.flatMap((f) => f.readings ?? []).find((x) => x.id === id)
-  if (!r) throw new Error(`reading "${id}" was not produced`)
+  if (!r) throw new Error(`reading "${id}" wasn’t produced`)
   return r
 }
 const area = (fundamentals: Fundamental[], id: string): Fundamental => {
@@ -224,7 +224,7 @@ check('the whole serve stays inside the frame', () => {
 
 check('classifies a side-on camera as side-on', () => {
   const { sideView } = run()
-  assert(sideView, 'side-on serve was not classified as a side view')
+  assert(sideView, 'side-on serve wasn’t classified as a side view')
 })
 
 check('rejects a clip with no serve in it', () => {
@@ -272,7 +272,7 @@ check('rejects a clip stated as the wrong hand, and names the right one', () => 
   } catch (e) {
     err = e
   }
-  assert(err instanceof NotAServeError, 'a wrong-handed clip did not throw NotAServeError')
+  assert(err instanceof NotAServeError, 'a wrong-handed clip didn’t throw NotAServeError')
   if (err instanceof NotAServeError) {
     assert(err.suggestedHand === 'right', `suggested ${err.suggestedHand}, not the hand that actually swung`)
   }
@@ -352,7 +352,7 @@ check('a clip that stops before contact is told so, not that it is left-handed',
 check('every clip-refusal message and hint passes the house-voice editor', () => {
   const cases: [string, NotAServeError][] = [
     ['no player visible', blockingFramingIssue(['nobody-visible'])!],
-    ['body does not fit', blockingFramingIssue(['feet-cropped', 'head-cropped'])!],
+    ['body doesn’t fit', blockingFramingIssue(['feet-cropped', 'head-cropped'])!],
     ['hands unseen, not far', blockingFramingIssue(['hands-unseen'])!],
     ['hands unseen, too far', blockingFramingIssue(['hands-unseen', 'too-far-away'])!],
   ]
@@ -439,7 +439,7 @@ check('returns serves in the order they were hit', () => {
   )
 })
 
-check('does not split one serve into several', () => {
+check('doesn’t split one serve into several', () => {
   // A single peak sampled many times must not yield a serve per sample.
   const found = findServes(reachTrace([{ t: 6, height: 0.9 }], 12, 50))
   assert(found.length === 1, `one serve split into ${found.length}`)
@@ -498,7 +498,7 @@ check('reads back hip–shoulder separation', () => {
   near(measured(fundamentals, 'hipShoulderSeparation').value, 26, 8, 'separation')
 })
 
-check('the trophy posture is not read off a single frame', () => {
+check('the trophy posture isn’t read off a single frame', () => {
   const frames = buildServe({}, FPS)
   const skel = detectServe(frames, FPS)
   const clean = measured(measure(frames, skel, true), 'hipShoulderSeparation').value
@@ -562,7 +562,7 @@ check('the report and the diagnosis read the same trophy', () => {
 
 console.log('\n\x1b[1mFaults that are the mirror of a virtue\x1b[0m')
 
-check('a reverse cartwheel does not score like a textbook trophy', () => {
+check('a reverse cartwheel doesn’t score like a textbook trophy', () => {
   // Tossing shoulder dropped, hitting shoulder riding high. It pulls the racket
   // down across the ball, it is common at club level, and measured as a bare
   // magnitude it is arithmetically indistinguishable from the trophy the report
@@ -588,7 +588,7 @@ check('a reverse cartwheel does not score like a textbook trophy', () => {
   )
 })
 
-check('a chest already open at the trophy does not read like coil', () => {
+check('a chest already open at the trophy doesn’t read like coil', () => {
   // The shoulders have unwound past the hips before the racket has dropped. The
   // magnitude of that is the magnitude of a good coil, so the player losing the
   // serve to it used to be congratulated for it. Ungraded on the card since its
@@ -605,7 +605,7 @@ check('a chest already open at the trophy does not read like coil', () => {
   )
 })
 
-check('the diagnosis names an open chest that the old sign could not see', () => {
+check('the diagnosis names an open chest that the old sign couldn’t see', () => {
   const frames = buildServe({ shoulderYaw: 82, hipYaw: 116, cameraYaw: CORNER }, FPS)
   const skel = detectServe(frames, FPS)
   const found = diagnose(frames, skel).flaws.find((f) => f.flaw === 'early_shoulder_rotation')
@@ -653,7 +653,7 @@ check('coil is measured the same whichever way the trunk turns', () => {
     // Ungraded on the card, so the fault is the diagnosis's to name, either way round.
     const named = (r: typeof open) =>
       diagnose(r.frames, r.skel).flaws.find((f) => f.flaw === 'early_shoulder_rotation')?.detected === true
-    assert(named(open) && !named(coiled), `the open chest was not told from the coil with the trunk ${way}`)
+    assert(named(open) && !named(coiled), `the open chest wasn’t told from the coil with the trunk ${way}`)
 
     // The diagnosis has to derive the direction the same way, or the card and
     // the flaw pass end up describing opposite trophies from one clip.
@@ -674,7 +674,7 @@ const swapShoulders = (marks: Frame['world']): Frame['world'] =>
     i === LM.leftShoulder ? marks[LM.rightShoulder] : i === LM.rightShoulder ? marks[LM.leftShoulder] : m,
   )
 
-check('a left/right swap on three frames does not invert the coil', () => {
+check('a left/right swap on three frames doesn’t invert the coil', () => {
   // MediaPipe relabels left and right on a rotating torso, and the serve rotates
   // hardest between the trophy and the ball — so a swap that covers the contact
   // frames and nothing else is a live failure, not a hypothetical.
@@ -739,7 +739,7 @@ check('a trunk yawed past the wrap point measures the coil it actually held', ()
   assert(!named(wrapped) && !named(plain), 'a coiled trunk was named an open chest on one side of the wrap')
 })
 
-check('a trunk that barely rotates is not handed a coil sign by noise', () => {
+check('a trunk that barely rotates isn’t handed a coil sign by noise', () => {
   // The direction is read off the shoulders sweeping open between the trophy and
   // contact. A player who arms the ball never makes that sweep, so there is no
   // direction to read — and guessing one does not produce a vague number, it
@@ -915,7 +915,7 @@ check('the widened axes still score their misses on the old curve, and it still 
   // coil had the same widened axis and is ungraded now.
   for (const id of ['shoulderTilt']) {
     const copy = metricCopy(id)
-    assert(copy.range[0] < 0, `${id} cannot show its own reverse: the axis stops at ${copy.range[0]}`)
+    assert(copy.range[0] < 0, `${id} can’t show its own reverse: the axis stops at ${copy.range[0]}`)
     assert(copy.missSpan !== undefined, `${id} widened its axis without pinning the scoring span`)
     const before: [number, number] = [0, copy.range[1]]
     for (let v = 0; v <= copy.range[1]; v++) {
@@ -986,7 +986,7 @@ check('measures leg drive when the player leaves the ground', () => {
   assert(
     metric(jumping.fundamentals, 'legDrive').value >
       metric(grounded.fundamentals, 'legDrive').value + 0.05,
-    'a jump did not register as more leg drive than staying grounded',
+    'a jump didn’t register as more leg drive than staying grounded',
   )
 })
 
@@ -1018,7 +1018,7 @@ check('a peak with nothing to fit on is left at its sample', () => {
   const times = [0, 0.03, 0.06, 0.09, 0.12]
   assert(refineExtremum([1, 2, 3, 2, 1], times, 0) === 0, 'an edge was moved')
   assert(refineExtremum([1, 2, 2, 2, 1], times, 2) === 0.06, 'a plateau was moved')
-  assert(refineExtremum([3, 2, 3, 2, 1], times, 2) === 0.06, 'a flank that was not rising was fitted')
+  assert(refineExtremum([3, 2, 3, 2, 1], times, 2) === 0.06, 'a flank that wasn’t rising was fitted')
 })
 
 check('drop-to-contact at 30 fps is no longer read a full sample long', () => {
@@ -1060,7 +1060,7 @@ check('a slow-motion clip hedges its timings instead of coaching a slow rhythm',
     assert(stretched.m(id).confidence < 0.55, `${id} was scored on a stretched clock (${stretched.m(id).confidence.toFixed(2)})`)
     assert(real.m(id).confidence >= 0.55, `${id} was hedged on a real-time clip`)
   }
-  assert(stretched.m('loadRatio').confidence >= 0.55, 'a share of the motion, which a stretch does not change, was hedged')
+  assert(stretched.m('loadRatio').confidence >= 0.55, 'a share of the motion, which a stretch doesn’t change, was hedged')
 })
 
 check('measurements hold up when the camera moves round', () => {
@@ -1106,7 +1106,7 @@ check('stiff legs are reported as a loading fault', () => {
   assert(Boolean(kb.fix), 'no fix offered for straight legs')
   assert(
     area(fundamentals, 'loading').score < area(fundamentals, 'contact').score,
-    'loading was not the weaker area despite straight legs',
+    'loading wasn’t the weaker area despite straight legs',
   )
 })
 
@@ -1288,7 +1288,7 @@ check('dropping the tossing arm early is caught', () => {
   assert(
     metric(dropped.fundamentals, 'tossArmHold').score <
       metric(held.fundamentals, 'tossArmHold').score - 15,
-    'dropping the tossing arm early did not lower the score',
+    'dropping the tossing arm early didn’t lower the score',
   )
 })
 
@@ -1301,7 +1301,7 @@ check('a wobbly toss scores below a straight one', () => {
   )
 })
 
-check('one fault does not drag down unrelated areas', () => {
+check('one fault doesn’t drag down unrelated areas', () => {
   const clean = run()
   const stiff = run({ trophyKneeAngle: 176 })
   const a = area(clean.fundamentals, 'toss').score
@@ -1358,25 +1358,25 @@ check('a toss that wanders is named as the least repeatable element', () => {
   ])
   assert(c !== undefined, 'no comparison produced')
   const contact = c!.metrics.find((m) => m.id === 'contactHeight')
-  assert(Boolean(contact), 'contact height was not compared')
+  assert(Boolean(contact), 'contact height wasn’t compared')
   assert(
     contact!.spread > 0.15,
     `contact height spread only ${contact!.spread.toFixed(3)} despite varying reach`,
   )
   assert(
     c!.weakest!.score <= contact!.score,
-    'the weakest metric was not ranked first',
+    'the weakest metric wasn’t ranked first',
   )
 })
 
 check('an element held steady while another varies keeps its own high score', () => {
   const c = basket([{ contactReach: 1.2 }, { contactReach: 1.45 }, { contactReach: 1.3 }])
   const knee = c!.metrics.find((m) => m.id === 'kneeBend')
-  assert(Boolean(knee), 'knee bend was not compared')
+  assert(Boolean(knee), 'knee bend wasn’t compared')
   assert(knee!.score >= 85, `knee bend scored ${knee!.score} despite never changing`)
 })
 
-check('reports serves the sweep tried to measure and could not', () => {
+check('reports serves the sweep tried to measure and couldn’t', () => {
   const c = basket([{}, {}])
   assert(c!.skipped === 0, `reported ${c!.skipped} skipped when all were measured`)
   const partial = buildConsistency(
@@ -1392,7 +1392,7 @@ check('reports serves the sweep tried to measure and could not', () => {
 // The count handed over is what the sweep *attempted*, which is capped — so a
 // clip with more serves in it than the cap must not come back reporting the
 // serves past the cap as ones too unclear to read. Nothing looked at them.
-check('serves past the sweep cap are not reported as unreadable', () => {
+check('serves past the sweep cap aren’t reported as unreadable', () => {
   const measured = Array.from({ length: MAX_CONSISTENCY_SERVES }, () => {
     const { fundamentals } = run()
     return { fundamentals, overall: 70 } as unknown as Parameters<typeof buildConsistency>[0][number]
@@ -1571,7 +1571,7 @@ function withHeight(heights: number[]) {
   })
 }
 
-check('the same body filmed several times is not flagged as a hand-off', () => {
+check('the same body filmed several times isn’t flagged as a hand-off', () => {
   // A body height noisy by a percent or two between serves is ordinary
   // measurement variation, not a different person.
   const c = buildConsistency(withHeight([0.54, 0.545, 0.538, 0.541]), 4)!
@@ -1582,10 +1582,10 @@ check('a clearly different standing height is flagged as a possible hand-off', (
   // One serve reading a fifth taller than the rest — a coach, or a much
   // taller player — with nothing else about the clip changing.
   const c = buildConsistency(withHeight([0.54, 0.545, 0.65, 0.538]), 4)!
-  assert(c.possibleHandoff, 'a clearly different standing height was not flagged')
+  assert(c.possibleHandoff, 'a clearly different standing height wasn’t flagged')
 })
 
-check('a report with no height reading at all is not flagged by default', () => {
+check('a report with no height reading at all isn’t flagged by default', () => {
   // Older or hand-assembled analyses may carry no scale at all; absence is not
   // evidence of a mismatch, and flagging it would train players to ignore a
   // warning that fires on every basket built without a camera.
@@ -1617,7 +1617,7 @@ check('a camera move under a metre is enough to cross the threshold', () => {
   // in one direction is a limit nobody has actually pinned down.
   const ratio = 6 / 5.08
   assert(ratio - 1 > IMPLAUSIBLE_HEIGHT_SPREAD, 'a 92 cm camera move no longer crosses the threshold')
-  assert(6 / 5.1 - 1 < ratio - 1, 'the boundary is not where the refusal says it is')
+  assert(6 / 5.1 - 1 < ratio - 1, 'the boundary isn’t where the refusal says it is')
 })
 
 /* ------------------------------------------- the ungraded deltas ---------- */
@@ -1671,7 +1671,7 @@ const erNoise = (n: number) => rangeReach(n) * ER_FRONT_BACK_DEVIATION_DEG
 check('a change bigger than its posture and its own noise is reported', () => {
   // 50° apart, and the lean differs by 4° — which buys 2° at 0.5°/°.
   const d = erDelta(deltaBasket([{ deg: 20, lean: 10 }, { deg: 70, lean: 14 }]))
-  assert(!!d, 'a 50° change against a 27° bound was not reported')
+  assert(!!d, 'a 50° change against a 27° bound wasn’t reported')
   assert(d!.from === 1 && d!.to === 2, `named serves ${d!.from} and ${d!.to}, not 1 and 2`)
   assert(Math.abs(d!.delta - 50) < 1e-9, `reported a delta of ${d!.delta}`)
   assert(Math.abs(d!.bound - Math.hypot(2, erNoise(2))) < 1e-9, `reported a bound of ${d!.bound}`)
@@ -1734,7 +1734,7 @@ check('a serve whose trophy arm was too folded to read drops out of the comparis
   assert(d!.from === 2 && d!.to === 3, `named serves ${d!.from} and ${d!.to}, not 2 and 3`)
 })
 
-check('a serve with no lean reading is not compared at all', () => {
+check('a serve with no lean reading isn’t compared at all', () => {
   // Without the lean there is no bound, and without a bound the delta is a
   // number nobody can say is not posture. `signals` omits a reading below
   // `MIN_EVIDENCE`, so this is the ordinary shape of a poorly seen trunk.
@@ -1744,7 +1744,7 @@ check('a serve with no lean reading is not compared at all', () => {
   )
 })
 
-check('one readable serve is not a comparison', () => {
+check('one readable serve isn’t a comparison', () => {
   assert(
     !erDelta(deltaBasket([{ deg: 40, lean: 10 }, { deg: null, lean: 10 }])),
     'a single reading was reported as a change',
@@ -1789,7 +1789,7 @@ check('a landing change bigger than the reading own noise is reported', () => {
   // most of it, past the 0.0164 that noise can set between two serves' extremes
   // (H44: the bound was one deviation of a difference, 0.0053).
   const d = landingDelta(landingBasket([0.0035, 0.0501]))
-  assert(!!d, 'a change across most of the measured range was not reported')
+  assert(!!d, 'a change across most of the measured range wasn’t reported')
   assert(d!.from === 1 && d!.to === 2, `named serves ${d!.from} and ${d!.to}, not 1 and 2`)
   assert(Math.abs(d!.bound - rangeReach(2) * 0.0045) < 1e-9, `bound came back ${d!.bound}`)
 })
@@ -1929,7 +1929,7 @@ async function sweepOf(opts: {
         throw new Cancelled()
       }
       if (opts.unreadable?.includes(serveIndex)) {
-        throw new NotAServeError('I could not find a serve there.', ['Trim the clip.'])
+        throw new NotAServeError('I couldn’t find a serve there.', ['Trim the clip.'])
       }
       const serve = measuredServe(serveIndex, opts.count)
       if (opts.refused?.includes(serveIndex)) {
@@ -1962,7 +1962,7 @@ check('each serve is handed over as it lands, before the next one starts', () =>
   assert(
     JSON.stringify(wholeBasket.log) ===
       JSON.stringify(['measure 0', 'serve 1', 'measure 1', 'serve 2', 'measure 2', 'serve 3', 'measure 3', 'serve 4']),
-    `serves did not stream one at a time: ${JSON.stringify(wholeBasket.log)}`,
+    `serves didn’t stream one at a time: ${JSON.stringify(wholeBasket.log)}`,
   )
   assert(!wholeBasket.streamedLate, 'a serve was streamed after the sweep had already finished')
   assert(
@@ -2028,7 +2028,7 @@ check('a sweep with nothing to compare leaves the report, with one line saying w
     const added = kept.quality.warnings.slice(a.quality.warnings.length)
     assert(added.length === 1, `added ${added.length} lines`)
     assert(cueIssues(added[0]).length === 0, `"${added[0]}": ${cueIssues(added[0]).join('; ')}`)
-    assert(added[0].includes('compare') || added[0].includes('alone'), `the line does not say why: "${added[0]}"`)
+    assert(added[0].includes('compare') || added[0].includes('alone'), `the line doesn’t say why: "${added[0]}"`)
     if (readable >= 2) {
       const said = readable < attempted ? added[0].includes(`${readable} of the ${attempted}`) : added[0].includes('checked the other serves')
       assert(said, `${readable} of ${attempted} read: "${added[0]}"`)
@@ -2049,7 +2049,7 @@ check('a sweep with nothing to compare leaves the report, with one line saying w
 check('stopping between serves keeps every serve already measured', () => {
   const r = stoppedBetweenServes.result
   assert(r.serves.length === 4, `kept ${r.serves.length} serves of the four measured`)
-  assert(r.cancelled, 'a stopped sweep did not report itself as stopped')
+  assert(r.cancelled, 'a stopped sweep didn’t report itself as stopped')
   assert(
     stoppedBetweenServes.asked.length === 4,
     `kept measuring after the stop: ${stoppedBetweenServes.asked.length} serves read`,
@@ -2066,12 +2066,12 @@ check('stopping between serves keeps every serve already measured', () => {
 // pressing stop.
 check('a serve interrupted mid-read is never reported as one too unclear to compare', () => {
   const r = stoppedMidServe.result
-  assert(r.cancelled, 'a sweep stopped mid-serve did not report itself as stopped')
+  assert(r.cancelled, 'a sweep stopped mid-serve didn’t report itself as stopped')
   assert(r.serves.length === 4, `measured ${r.serves.length} serves before the stop, expected 4`)
   assert(r.attempted === 4, `counted ${r.attempted} serves as attempted, expected 4`)
   assert(
     stoppedMidServe.streamed.length === 4,
-    `streamed ${stoppedMidServe.streamed.length} slots, expected 4 — the interrupted serve is not one`,
+    `streamed ${stoppedMidServe.streamed.length} slots, expected 4 — the interrupted serve isn’t one`,
   )
   const c = buildConsistency(r.serves, r.attempted)
   assert(c!.skipped === 0, `blamed the clip for ${c!.skipped} serves the player stopped`)
@@ -2081,17 +2081,17 @@ check('a sweep stopped before it starts measures nothing and claims nothing', ()
   const r = stoppedAtOnce.result
   assert(stoppedAtOnce.asked.length === 0, `read ${stoppedAtOnce.asked.length} serves after being stopped`)
   assert(r.serves.length === 0 && r.attempted === 0, `came back with ${r.serves.length} serves`)
-  assert(r.cancelled, 'did not report itself as stopped')
+  assert(r.cancelled, 'didn’t report itself as stopped')
 })
 
 // Below two serves there is no spread to compare — one reading has a max equal
 // to its min, which would score a perfect 100 for repeatability off a sample
 // containing no repetition. The screen offering to compare must agree with the
 // function that refuses to.
-check('one measured serve is not passed off as a comparison', () => {
+check('one measured serve isn’t passed off as a comparison', () => {
   const r = stoppedAfterOne.result
   assert(r.serves.length === 1, `measured ${r.serves.length} serves`)
-  assert(r.serves.length < MIN_COMPARABLE_SERVES, 'one serve is not below the comparison floor')
+  assert(r.serves.length < MIN_COMPARABLE_SERVES, 'one serve isn’t below the comparison floor')
   assert(
     buildConsistency(r.serves, r.attempted) === undefined,
     'a single serve produced a comparison',
@@ -2131,13 +2131,13 @@ check('a noisy serve is still recognised as a serve', () => {
   }
 })
 
-check('handedness is not confused by jitter', () => {
+check('handedness isn’t confused by jitter', () => {
   for (const noise of [REALISTIC_NOISE, BAD_NOISE]) {
     assert(run({ noise }).skel.racket === 'right', `misread the racket hand at noise ${noise}`)
   }
 })
 
-check('measurements do not lurch under realistic jitter', () => {
+check('measurements don’t lurch under realistic jitter', () => {
   const clean = run()
   const noisy = run({ noise: REALISTIC_NOISE })
   for (const id of ['contactHeight', 'kneeBend', 'dropDepth', 'armExtension', 'shoulderTilt']) {
@@ -2184,7 +2184,7 @@ check('noise scatters the measurements without skewing them', () => {
   }
 })
 
-check('a straight arm is not reported as bent just because tracking is noisy', () => {
+check('a straight arm isn’t reported as bent just because tracking is noisy', () => {
   // 180° is a ceiling, so jitter on a nearly-straight limb can only bend it and
   // the error cannot cancel. Arm extension drives a "your arm is bent at
   // contact" instruction, so this bias would put words in the coach's mouth.
@@ -2198,7 +2198,7 @@ check('a straight arm is not reported as bent just because tracking is noisy', (
   assert(Math.abs(bias) < 2, `arm extension reads ${bias.toFixed(2)}° off on noise alone`)
 })
 
-check('the trophy does not lurch under moderate jitter', () => {
+check('the trophy doesn’t lurch under moderate jitter', () => {
   // Knee angle is the noisiest series in the engine — three separately
   // jittering points feeding one derived number — and its minimum is broad, so
   // this is where noise does the most damage if the smoothing is wrong.
@@ -2254,7 +2254,7 @@ check('too few frames through the swing is flagged, not hidden', () => {
   const denseQ = assessQuality(dense, detectServe(dense, 50), 50)
   assert(
     q.confidence < denseQ.confidence,
-    `sparse (${q.confidence.toFixed(2)}) was not below dense (${denseQ.confidence.toFixed(2)})`,
+    `sparse (${q.confidence.toFixed(2)}) wasn’t below dense (${denseQ.confidence.toFixed(2)})`,
   )
 })
 
@@ -2390,7 +2390,7 @@ check('per-area deltas compare like with like', () => {
   assert(byId.swing === -4, `swing delta ${byId.swing}`)
 })
 
-check('skips an area the previous session did not measure', () => {
+check('skips an area the previous session didn’t measure', () => {
   const p = buildProgress([
     progressSession(DAY, 65, { toss: 60 }),
     progressSession(2 * DAY, 75, { toss: 72, swing: 66 }),
@@ -2403,9 +2403,9 @@ check('skips an area the previous session did not measure', () => {
 
 check('treats a change under the threshold as noise', () => {
   const line = REAL_CHANGE.overall
-  assert(deltaStatus(0, 'overall') === 'flat', '0 was not flat')
-  assert(deltaStatus(line - 1, 'overall') === 'flat', 'just under the threshold was not flat')
-  assert(deltaStatus(-(line - 1), 'overall') === 'flat', 'small decline was not flat')
+  assert(deltaStatus(0, 'overall') === 'flat', '0 wasn’t flat')
+  assert(deltaStatus(line - 1, 'overall') === 'flat', 'just under the threshold wasn’t flat')
+  assert(deltaStatus(-(line - 1), 'overall') === 'flat', 'small decline wasn’t flat')
   assert(deltaStatus(line, 'overall') === 'great', 'a real gain was called noise')
   assert(deltaStatus(-line, 'overall') === 'work', 'a real decline was called noise')
   assert(deltaStatus(line, 'overall', false) === 'soft', 'a gain between serves read differently was claimed')
@@ -2454,7 +2454,7 @@ check('a well-formed report passes through unchanged', () => {
   assert(out!.fundamentals[0].metrics.length === 1, 'lost a measurement')
 })
 
-check('rejects things that are not reports at all', () => {
+check('rejects things that aren’t reports at all', () => {
   for (const junk of [null, undefined, 42, 'report', [], {}]) {
     assert(normalise(junk) === undefined, `accepted ${JSON.stringify(junk)}`)
   }
@@ -2471,8 +2471,8 @@ check('fills in fields added by later versions', () => {
   delete legacy.quality
   const out = normalise(legacy)
   assert(Boolean(out), 'dropped a report that predates newer fields')
-  assert(out!.serves.count === 1, 'did not default the serve count')
-  assert(Boolean(out!.quality), 'did not default the quality block')
+  assert(out!.serves.count === 1, 'didn’t default the serve count')
+  assert(Boolean(out!.quality), 'didn’t default the quality block')
 })
 
 check('repairs an area whose measurements are missing', () => {
@@ -2661,7 +2661,7 @@ check('every practice headline reads as a sentence at one, two and five drills (
       }
     }
   }
-  const old = cueIssues('Knee bend at trophy has not improved after twice of its drill.')
+  const old = cueIssues('Knee bend at trophy hasn’t improved after twice of its drill.')
   assert(old.some((i) => i.startsWith('a count used as a noun')), `the lint let the old line through: ${old.join('; ')}`)
 })
 
@@ -2676,10 +2676,10 @@ check('reads a genuine improvement as improving', () => {
   // the camera moves that row a long way on a serve whose drop collapses.
   const f = findPracticeFocus(persistentWeakness([20, 24, 50, 70, 80]))
   assert(f!.verdict === 'improving', `verdict was ${f!.verdict} (trend ${f!.trend})`)
-  assert(practiceHeadline(f!).includes('getting better'), 'headline does not acknowledge progress')
+  assert(practiceHeadline(f!).includes('getting better'), 'headline doesn’t acknowledge progress')
 })
 
-check('a move the camera makes on its own is not progress', () => {
+check('a move the camera makes on its own isn’t progress', () => {
   // 32 against 55 on two serves a side: twenty-three points, which this row's
   // mean moves on noise alone one time in ten (L3.1).
   const f = findPracticeFocus(persistentWeakness([30, 34, 42, 52, 58]))
@@ -2719,18 +2719,18 @@ check('what to groove is carried alongside what to fix', () => {
     withBaskets(persistentWeakness([42, 45, 41, 44, 43]), 'contactHeight', 'Contact height'),
   )
   assert(f!.metricId === 'dropDepth', `focus moved to ${f!.metricId}`)
-  assert(f!.repeatability !== undefined, 'the recurring wanderer was not carried')
+  assert(f!.repeatability !== undefined, 'the recurring wanderer wasn’t carried')
   assert(f!.repeatability!.id === 'contactHeight', `carried ${f!.repeatability!.id}`)
   assert(f!.repeatability!.same === false, 'called it the same measurement as the focus')
   const note = repeatabilityNote(f!)
-  assert(note.toLowerCase().includes('contact height'), `note does not name it: ${note}`)
+  assert(note.toLowerCase().includes('contact height'), `note doesn’t name it: ${note}`)
 })
 
 check('the same measurement failing both tests is said once, not twice', () => {
   const f = findPracticeFocus(
     withBaskets(persistentWeakness([42, 45, 41, 44, 43]), 'dropDepth', 'Racket drop'),
   )
-  assert(f!.repeatability!.same === true, 'did not notice it is the focus measurement')
+  assert(f!.repeatability!.same === true, 'didn’t notice it is the focus measurement')
   const note = repeatabilityNote(f!)
   assert(note.length > 0, 'said nothing about the strongest case it can make')
   assert(
@@ -2809,7 +2809,7 @@ check('a history with no records says nothing about whether they drilled', () =>
   )
 })
 
-check('drills done before this run started are not evidence about it', () => {
+check('drills done before this run started aren’t evidence about it', () => {
   // The claim on the card is about this window of sessions. A drill done last
   // winter says nothing about a measurement that has been flat since May.
   const sessions = persistentWeakness([42, 45, 41, 44, 43])
@@ -2818,7 +2818,7 @@ check('drills done before this run started are not evidence about it', () => {
   assert(f.drilled === 0, `counted ${f.drilled} drills from before the window`)
 })
 
-check('a drill for something else is not credited to the focus', () => {
+check('a drill for something else isn’t credited to the focus', () => {
   const sessions = persistentWeakness([42, 45, 41, 44, 43])
   const f = findPracticeFocus(sessions, undefined, undefined, drilledLogs('kneeBend', 3))!
   assert(f.metricId === 'dropDepth', `focus was ${f.metricId}`)
@@ -2833,10 +2833,10 @@ check('reads a flat run as stuck', () => {
 check('reads a decline as slipping', () => {
   const f = findPracticeFocus(persistentWeakness([80, 74, 50, 30, 20]))
   assert(f!.verdict === 'slipping', `verdict was ${f!.verdict} (trend ${f!.trend})`)
-  assert(practiceHeadline(f!).includes('got worse'), 'headline does not flag the decline')
+  assert(practiceHeadline(f!).includes('got worse'), 'headline doesn’t flag the decline')
 })
 
-check('ignores a measurement that is not in every session', () => {
+check('ignores a measurement that isn’t in every session', () => {
   // contactAhead is only present twice and is terrible; it must not be chosen
   // over a metric measured consistently across all three.
   const sessions = [
@@ -2884,7 +2884,7 @@ check('the megabyte counter reads in the reader own locale, not always a period'
         minimumFractionDigits: 1,
         maximumFractionDigits: 1,
       }).format(4.5)),
-      `megabytes did not defer to the runtime locale: "${megabytes(4.5e6)}"`,
+      `megabytes didn’t defer to the runtime locale: "${megabytes(4.5e6)}"`,
     )
   }
 })
@@ -2905,7 +2905,7 @@ check('the megabyte counter keeps the shape the status line was written around',
 
 /* -------------------------------------- first serve against second ---------- */
 
-console.log('\n\x1b[1mWhy a basket cannot tell a first serve from a second\x1b[0m')
+console.log('\n\x1b[1mWhy a basket can’t tell a first serve from a second\x1b[0m')
 
 /**
  * R53 offers two ways to know which kind of serve it is looking at: a tap from
@@ -2970,7 +2970,7 @@ check('the rig separates a dialled second serve, and that proves nothing', () =>
   note(`  contact height (dialled) separates at ${dialled.toFixed(1)} sd`)
   note(`  chain span ratio (not dialled) separates at ${notDialled.toFixed(1)} sd`)
 
-  assert(dialled > 5, `the engine could not read a dial it was given: ${dialled.toFixed(1)} sd`)
+  assert(dialled > 5, `the engine couldn’t read a dial it was given: ${dialled.toFixed(1)} sd`)
   assert(
     notDialled < 3,
     `a reading nobody dialled separates the two at ${notDialled.toFixed(1)} sd — ` +
@@ -3026,14 +3026,14 @@ check('a sequence change past both terms is reported', () => {
     { ratio: 0.09, seconds: 1.35 },
     { ratio: 0.13, seconds: 1.35 },
   ]))
-  assert(!!d, 'a 0.04 change at equal tempo was not reported')
+  assert(!!d, 'a 0.04 change at equal tempo wasn’t reported')
   assert(
     Math.abs(d!.bound - rangeReach(2) * CHAIN_RATIO_DEVIATION) < 1e-9,
     `at equal tempo the bound came back ${d!.bound}`,
   )
 })
 
-check('from behind or a corner the sequence is not compared', () => {
+check('from behind or a corner the sequence isn’t compared', () => {
   // The elbow's speed there is half depth, as the leg lead says: the same serve
   // filmed from behind moved this ratio up to nine times as far.
   for (const view of ['front-back', 'angled']) {
@@ -3198,7 +3198,7 @@ check('each side is scored on its own serves, not on the basket', () => {
   const firstContact = split.first!.metrics.find((m) => m.id === 'contactHeight')!
   assert(
     firstContact.spread < wholeContact.spread / 2,
-    `splitting did not tighten the spread: ${firstContact.spread.toFixed(4)} against ${wholeContact.spread.toFixed(4)}`,
+    `splitting didn’t tighten the spread: ${firstContact.spread.toFixed(4)} against ${wholeContact.spread.toFixed(4)}`,
   )
 })
 

@@ -79,7 +79,7 @@ check('a hand peak after the ball had left its arc is overruled, and contact goe
         `fused contact at +${((skel.times.contact - truth.times.contact) * 1000).toFixed(0)} ms, ` +
         `from ${contact.from}, agreement ${contact.agreement}`,
     )
-    assert(late.times.contact - truth.times.contact > 0.1, `${fps} fps: the dial did not make the hand late`)
+    assert(late.times.contact - truth.times.contact > 0.1, `${fps} fps: the dial didn’t make the hand late`)
     assert(contact.from === 'ball', `${fps} fps: a hand peak after the hit was believed`)
     within((skel.times.contact - truth.times.contact) * 1000, -10, 1000 / fps + 25, `${fps} fps contact against the true hit (ms)`)
     assert(skel.keys.contact <= truth.keys.contact + 1, `${fps} fps: the contact sample stayed late`)

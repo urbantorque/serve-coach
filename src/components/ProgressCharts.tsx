@@ -76,7 +76,7 @@ export function ScoreRibbon({ points }: { points: TripPoint[] }) {
       <svg
         viewBox={`0 0 ${W} ${H}`}
         role="img"
-        aria-label={`Typical score across ${points.length} court trips, most recent ${newest.overall}.`}
+        aria-label={`Typical score across ${points.length} sessions, most recent ${newest.overall}.`}
         onPointerDown={pick}
         // A mouse reads a trip by hovering, a finger by touching (N5.4).
         onPointerMove={(e) => (e.buttons || e.pointerType === 'mouse') && pick(e)}

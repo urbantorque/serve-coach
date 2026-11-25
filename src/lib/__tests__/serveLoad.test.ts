@@ -60,12 +60,12 @@ check('usual is the mean of the last four weeks with serves, past any weeks off'
 check('two weeks is too few to call usual', () => {
   const load = serveLoad(season([0, 0, 20, 20, 60]), NOW)
   assert(load.usual === undefined && load.level === 'steady' && load.line === undefined, JSON.stringify(load))
-  assert(serveLoad(season([0, 20, 20, 20, 60]), NOW).level === 'jump', 'three weeks did not make a usual')
+  assert(serveLoad(season([0, 20, 20, 20, 60]), NOW).level === 'jump', 'three weeks didn’t make a usual')
 })
 
 heading('The level')
 
-check('a jump is the line weekJumpLine holds, and a busy week is not news', () => {
+check('a jump is the line weekJumpLine holds, and a busy week isn’t news', () => {
   assert(serveLoad(season([20, 22, 18, 20, 46]), NOW).level === 'jump', 'a doubling read steady')
   assert(serveLoad(season([2, 3, 2, 3, 8]), NOW).level === 'steady', 'three to eight was news')
   assert(weekJumped(30, 20) && !weekJumped(29, 20) && !weekJumped(19, 10), 'the jump line moved')
@@ -97,7 +97,7 @@ check('wherever weekJumpLine speaks, this says jump on the same usual', () => {
   }
 })
 
-check('a fortnightly player gets a usual that weekJumpLine cannot', () => {
+check('a fortnightly player gets a usual that weekJumpLine can’t', () => {
   const counts = [20, 0, 20, 0, 20, 0, 20, 0, 60]
   const sessions = season(counts)
   assert(weekJumpLine(servesPerWeek(sessions, NOW, counts.length)) === undefined, 'the older line was meant to be silent here')
@@ -168,7 +168,7 @@ check('the season reads as a small, steady load with a flag coming up', () => {
   const load = serveLoad(sessions, NOW)
   note(`${load.weeks.map((w) => w.serves).join(' ')}; usual ${load.usual}; this week ${load.thisWeek}; ${load.level}; ${load.line ?? 'no line'}`)
   note(`strain: ${load.strain.map((s) => `${s.flag} ${s.trips} of ${s.of}`).join(', ') || 'none'}`)
-  assert(load.strain.some((s) => s.flag === 'lumbar_load_posture_collapse'), 'the seeded back did not come up')
+  assert(load.strain.some((s) => s.flag === 'lumbar_load_posture_collapse'), 'the seeded back didn’t come up')
 })
 
 report()

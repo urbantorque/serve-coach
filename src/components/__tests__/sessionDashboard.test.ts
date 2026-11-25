@@ -76,7 +76,7 @@ check('the plan, before the file is timed and after', () => {
   assert(priced.includes('A sample of 12') && priced.includes('Every serve'), 'a choice is missing')
   assert(/About \d+ minutes|About a minute/.test(priced), 'no time was quoted on a timed file')
   const untimed = draw(fresh, { state: 'planning', timed: true })
-  assert(untimed.includes('I could not work out how fast your phone is'), 'an untimed file did not say so')
+  assert(untimed.includes('I couldn’t work out how fast your phone is'), 'an untimed file didn’t say so')
 })
 
 check('reading, paused, and a session reopened without its file', () => {
@@ -84,9 +84,9 @@ check('reading, paused, and a session reopened without its file', () => {
   const running = draw(half, { state: 'running', ratio: 0.5, detail: 'Reading serve 6 of 14' })
   assert(running.includes('Reading serve 6 of 14') && running.includes('Stop and keep the serves done so far'), 'the reading screen is incomplete')
   const paused = draw(half, { state: 'paused', reason: 'hidden', perSampleMs: 120 })
-  assert(paused.includes('went into the background') && paused.includes('5 of 14 serves checked'), 'the pause did not say why or where')
+  assert(paused.includes('went into the background') && paused.includes('5 of 14 serves checked'), 'the pause didn’t say why or where')
   const reopened = draw({ ...half, phase: 'stopped' }, { state: 'paused', reason: 'player' }, false)
-  assert(reopened.includes('Pick the video') && reopened.includes('9 to go'), 'a reopened session did not ask for its file')
+  assert(reopened.includes('Pick the video') && reopened.includes('9 to go'), 'a reopened session didn’t ask for its file')
 })
 
 check('the finished session draws every part it has data for', () => {
@@ -95,16 +95,16 @@ check('the finished session draws every part it has data for', () => {
   for (const part of ['What to work on', 'Every serve', 'Best and worst', 'A typical score of', 'All 14 serves']) {
     assert(done.includes(part), `"${part}" is missing`)
   }
-  assert(done.includes('data:image/jpeg;base64,AAAA'), 'the kept still was not drawn')
+  assert(done.includes('data:image/jpeg;base64,AAAA'), 'the kept still wasn’t drawn')
   const withUnsure = draw({ unsure: [40, 90] }, { state: 'done' }, false)
-  assert(withUnsure.includes('I left out 2 swings that were not serves.'), 'the swings left out were not counted')
+  assert(withUnsure.includes('I left out 2 swings that weren’t serves.'), 'the swings left out weren’t counted')
   const one = draw({ lines: lines.slice(0, 1) }, { state: 'done' })
   assert(!one.includes('Every serve'), 'a section with nothing to draw kept its heading')
   const none = draw({ found: [], chosen: [], lines: [] }, { state: 'done' })
-  assert(none.includes('I could not find a serve in this video.'), 'a session with no serves said something else')
+  assert(none.includes('I couldn’t find a serve in this video.'), 'a session with no serves said something else')
 })
 
-check('a stored session comes back with its stills and rubric, and nothing that is not a picture', () => {
+check('a stored session comes back with its stills and rubric, and nothing that isn’t a picture', () => {
   const back = normalisePracticeSession(
     JSON.parse(JSON.stringify({ ...session, stills: { 1: session.stills![1], x: 'data:image/jpeg;a', 2: 'javascript:alert(1)' } })),
   )!
@@ -117,7 +117,7 @@ check('with the video open the best and worst serves play; without it, the playe
   assert((open.match(/Watch the serve at/g) ?? []).length === 6, 'not every pick could be watched')
   const closed = renderToStaticMarkup(createElement(SessionDashboard, { session, onPickAgain: noop }))
   assert(!closed.includes('Watch the serve at'), 'a pick offered to play with no video open')
-  assert(closed.includes('Pick the same video again to watch these serves'), 'the way to watch them was not offered')
+  assert(closed.includes('Pick the same video again to watch these serves'), 'the way to watch them wasn’t offered')
 })
 
 heading('What the dashboard says')
@@ -169,13 +169,13 @@ check("each fix names the drill at the player's own step, with how to do it, and
   const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/'/g, '&#x27;').replace(/"/g, '&quot;')
   const on = Math.min(2, ladder.steps.length - 1)
   const moved = renderToStaticMarkup(createElement(SessionDashboard, { session, ladder: { [flaw]: on } }))
-  assert(moved.includes(esc(ladder.steps[on].name)), "the fix did not name the player's own step")
-  assert(moved.includes(`step ${on + 1} of ${ladder.steps.length}`), 'the step was not placed on its ladder')
+  assert(moved.includes(esc(ladder.steps[on].name)), "the fix didn’t name the player's own step")
+  assert(moved.includes(`step ${on + 1} of ${ladder.steps.length}`), 'the step wasn’t placed on its ladder')
   assert(moved.includes(esc(ladder.steps[on].how)), 'the drill came without how to do it')
   assert((moved.match(/Show the drill in big print/g) ?? []).length === 1, 'the court card is offered on more than the first fix, or not at all')
   const fresh = renderToStaticMarkup(createElement(SessionDashboard, { session }))
   const start = startingRung(ladder)
-  assert(fresh.includes(`step ${start + 1} of ${ladder.steps.length}`), 'a ladder never moved did not start where the plan starts it')
+  assert(fresh.includes(`step ${start + 1} of ${ladder.steps.length}`), 'a ladder never moved didn’t start where the plan starts it')
 })
 
 report()

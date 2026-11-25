@@ -110,7 +110,7 @@ check('the swing card is no longer down to a single row', () => {
   const ids = swing.metrics.map((m) => m.id)
   note(`swing card: ${ids.join(', ')}`)
   assert(ids.includes('dropDepth'), 'the racket drop left the swing card')
-  assert(ids.includes('handUnderElbow'), 'the surviving measurement is not on the swing card')
+  assert(ids.includes('handUnderElbow'), 'the surviving measurement isn’t on the swing card')
   assert(swing.metrics.length >= 2, `the swing card is back to ${swing.metrics.length} row(s)`)
 })
 
@@ -134,7 +134,7 @@ check('the racket drop still leads the swing card, and still owns the fix', () =
 
 heading('An area with nothing graded scores nothing, not zero (L1.1)')
 
-check('Rhythm is not measured on this serve, and says so', () => {
+check('Rhythm isn’t measured on this serve, and says so', () => {
   // Rhythm grades only `loadRatio`, and the collapse takes it away. The card
   // used to draw a 0 ring badged "Needs work" with a blank headline.
   const { area } = analyse(COLLAPSED)
@@ -156,7 +156,7 @@ check('the overall is the weighted mean of the areas that were graded', () => {
   )
   note(`overall ${overallOf(fundamentals)} (was ${zeroCounted} with the empty area counted as 0)`)
   assert(overallOf(fundamentals) === expected, `overall ${overallOf(fundamentals)}, expected ${expected}`)
-  assert(overallOf(fundamentals) > zeroCounted, 'leaving the empty area out did not lift the score')
+  assert(overallOf(fundamentals) > zeroCounted, 'leaving the empty area out didn’t lift the score')
 })
 
 check('no area delta is drawn into or out of an empty area', () => {
@@ -188,7 +188,7 @@ check('a report saved before the rule reads the same way', () => {
   assert(isMeasured({ score: 64, metrics: [] }), 'a stored area with a score reads as not measured')
 })
 
-heading('Legs that never bend cannot drive (L1.9)')
+heading('Legs that never bend can’t drive (L1.9)')
 
 check('the rig drives up less as its knees straighten', () => {
   // The hips used to dip and rise the same whatever the knees did.
@@ -242,12 +242,12 @@ check('it climbs with the racket drop, on serves the keyframes can see', () => {
   for (let i = 1; i < shares.length; i++) {
     assert(
       shares[i] > shares[i - 1],
-      `a deeper racket drop did not read as more hang: ${shares[i - 1]} → ${shares[i]}`,
+      `a deeper racket drop didn’t read as more hang: ${shares[i - 1]} → ${shares[i]}`,
     )
   }
 })
 
-check('the camera angle cannot move it', () => {
+check('the camera angle can’t move it', () => {
   // The reason it is only a vertical ordering of landmarks. `tossPathWobble` is
   // the cautionary tale: a reading taken along image x is two body axes mixed by
   // the camera, and the card is written in whichever one the phone happened to
@@ -260,7 +260,7 @@ check('the camera angle cannot move it', () => {
   }
 })
 
-check('a racket left hanging by the hip does not read as a loaded arm', () => {
+check('a racket left hanging by the hip doesn’t read as a loaded arm', () => {
   // Why the reading requires the hand to be up off the hip line as well as under
   // the elbow. A hanging arm puts the elbow above the hand by construction, so
   // without that gate a player who never takes the racket back at all would
@@ -280,7 +280,7 @@ check('a racket left hanging by the hip does not read as a loaded arm', () => {
     }
   }
   note(`idling: elbow over the hand on ${elbowOverHand}/${idle.length} frames, up off the hip on ${alsoUpOffTheHip}`)
-  assert(elbowOverHand > idle.length * 0.5, 'the rig did not produce a hanging arm to test against')
+  assert(elbowOverHand > idle.length * 0.5, 'the rig didn’t produce a hanging arm to test against')
   assert(
     alsoUpOffTheHip === 0,
     `${alsoUpOffTheHip} frames of a racket hanging by the hip would have counted as a loaded arm`,

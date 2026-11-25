@@ -27,12 +27,12 @@ check('between phases each serve runs forward at its own pace, never backwards',
 })
 
 check('the ends hold, and a serve missing a phase skips it', () => {
-  assert(syncedFrame(quick, -1) === 0 && syncedFrame(quick, 2) === 34, 'the ends do not hold')
+  assert(syncedFrame(quick, -1) === 0 && syncedFrame(quick, 2) === 34, 'the ends don’t hold')
   const noDrop = { ready: 0, toss: 10, trophy: 16, contact: 24, finish: 34 }
   const mid = (phaseMarks().trophy + phaseMarks().contact) / 2
   const f = syncedFrame(noDrop, mid)
   assert(f > 16 && f < 24, `a serve with no drop read ${f} between trophy and contact`)
-  assert(syncedFrame({}, 0.5) === 0, 'a serve with no phases did not rest on its first frame')
+  assert(syncedFrame({}, 0.5) === 0, 'a serve with no phases didn’t rest on its first frame')
 })
 
 report()

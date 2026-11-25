@@ -18,7 +18,7 @@ const FILE = {} as File
 
 heading('Whether to ask this browser to share at all')
 
-await check('a browser with no share function is not asked', async () => {
+await check('a browser with no share function isn’t asked', async () => {
   assert(
     (await attemptShare(undefined, FILE, 'x')) === 'not-attempted',
     'asked a browser with no navigator.share',
@@ -53,7 +53,7 @@ await check('a browser with share but no canShare is tried anyway', async () => 
   assert((await attemptShare(nav, FILE, 'My serve')) === 'shared', 'refused to try without canShare')
   assert(
     (called as { files?: File[] } | undefined)?.files?.[0] === FILE,
-    'did not hand the file to share()',
+    'didn’t hand the file to share()',
   )
 })
 
@@ -78,7 +78,7 @@ heading('What a real share sheet says back')
 
 await check('sharing that succeeds reports shared', async () => {
   const nav: ShareNavigator = { canShare: () => true, share: async () => undefined }
-  assert((await attemptShare(nav, FILE, 'x')) === 'shared', 'a clean share() was not reported as shared')
+  assert((await attemptShare(nav, FILE, 'x')) === 'shared', 'a clean share() wasn’t reported as shared')
 })
 
 await check('backing out of the share sheet is cancelled, not failed', async () => {
@@ -92,7 +92,7 @@ await check('backing out of the share sheet is cancelled, not failed', async () 
       throw abort
     },
   }
-  assert((await attemptShare(nav, FILE, 'x')) === 'cancelled', 'a dismissal was not read as cancelled')
+  assert((await attemptShare(nav, FILE, 'x')) === 'cancelled', 'a dismissal wasn’t read as cancelled')
 })
 
 await check('a share that fails for any other reason is failed, not cancelled', async () => {
@@ -108,7 +108,7 @@ await check('a share that fails for any other reason is failed, not cancelled', 
   )
 })
 
-check('every outcome that is not shared or cancelled falls through to a download', () => {
+check('every outcome that isn’t shared or cancelled falls through to a download', () => {
   // shareBlob's own contract, restated as a closed set: attemptShare only
   // ever returns one of four answers, and the caller's fallback depends on
   // exactly two of them being distinct from the other two.
@@ -189,9 +189,9 @@ await check('the card says how many serves, and both ends of the trip', async ()
   const texts = await drawTrip(TRIP)
   const all = texts.join(' | ')
   assert(/4 serves filmed/.test(all), `no serve count on the card:\n      ${all}`)
-  assert(texts.includes('74'), 'the best serve is not on the card')
-  assert(texts.includes('61'), 'the toughest serve is not on the card')
-  assert(/Racket stops short/.test(all), 'what they left working on is not on the card')
+  assert(texts.includes('74'), 'the best serve isn’t on the card')
+  assert(texts.includes('61'), 'the toughest serve isn’t on the card')
+  assert(/Racket stops short/.test(all), 'what they left working on isn’t on the card')
 })
 
 await check('one serve is a serve, not "1 serves"', async () => {
@@ -218,7 +218,7 @@ await check('a trip that was swept says so, with the number', async () => {
   const texts = await drawTrip({ ...TRIP, tightestGap: 6 })
   const all = texts.join(' | ')
   assert(/Tightest basket/.test(all), 'a swept trip drew no repeatability row')
-  assert(/6 apart/.test(all), `the gap did not reach the card:\n      ${all}`)
+  assert(/6 apart/.test(all), `the gap didn’t reach the card:\n      ${all}`)
 })
 
 await check('a trip with nothing to say about a joint says nothing about one', async () => {
@@ -227,7 +227,7 @@ await check('a trip with nothing to say about a joint says nothing about one', a
   const withStrain = await drawTrip(TRIP, 'Your shoulder has flagged on three of your last four trips.')
   assert(
     withStrain.join(' | ').includes('shoulder'),
-    'a strain line was passed and did not reach the card',
+    'a strain line was passed and didn’t reach the card',
   )
   assert(
     withStrain.length > texts.length,

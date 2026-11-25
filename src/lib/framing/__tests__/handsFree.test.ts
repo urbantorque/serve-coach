@@ -82,11 +82,11 @@ const lastOf = (xs: HandSample[]) => xs[xs.length - 1].t
 
 heading('Stopping on its own, once the serve is over')
 
-check('the rig serve raises a hand above the head, and its ready pose does not', () => {
+check('the rig serve raises a hand above the head, and its ready pose doesn’t', () => {
   const s = serveAt(0)
   assert(s.some((x) => x.handUp), 'no sample of the rig serve had a hand above the head')
   assert(!handSample(0, SERVE[0].image).handUp, 'the ready pose read as a hand up')
-  assert(handSample(0, SERVE[0].image).handsDown, 'the ready pose did not read as hands down')
+  assert(handSample(0, SERVE[0].image).handsDown, 'the ready pose didn’t read as hands down')
 })
 
 check('one serve stops a second and a half after the hands come down, not before', () => {
@@ -162,7 +162,7 @@ check('a serve under way never re-arms, because the toss puts a hand up', () => 
   assert(!shouldRearm(s.slice(0, up + 1), true, s[up].t), 'the toss itself re-armed')
 })
 
-check('nobody in shot, or a verdict that is not clear, never re-arms', () => {
+check('nobody in shot, or a verdict that isn’t clear, never re-arms', () => {
   assert(rearmsAt(gone(0, 10)) === undefined, 'an empty picture re-armed')
   assert(rearmsAt(standing(0, 10), false) === undefined, 'a hedged or refused picture re-armed')
 })
@@ -183,10 +183,10 @@ check('the countdown says when it starts, the last three seconds, and go', () =>
 })
 
 check('a verdict is spoken when it changes, and never twice inside the gap', () => {
-  assert(speakVerdict({ call: 'ready' }, undefined, 0), 'the first verdict was not spoken')
+  assert(speakVerdict({ call: 'ready' }, undefined, 0), 'the first verdict wasn’t spoken')
   assert(!speakVerdict({ call: 'ready' }, { call: 'ready', at: 0 }, 60_000), 'the same verdict was spoken again')
   assert(!speakVerdict({ call: 'feet' }, { call: 'ready', at: 0 }, SPEAK_GAP_MS - 1), 'a change was spoken inside the gap')
-  assert(speakVerdict({ call: 'feet' }, { call: 'ready', at: 0 }, SPEAK_GAP_MS), 'a change after the gap was not spoken')
+  assert(speakVerdict({ call: 'feet' }, { call: 'ready', at: 0 }, SPEAK_GAP_MS), 'a change after the gap wasn’t spoken')
 })
 
 check('a spoken cue loses its bold markers and stays a plain sentence', () => {
@@ -204,7 +204,7 @@ check('hands-free and the voice start on with a touch screen, and off without on
   const before = g.window
   try {
     g.window = { matchMedia: (q: string) => ({ matches: q === '(pointer: coarse)' }) }
-    assert(onCourtDefault(), 'a phone did not start on court')
+    assert(onCourtDefault(), 'a phone didn’t start on court')
     g.window = { matchMedia: () => ({ matches: false }) }
     assert(!onCourtDefault(), 'a desktop started hands-free')
     g.window = {}
@@ -218,8 +218,8 @@ check('hands-free and the voice start on with a touch screen, and off without on
 
 check("the player's own setting wins over the default, both ways", () => {
   const src = fs.readFileSync('src/components/FramingCheck.tsx', 'utf8')
-  assert(src.includes('readPrefs().handsFree ?? onCourtDefault()'), 'hands-free does not fall back only when unset')
-  assert(src.includes('readPrefs().speakFraming ?? onCourtDefault()'), 'the voice does not fall back only when unset')
+  assert(src.includes('readPrefs().handsFree ?? onCourtDefault()'), 'hands-free doesn’t fall back only when unset')
+  assert(src.includes('readPrefs().speakFraming ?? onCourtDefault()'), 'the voice doesn’t fall back only when unset')
   assert(!src.includes('Boolean(readPrefs().handsFree)'), 'an unset hands-free still reads as off somewhere')
 })
 
@@ -227,8 +227,8 @@ check('a blocked preview offers the camera app, and the app wires it to the came
   const framer = fs.readFileSync('src/components/FramingCheck.tsx', 'utf8')
   const app = fs.readFileSync('src/App.tsx', 'utf8')
   assert(/onCameraApp && CAMERA_APP_HELPS\.has\(block\)/.test(framer), 'the blocked state has no camera-app button')
-  assert(framer.includes('Film with your camera app'), 'the button does not say what it opens')
-  assert(/onCameraApp=\{\(\) => \{\s*setFilm\(null\)\s*cameraAppRef\.current\?\.click\(\)/.test(app), 'the app does not open the camera input from it')
+  assert(framer.includes('Film with your camera app'), 'the button doesn’t say what it opens')
+  assert(/onCameraApp=\{\(\) => \{\s*setFilm\(null\)\s*cameraAppRef\.current\?\.click\(\)/.test(app), 'the app doesn’t open the camera input from it')
 })
 
 report()

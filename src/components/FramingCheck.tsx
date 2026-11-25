@@ -708,7 +708,7 @@ export default function FramingCheck({ onRecorded, target, targetFlaw, rearm = f
   const pickButton = onPick && (
     <button type="button" className="film-side" onClick={onPick} aria-label={`Pick a video from this ${deviceNoun()}`}>
       <Icon name="gallery" size={26} />
-      <span>Videos</span>
+      <span>Upload</span>
     </button>
   )
 
@@ -768,7 +768,7 @@ export default function FramingCheck({ onRecorded, target, targetFlaw, rearm = f
                 onPick()
               }}
             >
-              Pick a video instead
+              Upload a video instead
             </button>
           )}
         </div>
@@ -841,7 +841,7 @@ export default function FramingCheck({ onRecorded, target, targetFlaw, rearm = f
         {rearming && handsFree && idle && (
           <p className="framer-target" role="status">
             <Icon name="camera" size={15} />
-            <span>Walk back to your spot and stand still. I start the countdown once you are still.</span>
+            <span>Walk back to your spot and stand still. I start the countdown once you’re still.</span>
           </p>
         )}
         {/* The download replaces the verdict: until the model is here there is no

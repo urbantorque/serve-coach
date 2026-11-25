@@ -349,8 +349,8 @@ check('no floor is quietly set below what its own repeatability asks for', () =>
       measured.add(v.id)
       if (!v.declared) {
         capped.push(
-          `${v.id} cannot resolve its own ${v.seriousMiss} serious miss ` +
-            `(needs a ${v.wanted} floor) and is not declared in UNDER_RESOLVED`,
+          `${v.id} can’t resolve its own ${v.seriousMiss} serious miss ` +
+            `(needs a ${v.wanted} floor) and isn’t declared in UNDER_RESOLVED`,
         )
       }
     }
@@ -441,7 +441,7 @@ check('the leg-drive floor is a full extension with no jump from the least knee 
   const atBandFloor = rows.find((r) => r.k === 145)!.planted
   assert(Math.abs(atBandFloor - floor) < 0.004, `a full extension from 35° rises ${atBandFloor.toFixed(4)}, and the floor is ${floor}`)
   assert(rows.find((r) => r.k === 133)!.planted > floor, 'a full load straightened sits under the floor')
-  assert(rows.find((r) => r.k === 170)!.planted < floor - NOISE_FLOOR.leg_drive_rise_ratio, 'straight legs are not clear of the floor')
+  assert(rows.find((r) => r.k === 170)!.planted < floor - NOISE_FLOOR.leg_drive_rise_ratio, 'straight legs aren’t clear of the floor')
 })
 
 check('the contact detector that was dropped stays measured and stays silent', () => {
@@ -537,7 +537,7 @@ const GRADED_END: Record<string, string> = {
 const SEEN_CEILING = 15
 const GRADED_INFERRED_FLOOR = 25
 
-check('the chain read from the picture plane holds still where the one read from depth does not', () => {
+check('the chain read from the picture plane holds still where the one read from depth doesn’t', () => {
   /*
    * The finding this workstream exists to establish, as a measurement.
    *
@@ -787,13 +787,13 @@ check('the landing is read from the picture plane and tracks what the rig posed'
       `0.12 m landing ${collapsed.mu.toFixed(4)} ± ${collapsed.sd.toFixed(4)} body heights`,
   )
 
-  assert(square.mu < 0.01, `a serve landing square reads ${square.mu.toFixed(4)}, which is not square`)
+  assert(square.mu < 0.01, `a serve landing square reads ${square.mu.toFixed(4)}, which isn’t square`)
   // Moves by far more than it wanders. The margin is wide because the claim is
   // "this responds", not "this responds by exactly 0.065".
   assert(
     collapsed.mu - square.mu > 4 * Math.max(square.sd, collapsed.sd),
     `a dialled landing moved the reading ${(collapsed.mu - square.mu).toFixed(4)} against a ` +
-      `deviation of ${Math.max(square.sd, collapsed.sd).toFixed(4)} — it does not respond to the fault`,
+      `deviation of ${Math.max(square.sd, collapsed.sd).toFixed(4)} — it doesn’t respond to the fault`,
   )
 
   /*
@@ -846,7 +846,7 @@ check('a clip that ended before the landing is refused, not reported as square',
     const short = readAt(cut)
     assert(
       short.offset === null,
-      `a clip ending +${cut}s after contact reported ${short.offset} — a body that has not landed ` +
+      `a clip ending +${cut}s after contact reported ${short.offset} — a body that hasn’t landed ` +
         'yet read as one that finished square',
     )
     // The feet were visible the whole time; it is the landing that is missing,
@@ -895,7 +895,7 @@ check('the landing floor is a share of the serve, not a number of seconds', () =
   const slow = readAt(2.7)
   assert(
     slow.landing.secondsAfterContact >= 0.3,
-    `the stretched case did not reach the old floor (+${slow.landing.secondsAfterContact}s), so it ` +
+    `the stretched case didn’t reach the old floor (+${slow.landing.secondsAfterContact}s), so it ` +
       'proves nothing about which floor is in force',
   )
   assert(
@@ -921,7 +921,7 @@ check('a landing nobody could see is refused rather than invented', () => {
    */
   const frames = buildServe({ ...DEPTH_AWARE, seed: SEEDS[0], landingLean: 0.12 }, FPS)
   const skel = detectServe(frames, FPS)
-  assert(typeof diagnose(frames, skel, { tier: 5 }).landing.offset === 'number', 'the clean case did not read')
+  assert(typeof diagnose(frames, skel, { tier: 5 }).landing.offset === 'number', 'the clean case didn’t read')
 
   // Feet flagged unseen and moved, exactly as a foot out of shot arrives.
   const blinded = frames.map((f) => ({
@@ -932,7 +932,7 @@ check('a landing nobody could see is refused rather than invented', () => {
   }))
   const out = diagnose(blinded, skel, { tier: 5 }).landing
   assert(out.offset === null, `an unseen foot produced an offset of ${out.offset}`)
-  assert(out.anklesSeen < 0.5, `the refusal did not report why: anklesSeen ${out.anklesSeen}`)
+  assert(out.anklesSeen < 0.5, `the refusal didn’t report why: anklesSeen ${out.anklesSeen}`)
   note(`  feet unseen: offset ${out.offset}, anklesSeen ${out.anklesSeen}`)
 })
 
@@ -1086,7 +1086,7 @@ check('every chain link is measured and none of them grades anybody', () => {
   )
 })
 
-check('a peak that is only the edge of its own window is not a peak', () => {
+check('a peak that is only the edge of its own window isn’t a peak', () => {
   /*
    * The fabrication `peakTimeInside` exists to refuse, tested where it happens.
    *
@@ -1162,19 +1162,19 @@ check('a link whose landmark was never seen is dropped rather than defaulted', (
   const seen = diagnose(frames, skel, { tier: 5 }).chain
   const unseen = diagnose(blind, skel, { tier: 5 }).chain
 
-  assert(seen.wrist.ms !== null, 'the racket hand was not read even on a clean clip')
+  assert(seen.wrist.ms !== null, 'the racket hand wasn’t read even on a clean clip')
   assert(
     unseen.wrist.ms === null,
     `a racket hand nobody saw still produced a peak at ${unseen.wrist.ms} ms`,
   )
   assert(
     unseen.span_ms === null,
-    `the chain span survived an end that did not: ${unseen.span_ms}`,
+    `the chain span survived an end that didn’t: ${unseen.span_ms}`,
   )
   // The other end of the same argument: this is a drop, not a collapse.
   assert(
     unseen.legs.ms !== null && unseen.elbow.ms !== null,
-    'blinding one landmark dropped links that did not depend on it',
+    'blinding one landmark dropped links that didn’t depend on it',
   )
   assert(
     unseen.wrist.confidence < 0.45,
@@ -1214,7 +1214,7 @@ check('the trunk pair are dropped on the same evidence that drops the legs', () 
 
   assert(
     seen.hips.ms !== null && seen.shoulders.ms !== null,
-    'the trunk pair were not read even on a clean clip',
+    'the trunk pair weren’t read even on a clean clip',
   )
   assert(
     d.chain.hips.ms === null && d.chain.shoulders.ms === null,
@@ -1223,11 +1223,11 @@ check('the trunk pair are dropped on the same evidence that drops the legs', () 
   // The signal built from the same two peaks agrees. That agreement is the point.
   assert(
     d.signals.hip_lead_ms === undefined,
-    'hip_lead_ms survived the blinding its own two peaks did not',
+    'hip_lead_ms survived the blinding its own two peaks didn’t',
   )
   assert(
     d.chain.legs.ms === null,
-    'the hips read as a rise survived a blinding the hips read as a yaw did not',
+    'the hips read as a rise survived a blinding the hips read as a yaw didn’t',
   )
   note(
     `  blinded trunk: hips ${d.chain.hips.ms} at ${d.chain.hips.confidence}, ` +
@@ -1235,7 +1235,7 @@ check('the trunk pair are dropped on the same evidence that drops the legs', () 
   )
 })
 
-check('the corner camera does not delete the links it cannot name an axis for', () => {
+check('the corner camera doesn’t delete the links it can’t name an axis for', () => {
   /*
    * A one-degree hole in the middle of the yaw range, from pricing a magnitude
    * with an axis-attribution doubt.
@@ -1360,7 +1360,7 @@ check('one identical serve produces one verdict', () => {
   note(`  stable: ${[...always].join(', ') || 'none'} · flickering: ${[...varies].join(', ') || 'none'}`)
 })
 
-check('a signal too coarse to tell one rung from the next does not rate a player', () => {
+check('a signal too coarse to tell one rung from the next doesn’t rate a player', () => {
   /*
    * The other end of `NOISE_FLOOR`, and the one nothing was watching. `inferTier`
    * reads the same table as band slack, where a wider floor lets a signal reach a
@@ -1404,7 +1404,7 @@ check('a signal too coarse to tell one rung from the next does not rate a player
   )
 })
 
-check('the two depth readings are marked soft when the camera cannot see depth', () => {
+check('the two depth readings are marked soft when the camera can’t see depth', () => {
   // The hedge that has to be doing the work, since the readings themselves
   // cannot be made better. Filmed from a yaw where one axis of the player's
   // depth points at the lens, both must fall below the threshold that keeps a
@@ -1422,7 +1422,7 @@ check('the two depth readings are marked soft when the camera cannot see depth',
     cameraYaw: CLEAN_SERVE.cameraYaw,
     seed: 4242,
   })
-  assert(headOn !== undefined, 'a face-on clip could not be read at all')
+  assert(headOn !== undefined, 'a face-on clip couldn’t be read at all')
   assert(
     headOn!.separationConfidence < SOFT_MEASUREMENT,
     `coil kept ${headOn!.separationConfidence.toFixed(2)} confidence on a face-on clip`,
@@ -1470,7 +1470,7 @@ check('knee extension tracks the bend it was given, across the whole range', () 
   const rungs = [118, 128, 138, 148, 158].map((dial) => ({ dial, ...extensionAt(dial) }))
   assert(
     rungs.every((r) => r.n === KNEE_SEEDS.length),
-    'the rig lost clips at some knee angles, so these rungs are not comparable',
+    'the rig lost clips at some knee angles, so these rungs aren’t comparable',
   )
   note(rungs.map((r) => `${r.dial}°→${r.mean.toFixed(1)}`).join(', '))
 
@@ -1590,7 +1590,7 @@ check('the trunk lead moves with the camera, and is noisiest where the guide put
   })
   assert(
     rows.every((r) => r.n === SPOT_SEEDS.length),
-    'the rig lost clips at some yaws, so the rows below are not comparable',
+    'the rig lost clips at some yaws, so the rows below aren’t comparable',
   )
   note(rows.map((r) => `${r.yaw}°: ${r.mean.toFixed(1)} ± ${r.sd.toFixed(1)}`).join(', '))
 
@@ -1653,7 +1653,7 @@ const underResolved = (() => {
 
 if (underResolved.length) {
   console.log(
-    `\n  \x1b[33m⚠ Signals this engine cannot resolve to its own serious miss:\x1b[0m` +
+    `\n  \x1b[33m⚠ Signals this engine can’t resolve to its own serious miss:\x1b[0m` +
       underResolved
         .map(
           (v) =>
@@ -1699,7 +1699,7 @@ if (underResolved.length) {
           .join('') +
         `\n  \x1b[2mThese are the best-conditioned timings in the engine and none of them names` +
         `\n  a fault. Repeatability was never the missing piece: what is missing is any` +
-        `\n  value a club player should have, which this rig cannot supply because every` +
+        `\n  value a club player should have, which this rig can’t supply because every` +
         `\n  track in it hangs off one normalised phase schedule. Real footage with a` +
         `\n  coach's judgement attached is the only thing that changes this.\x1b[0m`,
     )
@@ -1750,7 +1750,7 @@ check('a symptom is still attributed to a cause too small to name', () => {
 
   assert(toss.miss > 0, 'the toss was inside its band, so this proves nothing')
   assert(!toss.detected, `a ${toss.miss} miss was named as a fault despite the floor`)
-  assert(contact.detected, 'the contact miss was not large enough to be named')
+  assert(contact.detected, 'the contact miss wasn’t large enough to be named')
   assert(
     contact.caused_by === 'toss_height',
     'a low contact was reported without the low toss that caused it',
@@ -1766,7 +1766,7 @@ check('a fault below its floor is reported as no fault at all, severity included
   assert(only.severity === 'none', `a hidden fault kept severity "${only.severity}"`)
 })
 
-heading('External rotation: what a band could and could not rest on')
+heading('External rotation: what a band could and couldn’t rest on')
 
 /*
  * The reading `diagnose` takes is an angle against the trunk's up vector, and
@@ -1875,7 +1875,7 @@ check('and disagree completely about the absolute', () => {
   note(`one arm, two frames: ${trunk.toFixed(1)}° and ${shoulders.toFixed(1)}°`)
 })
 
-check('both frames are moved by a posture that is not external rotation', () => {
+check('both frames are moved by a posture that isn’t external rotation', () => {
   /*
    * The finding that stops "just pick the other frame" being the fix. Each
    * frame is confounded by a different posture, and switching moves the problem
@@ -1936,7 +1936,7 @@ check('the lean confound is additive, not entangled with the rotation', () => {
     spread <= 2,
     `lean shifts the reading by ${shifts.map((s) => s.toFixed(0)).join('/')}° at different ` +
       `rotations — a spread of ${spread.toFixed(1)}°, so the two are entangled and ` +
-      'ER_LEAN_SENSITIVITY cannot be one number',
+      'ER_LEAN_SENSITIVITY can’t be one number',
   )
 
   // And the number itself, against the constant — which is a BOUND, the worst
@@ -2126,7 +2126,7 @@ check('a delta between two serves is bounded by both terms, not by either alone'
   // everything and there would be no entry worth building.
   assert(
     atEqualTempo > 0.005 && atEqualTempo < 0.02,
-    `an equal-tempo bound of ${atEqualTempo.toFixed(4)} is not usable against a reading near 0.1`,
+    `an equal-tempo bound of ${atEqualTempo.toFixed(4)} isn’t usable against a reading near 0.1`,
   )
   assert(perSecond > 0, 'the tempo term came out at or below zero, so there is nothing to bound')
 })
@@ -2232,7 +2232,7 @@ check('the deviations UNCALIBRATED states are the ones the ensemble measures', (
  * R64 is unblocked and justified; it is not free. Pinned so it cannot go back to
  * being blocked for a reason that stopped being true.
  */
-check('the landing baseline moves with the back foot, and the front ankle does not', () => {
+check('the landing baseline moves with the back foot, and the front ankle doesn’t', () => {
   const read = (landingLean: number, landingBackFootDrag: number) => {
     const frames = buildServe({ landingLean, landingBackFootDrag, seed: 11 }, FPS)
     const skel = detectServe(frames, FPS)
@@ -2261,7 +2261,7 @@ check('the landing baseline moves with the back foot, and the front ankle does n
   )
   assert(
     frontSpread < 1.01,
-    `the front ankle varies ${frontSpread.toFixed(3)}× with the back foot, so it is not the clean ` +
+    `the front ankle varies ${frontSpread.toFixed(3)}× with the back foot, so it isn’t the clean ` +
       'baseline this finding claims',
   )
   // And the two are not interchangeable at square, which is why switching costs
@@ -2426,7 +2426,7 @@ check('at the corner a sideways toss is named and drilled as a forwards one', ()
  * writes a sentence, and so a change that fixed it goes red rather than passing
  * quietly.
  */
-check('one toss wobble reads seven times smaller on the axis a side-on camera cannot see', () => {
+check('one toss wobble reads seven times smaller on the axis a side-on camera can’t see', () => {
   const read = (dials: Record<string, number>) => {
     const v = realise(dials, 5, SEEDS.slice(0, 8))
       .map((r) => r.signals.toss_drift_ratio)

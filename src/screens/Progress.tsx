@@ -296,7 +296,7 @@ function ProgressBody({
             <span>{[tripDay(trip.createdAt), range].filter(Boolean).join(', ')}</span>
             {form.tripDelta !== undefined && deltaStatus(form.tripDelta, 'trip') !== 'flat' && (
               <span className="shape-delta">
-                <DeltaChip delta={form.tripDelta} scope="trip" /> on your last court trip
+                <DeltaChip delta={form.tripDelta} scope="trip" /> since last time
               </span>
             )}
           </p>
@@ -322,7 +322,7 @@ function ProgressBody({
             {sheetBestScore && (
               <div className="record-tile">
                 <span className="t-figure tnum">{sheetBestScore.score}</span>
-                <span>best court trip</span>
+                <span>best session</span>
               </div>
             )}
             <div className="record-tile">
@@ -334,7 +334,7 @@ function ProgressBody({
       </section>
 
       {!usualReady && (
-        <p className="progress-foot">After a dozen serves over three court trips, I can compare each new serve with your usual serve.</p>
+        <p className="progress-foot">After a dozen serves over three sessions, I can compare each new serve with your usual one.</p>
       )}
 
       {thenNow && (
@@ -347,7 +347,7 @@ function ProgressBody({
         <section className="block">
           <h2 className="block-title">Faults, serve by serve</h2>
           <FaultGrid faults={faults} />
-          <p className="progress-foot">Each square is a serve, oldest first. Lime means the fault was not there.</p>
+          <p className="progress-foot">Each square is a serve, oldest first. Lime means the fault wasn’t there.</p>
         </section>
       )}
 
@@ -356,7 +356,7 @@ function ProgressBody({
           {fastest && <p>{fastestLine(fastest, unit)}</p>}
           {tripSpeeds.length > 0 && (
             <p>
-              <strong className="tnum">{tripSpeeds.length}</strong> {tripSpeeds.length === 1 ? 'court trip' : 'court trips'} with a speed to compare.
+              <strong className="tnum">{tripSpeeds.length}</strong> {tripSpeeds.length === 1 ? 'session' : 'sessions'} with a speed to compare.
             </p>
           )}
         </Locked>
@@ -368,7 +368,7 @@ function ProgressBody({
             <>
               <SpeedTrips trips={tripSpeeds} unit={unit} />
               <p className="progress-foot">
-                Your typical first serve speed each court trip, in {UNIT_LABEL[unit]}, with each bar showing its likely range. Not checked against a radar.
+                Your typical first serve speed each session, in {UNIT_LABEL[unit]}, with each bar showing its likely range. Not checked against a radar.
               </p>
             </>
           )}
@@ -449,7 +449,7 @@ function ProgressBody({
             ))}
             {inRates.map((r) => (
               <p key={r.serveType} className="progress-foot">
-                {SERVE_TYPES[r.serveType].word.charAt(0).toUpperCase() + SERVE_TYPES[r.serveType].word.slice(1)} serves: in on {r.inServes} of {r.outcomes} tagged.
+                {SERVE_TYPES[r.serveType].word.charAt(0).toUpperCase() + SERVE_TYPES[r.serveType].word.slice(1)} serves: in on {r.inServes} of the {r.outcomes} you marked.
               </p>
             ))}
             {slowSecond && (
@@ -555,7 +555,7 @@ function ProgressBody({
             {sheetGapDelta && <p className="sheet-note">{sheetGapDelta}</p>}
             {spread.recurring && (
               <p className="sheet-note">
-                {spread.recurring.label} has been your least consistent part in {spread.recurring.sessions} of these. That is the one to practise most.
+                {spread.recurring.label} has been your least consistent part in {spread.recurring.sessions} of these. That’s the one to practise most.
               </p>
             )}
             {sheetBestGap && <p className="sheet-note">{bestGapEverLine(sheetBestGap)}</p>}

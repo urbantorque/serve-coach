@@ -99,7 +99,7 @@ check('a body keeps its width through a serve, whatever the limbs are doing', ()
 check('a player facing right shows the camera their right side, and left their left', () => {
   const right = placed(rig[20])
   const left = right.map((p) => ({ x: 1000 - p.x, y: p.y }))
-  assert(facingOf(right) * facingOf(left) < 0, 'mirroring did not turn the player round')
+  assert(facingOf(right) * facingOf(left) < 0, 'mirroring didn’t turn the player round')
   const near = nearSide(right)
   assert(near === (facingOf(right) >= 0 ? 'right' : 'left'), 'facing and the near side disagree')
 })
@@ -112,7 +112,7 @@ check('world depth, where a frame has it, decides which side is nearer', () => {
   world[LM.leftHip].z = -1
   world[LM.rightShoulder].z = 1
   world[LM.rightHip].z = 1
-  assert(nearSide(p, world) === 'left', 'the nearer side by depth was not chosen')
+  assert(nearSide(p, world) === 'left', 'the nearer side by depth wasn’t chosen')
 })
 
 check('the far limbs are painted before the trunk and the near arm after it', () => {

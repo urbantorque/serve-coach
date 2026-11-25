@@ -39,7 +39,7 @@ export default function StoragePanel({ count, onImported }: Props) {
       const n = await downloadBackup()
       setOutcome(`Saved ${n} ${n === 1 ? 'serve' : 'serves'} to a file.`)
     } catch {
-      setOutcome('The export did not work. Your reports are still here.')
+      setOutcome('The export didn’t work. Your reports are still here.')
     }
     setBusy(null)
   }
@@ -73,7 +73,7 @@ export default function StoragePanel({ count, onImported }: Props) {
           // room and import the same file again, which only re-adds what still
           // is not on the device.
           (r.failed
-            ? ` ${r.failed} could not be saved, because your phone is out of storage. Free up space and import this file again.`
+            ? ` ${r.failed} couldn’t be saved, because your phone is out of storage. Free up space and import this file again.`
             : '') +
           // Said rather than left to be found (L3.3): the restore counted these
           // in, and the store then had to make room.

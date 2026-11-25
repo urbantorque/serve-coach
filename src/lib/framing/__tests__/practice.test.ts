@@ -111,7 +111,7 @@ await check('a write that fails throws the file away rather than hand over a bas
 heading('Long enough to be a practice, bounded all the same')
 
 check('the cap is a practice, well past the session line and the single-serve cap', () => {
-  assert(MAX_PRACTICE_SECONDS > SESSION_SECONDS * 4, `${MAX_PRACTICE_SECONDS} s is not a basket`)
+  assert(MAX_PRACTICE_SECONDS > SESSION_SECONDS * 4, `${MAX_PRACTICE_SECONDS} s isn’t a basket`)
   assert(MAX_PRACTICE_SECONDS > MAX_RECORDING_SECONDS, 'a practice is capped shorter than a serve')
   assert(MAX_PRACTICE_SECONDS <= 30 * 60, 'no cap worth the name')
 })

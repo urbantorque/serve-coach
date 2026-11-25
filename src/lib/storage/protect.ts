@@ -280,7 +280,7 @@ export async function protectAfterSave(o: { practiceServes?: number } = {}, deps
 export function protectionLine(o: { available: boolean; serves?: number; persisted: boolean; mayClear: boolean; device?: string }): string {
   const lost = `a lost ${o.device ?? 'phone'}`
   if (!o.available) return 'This browser gives me nowhere to keep a safety copy. A backup file is your one safeguard.'
-  if (!o.serves) return `No safety copy yet. I make one here once you have filmed a serve, and only a file survives ${lost}.`
+  if (!o.serves) return `No backup yet. Once you’ve filmed a serve, save one here: only a backup file survives ${lost}.`
   const what = o.serves === 1 ? '1 serve' : `${o.serves} serves`
   const beyond = o.mayClear ? `${lost} or Safari clearing this site` : o.persisted ? lost : `${lost} or a cleared browser`
   return cue(`My copy of ${what} covers a damaged history or a mistaken clear; only a file survives ${beyond}.`)
@@ -319,7 +319,7 @@ export function recoveryReason(o: { opened: boolean; rows: number; readable: num
 
 export function recoveryLine(reason: RecoveryReason, serves: number, at: number): string {
   const what = `a copy of ${serves === 1 ? '1 serve' : `${serves} serves`} from ${shortDate(at)}`
-  return cue(reason === 'emptied' ? `Your history is empty, and I have ${what}. Restore it?` : `Part of your history will not open, and I have ${what}. Restore it?`)
+  return cue(reason === 'emptied' ? `Your history is empty, and I have ${what}. Restore it?` : `Part of your history won’t open, and I have ${what}. Restore it?`)
 }
 
 /**
@@ -404,7 +404,7 @@ function openShelf(idb: IDBFactory): Promise<IDBDatabase> {
       req.result.createObjectStore(SHELF_STORE)
     }
     req.onsuccess = () => resolve(req.result)
-    req.onerror = () => reject(req.error ?? new Error('Could not open the snapshot shelf'))
+    req.onerror = () => reject(req.error ?? new Error('Couldn’t open the snapshot shelf'))
   })
 }
 

@@ -46,7 +46,7 @@ export function serveStory(s: Session, history: readonly Session[], tags?: Reado
   const trip = tripsOf([...history]).find((t) => t.some((h) => h.id === s.id))
   if (trip && trip.length > 2) {
     const top = Math.max(...trip.map((h) => h.overall))
-    if (s.overall === top && trip.filter((h) => h.overall === top).length === 1) return { title: 'Best of that trip', best: true }
+    if (s.overall === top && trip.filter((h) => h.overall === top).length === 1) return { title: 'Best of that session', best: true }
   }
 
   const tag = tags?.get(s.id)

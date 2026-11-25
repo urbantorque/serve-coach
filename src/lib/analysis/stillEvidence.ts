@@ -31,12 +31,12 @@ export const STILL_EVIDENCE: Record<FlawId, StillEvidence> = {
   low_contact: { phase: 'contact', shows: 'target' },
   toss_arm_drops: { none: 'How long the arm stays up runs from the toss to the hit, and a still holds one moment of it.' },
   contact_behind: {
-    none: 'Which way the net is comes from the whole swing, so one frame cannot say in front from behind.',
+    none: 'Which way the net is comes from the whole swing, so one frame can’t say in front from behind.',
   },
   toss_height: { phase: 'contact', shows: 'flight' },
   collapsed_elbow: { phase: 'drop', shows: 'angle' },
   shallow_drop: {
-    none: 'A full drop and a shallow one leave the hand at nearly the same height on the drop still; the racket, which tells them apart, is not drawn from the clip.',
+    none: 'A full drop and a shallow one leave the hand at nearly the same height on the drop still; the racket, which tells them apart, isn’t drawn from the clip.',
   },
   no_leg_drive: { none: 'A rise runs from the knee bend to the hit, and a still holds one of the two moments.' },
   toss_drift: { none: "The tossing hand's wander is a path, and a still holds one point of it." },

@@ -34,7 +34,7 @@ heading('A streamed recording gets its length')
 check('Duration goes into Info, Info grows to hold it, and nothing after it moves but by that much', () => {
   const head = streamedHeader()
   const out = patchDuration(head, 6000)
-  assert(out !== undefined, 'a streamed header was not patched')
+  assert(out !== undefined, 'a streamed header wasn’t patched')
   assert(durationIn(out!) === 6000, `the duration read back as ${durationIn(out!)}`)
   // Info's size written in eight bytes now, and holding the eleven of Duration.
   const infoAt = 21
@@ -45,7 +45,7 @@ check('Duration goes into Info, Info grows to hold it, and nothing after it move
   assert(grew === 11 + 7, `grew by ${grew}`)
 })
 
-heading('A file it should not touch is left alone')
+heading('A file it shouldn’t touch is left alone')
 
 check('already timed, indexed, not a WebM, or no length to give', () => {
   assert(patchDuration(streamedHeader([0x44, 0x89, 0x84, 0x45, 0x00, 0x00, 0x00]), 6000) === undefined, 'a second Duration was added')

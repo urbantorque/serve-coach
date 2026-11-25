@@ -29,7 +29,7 @@ const TEACH: { moment: PhaseId; title: string; text: string; parts: (racket: 'le
   {
     moment: 'drop',
     title: 'The racket drop',
-    text: 'I see how low the racket falls behind you. That is where the speed starts.',
+    text: 'I see how low the racket falls behind you. That’s where the speed starts.',
     parts: (racket) => [`${racket}-upper`, `${racket}-fore`, `${racket}-hand`],
   },
   {

@@ -133,9 +133,9 @@ const fileOf = (sessions: Session[], practice?: PracticeLog[]) =>
 
 /* ------------------------------------------------------- refusing a bad file */
 
-heading('What is not a backup')
+heading('What isn’t a backup')
 
-await check('a file that is not JSON is refused by name, not by stack trace', async () => {
+await check('a file that isn’t JSON is refused by name, not by stack trace', async () => {
   const { store } = memoryStore()
   let message = ''
   try {
@@ -148,7 +148,7 @@ await check('a file that is not JSON is refused by name, not by stack trace', as
   assert(/\.json file the app exported/.test(message), `unhelpful refusal: "${message}"`)
 })
 
-await check('valid JSON that is not ours is refused', async () => {
+await check('valid JSON that isn’t ours is refused', async () => {
   const { store } = memoryStore()
   let message = ''
   try {
@@ -184,7 +184,7 @@ const fresh = await (async () => {
 
 await check('a report the phone has never seen is added', async () => {
   assert(fresh.result.added === 1, `added ${fresh.result.added}, expected 1`)
-  assert(fresh.m.sessions.has('c'), 'the new report is not in the store')
+  assert(fresh.m.sessions.has('c'), 'the new report isn’t in the store')
 })
 
 const older = await (async () => {
@@ -196,7 +196,7 @@ const older = await (async () => {
   return { result, m }
 })()
 
-check('an older copy of a report already here does not roll the phone back', () => {
+check('an older copy of a report already here doesn’t roll the phone back', () => {
   assert(older.result.skipped === 1, `skipped ${older.result.skipped}, expected 1`)
   assert(older.result.updated === 0, 'an older report overwrote a newer one')
   assert(
@@ -214,7 +214,7 @@ const newer = await (async () => {
 check('a newer copy of a report already here replaces it, and counts as updated', () => {
   assert(newer.result.updated === 1, `updated ${newer.result.updated}, expected 1`)
   assert(newer.result.added === 0, 'an update was counted as an addition')
-  assert(newer.m.sessions.get('a')!.overall === 88, 'the newer report did not land')
+  assert(newer.m.sessions.get('a')!.overall === 88, 'the newer report didn’t land')
 })
 
 check('a report identical in age is left alone rather than rewritten', () => {
@@ -283,7 +283,7 @@ const refused = await (async () => {
   return { result, m }
 })()
 
-check('one row that will not fit does not abandon every row after it', () => {
+check('one row that won’t fit doesn’t abandon every row after it', () => {
   // The Phase 1 defect, from the other side. Unguarded, a throw here lost every
   // remaining row in the file *and* the tally already reached, so the player was
   // told nothing at all had happened.
@@ -292,7 +292,7 @@ check('one row that will not fit does not abandon every row after it', () => {
   assert(refused.m.sessions.has('fourth'), 'rows after the failure were abandoned')
 })
 
-check('a row that would not fit is counted as failed, not as skipped', () => {
+check('a row that wouldn’t fit is counted as failed, not as skipped', () => {
   // They mean opposite things to a player. Skipped is "nothing would have
   // changed"; failed is "this might work once you free some space", and only one
   // of those is worth acting on.
@@ -320,7 +320,7 @@ check('drill records merge per record, newer winning, rather than replacing the 
   // Two phones can each hold drills the other never saw. A restore that replaced
   // the list would delete whichever side was not in the file.
   assert(drills.m.logs.get('kept')!.doneAt === 5_000, "the phone's newer drill record was overwritten")
-  assert(drills.m.logs.get('stale')!.doneAt === 8_000, "the file's newer drill record did not land")
+  assert(drills.m.logs.get('stale')!.doneAt === 8_000, "the file's newer drill record didn’t land")
   assert(drills.m.logs.has('new'), 'a drill record only the file had was lost')
 })
 
@@ -329,7 +329,7 @@ check('an unidentifiable drill record is dropped without failing the import', ()
   assert(drills.result.logs === 2, `logs ${drills.result.logs}, expected 2`)
 })
 
-check('drill records are counted apart from reports — they are not serves', () => {
+check('drill records are counted apart from reports — they aren’t serves', () => {
   assert(drills.result.added === 1, `added ${drills.result.added}, expected the one report`)
 })
 
@@ -375,7 +375,7 @@ await check('a round trip through a file changes nothing', async () => {
   const result = await importBackup(JSON.stringify(backup), to.store)
   assert(result.added === 2, `${result.added} of 2 reports survived the round trip`)
   assert(result.logs === 1, `${result.logs} of 1 drill records survived the round trip`)
-  for (const id of ['a', 'b']) assert(to.sessions.has(id), `report ${id} did not arrive`)
+  for (const id of ['a', 'b']) assert(to.sessions.has(id), `report ${id} didn’t arrive`)
 })
 
 heading('What a court trip can read back off a phone')
@@ -395,9 +395,9 @@ await check('an analysis keeps what it cost, all the way into an exported file',
   await importBackup(JSON.stringify(backup), to.store)
 
   const landed = to.sessions.get('t') as Session & { cost?: { ms: number; coldEngine: boolean } }
-  assert(landed !== undefined, 'the timed report did not survive the round trip')
+  assert(landed !== undefined, 'the timed report didn’t survive the round trip')
   assert(landed.cost?.ms === 24_310, `cost.ms came back as ${landed.cost?.ms}`)
-  assert(landed.cost?.coldEngine === false, 'coldEngine did not survive')
+  assert(landed.cost?.coldEngine === false, 'coldEngine didn’t survive')
   note('cost survives export and import, so a phone can report its own timings')
 })
 
@@ -437,9 +437,9 @@ const fileWithPrefs = (prefs: Partial<Prefs>) =>
 await check('an export carries the three that describe the player', async () => {
   const { store } = memoryStore({ prefs: { handedness: 'left', tier: 4, serveType: 'kick' } })
   const backup = await buildBackup(store)
-  assert(backup.prefs?.handedness === 'left', 'the hand did not travel')
-  assert(backup.prefs?.tier === 4, 'the rating did not travel')
-  assert(backup.prefs?.serveType === 'kick', 'the serve type did not travel')
+  assert(backup.prefs?.handedness === 'left', 'the hand didn’t travel')
+  assert(backup.prefs?.tier === 4, 'the rating didn’t travel')
+  assert(backup.prefs?.serveType === 'kick', 'the serve type didn’t travel')
 })
 
 await check('an export carries nothing about this install', async () => {
@@ -458,10 +458,10 @@ await check('an export carries the plan: the goal, each ladder step and when it 
     prefs: { goal, ladder: { shallow_drop: 2 }, ladderMovedAt: { shallow_drop: 7 }, ladderPassedAt: { shallow_drop: 7 }, cadence: 'weekly', courtMinutes: 45 },
   })
   const backup = await buildBackup(store)
-  assert(backup.prefs?.goal?.kind === 'fault', 'the goal did not travel')
-  assert(backup.prefs?.ladder?.shallow_drop === 2, 'the ladder step did not travel')
-  assert(backup.prefs?.ladderMovedAt?.shallow_drop === 7, 'when the step moved did not travel')
-  assert(backup.prefs?.cadence === 'weekly' && backup.prefs?.courtMinutes === 45, 'the cadence or court time did not travel')
+  assert(backup.prefs?.goal?.kind === 'fault', 'the goal didn’t travel')
+  assert(backup.prefs?.ladder?.shallow_drop === 2, 'the ladder step didn’t travel')
+  assert(backup.prefs?.ladderMovedAt?.shallow_drop === 7, 'when the step moved didn’t travel')
+  assert(backup.prefs?.cadence === 'weekly' && backup.prefs?.courtMinutes === 45, 'the cadence or court time didn’t travel')
 })
 
 await check('a fresh phone takes the plan; a phone with its own keeps it, fault by fault', async () => {
@@ -473,17 +473,17 @@ await check('a fresh phone takes the plan; a phone with its own keeps it, fault 
   })
   const fresh = memoryStore()
   await importBackup(file, fresh.store)
-  assert(fresh.prefs().goal?.kind === 'speed', 'a fresh phone did not take the goal')
-  assert(fresh.prefs().ladder?.shallow_drop === 2 && fresh.prefs().ladder?.toss_height === 1, 'a fresh phone did not take the ladders')
+  assert(fresh.prefs().goal?.kind === 'speed', 'a fresh phone didn’t take the goal')
+  assert(fresh.prefs().ladder?.shallow_drop === 2 && fresh.prefs().ladder?.toss_height === 1, 'a fresh phone didn’t take the ladders')
   assert(fresh.prefs().ladder?.bogus === undefined, 'a nonsense step was restored')
-  assert(fresh.prefs().ladderMovedAt?.toss_height === 6, 'when the step moved was not restored')
-  assert(fresh.prefs().cadence === 'fortnightly', 'a fresh phone did not take the cadence')
+  assert(fresh.prefs().ladderMovedAt?.toss_height === 6, 'when the step moved wasn’t restored')
+  assert(fresh.prefs().cadence === 'fortnightly', 'a fresh phone didn’t take the cadence')
 
   const mine = memoryStore({ prefs: { goal: { kind: 'second', startedAt: 8 }, ladder: { shallow_drop: 0 }, cadence: 'weekly' } })
   await importBackup(file, mine.store)
   assert(mine.prefs().goal?.kind === 'second', 'an old file overwrote the goal this phone set')
   assert(mine.prefs().ladder?.shallow_drop === 0, 'an old file moved a step this phone had')
-  assert(mine.prefs().ladder?.toss_height === 1, 'a fault this phone never started did not come across')
+  assert(mine.prefs().ladder?.toss_height === 1, 'a fault this phone never started didn’t come across')
   assert(mine.prefs().cadence === 'weekly', 'an old file overwrote the cadence')
 })
 
@@ -492,19 +492,19 @@ await check('a fresh phone takes the hand and the rating from the file', async (
   // knows any of this and the file is the only thing that does.
   const m = memoryStore()
   const result = await importBackup(fileWithPrefs({ handedness: 'left', tier: 4 }), m.store)
-  assert(m.prefs().handedness === 'left', 'a fresh phone did not take the hand')
-  assert(m.prefs().tier === 4, 'a fresh phone did not take the rating — every band moves with it')
-  assert(result.prefs === true, 'the restore did not report that it filled anything in')
+  assert(m.prefs().handedness === 'left', 'a fresh phone didn’t take the hand')
+  assert(m.prefs().tier === 4, 'a fresh phone didn’t take the rating — every band moves with it')
+  assert(result.prefs === true, 'the restore didn’t report that it filled anything in')
 })
 
-await check('a phone that already knows the player is not overwritten by an old file', async () => {
+await check('a phone that already knows the player isn’t overwritten by an old file', async () => {
   // The other half. A file exported in March must not move somebody back to a
   // rung they have since climbed off, or flip a hand they corrected last week.
   const m = memoryStore({ prefs: { handedness: 'right', tier: 5 } })
   const result = await importBackup(fileWithPrefs({ handedness: 'left', tier: 2 }), m.store)
   assert(m.prefs().handedness === 'right', 'an imported file overwrote the hand this phone had set')
   assert(m.prefs().tier === 5, 'an imported file rolled the rating backwards')
-  assert(!result.prefs, 'the restore claimed to have filled something in when it had not')
+  assert(!result.prefs, 'the restore claimed to have filled something in when it hadn’t')
 })
 
 check('a rating of zero is a stated rating, not an absent one', () => {
@@ -518,10 +518,10 @@ check('a rating of zero is a stated rating, not an absent one', () => {
   })
 })
 
-await check('a serve type nobody chose is filled in; one they chose is not', async () => {
+await check('a serve type nobody chose is filled in; one they chose isn’t', async () => {
   const untouched = memoryStore()
   await importBackup(fileWithPrefs({ serveType: 'kick' }), untouched.store)
-  assert(untouched.prefs().serveType === 'kick', 'the default serve type was not filled in')
+  assert(untouched.prefs().serveType === 'kick', 'the default serve type wasn’t filled in')
 
   const chosen = memoryStore({ prefs: { serveType: 'slice' } })
   await importBackup(fileWithPrefs({ serveType: 'kick' }), chosen.store)
@@ -535,7 +535,7 @@ await check('a backup written before preferences travelled still restores', asyn
   assert(!result.prefs, 'a file with no preferences claimed to have restored some')
 })
 
-await check('preferences that cannot be written do not fail the restore', async () => {
+await check('preferences that can’t be written don’t fail the restore', async () => {
   // A Safari private window throws on every `localStorage` write. The reports
   // are the history; a preference is a note beside them.
   const m = memoryStore({ prefsReadOnly: true })
@@ -562,7 +562,7 @@ await check('junk where the preferences should be is ignored rather than written
 
 /* ------------------------------- what the player said about their own serves */
 
-heading('The taps, which the file did not carry until R74')
+heading('The taps, which the file didn’t carry until R74')
 
 const tag = (id: string, taggedAt: number, extra: Partial<ServeTag> = {}): ServeTag => ({
   id,
@@ -588,12 +588,12 @@ await check('a tap survives the round trip', async () => {
     const r = await importBackup(JSON.stringify(b), to.store)
     assert(r.tags === 1, `${r.tags} taps restored, ${r.skippedTags} skipped`)
     const landed = (await to.store.listServeTags())[0]
-    assert(landed?.outcome === 'net', `the outcome did not survive: ${JSON.stringify(landed)}`)
-    assert(landed?.serveNumber === 2, 'which serve it was did not survive')
+    assert(landed?.outcome === 'net', `the outcome didn’t survive: ${JSON.stringify(landed)}`)
+    assert(landed?.serveNumber === 2, 'which serve it was didn’t survive')
   })
 })
 
-await check('a tap for a report that did not survive the prune is dropped', async () => {
+await check('a tap for a report that didn’t survive the prune is dropped', async () => {
   /*
    * The reason the tags are read last, after the pruning, rather than beside
    * the sessions. A tag is keyed by a report id and `restoreBackup` prunes as it
@@ -638,7 +638,7 @@ await check('the newer tap wins, in both directions', async () => {
     })
     .then(async (newer) => {
       assert(newer.tags === 1, 'a newer tap was refused')
-      assert((await to.store.listServeTags())[0].outcome === 'long', 'the newer tap did not land')
+      assert((await to.store.listServeTags())[0].outcome === 'long', 'the newer tap didn’t land')
     })
 })
 

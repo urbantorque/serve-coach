@@ -22,7 +22,7 @@ check('with no paid plan on sale, everything is open to everyone', () => {
 
 check('on sale, free opens no paid feature, except the breakdown of a first serve', () => {
   for (const f of FEATURES) assert(!can(f, { entitlement: FREE, gated: true, now: NOW }), `${f} open to free`)
-  assert(can('breakdown', { entitlement: FREE, gated: true, now: NOW, firstServe: true }), 'the first serve is not read in full')
+  assert(can('breakdown', { entitlement: FREE, gated: true, now: NOW, firstServe: true }), 'the first serve isn’t read in full')
   for (const f of FEATURES.filter((x) => x !== 'breakdown')) {
     assert(!can(f, { entitlement: FREE, gated: true, now: NOW, firstServe: true }), `a first serve opened ${f}`)
   }
@@ -31,7 +31,7 @@ check('on sale, free opens no paid feature, except the breakdown of a first serv
 check('Plus opens everything until it runs out, and not a moment after', () => {
   for (const f of FEATURES) assert(can(f, { entitlement: plus, gated: true, now: NOW }), `${f} closed to Plus`)
   for (const f of FEATURES) assert(!can(f, { entitlement: lapsed, gated: true, now: NOW }), `${f} open on a lapsed plan`)
-  assert(hasPlus({ plan: 'plus' }, NOW), 'a plan with no end is not Plus')
+  assert(hasPlus({ plan: 'plus' }, NOW), 'a plan with no end isn’t Plus')
   assert(!hasPlus(FREE, NOW), 'free counted as Plus')
 })
 

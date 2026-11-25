@@ -22,7 +22,7 @@ heading('This player so far')
 check('how long, which way, and how fast', () => {
   note(context.record.join(' | '))
   assert(context.record.some((l) => /serves filmed over \d+ trips since/.test(l) && /Typical score \d+, now \d+\./.test(l)), 'no record')
-  assert(context.record.some((l) => l.startsWith('Fastest serve about')), 'no speed, or one that is not said as about')
+  assert(context.record.some((l) => l.startsWith('Fastest serve about')), 'no speed, or one that isn’t said as about')
 })
 
 check('a score is never set against one scored under an older rubric', () => {
@@ -35,7 +35,7 @@ check('a score is never set against one scored under an older rubric', () => {
   note(line)
   const form = buildProgress(older)!
   const era = currentRubricEra(form.trips)
-  assert(era.length < form.trips.length, 'the history did not span two rubrics, so this checks nothing')
+  assert(era.length < form.trips.length, 'the history didn’t span two rubrics, so this checks nothing')
   const typical = /Typical score (\d+)/.exec(line)?.[1]
   if (era.length > 1) assert(typical === String(era[0].overall), `the typical score was ${typical}, not the first trip of this rubric's ${era[0].overall}`)
   else assert(typical === undefined, 'a score was set against a trip under another rubric')
@@ -64,15 +64,15 @@ const page = (c = context) => coachReportHtml(newest, [], [], c)
 
 check('every line lands on the page, and the camera\'s limits with it', () => {
   const html = page()
-  for (const l of [...context.record, ...context.working]) assert(html.includes(l.split("'").join('&#39;').split('"')[0].slice(0, 20)), `"${l}" is not on the page`)
-  for (const l of CANNOT_SEE) assert(html.includes(l.slice(0, 18)), `"${l}" is not on the page`)
-  assert(html.includes('What this cannot see'), 'the limits have no heading')
+  for (const l of [...context.record, ...context.working]) assert(html.includes(l.split("'").join('&#39;').split('"')[0].slice(0, 20)), `"${l}" isn’t on the page`)
+  for (const l of CANNOT_SEE) assert(html.includes(l.slice(0, 18)), `"${l}" isn’t on the page`)
+  assert(html.includes('What this can’t see'), 'the limits have no heading')
 })
 
-check('with nothing known, the sections are not there, and the limits still are', () => {
+check('with nothing known, the sections aren’t there, and the limits still are', () => {
   const html = coachReportHtml(newest, [], [])
   assert(!html.includes('This player so far') && !html.includes('their own usual'), 'an empty section was drawn')
-  assert(html.includes('What this cannot see'), 'the limits went with them')
+  assert(html.includes('What this can’t see'), 'the limits went with them')
 })
 
 check('a line is text, whatever it holds', () => {
@@ -85,7 +85,7 @@ check('the marks drawn on the serve reach the coach, with their read-outs and mo
   const ctx = coachContextOf(newest, sessions, [tag], DEFAULTS)
   assert(ctx.marks.length === 1 && ctx.marks[0] === 'At 1.25 s, a line: 0° from upright, measured on the picture.', ctx.marks.join(' | '))
   const html = coachReportHtml(newest, [], [], ctx)
-  assert(html.includes('What the player drew on it') && html.includes('0° from upright'), 'the marks are not on the page')
+  assert(html.includes('What the player drew on it') && html.includes('0° from upright'), 'the marks aren’t on the page')
   const none = coachReportHtml(newest, [], [], coachContextOf(newest, sessions, [], DEFAULTS))
   assert(!none.includes('What the player drew'), 'an empty marks section was drawn')
 })

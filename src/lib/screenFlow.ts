@@ -128,7 +128,7 @@ export const MOVES: Record<Screen, Move[]> = {
   session: [
     // Planning, reading, paused and done are one screen's stages, not screens.
     { to: 'session', via: 'startSession / stopSession' },
-    { to: 'error', via: 'sessionFailed (the video could not be read or scanned)' },
+    { to: 'error', via: 'sessionFailed (the video couldn’t be read or scanned)' },
     { to: 'home', via: 'leaveSession' },
   ],
 }

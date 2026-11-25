@@ -411,7 +411,7 @@ check('a clean track reads its launch speed, wherever the ball flew relative to 
   assert(read >= 40, `only ${read} of 60 clean landscape tracks read`)
   note(`worst error within 30° of the picture: ${(worst * 100).toFixed(1)}% with the depth fitted, ${(flatWorst * 100).toFixed(1)}% from the picture alone`)
   assert(worst < 0.05, `a clean track read ${(worst * 100).toFixed(1)}% off`)
-  assert(flatWorst > 0.1, 'the flat reading was never far out — then the depth model is not earning its keep')
+  assert(flatWorst > 0.1, 'the flat reading was never far out — then the depth model isn’t earning its keep')
 })
 
 check('the stated range holds the true speed, with decoys in every frame', () => {

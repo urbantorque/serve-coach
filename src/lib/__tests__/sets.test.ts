@@ -59,7 +59,7 @@ check('first and second serves are kept apart', () => {
 
 heading('A set counts ten tapped serves after it starts')
 
-check('serves before the start, untapped ones and the other serve number do not count', () => {
+check('serves before the start, untapped ones and the other serve number don’t count', () => {
   const rows = [
     tapped(0, 'in', 1), // before the set
     tapped(2, 'in', 1),
@@ -91,7 +91,7 @@ const result = (startedAt: number, inServes: number, serveNumber: 1 | 2 = 1, tar
   target,
 })
 
-check('a set past every other of its serve number is the record; a second serve does not compete', () => {
+check('a set past every other of its serve number is the record; a second serve doesn’t compete', () => {
   const past = [result(0, 6), result(100, 9, 2)]
   const now = result(200, 8, 1, 7)
   const line = setDoneLine(now, [...past, now])
@@ -101,7 +101,7 @@ check('a set past every other of its serve number is the record; a second serve 
   const short = setDoneLine(result(300, 5, 1, 7), [...past, now, result(300, 5, 1, 7)])
   assert(short === 'Set of 10 first serves: 5 in. Your aim was 7.', `"${short}"`)
   const first = setDoneLine(result(0, 6), [result(0, 6)])
-  assert(first === 'Set of 10 first serves: 6 in. That is your mark to beat next time.', `"${first}"`)
+  assert(first === 'Set of 10 first serves: 6 in. That’s your mark to beat next time.', `"${first}"`)
 })
 
 await check('the records travel in the backup, and merge with the phone\'s own', async () => {
@@ -141,14 +141,14 @@ check('the glance offers a set, runs one, and says how it finished', () => {
   const running = renderToStaticMarkup(
     createElement(Glance, { ...props, onStartSet: () => {}, onStopSet: () => {}, set: { line: 'Set of first serves: 3 in of 4. Aim: 7 of 10.', running: true } }),
   )
-  assert(running.includes('3 in of 4') && running.includes('Stop this set'), 'the running set was not shown')
+  assert(running.includes('3 in of 4') && running.includes('Stop this set'), 'the running set wasn’t shown')
   assert(!running.includes('Start a set of 10'), 'a second set was offered while one runs')
   const done = renderToStaticMarkup(
     createElement(Glance, { ...props, onStartSet: () => {}, set: { line: 'Set of 10 first serves: 8 in.', running: false } }),
   )
-  assert(done.includes('8 in.') && done.includes('Start a set of 10'), 'a finished set did not offer the next')
+  assert(done.includes('8 in.') && done.includes('Start a set of 10'), 'a finished set didn’t offer the next')
   const untagged = renderToStaticMarkup(createElement(Glance, { ...props, onTagOutcome: undefined, onStartSet: () => {} }))
-  assert(!untagged.includes('Start a set'), 'a set was offered where landings cannot be tapped')
+  assert(!untagged.includes('Start a set'), 'a set was offered where landings can’t be tapped')
 })
 
 report()

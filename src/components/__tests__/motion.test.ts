@@ -14,13 +14,13 @@ const noop = () => {}
 
 heading('Motion with a purpose')
 
-check('a screen change runs inside a view transition where there is one, and directly where there is not', () => {
+check('a screen change runs inside a view transition where there is one, and directly where there isn’t', () => {
   let ran = 0
   let wrapped = 0
   withTransition(() => ran++, { startViewTransition: ((fn: () => void) => { wrapped++; fn(); return {} as ViewTransition }) as Document['startViewTransition'] })
   assert(ran === 1 && wrapped === 1, `ran ${ran}, wrapped ${wrapped}`)
   withTransition(() => ran++, {} as Pick<Document, 'startViewTransition'>)
-  assert(ran === 2, 'without the API the change did not happen')
+  assert(ran === 2, 'without the API the change didn’t happen')
 })
 
 check('a report just made plays through once, and a reopened one opens at rest', () => {
@@ -28,7 +28,7 @@ check('a report just made plays through once, and a reopened one opens at rest',
   const { frames: _f, ...saved } = sampleAnalysis()
   void _f
   const reopened = renderToStaticMarkup(createElement(Report, { analysis: saved as never, onBack: noop, onAnalyzeAnother: noop }))
-  assert(live.includes('data-settled="false"'), 'the live report does not play through')
+  assert(live.includes('data-settled="false"'), 'the live report doesn’t play through')
   assert(reopened.includes('data-settled="true"'), 'a reopened report replays the reveal')
 })
 

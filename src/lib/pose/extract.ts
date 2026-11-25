@@ -184,8 +184,8 @@ export function describeDecodeFailure(video: HTMLVideoElement): UnreadableVideoE
     code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED || code === MediaError.MEDIA_ERR_DECODE
 
   if (unsupported && !supportsHEVC()) {
-    return new UnreadableVideoError('This browser cannot play that video.', [
-      'It is probably in the iPhone\'s High Efficiency format, which this browser cannot play.',
+    return new UnreadableVideoError('This browser can’t play that video.', [
+      'It’s probably in the iPhone\'s High Efficiency format, which this browser can’t play.',
       'On iPhone: Settings › Camera › Formats › Most Compatible. Clips filmed after that will work.',
       'For a clip you have already filmed, send it to yourself by WhatsApp or email, which converts it to a format that plays.',
       'Safari on an iPhone or Mac can open it, if you have one to hand.',
@@ -193,7 +193,7 @@ export function describeDecodeFailure(video: HTMLVideoElement): UnreadableVideoE
   }
 
   if (code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED) {
-    return new UnreadableVideoError('That file is not a video this browser can open.', [
+    return new UnreadableVideoError('That file isn’t a video this browser can open.', [
       'MP4 and MOV clips straight from a phone camera work best.',
       'If it came from a screen recording or an editing app, try exporting it again as MP4.',
     ])
@@ -206,7 +206,7 @@ export function describeDecodeFailure(video: HTMLVideoElement): UnreadableVideoE
     ])
   }
 
-  return new UnreadableVideoError('That video would not open.', [
+  return new UnreadableVideoError('That video wouldn’t open.', [
     'Try trimming it in your photo library and picking it again.',
     'MP4 or MOV clips from a phone camera work best.',
   ])
@@ -350,10 +350,10 @@ export async function loadVideo(video: HTMLVideoElement, src: string): Promise<v
   if (video.error) throw describeDecodeFailure(video)
 
   if (!Number.isFinite(video.duration) || video.duration <= 0) {
-    throw new UnreadableVideoError('That video would not open properly.', [
+    throw new UnreadableVideoError('That video wouldn’t open properly.', [
       supportsHEVC()
         ? 'It may be an unusual format, or still downloading from iCloud or Google Photos.'
-        : 'If it came from an iPhone, it is probably in High Efficiency (HEVC) format, which this browser cannot play. Set Settings › Camera › Formats › Most Compatible and film it again.',
+        : 'If it came from an iPhone, it is probably in High Efficiency (HEVC) format, which this browser can’t play. Set Settings › Camera › Formats › Most Compatible and film it again.',
       'Trimming the clip in your photo library and picking it again usually fixes it.',
     ])
   }
@@ -365,7 +365,7 @@ export async function loadVideo(video: HTMLVideoElement, src: string): Promise<v
   // audio-only file, or a codec the browser advertised and then could not set up.
   if (!video.videoWidth || !video.videoHeight) {
     throw new UnreadableVideoError('There is no picture in that file.', [
-      'It may be an audio recording, or a video this browser cannot play.',
+      'It may be an audio recording, or a video this browser can’t play.',
       'Pick a clip from your camera roll rather than a file from another app.',
     ])
   }

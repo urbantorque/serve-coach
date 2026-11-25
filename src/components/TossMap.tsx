@@ -178,7 +178,7 @@ export default function TossMap({ map }: { map: TossMapData }) {
           <svg width="14" height="14" aria-hidden="true">
             <circle cx="7" cy="7" r="4.5" fill="none" stroke="var(--fg-faint)" strokeWidth="2" />
           </svg>
-          {tagged ? 'Not tagged' : 'Tag a serve to colour it'}
+          {tagged ? 'Not marked' : 'Mark a serve as in or out to colour it'}
         </li>
       </ul>
     </figure>

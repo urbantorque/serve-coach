@@ -73,7 +73,7 @@ check('a real-time toss is never read as slowed down', () => {
   }
 })
 
-check('decoys in every frame and a rougher centroid do not change the answer', () => {
+check('decoys in every frame and a rougher centroid don’t change the answer', () => {
   // Two blobs per frame that are not the ball — a bright shirt, a sign — moving
   // nowhere in particular, and twice the centroid noise.
   for (const factor of [1, 4] as const) {
@@ -132,7 +132,7 @@ check('the file wins when it speaks, whatever the ball says', () => {
 
 check('the ball decides only when the motion agrees', () => {
   const ball = stretchFromBall(toss(4, 77), GRAVITY)!
-  assert(ball.factor === 4, 'setup: the ball did not read four')
+  assert(ball.factor === 4, 'setup: the ball didn’t read four')
   const agreed = chooseStretch({ ball, swing: 0.56, motion: 4.8 })
   assert(agreed.factor === 4 && agreed.source === 'ball', `chose ${agreed.factor} from ${agreed.source}`)
   const human = chooseStretch({ ball, swing: 0.14, motion: 1.2 })
@@ -157,7 +157,7 @@ check('a four-times clip retimed reads the timings of the serve, not the file', 
   const file = real.map((f) => ({ ...f, t: f.t * 4 }))
   const truth = measure(real, detectServe(real, 120), true)
   const fileSkel = detectServe(file, 30)
-  assert(looksSlowedDown(file, fileSkel), 'setup: the file did not look slowed down')
+  assert(looksSlowedDown(file, fileSkel), 'setup: the file didn’t look slowed down')
   const retimed = retimeFrames(file, 4)
   const skel = detectServe(retimed, 120)
   assert(!looksSlowedDown(retimed, skel), 'the retimed clip still looks like slow motion')

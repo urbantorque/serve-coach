@@ -56,7 +56,7 @@ check('three cold starts get their own figure, said as its own thing', () => {
   ])
   assert(t!.coldMedianMs === 90_000, `cold median was ${t!.coldMedianMs}`)
   const line = coldTimingLine(t)!
-  assert(/57 MB/.test(line), `the cold line does not say what is in it: "${line}"`)
+  assert(/57 MB/.test(line), `the cold line doesn’t say what is in it: "${line}"`)
 })
 
 check('reports with no cost on them are simply not counted', () => {

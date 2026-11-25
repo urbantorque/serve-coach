@@ -36,7 +36,7 @@ check('every claim names a study it can be checked against, or says it is coachi
       }
       for (const id of Array.isArray(claim.from) ? claim.from : [claim.from]) {
         const source = SOURCES[id]
-        assert(source !== undefined, `"${claim.text}" cites ${id}, which is not in SOURCES`)
+        assert(source !== undefined, `"${claim.text}" cites ${id}, which isn’t in SOURCES`)
         assert(/\d{4}/.test(source.ref) && /doi|PMID|J |Med|Sci|Rev/.test(source.ref), `${id}: a reference nobody could look up`)
       }
       studies++
@@ -46,7 +46,7 @@ check('every claim names a study it can be checked against, or says it is coachi
   assert(studies > coaching, 'more of the lessons are coaching than measured')
 })
 
-check('the coaching mark says it is not a measurement', () => {
+check('the coaching mark says it isn’t a measurement', () => {
   assert(/not a measurement/.test(fromLine(COACHING)), fromLine(COACHING))
 })
 

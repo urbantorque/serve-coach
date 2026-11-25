@@ -246,7 +246,7 @@ const RANKING: {
     // hedged for it.
     call: 'turn-off-square',
     grade: 'hedged',
-    say: `**Move the phone round to your side**, ${PLACEMENT.where}. From the front, I cannot see how far in front you hit.`,
+    say: `**Move the phone round to your side**, ${PLACEMENT.where}. From the front, I can’t see how far in front you hit.`,
     fires: (r) => collapsed(r) === 'depth',
   },
   {
@@ -275,7 +275,7 @@ const RANKING: {
      */
     call: 'off-vertical',
     grade: 'hedged',
-    say: '**Straighten up, and check the phone is level.** One of the two is leaning and I cannot tell which.',
+    say: '**Straighten up, and check the phone is level.** One of the two is leaning and I can’t tell which.',
     // Where levelling starts (H37). At the old 4° a level phone's own stance,
     // 3.3° to 5.1° on the Bath serves, was told to check the phone.
     fires: (r) => r.spatial !== null && Math.abs(r.spatial.roll_deg) >= LEVEL_FROM,

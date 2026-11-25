@@ -68,10 +68,10 @@ check('an uneven run — a bridged gap — still finds the nearest', () => {
   // evenly spaced. A search that assumed a fixed cadence would divide its way to
   // the wrong side of a hole.
   const holed = at([0, 0.03, 0.06, 0.5, 0.53, 0.56])
-  assert(nearestFrameIndex(holed, 0.07) === 2, 'crossed a gap it should not have')
-  assert(nearestFrameIndex(holed, 0.49) === 3, 'did not reach across the gap when it should')
-  assert(nearestFrameIndex(holed, 0.2) === 2, 'a moment inside the gap did not take the nearer edge')
-  assert(nearestFrameIndex(holed, 0.4) === 3, 'a moment inside the gap did not take the nearer edge')
+  assert(nearestFrameIndex(holed, 0.07) === 2, 'crossed a gap it shouldn’t have')
+  assert(nearestFrameIndex(holed, 0.49) === 3, 'didn’t reach across the gap when it should')
+  assert(nearestFrameIndex(holed, 0.2) === 2, 'a moment inside the gap didn’t take the nearer edge')
+  assert(nearestFrameIndex(holed, 0.4) === 3, 'a moment inside the gap didn’t take the nearer edge')
 })
 
 check('an exact tie takes the later frame, consistently', () => {

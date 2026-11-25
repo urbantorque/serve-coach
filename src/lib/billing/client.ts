@@ -88,7 +88,7 @@ export async function startCheckout(plan: 'monthly' | 'annual' = 'monthly'): Pro
     location.assign(r.data.url)
     return undefined
   }
-  return r.data.error ?? 'I could not start the checkout. Try again in a minute.'
+  return r.data.error ?? 'I couldn’t start the checkout. Try again in a minute.'
 }
 
 /**
@@ -113,7 +113,7 @@ export async function manage(): Promise<string | undefined> {
     location.assign(r.data.url)
     return undefined
   }
-  return r.data.error ?? 'I could not open your billing. Try again in a minute.'
+  return r.data.error ?? 'I couldn’t open your billing. Try again in a minute.'
 }
 
 /** A link that brings Plus to another device. The pass rides in the fragment, which no server sees. */

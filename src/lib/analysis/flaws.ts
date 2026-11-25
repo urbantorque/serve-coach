@@ -152,7 +152,7 @@ export const FLAWS: FlawSpec[] = [
     flaw: 'arming_the_ball',
     signal: 'hip_lead_ms',
     causedBy: 'early_shoulder_rotation',
-    notNamed: 'see UNDER_RESOLVED.hip_lead_ms; segment order does not predict serve speed (van Trigt 2024)',
+    notNamed: 'see UNDER_RESOLVED.hip_lead_ms; segment order doesn’t predict serve speed (van Trigt 2024)',
   },
   // The arm doing the work because the legs did not lift the body into the
   // ball. Serving with no leg drive cost about a tenth of racket speed and saved

@@ -78,7 +78,7 @@ check('a kick is never compared with flat serves', () => {
   const kick = history([{ outcome: 'net', dials: { contactReach: 1.05 }, n: 6 }])
   const sessions = [...flat.sessions, ...kick.sessions.map((s) => ({ ...s, serveType: 'kick' as const }))]
   const found = missesInCommon(sessions, [...flat.tags, ...kick.tags], 'flat')
-  assert(found.length === 0, 'flat serves that went in were set against kicks that did not')
+  assert(found.length === 0, 'flat serves that went in were set against kicks that didn’t')
 })
 
 report()

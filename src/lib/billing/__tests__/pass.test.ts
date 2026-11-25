@@ -20,7 +20,7 @@ const b64 = (s: string) => btoa(s).replace(/\+/g, '-').replace(/\//g, '_').repla
 await check('a signed pass reads back exactly as it was signed', async () => {
   const read = await readPass(pass, verify)
   assert(JSON.stringify(read) === JSON.stringify(claims), JSON.stringify(read))
-  assert(/^[\w-]+\.[\w-]+$/.test(pass), `a pass is not two url-safe parts: ${pass}`)
+  assert(/^[\w-]+\.[\w-]+$/.test(pass), `a pass isn’t two url-safe parts: ${pass}`)
 })
 
 await check('a pass stretched by editing it is refused', async () => {
@@ -39,7 +39,7 @@ await check('nonsense is refused without throwing', async () => {
   for (const junk of ['', '.', 'abc', 'abc.def', `${pass}x`, 'e30.e30']) assert((await readPass(junk, verify)) === undefined, `accepted "${junk}"`)
 })
 
-await check('the public half cannot sign', async () => {
+await check('the public half can’t sign', async () => {
   assert(!('d' in keys.publicJwk), 'the public key carries the private part')
   let refused = false
   try {

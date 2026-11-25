@@ -585,7 +585,7 @@ export function softnessReason(id: string, ctx: ConfidenceContext): string | und
       say:
         ctx.skel.detectedRacket !== ctx.skel.racket
           ? cue('This clip looks like your other hand, so this reading may sit backwards. Check the hand badge before you trust it.')
-          : cue('I could not lock which hand holds your racket, so this reading may sit backwards. Set the hand badge yourself.'),
+          : cue('I couldn’t lock which hand holds your racket, so this reading may sit backwards. Set the hand badge yourself.'),
     })
   }
   if (deps.includes('scale') && ctx.skel.derivation.cameraMoved) {
@@ -655,14 +655,14 @@ export function softnessReason(id: string, ctx: ConfidenceContext): string | und
     causes.push({
       cost: imageXAxisTrust(ctx),
       say: cue(
-        'Your camera sits halfway between side-on and face-on, so I cannot tell which way your toss wandered. Film from further round.',
+        'Your camera sits halfway between side-on and face-on, so I can’t tell which way your toss wandered. Film from further round.',
       ),
     })
   }
   if (deps.includes('trunkSweep') && !sweepResolved(ctx)) {
     causes.push({
       cost: SWEEP_UNRESOLVED,
-      say: cue('I could not follow your chest turning up to the ball, so this reading may be off. Read this one loosely.'),
+      say: cue('I couldn’t follow your chest turning up to the ball, so this reading may be off. Read this one loosely.'),
     })
   }
 

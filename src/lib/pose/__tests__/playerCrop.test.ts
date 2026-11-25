@@ -32,7 +32,7 @@ check('the tallest person is the server, and a partner in the background is igno
   assert(Math.abs(cx - (700 + 215 * 0.45 / 2)) < 5, `the crop is centred at x=${cx}, not on the server`)
 })
 
-check('somebody walking past the lens for one sample does not drag the crop', () => {
+check('somebody walking past the lens for one sample doesn’t drag the crop', () => {
   const crop = choosePlayerCrop(
     [[person(700, 230, 215)], [person(60, 100, 600)], [person(704, 229, 216)], [person(701, 232, 214)]],
     W,

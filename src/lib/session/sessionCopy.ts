@@ -38,7 +38,7 @@ export function driftLine(d: Drift): string {
 
 /** The one line at the top: how many were read, and the thing most worth knowing. */
 export function headlineOf(stats: SessionStats, counted = false): string {
-  if (stats.read === 0) return cue('I could not see any of these serves clearly enough to check them.')
+  if (stats.read === 0) return cue('I couldn’t see any of these serves clearly enough to check them.')
   const count = stats.read === 1 ? 'One serve checked.' : `${stats.read} serves checked.`
   if (stats.drifts.length) return counted ? driftLine(stats.drifts[0]) : cue(`${count} ${driftLine(stats.drifts[0])}`)
   const top = stats.faults.find((f) => f.verdict)
@@ -75,7 +75,7 @@ export const goneLine = (flaw: FlawId): string =>
  * toss is always asked (W6.12) is not the only reason one is left out.
  */
 export const unsureLine = (n: number): string =>
-  cue(n === 1 ? 'I left out one swing that was not a serve.' : `I left out ${n} swings that were not serves.`)
+  cue(n === 1 ? 'I left out one swing that wasn’t a serve.' : `I left out ${n} swings that weren’t serves.`)
 
 /** What the fixes say when there are none to give. */
 export const noFixLine = (read: number): string =>

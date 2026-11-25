@@ -175,7 +175,7 @@ check('a sample lost where the hand turns round is filled on the turn, not past 
     for (let s = 1; s <= seeds; s++) {
       const noisy = buildServe({ noise: 0.008, seed: s * 7919 }, fps)
       const bridged = bridgeDetectionGaps(grid(noisy, (i) => i === at))
-      assert(bridged.length === noisy.length, `${name}: the lost sample was not bridged`)
+      assert(bridged.length === noisy.length, `${name}: the lost sample wasn’t bridged`)
       sum += missBy(bridged[at], clean[at], LM.rightWrist) / RIG_BODY_HEIGHT
     }
     const mean = sum / seeds
@@ -232,7 +232,7 @@ check('an edge the clip never comes back from is never extrapolated', () => {
 
 /* ======================================================== staying honest about it */
 
-heading('A bridged frame does not read as a detected one')
+heading('A bridged frame doesn’t read as a detected one')
 
 check('a bridged frame carries no visibility, so nothing counts it as seen', () => {
   const truth = buildServe({}, FPS)
@@ -255,7 +255,7 @@ check('a bridged frame carries no visibility, so nothing counts it as seen', () 
   assert(bridged[29].image[LM.rightWrist] === truth[29].image[LM.rightWrist], 'a detected frame was rewritten')
 })
 
-check('bridging a gap in the swing does not buy back the samples it cost', () => {
+check('bridging a gap in the swing doesn’t buy back the samples it cost', () => {
   // `swingSamples` is what the report leans on to decide whether the drop and
   // contact can be told apart in time at all. Interpolated frames improve where
   // the keyframes sit; they add no evidence, and counting them would let a clip

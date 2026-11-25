@@ -37,9 +37,9 @@ check('each line passes the copy lint and carries no number', () => {
 heading('A reading, in the player’s unit (N2.7)')
 
 check('the locale picks the unit: mph in the US and the UK, km/h elsewhere', () => {
-  assert(defaultSpeedUnit('en-US') === 'mph' && defaultSpeedUnit('en-GB') === 'mph', 'the US or the UK is not in mph')
-  assert(defaultSpeedUnit('fr-FR') === 'kmh' && defaultSpeedUnit('en-AU') === 'kmh', 'France or Australia is not in km/h')
-  assert(defaultSpeedUnit('en') === 'kmh', 'a locale with no region is not in km/h')
+  assert(defaultSpeedUnit('en-US') === 'mph' && defaultSpeedUnit('en-GB') === 'mph', 'the US or the UK isn’t in mph')
+  assert(defaultSpeedUnit('fr-FR') === 'kmh' && defaultSpeedUnit('en-AU') === 'kmh', 'France or Australia isn’t in km/h')
+  assert(defaultSpeedUnit('en') === 'kmh', 'a locale with no region isn’t in km/h')
 })
 
 check('whole units, the range widened outwards so rounding never narrows the claim', () => {
@@ -117,7 +117,7 @@ check('the record, the trend and the two serves each say their ranges, in the pl
   assert(plain(t) === 'Serving faster than your last time on court: about 144 km/h, likely 138 to 150, compared with about 130 km/h, likely 122 to 139.', t)
   const slow = serveNumberSpeedLine({ first: b, second: a, direction: 'slower' }, 'kmh')
   assert(!/fault|too slow/i.test(slow) && slow.startsWith('First serves about 144'), slow)
-  assert(serveNumberSpeedLine({ first: a, second: b, direction: 'faster' }, 'kmh').endsWith('Your second serve is the quicker one.'), 'a quicker second serve is not said')
+  assert(serveNumberSpeedLine({ first: a, second: b, direction: 'faster' }, 'kmh').endsWith('Your second serve is the quicker one.'), 'a quicker second serve isn’t said')
 })
 
 report()

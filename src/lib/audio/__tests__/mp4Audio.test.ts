@@ -93,7 +93,7 @@ check('the audio track is found past the video one, and its config read', () => 
   const t = aacTrackOf(buffer(moov(videoTrak(), audioTrak({ sizes: [300], runs: [[1, 1]], offsets: [1000] }))))!
   assert(t !== undefined, 'no audio track found')
   assert(t.codec === 'mp4a.40.2' && t.sampleRate === 44100 && t.channels === 2, `${t.codec} ${t.sampleRate} ${t.channels}`)
-  assert(t.config.length === 2 && t.config[0] === 0x12, 'the config was not carried')
+  assert(t.config.length === 2 && t.config[0] === 0x12, 'the config wasn’t carried')
 })
 
 check('frames are laid out chunk by chunk, each after the last, at its own time', () => {
@@ -112,11 +112,11 @@ check('a QuickTime entry with its wave box, and 64-bit chunk offsets, read the s
   const t = aacTrackOf(
     buffer(moov(audioTrak({ sizes: [300, 300], runs: [[1, 2]], offsets: [big], quicktime: true, wide: true }))),
   )!
-  assert(t !== undefined, 'a QuickTime audio entry was not read')
+  assert(t !== undefined, 'a QuickTime audio entry wasn’t read')
   assert(t.frames[1].offset === big + 300, `offset ${t.frames[1].offset}`)
 })
 
-check('a file with no audio, or audio that is not AAC, has no track', () => {
+check('a file with no audio, or audio that isn’t AAC, has no track', () => {
   assert(aacTrackOf(buffer(moov(videoTrak()))) === undefined, 'a silent file had a track')
   const notAac = audioTrak({ sizes: [300], runs: [[1, 1]], offsets: [1000] })
   const swapped = new Uint8Array(notAac)
@@ -132,7 +132,7 @@ check('the ADTS header says the profile, the rate, the channels and the length',
   const bits = Array.from(h, (b) => b.toString(2).padStart(8, '0')).join('')
   const read = (from: number, n: number) => parseInt(bits.slice(from, from + n), 2)
   assert(read(0, 12) === 0xfff, 'no sync word')
-  assert(read(15, 1) === 1, 'claims a CRC it does not have')
+  assert(read(15, 1) === 1, 'claims a CRC it doesn’t have')
   assert(read(16, 2) === 1, `profile ${read(16, 2)}, AAC LC is 1`)
   assert(read(18, 4) === 4, `rate index ${read(18, 4)}`)
   assert(read(23, 3) === 2, `channels ${read(23, 3)}`)

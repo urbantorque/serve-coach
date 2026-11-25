@@ -128,7 +128,7 @@ await check('every file on one bar, in order, never past its end', async () => {
   assert(seen.every((p) => p.total === 1000), 'the total moved during the download')
   for (let i = 1; i < seen.length; i++) assert(seen[i].loaded >= seen[i - 1].loaded, 'the bar went backwards')
   assert(seen.every((p) => p.loaded <= p.total), 'the bar ran past its end')
-  assert(seen[seen.length - 1].loaded === 1000, 'the bar did not finish')
+  assert(seen[seen.length - 1].loaded === 1000, 'the bar didn’t finish')
 })
 
 await check('a fetch that never answers is rejected as stalled, and its request aborted', async () => {
@@ -151,7 +151,7 @@ await check('a fetch that never answers is rejected as stalled, and its request 
   assert(clock.pending() === 0, 'a timer was left behind')
 })
 
-await check('a stream that stops mid-file is stalled; one that keeps arriving slowly is not', async () => {
+await check('a stream that stops mid-file is stalled; one that keeps arriving slowly isn’t', async () => {
   const clock = fakeClock()
   const stuck = streamed([10, 10, 10], { holdAfter: 2 })
   let caught: unknown
@@ -242,14 +242,14 @@ check('settings says the size, the bar in megabytes, and the warning before the 
   const row = (ready: boolean, warming?: OfflineWarmup, metered?: 'saveData' | 'cellular') =>
     renderToStaticMarkup(createElement(OfflineRow, { ready, warming, metered, onDownload: noop }))
   assert(row(false).includes('Download to use with no signal, 57\u00a0MB'), 'the button lost its size')
-  assert(row(false, { stage: 'downloading', ratio: 0.4, loadedMb: 23, totalMb: 57 }).includes('Downloading, 23 of 57\u00a0MB'), 'the bar is not in megabytes')
+  assert(row(false, { stage: 'downloading', ratio: 0.4, loadedMb: 23, totalMb: 57 }).includes('Downloading, 23 of 57\u00a0MB'), 'the bar isn’t in megabytes')
   assert(row(false, { stage: 'failed', stalled: true }).includes('The download stopped. Try again'), 'a stall reads as a refusal')
   assert(row(false, undefined, 'cellular').includes('wait for Wi-Fi'), 'no warning on mobile data')
-  assert(row(true).includes('Ready to use with no signal'), 'a downloaded coach does not say so')
+  assert(row(true).includes('Ready to use with no signal'), 'a downloaded coach doesn’t say so')
   const first = renderToStaticMarkup(
     createElement(Home, { sessions: [], offlineReady: false, sessionsLoaded: true, prefs: DEFAULTS, onPrefs: noop, onFilm: noop, onOpen: noop, onShowHistory: noop, onShowSettings: noop, onShowProgress: noop, onShowExample: noop }),
   )
-  assert(first.includes('needs a one-time download of 57\u00a0MB'), 'a new player is not told the size before the first serve')
+  assert(first.includes('needs a one-time download of 57\u00a0MB'), 'a new player isn’t told the size before the first serve')
 })
 
 report()

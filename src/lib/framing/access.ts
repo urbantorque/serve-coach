@@ -30,11 +30,11 @@ export type PreviewBlock = 'unsupported' | 'denied' | 'missing' | 'busy' | 'unkn
  * again in a moment" named a button that was never there.
  */
 export const PREVIEW_BLOCK_CUE: Record<PreviewBlock, string> = {
-  unsupported: '**Film with your camera app** instead. This browser cannot show the camera here.',
+  unsupported: '**Film with your camera app** instead. This browser can’t show the camera here.',
   denied: '**Allow the camera** for this page, or film with your camera app and pick the video.',
-  missing: '**Film with your camera app** instead. I could not find a camera on this device.',
+  missing: '**Film with your camera app** instead. I couldn’t find a camera on this device.',
   busy: '**Close your other camera apps**, then open the camera here again.',
-  unknown: '**Film with your camera app** instead. The camera did not start here.',
+  unknown: '**Film with your camera app** instead. The camera didn’t start here.',
   engine: '**Open the camera again** once you have signal. The coach needs a one-time download first.',
 }
 

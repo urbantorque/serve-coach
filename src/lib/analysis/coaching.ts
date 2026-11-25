@@ -622,7 +622,7 @@ export const METRICS: Record<string, MetricCopy> = {
     insight: {
       low: 'Your swing from the racket drop to the ball is **short**. Check the racket falls fully behind you first.',
       ok: 'Your racket **swings up fast** from the drop to the ball, with no pause.',
-      high: 'Your racket **moves slowly** from the drop to the ball, as if you are steering it.',
+      high: 'Your racket **moves slowly** from the drop to the ball, as if you’re steering it.',
     },
     fix: {
       low: '**Let the racket fall fully** behind your back first. A fast swing from a shallow drop is still a short one.',
@@ -932,8 +932,8 @@ export const AXIS_COPY: Record<string, Partial<Record<BodyAxis, AxisCopy>>> = {
        * is steady towards the net and back, and says the other half is unseen.
        */
       insight: {
-        low: 'Your toss goes **straight up**, with no wander towards the net or back. From the side I cannot see sideways movement.',
-        ok: 'Your toss goes **straight up**, barely moving towards the net or back. From the side I cannot see sideways movement.',
+        low: 'Your toss goes **straight up**, with no wander towards the net or back. From the side I can’t see sideways movement.',
+        ok: 'Your toss goes **straight up**, barely moving towards the net or back. From the side I can’t see sideways movement.',
         high: 'Your tossing hand **moves towards the net or back** as it lifts, so the ball goes up nearer or further out each serve.',
       },
       fix: {
@@ -952,8 +952,8 @@ export const AXIS_COPY: Record<string, Partial<Record<BodyAxis, AxisCopy>>> = {
       // From in front or behind, the other way round: across the body is seen,
       // towards the net and back points into the lens (N2.10).
       insight: {
-        low: 'Your toss goes **straight up**, with no sideways wander. From here I cannot see movement towards the net or back.',
-        ok: 'Your toss goes **straight up**, barely moving sideways. From here I cannot see movement towards the net or back.',
+        low: 'Your toss goes **straight up**, with no sideways wander. From here I can’t see movement towards the net or back.',
+        ok: 'Your toss goes **straight up**, barely moving sideways. From here I can’t see movement towards the net or back.',
         high: 'Your tossing hand **moves sideways** as it lifts, so the ball goes up somewhere new each serve.',
       },
       fix: {
@@ -1135,7 +1135,7 @@ export const SERVE_TYPES: Record<ServeType, ServeTypeCopy> = {
         // Under it a kick is behind the head, which arches the back; inside it
         // the racket can still brush up the ball; over it, as for a flat serve,
         // the player is reaching far out in front.
-        low: 'You strike **behind your head**, so your back arches and the racket cannot brush up the ball.',
+        low: 'You strike **behind your head**, so your back arches and the racket can’t brush up the ball.',
         ok: 'You strike **over or in front of** your head, where a kick can brush up the back of the ball.',
         high: 'You strike **far in front** of your body, so the racket drives through the ball rather than up its back.',
       },
@@ -1283,7 +1283,7 @@ export const FUNDAMENTALS: Record<
     },
   },
   loading: {
-    label: 'Loading',
+    label: 'Legs',
     blurb: 'Bending the knees, tilting the shoulders and pushing up with the legs.',
     phase: 'trophy',
     weight: 22,
@@ -1330,7 +1330,7 @@ export const FUNDAMENTALS: Record<
     drill: UP_AND_OUT,
   },
   rhythm: {
-    label: 'Rhythm',
+    label: 'Timing',
     blurb: 'How your serve splits its time between the slow start and the fast swing.',
     phase: 'ready',
     weight: 12,

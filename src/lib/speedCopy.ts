@@ -13,8 +13,8 @@ import type { ServeSpeed, SpeedMiss } from './vision/serveSpeed'
 export const SPEED_MISS_LINE: Record<SpeedMiss, string> = {
   frame_rate: 'To get a speed, film in slow motion or move the phone further back. At normal speed the ball leaves the picture in two frames.',
   view: 'Film from the side to get a speed. From behind, the ball flies straight away from the camera.',
-  no_toss: 'I could not follow your toss, and I need it to measure distances in the picture. Keep the whole toss in shot.',
-  timing: 'This video does not carry the time of each frame, so I cannot time the ball.',
+  no_toss: 'I couldn’t follow your toss, and I need it to measure distances in the picture. Keep the whole toss in shot.',
+  timing: 'This video doesn’t carry the time of each frame, so I can’t time the ball.',
   not_found: 'I lost the ball after the hit. Hold the phone sideways, move it further back and leave clear space on the net side.',
   clip_end: 'The clip stops right after the hit, so the ball had no flight to time. Keep filming until it lands.',
   unsure: 'I saw the ball after the hit, but not clearly enough to give a speed I trust.',
@@ -130,4 +130,4 @@ export function sessionSpeedLine(s: { read: number; fastest: Ranged; typical?: R
 
 /** A session read for speeds where no serve gave one. */
 export const NO_SESSION_SPEED =
-  'I could not get a speed from any serve in this practice. Hold the phone sideways, move it further back and leave clear space on the net side.'
+  'I couldn’t get a speed from any serve in this practice. Hold the phone sideways, move it further back and leave clear space on the net side.'

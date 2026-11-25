@@ -155,7 +155,7 @@ check('only a day holding both sides counts, and only for how it splits', () => 
 check('the smallest p seven a side can reach clears the first step of the correction', () => {
   const samples = (values: number[]) => values.map((value) => ({ value, stratum: 'a' }))
   const p = permutationP(samples([9, 9, 9, 9, 9, 9, 9]), samples([1, 1, 1, 1, 1, 1, 1]), seeded(2).uniform)
-  assert(p <= LINK_FDR / 28, `p ${p} cannot pass 28 rows at ${LINK_FDR}`)
+  assert(p <= LINK_FDR / 28, `p ${p} can’t pass 28 rows at ${LINK_FDR}`)
 })
 
 check('a permutation p is a p: flat on noise', () => {
@@ -174,7 +174,7 @@ check('Benjamini-Hochberg steps up to the largest p under its line', () => {
   const ps = [0.001, 0.008, 0.039, 0.041, 0.042, 0.06, 0.074, 0.205, 0.212, 0.216].map((p) => ({ p }))
   assert(discoveries(ps, 0.05).length === 2, `${discoveries(ps, 0.05).length} found on the textbook list`)
   assert(discoveries(ps, 0.3).length === 10, 'a generous rate found less than everything')
-  assert(discoveries([{ p: 0.04 }, { p: 0.03 }], 0.05).length === 2, 'the step up did not carry the smaller p with it')
+  assert(discoveries([{ p: 0.04 }, { p: 0.03 }], 0.05).length === 2, 'the step up didn’t carry the smaller p with it')
   assert(discoveries([{ p: 0.06 }, { p: 0.5 }], 0.05).length === 0, 'something was found over the line')
   assert(discoveries([], 0.05).length === 0, 'something was found in nothing')
 })
@@ -211,7 +211,7 @@ check('a link in what went in is found, when no one kind of miss has enough to s
   assert(links[0].line === 'Your serves that go in **meet the ball higher** than your misses.', links[0].line)
 })
 
-check('what the misses already said is not said twice', () => {
+check('what the misses already said isn’t said twice', () => {
   // Every miss in the net, and low: `missesInCommon` reads this itself. It reads
   // from the diagnosis, so these stubs carry the signal it reads.
   const { sessions, tags } = plantedOutcome('contactHeight', 4 * CARD_NOISE_SD.contactHeight, Array.from({ length: 12 }, (): ServeOutcome => 'net'))
@@ -224,7 +224,7 @@ check('what the misses already said is not said twice', () => {
   assert(!links.some((l) => l.metricId === 'contactHeight'), `said twice: ${links.map((l) => l.line).join(' / ')}`)
   // A row the misses never read still gets its link.
   const { sessions: knees, tags: kneeTags } = plantedOutcome('kneeBend', 4 * CARD_NOISE_SD.kneeBend, Array.from({ length: 12 }, (): ServeOutcome => 'net'))
-  assert(serveLinks(knees, kneeTags).some((l) => l.metricId === 'kneeBend'), 'a row the misses cannot read lost its link')
+  assert(serveLinks(knees, kneeTags).some((l) => l.metricId === 'kneeBend'), 'a row the misses can’t read lost its link')
 })
 
 check('at most two links, each on its own row, strongest first', () => {
@@ -271,7 +271,7 @@ check('too few on a side says nothing, however big the gap', () => {
   assert(serveLinks(speed, []).length === 0, `${speed.length} speeds were enough for two thirds of seven`)
 })
 
-check('speeds the reader cannot tell apart are not "fastest"', () => {
+check('speeds the reader can’t tell apart aren’t "fastest"', () => {
   // Knees that really follow the figure, on speeds inside each other's ranges.
   const sessions = plantedSpeed(36, 6, 3).map((s) => {
     const { ms } = (s.speed as unknown as { speed: { ms: number } }).speed
@@ -293,7 +293,7 @@ check('a gap inside one take of the camera says nothing, however steady the serv
   assert(serveLinks(sessions, []).length === 0, 'a gap the camera could have made was said')
 })
 
-check('a season\'s drift is not a link: speed and the knees rising together, trip by trip', () => {
+check('a season\'s drift isn’t a link: speed and the knees rising together, trip by trip', () => {
   // Faster and deeper from one trip to the next, and nothing between them inside
   // a trip. Pooled, the two rise as one. A shuffle across trips would call it a link.
   let said = 0
@@ -339,7 +339,7 @@ check('nor is a player who simply misses less as their knees improve over a seas
   assert(said / runs <= LINK_FDR, `${pct(said / runs)} of drifting histories raised a link`)
 })
 
-check('a phone moved between trips is not a link either', () => {
+check('a phone moved between trips isn’t a link either', () => {
   // The serves on the second angle read deeper, and happen to be the fast ones.
   const r = seeded(13)
   const sessions: Session[] = []
@@ -381,7 +381,7 @@ check('other scoring versions never mix', () => {
   assert(serveLinks(sessions, []).length === 0, 'two rubrics were set against each other')
 })
 
-check('second serves stand apart: a slow second is not a slow serve', () => {
+check('second serves stand apart: a slow second isn’t a slow serve', () => {
   const r = seeded(16)
   const sessions: Session[] = []
   const tags: ServeTag[] = []

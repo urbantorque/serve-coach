@@ -127,7 +127,7 @@ check('a thigh is wider at the hip than the knee, and the racket arm heavier tha
   const frame = frames[skel.keys.trophy]
   const { ops } = draw(frame)
   const neutral = ops.find((o) => o.op === 'fill' && o.style.startsWith('rgba(238, 242, 246, 0.82'))!
-  assert(neutral !== undefined, 'the body was not filled in its neutral ink')
+  assert(neutral !== undefined, 'the body wasn’t filled in its neutral ink')
   const hip = toPx(frame.image[LM.leftHip])
   const knee = toPx(frame.image[LM.leftKnee])
   const thigh = neutral.subs.find(
@@ -138,7 +138,7 @@ check('a thigh is wider at the hip than the knee, and the racket arm heavier tha
   const atHip = dist(thigh!.points[0], thigh!.points[3])
   const atKnee = dist(thigh!.points[1], thigh!.points[2])
   note(`thigh ${atHip.toFixed(1)} px at the hip, ${atKnee.toFixed(1)} px at the knee`)
-  assert(atHip > atKnee * 1.2, 'the thigh does not taper')
+  assert(atHip > atKnee * 1.2, 'the thigh doesn’t taper')
 
   const width = (style: string) => {
     const op = ops.find((o) => o.op === 'fill' && o.style === style)!
@@ -185,7 +185,7 @@ check('a rig frame is drawn holding its own racket, with no hand to estimate fro
   assert(frame.racket !== undefined, 'the rig placed no racket')
   assert(ellipses.length === 1, `${ellipses.length} racket heads drawn`)
   const head = toPx(frame.racket!.head)
-  assert(dist(ellipses[0], head) < 0.5, 'the racket head is not where the rig put it')
+  assert(dist(ellipses[0], head) < 0.5, 'the racket head isn’t where the rig put it')
   // And a tracked frame, with no racket and no body height, draws none.
   const { racket: _r, ...bare } = frame
   void _r
@@ -240,7 +240,7 @@ check('the model ball leaves the tossing hand and meets the middle of the string
   const release = frames.find((f) => f.t === first.t)!
   const handGap = dist(first, release.image[LM.leftWrist]) / 0.54
   note(`the ball leaves ${handGap.toFixed(3)} body heights from the wrist`)
-  assert(handGap < 0.05, 'the ball does not leave the tossing hand')
+  assert(handGap < 0.05, 'the ball doesn’t leave the tossing hand')
   assert(flight!.apex.y < Math.min(first.y, head.y), 'the ball never rises above the hand or the strings')
   // Drawn as a flight and a marker.
   const { ops } = draw(frames[skel.keys.drop], { ball: ballMarkerAt(flight, frames[skel.keys.drop].t) })
@@ -268,7 +268,7 @@ check('the segment a fault is in is painted in --work, and only when asked', () 
   const band = marked[0].subs.filter((s) => s.closed)
   assert(band.length === 1, `${band.length} bones painted for one`)
   const shoulder = toPx(frame.image[arm.shoulder])
-  assert(dist({ x: (band[0].points[0].x + band[0].points[3].x) / 2, y: (band[0].points[0].y + band[0].points[3].y) / 2 }, shoulder) < 1, 'the work band is not on the upper arm')
+  assert(dist({ x: (band[0].points[0].x + band[0].points[3].x) / 2, y: (band[0].points[0].y + band[0].points[3].y) / 2 }, shoulder) < 1, 'the work band isn’t on the upper arm')
 })
 
 check('the target is dashed, drawn under the body, and the dash is put back', () => {
@@ -277,7 +277,7 @@ check('the target is dashed, drawn under the body, and the dash is put back', ()
   const target = [{ a: frame.image[arm.shoulder], b: { x: frame.image[arm.shoulder].x, y: frame.image[arm.shoulder].y - 0.1 } }]
   const rec = draw(frame, { target })
   const dashed = rec.ops.filter((o) => o.dashed)
-  assert(dashed.some((o) => o.style === 'rgba(238, 242, 246, 0.8)'), 'the target was not stroked dashed in its ink')
+  assert(dashed.some((o) => o.style === 'rgba(238, 242, 246, 0.8)'), 'the target wasn’t stroked dashed in its ink')
   const firstLimb = rec.ops.findIndex((o) => o.op === 'fill' && o.style === 'rgba(238, 242, 246, 0.82)')
   const lastDash = rec.ops.map((o) => o.dashed).lastIndexOf(true)
   assert(lastDash < firstLimb, 'the target was drawn over the body')
@@ -299,7 +299,7 @@ check('a demonstration paints its part on the faulty body, with the fix hung das
     const h = highlightOf(demo.part, racket, at(demo.fault), at(demo.fix))
     assert(JSON.stringify(h.work) === JSON.stringify([[arm.shoulder, arm.elbow]]), `${racket}: marks ${JSON.stringify(h.work)}`)
     const shoulder = at(demo.fault).image[arm.shoulder]
-    assert(dist(h.target[0].a, shoulder) < 1e-9, `${racket}: the dashed arm does not hang from the fault's shoulder`)
+    assert(dist(h.target[0].a, shoulder) < 1e-9, `${racket}: the dashed arm doesn’t hang from the fault's shoulder`)
   }
 })
 

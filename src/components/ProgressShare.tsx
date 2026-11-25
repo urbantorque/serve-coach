@@ -62,7 +62,7 @@ export default function ProgressShare({ records, sessions, strainLine, fixed, th
       <div className="share-menu-list">
         {clip && <ShareOption label="Then and now, a slow clip" run={() => shareBothSwings(thenNow)} />}
         {season && <ShareOption label="Your season" run={() => shareSeasonCard(records, Date.now())} />}
-        {tripOk && <ShareOption label="This trip" run={() => shareTripCard(trip!, strainLine)} />}
+        {tripOk && <ShareOption label="This session" run={() => shareTripCard(trip!, strainLine)} />}
         {fixed.map((card) => (
           <ShareOption key={card.flaw} label={`${card.name} fixed`} run={() => shareGraduationCard(card)} />
         ))}

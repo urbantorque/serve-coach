@@ -52,7 +52,7 @@ await check('after paying, it gives a pass the device can check, good to the end
   pass = r.data.pass!
   const c = await readPass(pass, verify)
   assert(c !== undefined && c.until - clock > 29 * DAY && c.until - clock <= 30 * DAY, JSON.stringify(c))
-  assert(can('compare', { entitlement: { plan: 'plus', until: c!.until }, gated: true, now: clock }), 'the pass does not open Plus')
+  assert(can('compare', { entitlement: { plan: 'plus', until: c!.until }, gated: true, now: clock }), 'the pass doesn’t open Plus')
   assert(!can('compare', { entitlement: FREE, gated: true, now: clock }), 'free opened Plus')
 })
 
@@ -87,14 +87,14 @@ await check('a forged pass, a bad id, a GET and an unset site are each refused p
   assert(Boolean(forged), 'the other key signed nothing to test with')
   assert((await call('refresh', { pass: forged })).status === 401, 'a pass from another key was renewed')
   assert((await call('claim', { sessionId: 'cs_x"; drop' })).status === 400, 'a malformed id reached Stripe')
-  assert((await call('claim', { sessionId: 'cs_unknown' })).status === 404, 'an unknown checkout was not a 404')
+  assert((await call('claim', { sessionId: 'cs_unknown' })).status === 404, 'an unknown checkout wasn’t a 404')
   assert((await call('checkout', {}, env, 'GET')).status === 405, 'a GET was answered')
   const unset = await call('checkout', {}, {})
-  assert(unset.status === 503 && /not switched on/.test(unset.data.error ?? ''), JSON.stringify(unset))
+  assert(unset.status === 503 && /(not|n’t) switched on/.test(unset.data.error ?? ''), JSON.stringify(unset))
   assert((await call('nope')).status === 404, 'an unknown route was answered')
 })
 
-await check('when Stripe does not answer, the player is told to try again, and nothing is signed', async () => {
+await check('when Stripe doesn’t answer, the player is told to try again, and nothing is signed', async () => {
   const down = async (): Promise<Response> => {
     throw new Error('offline')
   }
@@ -120,11 +120,11 @@ await check('a yearly checkout asks Stripe for the yearly price, and is refused 
   const withYear: PayEnv = { ...env, STRIPE_ANNUAL_PRICE_ID: 'price_annual_stand_in' }
   const r = await call('checkout', { plan: 'annual' }, withYear)
   const id = new URL(r.data.url!).searchParams.get('session')!
-  assert(mock.sessions.get(id)?.price === 'price_annual_stand_in', 'the yearly price was not asked for')
+  assert(mock.sessions.get(id)?.price === 'price_annual_stand_in', 'the yearly price wasn’t asked for')
   const monthly = new URL((await call('checkout', {}, withYear)).data.url!).searchParams.get('session')!
-  assert(mock.sessions.get(monthly)?.price === 'price_stand_in', 'a plain checkout did not stay monthly')
+  assert(mock.sessions.get(monthly)?.price === 'price_stand_in', 'a plain checkout didn’t stay monthly')
   const none = await call('checkout', { plan: 'annual' })
-  assert(none.status === 400 && /not on sale/.test(none.data.error ?? ''), JSON.stringify(none))
+  assert(none.status === 400 && /(not|n’t) on sale/.test(none.data.error ?? ''), JSON.stringify(none))
   // Paid for a year: the pass runs to the year's end.
   mock.pay(id)
   const claimed = await call('claim', { sessionId: id }, withYear)
@@ -135,11 +135,11 @@ await check('a yearly checkout asks Stripe for the yearly price, and is refused 
 await check('a trial starts Plus at once, ends with the trial, and only a whole number of days from 1 to 30 counts', async () => {
   const trial: PayEnv = { ...env, TRIAL_DAYS: '7' }
   const id = new URL((await call('checkout', {}, trial)).data.url!).searchParams.get('session')!
-  assert(mock.sessions.get(id)?.trialDays === 7, 'the trial was not asked for')
+  assert(mock.sessions.get(id)?.trialDays === 7, 'the trial wasn’t asked for')
   mock.pay(id)
   const c = await readPass((await call('claim', { sessionId: id }, trial)).data.pass!, verify)
-  assert(c !== undefined && Math.abs(c.until - (clock + 7 * DAY)) < DAY, 'the pass does not end with the trial')
-  assert(can('pathway', { gated: true, entitlement: { plan: 'plus', until: c!.until }, now: clock }), 'Plus is not on during the trial')
+  assert(c !== undefined && Math.abs(c.until - (clock + 7 * DAY)) < DAY, 'the pass doesn’t end with the trial')
+  assert(can('pathway', { gated: true, entitlement: { plan: 'plus', until: c!.until }, now: clock }), 'Plus isn’t on during the trial')
   for (const bad of ['0', '45', '2.5', 'seven']) {
     const s = new URL((await call('checkout', {}, { ...env, TRIAL_DAYS: bad })).data.url!).searchParams.get('session')!
     assert(mock.sessions.get(s)?.trialDays === undefined, `a trial of "${bad}" was asked for`)

@@ -15,7 +15,7 @@ const rows = accuracyRows()
 check('every graded reading is on the page, measured or said to be unmeasured', () => {
   const shown = new Set([...rows.map((r) => r.id), ...unmeasuredRows().map((r) => r.id)])
   for (const id of gradedIds()) assert(shown.has(id), `${id} is graded and missing from the page`)
-  for (const r of rows) assert(r.wobble === CARD_NOISE_SD[r.id], `${r.id} shows a wobble the engine does not use`)
+  for (const r of rows) assert(r.wobble === CARD_NOISE_SD[r.id], `${r.id} shows a wobble the engine doesn’t use`)
 })
 
 check('a steady serve keeps its grade 95 times in 100 where the band rule holds, and fewer where it is known not to', () => {

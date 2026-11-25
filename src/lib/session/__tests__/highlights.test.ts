@@ -47,7 +47,7 @@ check('the best and worst serves become a stretch around each, inside the file',
   assert(!hs.some((h) => h.number === 6), 'an unclear serve was kept as a highlight')
 })
 
-check('a stored row keeps its stretches and drops anything that is not one', () => {
+check('a stored row keeps its stretches and drops anything that isn’t one', () => {
   const back = normalisePracticeSession({
     id: sessionIdFor('k'),
     createdAt: 1,
@@ -66,13 +66,13 @@ check('a stored row keeps its stretches and drops anything that is not one', () 
 
 heading('The same file, found again')
 
-check('a file is known by its name, size and time, and by nothing it does not keep', () => {
+check('a file is known by its name, size and time, and by nothing it doesn’t keep', () => {
   const clip = { name: 'Tuesday basket.mov', size: 2_147_483_648, lastModified: 1_760_000_000_000 }
   assert(fileKeyOf(clip) === fileKeyOf({ ...clip }), 'the same file was given two keys')
   for (const changed of [{ name: 'Wednesday.mov' }, { size: clip.size - 1 }, { lastModified: clip.lastModified + 1 }]) {
     assert(fileKeyOf({ ...clip, ...changed }) !== fileKeyOf(clip), `a changed file kept its key: ${JSON.stringify(changed)}`)
   }
-  assert(sessionIdFor(fileKeyOf(clip)).startsWith('practice-'), 'a session id is not a session id')
+  assert(sessionIdFor(fileKeyOf(clip)).startsWith('practice-'), 'a session id isn’t a session id')
 })
 
 heading('Never copied')
@@ -88,7 +88,7 @@ check('nothing on the session path writes the file anywhere', () => {
   const app = fs.readFileSync(path.join(root, 'src', 'components', 'useAnalysisRun.ts'), 'utf8')
   const from = app.indexOf('const closeSessionVideo')
   const to = app.indexOf('const openClip = useCallback(')
-  assert(from > 0 && to > from, 'the session functions in useAnalysisRun.ts were not found')
+  assert(from > 0 && to > from, 'the session functions in useAnalysisRun.ts weren’t found')
   sources.push(['useAnalysisRun.ts (session functions)', app.slice(from, to)])
   const writes = /keepClip\(|getDirectory\(|createWritable\(|\.arrayBuffer\(\)/
   for (const [name, text] of sources) {

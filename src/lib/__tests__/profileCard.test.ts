@@ -66,7 +66,7 @@ const history = [...rigTrip(0, NO_DROP), ...rigTrip(3, {}), ...rigTrip(6, {})]
 
 check('a fixed fault draws a serve that showed it beside a clean one, each dated', () => {
   const g = graduation(history, 'shallow_drop')
-  assert(g !== undefined, 'the drop did not graduate on the rig history')
+  assert(g !== undefined, 'the drop didn’t graduate on the rig history')
   const card = graduationCard(history, g!)!
   note(`${card.name} at ${card.moment}: then ${new Date(card.then.at).toISOString()}, now ${new Date(card.now.at).toISOString()}`)
   assert(card !== undefined && card.then.at < g!.since && card.now.at >= g!.since, 'the two halves are on the wrong sides of the fix')
@@ -108,9 +108,9 @@ await check('the card renders its name, its line and both dates', async () => {
   note(all)
   assert(texts.includes('FIXED') && texts.includes(card.name), 'the heading or the fault is missing')
   assert(/THEN · \d{4}-\d{2}-\d{2}/.test(all) && /NOW · \d{4}-\d{2}-\d{2}/.test(all), 'a half is undated')
-  assert(/clean on/.test(all), 'the graduation line is missing')
+  assert(/not seen on/.test(all), 'the graduation line is missing')
   // Limbs are filled bands since L4.4, the racket and the ball stroked.
-  assert(strokes + fills > 10, `only ${strokes} strokes and ${fills} fills: the figures were not drawn`)
+  assert(strokes + fills > 10, `only ${strokes} strokes and ${fills} fills: the figures weren’t drawn`)
 })
 
 check('the progress screen offers the card, and the profile, without a grade in either', () => {

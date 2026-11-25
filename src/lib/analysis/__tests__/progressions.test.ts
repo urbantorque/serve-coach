@@ -57,7 +57,7 @@ check('for every fault and every axis, the drill on the card is one of the steps
       const drill = drillFor(drillIdFor(flaw, axis))
       assert(drill !== undefined, `${flaw}: no drill on the card`)
       const at = stepOf(p, drill!)
-      assert(at >= 0, `${flaw} (${axis ?? 'no axis'}): "${drill!.name}" is not on its ladder`)
+      assert(at >= 0, `${flaw} (${axis ?? 'no axis'}): "${drill!.name}" isn’t on its ladder`)
     }
   }
   note(
@@ -124,7 +124,7 @@ check('enough clean serves pass the step, at the ladder’s own bar', () => {
   assert(c.read === 6 && c.clean === 4 && c.need === 4, `read ${c.read}, clean ${c.clean}, need ${c.need}`)
 })
 
-check('a full basket that falls short is not yet, and so is one past saving', () => {
+check('a full basket that falls short isn’t yet, and so is one past saving', () => {
   const short = checkDrill('shallow_drop', basket('shallow_drop', 'clean', 'clean', 'clean', 'named', 'named', 'named'))!
   assert(short.outcome === 'not_yet', `full basket: ${short.outcome}`)
   // Three named in four read: four of six is out of reach whatever else is filmed.
@@ -132,10 +132,10 @@ check('a full basket that falls short is not yet, and so is one past saving', ()
   assert(lost.outcome === 'not_yet', `out of reach: ${lost.outcome}`)
 })
 
-check('serves the fault could not be judged on count for nothing either way', () => {
+check('serves the fault couldn’t be judged on count for nothing either way', () => {
   const c = checkDrill('shallow_drop', basket('shallow_drop', 'clean', 'clean', 'unseen', 'refused', 'unseen', 'clean'))!
   assert(c.read === 3 && c.clean === 3, `read ${c.read}, clean ${c.clean}`)
-  assert(c.outcome === 'unread', `three clean of three read is not a pass of four: ${c.outcome}`)
+  assert(c.outcome === 'unread', `three clean of three read isn’t a pass of four: ${c.outcome}`)
 })
 
 check('a fault with no ladder has no check', () => {
@@ -204,8 +204,8 @@ check("a ladder goes only with a miss on its own fault's side (N7.3)", () => {
     if (!flaw) continue
     const direction = SIGNALS[CARD_SIGNAL[card]].direction
     const ideal = METRICS[card].ideal
-    assert(missSide({ value: ideal[0] - 1, ideal }) === 'low', `${card}: a value under the band is not low`)
-    assert(missSide({ value: ideal[1] + 1, ideal }) === 'high', `${card}: a value over the band is not high`)
+    assert(missSide({ value: ideal[0] - 1, ideal }) === 'low', `${card}: a value under the band isn’t low`)
+    assert(missSide({ value: ideal[1] + 1, ideal }) === 'high', `${card}: a value over the band isn’t high`)
     assert(missSide({ value: (ideal[0] + ideal[1]) / 2, ideal }) === undefined, `${card}: the middle of the band missed`)
     if (direction === 'higher') {
       assert(faultForMetric(card, 'low') === flaw, `${card}: a miss under the band lost ${flaw}`)
@@ -280,9 +280,9 @@ check('a serious fault starts on the most guided step, a slight one nearer the m
   for (const [flaw, p] of everyProgression()) {
     const [high, medium, low] = (['high', 'medium', 'low'] as const).map((s) => startingRung(p, s))
     assert(high === 0, `${flaw}: a serious fault starts on step ${high + 1}`)
-    assert(high < medium && medium <= low, `${flaw}: ${high}, ${medium}, ${low} is not in order`)
+    assert(high < medium && medium <= low, `${flaw}: ${high}, ${medium}, ${low} isn’t in order`)
     assert(low <= p.steps.length - 2, `${flaw}: a slight fault starts on the match step`)
-    assert(startingRung(p) === medium && startingRung(p, 'none') === medium, `${flaw}: no grade did not start at medium`)
+    assert(startingRung(p) === medium && startingRung(p, 'none') === medium, `${flaw}: no grade didn’t start at medium`)
     rows.push(`${flaw} ${high + 1}/${medium + 1}/${low + 1} of ${p.steps.length}`)
   }
   note(rows.join(' · '))

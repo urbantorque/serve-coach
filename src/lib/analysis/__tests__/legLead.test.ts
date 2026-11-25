@@ -53,10 +53,10 @@ heading('How far the legs led the arm')
 check('the rig’s late legs close the gap and turn it, at 30 fps', () => {
   const row = [0, 0.5, 0.75, 1].map((lateLegDrive) => read({ lateLegDrive }, 30).legLead)
   note(`late legs 0 / 0.5 / 0.75 / 1: ${row.map((l) => `${l?.ms} ms ${l?.order}`).join(', ')}`)
-  assert(row[0]?.order === 'legs_first', 'a clean serve did not read legs first')
+  assert(row[0]?.order === 'legs_first', 'a clean serve didn’t read legs first')
   assert(row[2]?.order === 'level', 'a dead heat was called')
-  assert(row[3]?.order === 'arm_first', 'legs after the elbow were not read')
-  for (let i = 1; i < row.length; i++) assert(row[i]!.ms < row[i - 1]!.ms, 'the gap did not close as the legs came later')
+  assert(row[3]?.order === 'arm_first', 'legs after the elbow weren’t read')
+  for (let i = 1; i < row.length; i++) assert(row[i]!.ms < row[i - 1]!.ms, 'the gap didn’t close as the legs came later')
 })
 
 check('real serves read legs first on every take, at every rate an ordinary clip has', () => {
@@ -73,7 +73,7 @@ check('real serves read legs first on every take, at every rate an ordinary clip
   }
 })
 
-check('it holds down to 20 fps, a wide window’s rate, and below that it is not read', () => {
+check('it holds down to 20 fps, a wide window’s rate, and below that it isn’t read', () => {
   for (const fps of [20, 24]) {
     const leads = REAL_SERVES.flatMap((s) => seeds(4).map((seed) => takeOf(s, { fps }, seed).legLead))
     assert(leads.every((l) => l?.order === 'legs_first'), `${fps} fps: ${JSON.stringify(leads.find((l) => l?.order !== 'legs_first'))}`)
@@ -81,7 +81,7 @@ check('it holds down to 20 fps, a wide window’s rate, and below that it is not
   assert(takeOf(REAL_SERVES[0], { fps: 18 }, 7).legLead === undefined, 'an unmeasured rate was read')
 })
 
-check('real serves with the legs run late are read that way, and a tie is not called', () => {
+check('real serves with the legs run late are read that way, and a tie isn’t called', () => {
   // By how far the legs are planted late, and what that leaves between the
   // legs and the elbow in 3D on these serves: about 85 ms less the delay.
   const calls = (delay: number, clip: (typeof CLIPS)[number]) => {
@@ -150,7 +150,7 @@ check('planting the legs late leaves the arm where it was', () => {
   assert(Math.abs(after.wristTop - before.wristTop) < 0.002, 'planting the legs moved contact')
 })
 
-check('a serve whose hips barely rise is not timed', () => {
+check('a serve whose hips barely rise isn’t timed', () => {
   // Under this rise the peak of it is tracker noise: the gap's spread goes past
   // 40 ms and readings start to land on the arm's side of zero.
   for (const [trophyKneeAngle, contactHipHeight] of [
@@ -163,7 +163,7 @@ check('a serve whose hips barely rise is not timed', () => {
   }
 })
 
-check('from behind and from a corner it is not read, because the elbow’s speed there is half depth', () => {
+check('from behind and from a corner it isn’t read, because the elbow’s speed there is half depth', () => {
   for (const cameraYaw of [8, 45]) {
     assert(read({ cameraYaw }, 30).legLead === undefined, `read at camera yaw ${cameraYaw}`)
   }

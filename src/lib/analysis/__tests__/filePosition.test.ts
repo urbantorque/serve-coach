@@ -97,7 +97,7 @@ check('the same take reads the same, keyframes, rows and faults, wherever it sit
   }
 })
 
-heading('What levelling cannot do')
+heading('What levelling can’t do')
 
 check('KNOWN: from the side, a phone tilted six degrees is levelled by the stance, not the tilt', () => {
   /*

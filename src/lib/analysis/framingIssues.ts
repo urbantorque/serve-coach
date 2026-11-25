@@ -187,8 +187,8 @@ export function blockingFramingIssue(issues: string[]): NotAServeError | undefin
   if (issues.includes('hands-unseen')) {
     return new NotAServeError(
       issues.includes('too-far-away')
-        ? 'You are too far from the camera for me to check.'
-        : 'I could not see your racket hand.',
+        ? 'You’re too far from the camera for me to check.'
+        : 'I couldn’t see your racket hand.',
       [
         `Move the phone to ${PLACEMENT.distance} away, so you fill the picture from head to feet.`,
         'I check the swing by following your racket hand, so it must be in view.',

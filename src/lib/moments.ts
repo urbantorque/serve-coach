@@ -151,7 +151,7 @@ function newBestTrip(sessions: Session[], more: MomentContext): Found | undefine
     kind: 'best_trip',
     key: `best_trip:${record.from}`,
     at: record.to,
-    title: 'Best court trip yet',
+    title: 'Your best session yet',
     body: cue(bestTripLine(record, record.to)),
   }
 }
@@ -167,7 +167,7 @@ function streakMilestone(sessions: Session[], prefs: Prefs, now: number, more: M
     kind: 'streak',
     key: `streak:${n}:${at}`,
     at,
-    title: `${n} court trips in a row`,
+    title: `${n} sessions in a row`,
     body: cue(`${capital(CADENCE_WORDS[cadence])}, and you filmed every trip.`),
   }
 }
@@ -263,7 +263,7 @@ function derive(sessions: Session[], prefs: Prefs, now: number, evidence: readon
       key: 'first_serve',
       at: first,
       title: 'First serve filmed',
-      body: 'Your history starts here. Film again on your next court trip and I can start comparing.',
+      body: 'Your history starts here. Film again next time you play and I can start comparing.',
     })
   }
 
@@ -443,7 +443,7 @@ export function weekRecap(
   const unit = prefs.speedUnit ?? defaultSpeedUnit()
 
   const count = week.serves === 1 ? '1 serve' : `${week.serves} serves`
-  const where = trips === 1 ? 'on one court trip' : `over ${trips} court trips`
+  const where = trips === 1 ? 'in one session' : `over ${trips} sessions`
   return {
     from,
     to,

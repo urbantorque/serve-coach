@@ -105,7 +105,7 @@ check('every cue names one thing to do with the phone or the body', () => {
 
 heading('The ranking')
 
-check('every call appears exactly once, and the two states are not in it', () => {
+check('every call appears exactly once, and the two states aren’t in it', () => {
   const order = framingRanking()
   assert(new Set(order).size === order.length, `a call is ranked twice: ${order.join(', ')}`)
   assert(!order.includes('looking'), '"looking" is a state, not something that fires')
@@ -181,7 +181,7 @@ check('a part-filled window is never judged', () => {
     const expected = n === 0 ? 'no-player' : 'looking'
     assert(verdict.call === expected, `${n} frames said ${verdict.call}`)
   }
-  assert(judgeFraming(readFraming(standing(CORNER))).call === 'ready', 'a full clean window was not ready')
+  assert(judgeFraming(readFraming(standing(CORNER))).call === 'ready', 'a full clean window wasn’t ready')
 })
 
 check('the window is the one assessSpatial reads', () => {
@@ -234,7 +234,7 @@ check('the guide angle and the live check agree (L1.10)', () => {
   assert(judgeFraming(r).call === 'ready', `the guide's own placement was told to ${judgeFraming(r).call}`)
 })
 
-heading('A body that is not upright in the picture')
+heading('A body that isn’t upright in the picture')
 
 /**
  * A player leaning, on a phone that is perfectly level.
@@ -309,10 +309,10 @@ check('a leaning player and a tilted phone are the same reading, and the cue adm
   }
   // The honesty the ambiguity forces, pinned so it cannot be edited back out.
   const said = plain(judgeFraming(readFraming(leaning(standing(CORNER), 10))).cue)
-  assert(/cannot tell/.test(said), `the cue picked a culprit it cannot see: "${said}"`)
+  assert(/can’t tell/.test(said), `the cue picked a culprit it can’t see: "${said}"`)
 })
 
-check('roll never outranks something the camera cannot see past', () => {
+check('roll never outranks something the camera can’t see past', () => {
   const base = standing(CORNER)
   const rolled = unlevelFrames(base, { roll_deg: 15, ...levelPivot(base) })
   const verdict = judgeFraming(readFraming(unseen(rolled, HANDS)))
@@ -337,14 +337,14 @@ check('each crop reaches the player as the thing they can fix', () => {
   }
 })
 
-check('both ends gone is a refusal, one end gone is not', () => {
+check('both ends gone is a refusal, one end gone isn’t', () => {
   const base = standing(CORNER)
   assert(judgeFraming(readFraming(unseen(base, [...FEET, LM.nose]))).grade === 'refused', 'both ends survived')
   assert(judgeFraming(readFraming(unseen(base, FEET))).grade === 'hedged', 'cropped feet were refused')
   assert(judgeFraming(readFraming(unseen(base, [LM.nose]))).grade === 'hedged', 'a cropped head was refused')
 })
 
-check('the standing height is dropped, never guessed, when the feet are not in shot', () => {
+check('the standing height is dropped, never guessed, when the feet aren’t in shot', () => {
   const base = standing(CORNER)
   const height = standingHeight(base)
   assert(height !== null && height > 0, 'no height from a clean window')
@@ -388,7 +388,7 @@ check('the aspect correction round-trips, and it changes the answer', () => {
     for (const [k, p] of f.image.entries()) {
       assert(
         Math.abs(p.x - source[i].image[k].x) < 1e-9 && p.y === source[i].image[k].y,
-        `landmark ${k} of frame ${i} did not round-trip`,
+        `landmark ${k} of frame ${i} didn’t round-trip`,
       )
     }
   }
@@ -401,7 +401,7 @@ check('the aspect correction round-trips, and it changes the answer', () => {
   const right = readFraming(rebuilt).spatial!.yaw_deg
   const wrong = readFraming(flat).spatial!.yaw_deg
   note(`a 16:9 preview read square recovers ${wrong}° where the corrected read gives ${right}°`)
-  assert(wrong !== right, 'the aspect correction made no difference, so it is not being applied')
+  assert(wrong !== right, 'the aspect correction made no difference, so it isn’t being applied')
 })
 
 check('a missing visibility is trusted, not zeroed', () => {
@@ -422,12 +422,12 @@ check('an empty preview says so and measures nothing', () => {
 
 heading('Filming for a speed (C4)')
 
-check('standing far back in the speed placement is not told to move closer', () => {
+check('standing far back in the speed placement isn’t told to move closer', () => {
   const form = judgeFraming(reading({ issues: ['too-far-away'] }))
   const speed = judgeFraming(reading({ issues: ['too-far-away'], placement: 'speed', aspect: 16 / 9 }))
   assert(form.call === 'too-far', `the form placement said ${form.call}`)
   assert(speed.call === 'ready' && speed.grade === 'clear', `the speed placement said ${speed.call}, ${speed.grade}`)
-  assert(/rougher/.test(speed.cue), 'the speed placement did not say what the distance costs')
+  assert(/rougher/.test(speed.cue), 'the speed placement didn’t say what the distance costs')
 })
 
 check('the speed placement never lifts a refusal', () => {

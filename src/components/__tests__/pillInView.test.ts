@@ -22,7 +22,7 @@ check('a pill already showing leaves the row where the player put it', () => {
 
 check('a pill off the right edge is brought in, and the row moves right', () => {
   const to = scrollToShow({ ...ROW, scrollLeft: 0 }, { left: 430, width: 80 })
-  assert(to !== undefined && to > 0, `did not scroll: ${to}`)
+  assert(to !== undefined && to > 0, `didn’t scroll: ${to}`)
   assert(430 >= to! && 430 + 80 <= to! + ROW.width, `contact still off screen at ${to}`)
 })
 

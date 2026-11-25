@@ -29,7 +29,7 @@ const findingsFrom = (cameraYaw: number, dials: Partial<ServeDials> = {}): FlawF
 /** Every fault the engine names to players, once each. */
 const NAMED = [...new Set(FLAWS.filter((s) => s.notNamed === undefined).map((s) => s.flaw))]
 
-heading('What each angle cannot see')
+heading('What each angle can’t see')
 
 check('every named fault is read from every angle, or is listed with the angle that wakes it', () => {
   const awake = { side: findingsFrom(SIDE), 'front-back': findingsFrom(BEHIND) }
@@ -39,21 +39,21 @@ check('every named fault is read from every angle, or is listed with the angle t
     for (const flaw of NAMED) {
       const bound = ANGLE_BOUND.filter((b) => b.flaw === flaw)
       if (!bound.length) {
-        if (!flaws.some((f) => f.flaw === flaw)) missed.push(`${flaw} is not read from ${yaw}° and is not listed`)
+        if (!flaws.some((f) => f.flaw === flaw)) missed.push(`${flaw} isn’t read from ${yaw}° and isn’t listed`)
         continue
       }
       for (const b of unseenBy({ flaws }).filter((u) => u.flaw === flaw)) {
         const woken = awake[b.filmFrom].some((f) => f.flaw === b.flaw && f.axis === b.axis)
-        if (!woken) missed.push(`${flaw} (${b.axis}) is missed from ${yaw}° and ${b.filmFrom} does not read it either`)
+        if (!woken) missed.push(`${flaw} (${b.axis}) is missed from ${yaw}° and ${b.filmFrom} doesn’t read it either`)
       }
     }
-    note(`${yaw}°: cannot see ${unseenBy({ flaws }).map((b) => `${b.flaw} ${b.axis}`).join(', ') || 'nothing'}`)
+    note(`${yaw}°: can’t see ${unseenBy({ flaws }).map((b) => `${b.flaw} ${b.axis}`).join(', ') || 'nothing'}`)
     assert(missed.length === 0, missed.join('; '))
   }
   // And a listed fault the angle named for it really does read: no entry stands
   // for an angle that cannot see it either.
   for (const b of ANGLE_BOUND) {
-    assert(awake[b.filmFrom].some((f) => f.flaw === b.flaw && f.axis === b.axis), `${b.flaw} ${b.axis} is not read ${b.filmFrom}`)
+    assert(awake[b.filmFrom].some((f) => f.flaw === b.flaw && f.axis === b.axis), `${b.flaw} ${b.axis} isn’t read ${b.filmFrom}`)
   }
 })
 
@@ -69,7 +69,7 @@ check('the report says what this angle missed, and where to stand, in the voice'
   // send the player to the same place.
   assert(side.length === 1 && side[0].includes('behind the baseline'), `the side clip said: ${side.join(' | ')}`)
   assert(side[0].includes('toss') && side[0].includes('body folds'), `the side line left one out: ${side[0]}`)
-  assert(behind.length === 1 && behind[0].includes('forward or back') && behind[0].includes('side-on'), 'the back clip did not send the player to the side')
+  assert(behind.length === 1 && behind[0].includes('forward or back') && behind[0].includes('side-on'), 'the back clip didn’t send the player to the side')
   assert(corner.length === 2, `a 45° corner reads neither drift and said ${corner.length} lines`)
   for (const l of [...side, ...behind, ...corner]) assert(cueIssues(l).length === 0, `"${l}": ${cueIssues(l).join(', ')}`)
   assert(unseenLines(undefined).length === 0, 'a report with no diagnosis was told what it missed')
@@ -103,7 +103,7 @@ check('real serves filmed from the back fence read sideways and name none of it'
       const frames = filmMocap(serve, { fps, bearing: 180, distance: 6 })
       const d = diagnose(frames, detectServe(frames, fps))
       const drift = d.flaws.find((f) => f.flaw === 'toss_drift')
-      assert(drift?.axis === 'lateral', `a real serve from the back fence was not read sideways at ${fps} fps`)
+      assert(drift?.axis === 'lateral', `a real serve from the back fence wasn’t read sideways at ${fps} fps`)
       for (const flaw of ['toss_drift', 'posture_collapse'] as const) {
         assert(!d.flaws.find((f) => f.flaw === flaw)?.detected, `a real serve from the back fence was named ${flaw} at ${fps} fps`)
       }

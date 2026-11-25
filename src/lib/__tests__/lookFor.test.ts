@@ -31,7 +31,7 @@ const ANALYSES: [string, Analysis][] = [
 
 heading('Ticks are band membership, and nothing else')
 
-check('every moment is ticked when its confident readings are all in band, crossed when one is not', () => {
+check('every moment is ticked when its confident readings are all in band, crossed when one isn’t', () => {
   let ticks = 0
   let crosses = 0
   for (const [name, a] of ANALYSES) {
@@ -55,7 +55,7 @@ check('each check is a reading from its own moment, ticked by its own band, off-
       assert(checks.length <= 3, `${name} ${phase}: ${checks.length} checks`)
       for (const c of checks) {
         const m = a.fundamentals.flatMap((f) => f.metrics).find((x) => x.id === c.id)!
-        assert(m.phase === phase, `${name}: ${c.id} is not read at ${phase}`)
+        assert(m.phase === phase, `${name}: ${c.id} isn’t read at ${phase}`)
         assert(c.inBand === (m.value >= m.ideal[0] && m.value <= m.ideal[1]), `${name}: ${c.id} ticked against its band`)
         assert(!(m.confidence < SOFT_MEASUREMENT), `${name}: a hedged reading was ticked`)
       }
@@ -73,7 +73,7 @@ check('the top fault is shown at the moment its own row is read', () => {
   const row = a.fundamentals.flatMap((f) => f.metrics).find((m) => faultForMetric(m.id) === plan[0].flaw)
   assert(row !== undefined && moment === row.phase, `${plan[0].flaw} showed at ${moment}, its row is read at ${row?.phase}`)
   // And a drop shows at the drop, whichever fault leads.
-  assert(faultMoment(a.fundamentals, 'shallow_drop') === 'drop', 'the drop does not show at the drop')
+  assert(faultMoment(a.fundamentals, 'shallow_drop') === 'drop', 'the drop doesn’t show at the drop')
   assert(faultMoment(a.fundamentals, undefined) === undefined, 'a moment for no fault')
 })
 
@@ -103,7 +103,7 @@ check('the pair renders the player beside something to compare, with its checks'
   )
   assert(html.includes('Your racket drop, side by side'), 'the pair has no title')
   assert(html.includes('aria-label="Your racket drop, as the tracked body"'), 'the player half is missing')
-  for (const c of checks) assert(html.includes(c.label), `${c.label} is not listed`)
+  for (const c of checks) assert(html.includes(c.label), `${c.label} isn’t listed`)
 })
 
 check('the report shows the pair at the top fault, and the moments say how they went', () => {
@@ -112,9 +112,9 @@ check('the report shows the pair at the top fault, and the moments say how they 
   const top = causalPlan(a.triage, a.diagnosis)[0]
   const moment = faultMoment(a.fundamentals, top.flaw)!
   const label = a.phases.find((p) => p.id === moment)!.label.toLowerCase()
-  assert(html.includes(`Your ${label}, side by side`), `the pair at the ${label} is not on the report`)
+  assert(html.includes(`Your ${label}, side by side`), `the pair at the ${label} isn’t on the report`)
   // The moment the player is parked on says what to look for; the rest are a tap away.
-  assert(html.includes(LOOK_FOR.ready.replace(/'/g, '&#x27;')), 'the moment on screen does not say what to look for')
+  assert(html.includes(LOOK_FOR.ready.replace(/'/g, '&#x27;')), 'the moment on screen doesn’t say what to look for')
   const marks = (html.match(/watch-mark--(tick|cross)/g) ?? []).length
   const expected = PHASES.filter((p) => momentMark(a.fundamentals, p) !== undefined).length
   assert(marks === expected, `${marks} marks on the moments, ${expected} moments with a reading`)

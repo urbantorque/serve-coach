@@ -33,7 +33,7 @@ check('the contributions add up to the overall, on every demo serve', () => {
   }
 })
 
-check('an area the clip could not grade takes no share', () => {
+check('an area the clip couldn’t grade takes no share', () => {
   const a = sampleAnalysis(DEMO_DIALS.collapsed)
   const unmeasured = a.fundamentals.filter((f) => f.metrics.length === 0 && f.score === 0).map((f) => f.id)
   const parts = scoreBreakdown(a.fundamentals)
@@ -59,7 +59,7 @@ check('the pull is the weakest-link term the area score applied', () => {
   assert(b.dropped.length === 3, `dropped ${b.dropped.join(', ')}`)
 })
 
-check('rows this clip could not grade, or read only roughly, are named', () => {
+check('rows this clip couldn’t grade, or read only roughly, are named', () => {
   const a = sampleAnalysis(DEMO_DIALS.collapsed)
   const swing = scoreBreakdown(a.fundamentals).find((p) => p.id === 'swing')!
   note(`swing dropped: ${swing.dropped.join(', ')}`)
@@ -69,7 +69,7 @@ check('rows this clip could not grade, or read only roughly, are named', () => {
   const soft = scoreBreakdown([
     { id: 'toss', score: 70, metrics: [{ id: 'releaseHeight', label: 'Release height', score: 70, weight: 1, confidence: 0.4 }] },
   ] as unknown as Fundamental[])[0]
-  assert(soft.approximate[0] === 'Release height', 'an approximate row was not named')
+  assert(soft.approximate[0] === 'Release height', 'an approximate row wasn’t named')
 })
 
 heading('In the player\'s words')

@@ -69,7 +69,7 @@ check('a row is the pose of the frame that keyframe points at, not a neighbour',
       const dx = Math.abs(rebuilt.image[k].x - source.image[k].x)
       const dy = Math.abs(rebuilt.image[k].y - source.image[k].y)
       const step = 10 ** -POSE_PRECISION
-      assert(dx <= step && dy <= step, `row ${i}, landmark ${k} is not the frame it came from`)
+      assert(dx <= step && dy <= step, `row ${i}, landmark ${k} isn’t the frame it came from`)
     }
   }
 })
@@ -77,7 +77,7 @@ check('a row is the pose of the frame that keyframe points at, not a neighbour',
 check('a keyframe pointing outside the clip produces no row rather than a wrong one', () => {
   const poses = keyframePoses(frames, [{ frame: 9999 }, { frame: K.contact }] as Pick<Phase, 'frame'>[], ASPECT)
   assert(poses !== undefined, 'one unreadable keyframe threw the other away')
-  assert(poses!.rows[0] === null, 'a frame that does not exist produced a row')
+  assert(poses!.rows[0] === null, 'a frame that doesn’t exist produced a row')
   assert(poses!.rows[1] !== null, 'the readable keyframe lost its row')
 })
 
@@ -89,7 +89,7 @@ check('nothing readable at all produces nothing, not an empty shell', () => {
   assert(keyframePoses(frames, phases, 0) === undefined, 'an aspect of zero produced a track')
 })
 
-check('what does not survive comes back absent, never fabricated', () => {
+check('what doesn’t survive comes back absent, never fabricated', () => {
   // A stored pose has no world landmarks and no timestamp. Returning a plausible
   // zero for either would let something downstream measure a joint angle off a
   // body that has no depth, which is the whole reason only image landmarks are
@@ -119,17 +119,17 @@ check('junk in a row is dropped rather than drawn', () => {
   assert(read!.rows[0] !== null && read!.rows[5] !== null, 'a good row was dropped')
   assert(
     read!.rows.slice(1, 5).every((r) => r === null),
-    'a row that was not an array, was the wrong length, or held a string survived',
+    'a row that wasn’t an array, was the wrong length, or held a string survived',
   )
 })
 
-check('a shape that cannot be drawn at all reads as absent', () => {
+check('a shape that can’t be drawn at all reads as absent', () => {
   const good = keyframePoses(frames, phases, ASPECT)!
   assert(readKeyframePoses(undefined) === undefined, 'undefined produced a track')
   assert(readKeyframePoses('a string') === undefined, 'a string produced a track')
   assert(readKeyframePoses({ rows: good.rows }) === undefined, 'a track with no aspect was accepted')
   assert(readKeyframePoses({ aspect: 0, rows: good.rows }) === undefined, 'an aspect of zero was accepted')
-  assert(readKeyframePoses({ aspect: 0.5, rows: 'nope' }) === undefined, 'rows that are not an array were accepted')
+  assert(readKeyframePoses({ aspect: 0.5, rows: 'nope' }) === undefined, 'rows that aren’t an array were accepted')
   assert(
     readKeyframePoses({ aspect: 0.5, rows: [null, [1, 2]] }) === undefined,
     'a track with no usable row at all was accepted',
@@ -174,7 +174,7 @@ check('the six keyframes come back out of a track byte for byte', () => {
   const stored = keyframePoses(frames, phases, ASPECT)
   assert(
     JSON.stringify(lifted) === JSON.stringify(stored),
-    'the keyframes lifted out of a track are not the ones the report would have stored',
+    'the keyframes lifted out of a track aren’t the ones the report would have stored',
   )
   note(`track ${(bytes(track) / 1024).toFixed(1)} kB carries the ${(bytes(stored) / 1024).toFixed(1)} kB of keyframes inside it`)
 })
@@ -222,14 +222,14 @@ check('times are one per row and read off the frames, not stepped', () => {
    * identical to a keyframe row.
    */
   const track = swingTrack(frames, K.ready, K.finish, ASPECT)!
-  assert(track.times.length === track.rows.length, 'one timestamp per row is not what was written')
+  assert(track.times.length === track.rows.length, 'one timestamp per row isn’t what was written')
   for (let i = 0; i < track.rows.length; i++) {
     const t = frames[track.from + i].t
-    assert(Math.abs(track.times[i] - t) <= 0.001, `time ${i} is not the frame's own`)
+    assert(Math.abs(track.times[i] - t) <= 0.001, `time ${i} isn’t the frame's own`)
   }
   assert(
     track.times.every((t, i) => i === 0 || t >= track.times[i - 1]),
-    'the timestamps do not run forwards',
+    'the timestamps don’t run forwards',
   )
 })
 
@@ -247,12 +247,12 @@ check('junk is refused on the way back out of storage', () => {
   assert(readSwingTrack(undefined) === undefined, 'nothing read as a track')
   assert(readSwingTrack({ ...good, aspect: 0 }) === undefined, 'an aspect of zero survived the door')
   assert(readSwingTrack({ ...good, from: -1 }) === undefined, 'a negative offset survived the door')
-  assert(readSwingTrack({ ...good, rows: 'rows' }) === undefined, 'rows that are not an array survived')
+  assert(readSwingTrack({ ...good, rows: 'rows' }) === undefined, 'rows that aren’t an array survived')
   assert(readSwingTrack({ ...good, rows: [[1, 2], null] }) === undefined, 'a track of only junk rows survived')
   // A missing timestamp costs a replay its spacing; a row is still worth drawing
   // without one, so `times` is repaired to the row count rather than refused with it.
   const short = readSwingTrack({ ...good, times: [] })!
-  assert(short.times.length === short.rows.length, 'a short times array was not repaired to the rows')
+  assert(short.times.length === short.rows.length, 'a short times array wasn’t repaired to the rows')
 })
 
 check('the report reads whichever form it is carrying', () => {
@@ -290,21 +290,21 @@ check('a replay is the tracked rows, timed by the sampler rather than a guess', 
   const replay = replayFrom(track)!
   assert(replay.samples.length === track.rows.length, 'a clean swing lost samples')
   assert(!replay.assumedSpacing, 'a swing with real timestamps was replayed at an assumed cadence')
-  assert(replay.samples[0].at === 0, 'the replay does not start at zero')
+  assert(replay.samples[0].at === 0, 'the replay doesn’t start at zero')
   /*
    * Relative to the first sample, not to the clip. There is no clip left to be
    * absolute against — the video is gone, and an elapsed time counted from a
    * walk-up nobody can watch is a number with nothing behind it.
    */
   const span = frames[K.finish].t - frames[K.ready].t
-  assert(Math.abs(replay.duration - span) <= 0.002, `duration ${replay.duration} is not the swing's own`)
+  assert(Math.abs(replay.duration - span) <= 0.002, `duration ${replay.duration} isn’t the swing's own`)
   assert(
     replay.samples.every((s, i) => i === 0 || s.at >= replay.samples[i - 1].at),
-    'the replay does not run forwards',
+    'the replay doesn’t run forwards',
   )
 })
 
-check('a frame the tracker lost is not a sample, and takes its time with it', () => {
+check('a frame the tracker lost isn’t a sample, and takes its time with it', () => {
   /*
    * A row with no body cannot be drawn, and blanking the canvas for an instant
    * reads as the app faulting rather than as a gap in what a phone could see.
@@ -324,14 +324,14 @@ check('a frame the tracker lost is not a sample, and takes its time with it', ()
   assert(gap > step * 2, `the two-frame hole replayed as a ${gap.toFixed(3)}s step, the same as any other`)
 })
 
-check('one pose is not motion', () => {
+check('one pose isn’t motion', () => {
   const track = swingTrack(frames, K.ready, K.finish, ASPECT)!
   const single = { ...track, rows: track.rows.map((r, i) => (i === 3 ? r : null)) }
   assert(replayFrom(single) === undefined, 'a single pose was offered as a replay')
   assert(replayFrom(undefined) === undefined, 'nothing was offered as a replay')
 })
 
-check('timestamps that cannot be trusted fall back to a cadence, and say so', () => {
+check('timestamps that can’t be trusted fall back to a cadence, and say so', () => {
   /*
    * `readSwingTrack` repairs a missing timestamp to zero rather than refusing
    * the row it belongs to, which is the right trade for a filmstrip and the
@@ -344,7 +344,7 @@ check('timestamps that cannot be trusted fall back to a cadence, and say so', ()
   assert(repaired.assumedSpacing, 'a run of zeroed timestamps was treated as measured')
   assert(
     Math.abs(repaired.samples[1].at - REPLAY_ASSUMED_STEP) <= 0.001,
-    'the assumed cadence is not the constant it is documented as',
+    'the assumed cadence isn’t the constant it is documented as',
   )
   assert(repaired.duration > 0, 'a repaired replay has no duration to loop over')
 
@@ -369,7 +369,7 @@ check('a row rebuilds as the frame it came from, carrying its own clip index and
       assert(
         Math.abs(rebuilt.image[k].x - source.image[k].x) <= step &&
           Math.abs(rebuilt.image[k].y - source.image[k].y) <= step,
-        `row ${row}, landmark ${k} is not the frame it came from`,
+        `row ${row}, landmark ${k} isn’t the frame it came from`,
       )
     }
   }
@@ -424,7 +424,7 @@ check('a keyframe with no row of its own gets no control rather than its neighbo
   assert(phaseSamples(undefined, track, namedPhases).size === 0, 'no replay produced marks anyway')
 })
 
-check('the replay clock can drive the smoother even when the stored times cannot', () => {
+check('the replay clock can drive the smoother even when the stored times can’t', () => {
   /*
    * A bug found by reading, and the worst shape one can have: it looked like it
    * was working.

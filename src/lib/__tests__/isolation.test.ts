@@ -24,12 +24,12 @@ heading('Cross-origin isolation, ready and switched off')
 
 check('asked for, the dev server and vite preview send the two headers, ahead of the raw ort/ files', () => {
   const config = fs.readFileSync('vite.config.ts', 'utf8')
-  assert(config.includes("'Cross-Origin-Opener-Policy': 'same-origin'"), 'COOP is not same-origin')
-  assert(config.includes("'Cross-Origin-Embedder-Policy': 'require-corp'"), 'COEP is not require-corp')
-  assert(/configureServer:\s*add/.test(config) && /configurePreviewServer:\s*add/.test(config), 'the headers are not on both servers')
+  assert(config.includes("'Cross-Origin-Opener-Policy': 'same-origin'"), 'COOP isn’t same-origin')
+  assert(config.includes("'Cross-Origin-Embedder-Policy': 'require-corp'"), 'COEP isn’t require-corp')
+  assert(/configureServer:\s*add/.test(config) && /configurePreviewServer:\s*add/.test(config), 'the headers aren’t on both servers')
   const plugins = config.slice(config.indexOf('plugins: ['))
   const at = plugins.indexOf('[isolationHeaders()]')
-  assert(at >= 0 && at < plugins.indexOf('serveOrtRaw(),'), 'the headers plugin is not ahead of the raw ort/ files')
+  assert(at >= 0 && at < plugins.indexOf('serveOrtRaw(),'), 'the headers plugin isn’t ahead of the raw ort/ files')
 })
 
 check('unasked, nothing is isolated: not the dev server, not a static host', () => {
@@ -41,8 +41,8 @@ check('unasked, nothing is isolated: not the dev server, not a static host', () 
   const host = fs.readFileSync('public/_headers', 'utf8')
   const live = host.split(/\r?\n/).filter((l) => !l.trim().startsWith('#'))
   assert(!live.some((l) => /Cross-Origin-(Opener|Embedder)-Policy/i.test(l)), 'public/_headers isolates every static host')
-  assert(/^#\s+Cross-Origin-Opener-Policy: same-origin$/m.test(host), 'the opener line is not ready in public/_headers')
-  assert(/^#\s+Cross-Origin-Embedder-Policy: require-corp$/m.test(host), 'the embedder line is not ready in public/_headers')
+  assert(/^#\s+Cross-Origin-Opener-Policy: same-origin$/m.test(host), 'the opener line isn’t ready in public/_headers')
+  assert(/^#\s+Cross-Origin-Embedder-Policy: require-corp$/m.test(host), 'the embedder line isn’t ready in public/_headers')
 })
 
 check('the shell loads nothing from another origin, which require-corp would block', () => {

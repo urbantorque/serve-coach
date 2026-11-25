@@ -76,7 +76,7 @@ export async function fetchStreamed(url: string, opts: StreamOptions = {}): Prom
   try {
     arm()
     const res = await race(doFetch(url, { signal: abort.signal }))
-    if (!res.ok) throw new Error(`Could not download ${url.split('/').pop()} (HTTP ${res.status}).`)
+    if (!res.ok) throw new Error(`Couldn’t download ${url.split('/').pop()} (HTTP ${res.status}).`)
     if (!res.body) {
       const all = new Uint8Array(await race(res.arrayBuffer()))
       opts.onChunk?.(all.length)
@@ -178,7 +178,7 @@ export function engineFailureOf(cause: unknown, online: boolean): EngineFailure 
 
 const FAILURE_COPY: Record<EngineFailure, (mb: number) => { title: string; hints: string[] }> = {
   offline: (mb) => ({
-    title: `The coach is not on this ${deviceNoun()} yet`,
+    title: `The coach isn’t on this ${deviceNoun()} yet`,
     hints: [
       `Connect to the internet once, on Wi-Fi if you can, and the coach downloads (${mb} MB).`,
       'After that it works with no signal at all.',
@@ -189,7 +189,7 @@ const FAILURE_COPY: Record<EngineFailure, (mb: number) => { title: string; hints
     hints: ['Check your connection and try again.', `On Wi-Fi the ${mb} MB takes a minute or two.`],
   }),
   failed: () => ({
-    title: 'I could not start the coach',
+    title: 'I couldn’t start the coach',
     hints: [
       'Reload the page and try again.',
       'If it happens again, check this browser is allowed to store data for this site.',

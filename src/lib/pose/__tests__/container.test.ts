@@ -119,7 +119,7 @@ check('the key is found in ISO-style metadata and inside udta too', () => {
   near(udta.captureFps!, 60, 1e-6, 'udta meta')
 })
 
-check('a real-time clip tagged with its own rate is not a stretch', () => {
+check('a real-time clip tagged with its own rate isn’t a stretch', () => {
   const t = parseMoov(buffer(moov(videoTrak(600, [[300, 20]]), mdtaMeta([[CAPTURE_FPS_KEY, f32(30), 23]]))))
   assert(stretchFromContainer(t) === undefined, 'a 30-on-30 clip was called slow motion')
   assert(stretchFromContainer({ fileFps: 30 }) === undefined, 'no capture rate, yet a stretch')
@@ -184,7 +184,7 @@ await check('a thirty-minute 60 fps session is timed from its moov, reading unde
   assert(read < 32 * 1024 * 1024, `read ${read} bytes`)
 })
 
-await check('a file that is not MP4 or MOV comes back as nothing', async () => {
+await check('a file that isn’t MP4 or MOV comes back as nothing', async () => {
   const webm = new Uint8Array([0x1a, 0x45, 0xdf, 0xa3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
   assert((await readContainerTiming(new Blob([webm]))) === undefined, 'WebM was walked as MP4')
   assert((await readContainerTiming(new Blob([]))) === undefined, 'an empty file returned timing')

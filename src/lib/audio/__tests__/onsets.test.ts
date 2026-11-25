@@ -76,7 +76,7 @@ check('every impact is found, at its own moment, and nothing else is', () => {
   const extra = found.filter((o) => !impacts.some((t) => Math.abs(o.t - t) < 0.004))
   note(`found ${found.length}: ${found.map((o) => `${o.t.toFixed(3)} (${o.strength.toFixed(0)} dB)`).join(', ')}`)
   assert(hit.every(Boolean), `missed impacts at ${impacts.filter((_, i) => !hit[i]).join(', ')} s`)
-  assert(extra.length === 0, `heard impacts that were not there: ${extra.map((o) => o.t.toFixed(3)).join(', ')} s`)
+  assert(extra.length === 0, `heard impacts that weren’t there: ${extra.map((o) => o.t.toFixed(3)).join(', ')} s`)
 })
 
 check('two cracks closer than the refractory time are one impact', () => {

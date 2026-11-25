@@ -20,7 +20,7 @@ check('best, last and a month before, in that order, each once', () => {
   assert(set.map((s) => `${s.who}:${s.session.id}`).join(' ') === 'best:b last:a month:c', set.map((s) => `${s.who}:${s.session.id}`).join(' '))
 })
 
-check('a best that is also the last is shown once, as the best, and the next serve is not called the last', () => {
+check('a best that is also the last is shown once, as the best, and the next serve isn’t called the last', () => {
   const set = compareSet([serve('a', 2, 90), serve('b', 10, 60), serve('c', 30, 50), shown], shown, all)
   assert(set.map((s) => s.who).join(' ') === 'best month', set.map((s) => `${s.who}:${s.session.id}`).join(' '))
 })
@@ -52,7 +52,7 @@ check('never a later serve, another serve type, a refused clip, or this serve', 
   assert(set.length === 0, set.map((s) => s.session.id).join(' '))
 })
 
-check('a best from an older rubric is not called the best, but can still be the last', () => {
+check('a best from an older rubric isn’t called the best, but can still be the last', () => {
   const set = compareSet([serve('old', 2, 99, { scoringVersion: 6 } as Partial<Session>), shown], shown, all)
   assert(set.map((s) => `${s.who}:${s.session.id}`).join(' ') === 'last:old', set.map((s) => `${s.who}:${s.session.id}`).join(' '))
 })

@@ -71,13 +71,13 @@ export const canMoveUp = (c: TripCheck): boolean => c.outcome === 'passed' && c.
 
 /** The glance's line for it, in the copy rules' voice: counts, never readings. */
 export function tripCheckLine(c: TripCheck, where: 'trip' | 'practice' = 'trip'): string {
-  const scope = `this ${where}`
+  const scope = where === 'trip' ? 'today' : 'in this practice'
   if (c.outcome === 'passed') {
     return canMoveUp(c)
-      ? `Clean on ${c.clean} of ${c.read} serves ${scope}. You have passed this step.`
-      : `Clean on ${c.clean} of ${c.read} serves ${scope}, on the last step of this drill.`
+      ? `${c.clean} of ${c.read} serves ${scope} came back without this fault. You’ve passed this step.`
+      : `${c.clean} of ${c.read} serves ${scope} came back without this fault, on the last step of this drill.`
   }
-  if (c.outcome === 'not_yet') return `Clean on ${c.clean} of ${c.read} serves ${scope}. Stay on this step for now.`
+  if (c.outcome === 'not_yet') return `${c.clean} of ${c.read} serves ${scope} came back without this fault. Stay on this step for now.`
   const left = CHECK_SERVES - c.read
-  return `${c.clean} of ${c.read} clean so far ${scope}. Film ${left} more to check this step.`
+  return `${c.clean} of ${c.read} serves ${scope} without this fault so far. Film ${left} more to check this step.`
 }

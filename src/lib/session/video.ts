@@ -121,7 +121,7 @@ export function openSessionVideo(videoUrl: string, file: Blob): SessionVideo {
       // `locateServes` hands back nothing when the scan failed, so that a single
       // serve can fall back to scanning for itself. A session has no such
       // fallback: every serve it reads is one this scan found.
-      if (!found) throw new Error('I could not look through that video for serves.')
+      if (!found) throw new Error('I couldn’t look through that video for serves.')
       return { found, unsure }
     },
 

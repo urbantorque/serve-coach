@@ -133,7 +133,7 @@ await check('a clip too slow for even a pinned track is answered frame rate with
 
 check('the window is the net side of contact, and the times every native frame round it', () => {
   const w = speedWindow(input(240, 8), { width: W, height: H })
-  assert(w.x < contact.x * H && w.x + w.w === W, 'the window does not run from behind contact to the net-side edge')
+  assert(w.x < contact.x * H && w.x + w.w === W, 'the window doesn’t run from behind contact to the net-side edge')
   // Contact a second in, so the window is not clamped at the clip's start.
   const times = speedTimes({ ...input(240, 8), contactT: 1 })
   const step = times[1] - times[0]

@@ -275,7 +275,7 @@ check('the diagram in the plate is a limb, and it is the one being judged', () =
   const gapAgainst = (band: [number, number]) => {
     const s = drawOnce({ annotation: 'trophy', bands: { kneeBend: band } }).strokes
     const last = s.map((x) => x.dashed).lastIndexOf(true)
-    assert(last >= 1 && last + 2 < s.length, 'the plate did not draw a dashed pair and a solid pair')
+    assert(last >= 1 && last + 2 < s.length, 'the plate didn’t draw a dashed pair and a solid pair')
     const target = [s[last - 1], s[last]]
     const yours = [s[last + 1], s[last + 2]]
     assert(!yours[0].dashed && !yours[1].dashed, 'the player’s own limb came out dashed')
@@ -313,7 +313,7 @@ check('the diagram in the plate is a limb, and it is the one being judged', () =
   assert(
     straighter > 0.3 && deeper > 0.3,
     `a target far from the reading separated by only ${(Math.min(straighter, deeper) * 100).toFixed(0)}% ` +
-      'of a bone, so the plate is not showing the difference it exists for',
+      'of a bone, so the plate isn’t showing the difference it exists for',
   )
   note(
     `  measured ~47°: the target limb sits ${(asIs * 100).toFixed(0)}% of a bone away for a band ` +
@@ -365,7 +365,7 @@ check('the ball flight is drawn as one smooth curve, not a dashed raw path', () 
   assert(dashed.length === 0, 'the flight arc is still drawn dashed, like a polyline through raw samples')
   assert(
     strokes.length - withoutBall >= path.length - 1,
-    'the flight arc was not drawn as a continuous run of segments',
+    'the flight arc wasn’t drawn as a continuous run of segments',
   )
   const marker = arcs.find(
     (a) => Math.abs(a.x - (rect.ox + 0.45 * rect.dw)) < 1 && Math.abs(a.y - (rect.oy + 0.3 * rect.dh)) < 1,
@@ -419,7 +419,7 @@ check('the trail costs the same strokes on ten times the sampled frames', () => 
   note(`${long.frameCount} frames: ${long.strokeCalls} strokes, ${long.ms.toFixed(2)}ms`)
   assert(
     long.frameCount > short.frameCount * 5,
-    `the long case is not actually longer — ${long.frameCount} vs ${short.frameCount} frames proves nothing`,
+    `the long case isn’t actually longer — ${long.frameCount} vs ${short.frameCount} frames proves nothing`,
   )
   assert(
     long.strokeCalls === short.strokeCalls,

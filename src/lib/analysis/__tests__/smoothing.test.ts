@@ -30,7 +30,7 @@ const std = (xs: number[]) => {
 
 heading('Smoothing the skeleton for drawing only')
 
-check('a point that is not actually moving is steadied against per-frame noise', () => {
+check('a point that isn’t actually moving is steadied against per-frame noise', () => {
   const rand = seeded(1)
   const smoother = new SkeletonSmoother()
   const fps = 30

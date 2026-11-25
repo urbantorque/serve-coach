@@ -85,12 +85,12 @@ export async function importBackup(
   try {
     parsed = JSON.parse(text)
   } catch {
-    throw new Error('That file is not readable. Pick the .json file the app exported.')
+    throw new Error('That file isn’t readable. Pick the .json file the app exported.')
   }
 
   const backup = parsed as Partial<Backup>
   if (!backup || backup.format !== FORMAT || !Array.isArray(backup.sessions)) {
-    throw new Error('That does not look like a Serve Coach backup.')
+    throw new Error('That doesn’t look like a Serve Coach backup.')
   }
 
   const existing = new Map((await store.listSessions()).map((s) => [s.id, s]))

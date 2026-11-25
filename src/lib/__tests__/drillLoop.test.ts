@@ -55,8 +55,8 @@ const read = (s: Session, logs: PracticeLog[] = [log(lastAt + 6 * DAY)]) => dril
 heading('Which drill, and which fault')
 
 check('a ladder step names its fault, and so does the row a drill was logged against', () => {
-  assert(flawOfDrill({ drill, metricId: 'x' }) === FLAW, 'the ladder step did not name its fault')
-  assert(flawOfDrill({ drill: 'Something else', metricId: ROW }) === FLAW, 'the row did not name its fault')
+  assert(flawOfDrill({ drill, metricId: 'x' }) === FLAW, 'the ladder step didn’t name its fault')
+  assert(flawOfDrill({ drill: 'Something else', metricId: ROW }) === FLAW, 'the row didn’t name its fault')
   assert(flawOfDrill({ drill: 'Something else', metricId: 'nothing' }) === undefined, 'named a fault from nothing')
   assert(rowOf('waiters_tray') === undefined && rowOf(FLAW) === ROW, 'the fault-to-row map is off')
 })

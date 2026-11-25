@@ -40,7 +40,7 @@ import TrackPlayer from '../components/TrackPlayer'
 import { replayFrom } from '../lib/storage/poseTrack'
 import { pairTracks } from '../lib/trackPair'
 import { focusAgainstBest } from '../lib/bestServe'
-import { OUTCOME_LABEL, SERVE_NUMBER_LABEL } from '../lib/serveTagCopy'
+import { OUTCOME_LABEL, SERVE_NUMBER_LABEL, serveTagSummary } from '../lib/serveTagCopy'
 import { SERVE_OUTCOMES, type ServeOutcome } from '../lib/storage/db'
 import { FIXTURE_PLAN } from '../lib/fixturePlan'
 import { useShareState } from '../components/useShareState'
@@ -193,6 +193,8 @@ interface Props {
 }
 
 /** The scoring line and its stop, on one row. Inline: the report's stylesheet is at its budget. */
+/** The serve-tag fold's line: a link, without the browser's triangle. */
+const TAG_SUMMARY = { listStyle: 'none', cursor: 'pointer', minHeight: 44, display: 'flex', alignItems: 'center' } as const
 const SCORING_ROW = { display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' } as const
 
 /** A saved session has no `frames`, so the player is only offered live. */
@@ -581,7 +583,7 @@ export default function Report({
               ))}
             </ul>
             <p className="refusal-note">
-              I measured this video, but I do not trust the results. Numbers from footage this hard to see look
+              I measured this video, but I don’t trust the results. Numbers from footage this hard to see look
               like real ones.
             </p>
             <button className="link-btn link-btn--quiet" onClick={() => setOverrode(true)}>
@@ -688,7 +690,7 @@ export default function Report({
                 )}
               </p>
             ) : (
-              <p className="hero-delta">I changed how I score serves since your last one, so I cannot compare the two.</p>
+              <p className="hero-delta">I changed how I score serves since your last one, so I can’t compare the two.</p>
             ))}
           {bestScore && <p className="hero-best">{bestTripLine(bestScore, analysis.createdAt)}</p>}
           {self?.reward && (
@@ -924,7 +926,7 @@ export default function Report({
             four={showCompare}
             racket={analysis.handedness}
           />
-          <p className="player-note">This video is saved on this {deviceNoun()}. It is deleted with this report, or sooner if space runs short.</p>
+          <p className="player-note">This video is saved on this {deviceNoun()}. It’s deleted with this report, or sooner if space runs short.</p>
         </section>
       )}
 
@@ -944,8 +946,8 @@ export default function Report({
           />
           <p className="player-note">
             {keepsClips
-              ? `This video was not saved on your ${deviceNoun()}, so this is an outline of your body, moving as you filmed it.`
-              : `Your video never left your ${deviceNoun()} and was not saved, so this is an outline of your body, moving as you filmed it.`}
+              ? `This video wasn’t saved on your ${deviceNoun()}, so this is an outline of your body, moving as you filmed it.`
+              : `Your video never left your ${deviceNoun()} and wasn’t saved, so this is an outline of your body, moving as you filmed it.`}
             {ghost
               ? ghost.who === 'best'
                 ? ' The dashed outline is your best serve so far, lined up at the moment you hit the ball.'
@@ -967,7 +969,7 @@ export default function Report({
       {analysis.serves && analysis.serves.count > 1 && (
         <section className="serves">
           <p className="serves-lead">
-            {analysis.serves.count} serves in this clip, showing number <strong>{analysis.serves.index + 1}</strong>.
+            Showing serve <strong>{analysis.serves.index + 1}</strong> of {analysis.serves.count} in this video.
           </p>
           {consistency && (
             <p className="serves-spread">
@@ -978,8 +980,8 @@ export default function Report({
             <div className="serves-scoring" style={SCORING_ROW}>
               <p className="serves-spread" role="status">
                 {scoring.stopping
-                  ? 'Stopping. I will compare the serves already scored.'
-                  : `I am scoring each serve in this clip to compare them, ${scoring.done} of ${scoring.total} done.`}
+                  ? 'Stopping. I’ll compare the serves already scored.'
+                  : `I’m scoring each serve in this clip to compare them, ${scoring.done} of ${scoring.total} done.`}
               </p>
               {onStopScoring && !scoring.stopping && (
                 <button type="button" className="chip chip--button" onClick={onStopScoring} aria-label="Stop scoring the serves">
@@ -1006,9 +1008,13 @@ export default function Report({
       )}
 
       {/* A guess and one tap, not a form. The app never sees the court, so where
-          it landed stays the player's to say, and saying it is optional. */}
+          it landed stays the player's to say, and saying it is optional: folded
+          to one line that says what is known, opened on a tap (2026-11-25). */}
       {(onTagServe || onTagOutcome) && (
-        <section className="serve-tags" aria-label="What you said about this serve">
+        <details className="serve-tags" aria-label="What you said about this serve">
+          <summary className="link-btn" style={TAG_SUMMARY}>
+            {serveTagSummary(serveNumber, outcome, serveGuess?.serveNumber)}
+          </summary>
           {onTagServe && (
             <div className="serve-tags-row">
               <span className="serve-tags-lead">Which serve</span>
@@ -1044,7 +1050,7 @@ export default function Report({
               </div>
             </div>
           )}
-        </section>
+        </details>
       )}
 
       {/* The two moment names a club player is least likely to know, defined on a tap. */}
@@ -1184,7 +1190,7 @@ export default function Report({
                   />
                   {!isLive(analysis) && (
                     <p className="levelled-note">
-                      The video for this report was not saved, so I cannot score it again. Your new level applies from your next video.
+                      The video for this report wasn’t saved, so I can’t score it again. Your new level applies from your next video.
                     </p>
                   )}
                 </>
@@ -1290,11 +1296,11 @@ export default function Report({
           ? 'Built from a simulated serve. Nothing on this page was measured from a video.'
           : isLive(analysis)
             ? `Measured on this device from ${analysis.frames.length} tracked frames. Nothing was uploaded.` +
-              (keepFailed ? ` I could not keep this video on the ${deviceNoun()}, so it will not play here later.` : '')
+              (keepFailed ? ` I couldn’t keep this video on the ${deviceNoun()}, so it won’t play here later.` : '')
             : kept
               ? `Measured on this device. Nothing was uploaded, and the video is kept on this ${deviceNoun()} only.`
               : keepsClips
-                ? 'Measured on this device. Nothing was uploaded, and this video was not kept.'
+                ? 'Measured on this device. Nothing was uploaded, and this video wasn’t kept.'
                 : 'Measured on this device. Nothing was uploaded, and the video itself was never saved.'}
       </p>
 

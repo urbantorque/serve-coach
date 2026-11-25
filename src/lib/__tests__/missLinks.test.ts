@@ -58,7 +58,7 @@ check("one table is Fisher's exact test: the lady tasting tea", () => {
   const four = chanceOfAtLeast([{ serves: 8, fault: 4, miss: 4, both: 4 }])
   assert(Math.abs(three - 17 / 70) < 1e-12, `three right read ${three}, not 17/70`)
   assert(Math.abs(four - 1 / 70) < 1e-12, `four right read ${four}, not 1/70`)
-  assert(chanceOfAtLeast([{ serves: 8, fault: 4, miss: 4, both: 0 }]) === 1, 'the least extreme count was not certain')
+  assert(chanceOfAtLeast([{ serves: 8, fault: 4, miss: 4, both: 0 }]) === 1, 'the least extreme count wasn’t certain')
 })
 
 check('two sittings are summed exactly, not multiplied as if separate tests', () => {
@@ -87,7 +87,7 @@ check('the looks double from the first, each spending half of what is left', () 
   assert(lookFor(FIRST_LOOK - 1) === undefined, `a look at ${FIRST_LOOK - 1} tagged serves`)
   const looks = [FIRST_LOOK, 2 * FIRST_LOOK - 1, 2 * FIRST_LOOK, 4 * FIRST_LOOK, 1000].map((n) => lookFor(n)!)
   assert(looks[0].serves === FIRST_LOOK && looks[0].alpha === LINK_ALPHA / 2, JSON.stringify(looks[0]))
-  assert(looks[1].serves === FIRST_LOOK, `${2 * FIRST_LOOK - 1} serves did not hold the first look`)
+  assert(looks[1].serves === FIRST_LOOK, `${2 * FIRST_LOOK - 1} serves didn’t hold the first look`)
   assert(looks[2].serves === 2 * FIRST_LOOK && looks[2].alpha === LINK_ALPHA / 4, JSON.stringify(looks[2]))
   // However long the history runs, every look's share together stays under the rate.
   let spent = 0
@@ -186,7 +186,7 @@ check('asking within each sitting is what keeps a drifting season honest', () =>
   }
   note(`a drifting season, one look at 5%: pooled ${pct(pooled, N)}, within sittings ${pct(within, N)}`)
   assert(within / N <= LINK_ALPHA, `within sittings named a link in ${pct(within, N)}`)
-  assert(pooled / N > 2 * LINK_ALPHA, `pooled named only ${pct(pooled, N)}: the confound this guards against is not in the histories`)
+  assert(pooled / N > 2 * LINK_ALPHA, `pooled named only ${pct(pooled, N)}: the confound this guards against isn’t in the histories`)
 })
 
 check('a strong link is found at the stated rate, and a weaker one is said to be hard', () => {
@@ -224,7 +224,7 @@ check('a strong link is found at the stated rate, and a weaker one is said to be
   note(found.join(' · '))
 })
 
-heading('Nothing is a fault that was not read')
+heading('Nothing is a fault that wasn’t read')
 
 const finding = (flaw: FlawId, detected: boolean, confidence = 0.9, extra: Partial<FlawFinding> = {}): FlawFinding => ({
   flaw,
@@ -240,10 +240,10 @@ const finding = (flaw: FlawId, detected: boolean, confidence = 0.9, extra: Parti
   ...extra,
 })
 
-check('a reading the camera could not take is neither a fault nor a clean serve', () => {
+check('a reading the camera couldn’t take is neither a fault nor a clean serve', () => {
   const read = faultsOf([finding('low_contact', true), finding('toss_drift', false), finding('collapsed_elbow', true, 0.3)])
-  assert(read.low_contact === true, 'a named fault was not read as one')
-  assert(read.toss_drift === false, 'a fault read and not named was not read as clean')
+  assert(read.low_contact === true, 'a named fault wasn’t read as one')
+  assert(read.toss_drift === false, 'a fault read and not named wasn’t read as clean')
   assert(read.collapsed_elbow === undefined, `a reading under the bar to name anything read as ${read.collapsed_elbow}`)
   assert(read.no_leg_drive === undefined, 'a fault with no reading at all was given an answer')
   assert(faultsOf([finding('low_contact', true, 0.9, { value: Number.NaN })]).low_contact === undefined, 'a reading with no number counted')
@@ -329,7 +329,7 @@ check(`too few tags, or nothing past chance, and there is no link`, () => {
   assert(missLinks(onScreen(), untold.sessions, untold.tags).length === 0, 'a link from serves nobody tagged')
 })
 
-check('an unread fault on the misses is not read as the fault', () => {
+check('an unread fault on the misses isn’t read as the fault', () => {
   // Every net serve has the reading unread, every in serve has it read and
   // clean. Counting "unread" as the fault would make a perfect link of it.
   const serves = sittings('low_contact', 0, 0).map((s) =>
@@ -351,7 +351,7 @@ check('only serves like this one, filmed before it, are compared', () => {
   const seconds = historyOf(strong.map((s) => ({ ...s, serveNumber: 2 as const })))
   assert(missLinks(onScreen(), seconds.sessions, seconds.tags).length === 0, 'second serves were read against a first')
   const asSecond = [...seconds.tags, { id: 'now', serveNumber: 2 as const, taggedAt: 30 * DAY }]
-  assert(missLinks(onScreen(), seconds.sessions, asSecond).length === 1, 'a second serve did not read the seconds')
+  assert(missLinks(onScreen(), seconds.sessions, asSecond).length === 1, 'a second serve didn’t read the seconds')
 })
 
 /* ------------------------------------------------------- on the report -- */
@@ -434,13 +434,13 @@ check('a linked fault the cap held back comes in, and the plan keeps its length'
   const { triage, diagnosis } = reportOf()
   const before = causalPlan(triage, diagnosis)
   const { plan, why } = linkedPlan(triage, diagnosis, [link('low_contact')])
-  assert(!before.some((p) => p.flaw === 'low_contact'), 'the low contact was not held back to begin with')
+  assert(!before.some((p) => p.flaw === 'low_contact'), 'the low contact wasn’t held back to begin with')
   assert(flawsOf(plan) === 'toss_arm_drops > low_contact > no_leg_drive > collapsed_elbow', flawsOf(plan))
   assert(plan.length === before.length, `${plan.length} drills against ${before.length}`)
   assert(why.low_contact?.startsWith('I moved this up.') === true, `"${why.low_contact}"`)
 })
 
-check('a rough reading on this serve does not pass a firm one', () => {
+check('a rough reading on this serve doesn’t pass a firm one', () => {
   const rough = OWN.map((f) => (f.flaw === 'collapsed_elbow' ? { ...f, confidence: 0.5 } : f))
   const { triage, diagnosis } = reportOf(rough)
   const { plan, why } = linkedPlan(triage, diagnosis, [link('collapsed_elbow')])
@@ -468,7 +468,7 @@ check('every line is first person when it moves a fix, 25 words, two sentences, 
       lines.push(line)
       assert(cueIssues(line).length === 0, `"${line}": ${cueIssues(line).join('; ')}`)
       assert(wordCount(line) <= 25 && sentenceCount(line) <= 2, `"${line}"`)
-      if (moved) assert(/^I\b/.test(line), `"${line}" is not in the first person`)
+      if (moved) assert(/^I\b/.test(line), `"${line}" isn’t in the first person`)
     }
   }
   note(lines[0])
@@ -525,7 +525,7 @@ check(`the minimum split is ${MIN_SIDE} a side`, () => {
   for (let i = 0; i < 60; i++) rows.push({ outcome: 'in', stratum: 'a', faults: { low_contact: false } })
   assert(linksIn(rows, LINK_ALPHA).length === 0, 'six a side was asked')
   rows.push({ outcome: 'net', stratum: 'a', faults: { low_contact: true } })
-  assert(linksIn(rows, LINK_ALPHA).length === 1, 'seven a side, perfectly split, was not found')
+  assert(linksIn(rows, LINK_ALPHA).length === 1, 'seven a side, perfectly split, wasn’t found')
 })
 
 report()

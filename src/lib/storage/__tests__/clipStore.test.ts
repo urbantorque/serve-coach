@@ -69,7 +69,7 @@ await check('nothing is written unless the player opted in', async () => {
   assert((await keepClip('serve-a', clip(MB), { optedIn: false }, root)) === false, 'kept without the opt-in')
   assert(files.size === 0, 'a file was written without the opt-in')
   assert((await keepClip('serve-a', clip(MB), { optedIn: true, estimate: { usage: 0, quota: 1e10 } }, root)) === true, 'not kept with it')
-  assert(files.size === 1 && (await clipFor('serve-a', root))?.size === MB, 'the kept clip did not read back')
+  assert(files.size === 1 && (await clipFor('serve-a', root))?.size === MB, 'the kept clip didn’t read back')
 })
 
 check('with room to spare nothing makes way', () => {
@@ -102,7 +102,7 @@ check('a clip that could never fit is refused, and nothing is emptied for it', (
 
 check('with no estimate from the browser, only the count bounds it', () => {
   assert(planClipRoom(clips(3), 500 * MB).fits, 'refused with no estimate and room in the count')
-  assert(planClipRoom(clips(MAX_KEPT_CLIPS), MB).evict.join() === 'serve-0', 'the count was not enforced without an estimate')
+  assert(planClipRoom(clips(MAX_KEPT_CLIPS), MB).evict.join() === 'serve-0', 'the count wasn’t enforced without an estimate')
 })
 
 await check('keeping evicts on the device as planned, oldest first', async () => {
@@ -153,7 +153,7 @@ function readOnlyRoot() {
   return { root: (async () => dir as unknown as FileSystemDirectoryHandle) as ClipRoot, files }
 }
 
-await check('a handle that cannot be written keeps nothing, and leaves no empty clip behind', async () => {
+await check('a handle that can’t be written keeps nothing, and leaves no empty clip behind', async () => {
   const { root, files } = readOnlyRoot()
   const kept = await keepClip('serve-a', clip(MB), { optedIn: true, estimate: { usage: 0, quota: 1e10 } }, root)
   assert(kept === false, 'a clip was reported kept on a handle with no way to write it')

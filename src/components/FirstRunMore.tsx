@@ -73,7 +73,7 @@ export default function FirstRunMore({ onShowPage }: Props) {
           <li>
             <Icon name="info" size={22} />
             <div>
-              <strong>I tell you what I cannot see.</strong>
+              <strong>I tell you what I can’t see.</strong>
               <span>Every number says how sure I am. Speed is a likely range, never a grade.</span>
             </div>
           </li>
@@ -88,7 +88,7 @@ export default function FirstRunMore({ onShowPage }: Props) {
             <Icon name="check" size={22} />
             <div>
               <strong>Every serve checked for free.</strong>
-              <span>{GATED ? 'Your score and the top fix are free. Plus adds the full results.' : 'Everything is free while Plus is not on sale.'}</span>
+              <span>{GATED ? 'Your score and the top fix are free. Plus adds the full results.' : 'Everything is free while Plus isn’t on sale.'}</span>
             </div>
           </li>
         </ul>
@@ -113,7 +113,7 @@ export default function FirstRunMore({ onShowPage }: Props) {
               <em>A likely range, never a grade</em>
             </li>
             <li>
-              <span>Anything the camera cannot see well</span>
+              <span>Anything the camera can’t see well</span>
               <em>Marked as unsure, or left out</em>
             </li>
           </ul>
@@ -134,7 +134,7 @@ export default function FirstRunMore({ onShowPage }: Props) {
               <h3 className="t-subhead">Free and Plus</h3>
               <p className="first-more-lede">Your score and the top fix for every serve are free. Plus adds the full results, a step-by-step plan and more.</p>
               {PRICE_LINE && <p className="first-more-lede">Plus is {PRICE_LINE}.</p>}
-              {!GATED && <p className="first-more-lede">Everything is free while Plus is not on sale.</p>}
+              {!GATED && <p className="first-more-lede">Everything is free while Plus isn’t on sale.</p>}
               <a className="first-more-link" href={pathFor({ kind: 'page', page: 'pricing' }, import.meta.env.BASE_URL)} onClick={open('pricing')}>
                 See the plans
                 <Icon name="chevron" size={16} />

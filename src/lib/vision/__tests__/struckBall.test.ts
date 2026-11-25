@@ -83,7 +83,7 @@ check('the centre sits where the ball was halfway through the exposure, round or
   assert(worst <= 1.5, `a centre was ${worst.toFixed(2)} px from the truth`)
 })
 
-check('where the ball was a frame ago is not reported as where it is', () => {
+check('where the ball was a frame ago isn’t reported as where it is', () => {
   const rand = seeded(9)
   const fps = 120
   const prev = render(0, 0.5 / fps, 45, 8, rand)

@@ -374,12 +374,12 @@ function plannedInArea(s: Session | undefined, area: FundamentalId): FlawId | un
 export function repeatabilityNote(f: PracticeFocus): string {
   const r = f.repeatability
   if (!r) return ''
-  const baskets = `${r.sessions} baskets`
+  const baskets = `${r.sessions} ${r.sessions === 1 ? 'video' : 'videos'}`
 
   if (r.same) {
     // The same measurement failing both tests. Worth saying plainly: it is the
     // strongest case this app can make for spending a session on one thing.
-    return cue(`It is also the least steady part of your serve, in ${baskets}. That is two reasons to work on it.`)
+    return cue(`It’s also the least steady part of your serve, across ${baskets}. That’s two reasons to work on it.`)
   }
   /*
    * Rewritten twice by C5's audit, and the second time is the real finding.
@@ -415,7 +415,7 @@ export function repeatabilityNote(f: PracticeFocus): string {
    * either way: "Racket drop scores fine…" and "Hitting the ball at its peak
    * scores fine…".
    */
-  return cue(`${r.label} scores fine but varies most, across ${baskets}. Make it steady after you fix the one above.`)
+  return cue(`${r.label} scores fine but changes the most, across ${baskets}. Make it steady after you fix the one above.`)
 }
 
 /**
@@ -485,21 +485,21 @@ export function practiceHeadline(f: PracticeFocus): string {
    * whole ladder did not move.
    */
   if (f.drilled && f.drilled >= COACH_AFTER_DRILLS && !f.rungsLeft) {
-    return cue(`${it} has not improved after ${rounds(f.drilled)} of its drill. Take this one to a coach.`)
+    return cue(`${it} hasn’t improved after ${rounds(f.drilled)} of its drill. Take this one to a coach.`)
   }
   if (f.drilled && f.drilled >= COACH_AFTER_DRILLS) {
-    return cue(`${it} has not improved after ${rounds(f.drilled)} of its drill. Work through the rest of its ladder before you take it to a coach.`)
+    return cue(`${it} hasn’t improved after ${rounds(f.drilled)} of its drill. Work through the rest of its ladder before you take it to a coach.`)
   }
   if (f.drilled) {
-    return cue(`${it} has not improved after ${rounds(f.drilled)} of its drill. Do it at half pace, then film again.`)
+    return cue(`${it} hasn’t improved after ${rounds(f.drilled)} of its drill. Do it at half pace, then film again.`)
   }
   if (f.drilled === 0 && f.timesWeakest >= 2) {
-    return cue(`${it} was your lowest score on ${f.timesWeakest} serves, and you have not logged its drill. Start there.`)
+    return cue(`${it} was your lowest score on ${f.timesWeakest} serves, and you haven’t logged its drill. Start there.`)
   }
   if (f.timesWeakest >= Math.ceil(f.sessionsConsidered / 2)) {
     return cue(`${it} was your lowest score on ${f.timesWeakest} of your last ${f.sessionsConsidered} ${SERVE_WORD(f.serveType)} serves. Start here.`)
   }
-  return cue(`${it} scores lowest ${across} and has not improved. Start here.`)
+  return cue(`${it} scores lowest ${across} and hasn’t improved. Start here.`)
 }
 
 /** Logged sessions of a drill before a stuck reading is sent to a coach. */

@@ -146,10 +146,10 @@ await check('compact: no photographs, the swing traded for its keyframes, and th
   note(`a report: ${JSON.stringify(full).length} chars whole, ${text.length} in the copy`)
   assert(serves === 1 && file.format === 'serve-coach-backup', 'not a backup')
   assert(copy.phases.every((p) => !p.thumbnail), 'a photograph stayed in')
-  assert(!copy.track && !!copy.poses, 'the swing was not traded for its keyframes')
+  assert(!copy.track && !!copy.poses, 'the swing wasn’t traded for its keyframes')
   assert(copy.overall === full.overall && JSON.stringify(copy.fundamentals) === JSON.stringify(full.fundamentals), 'the numbers moved')
   assert(JSON.stringify(copy.diagnosis) === JSON.stringify(full.diagnosis), 'the diagnosis moved')
-  assert(text.length * 400 < SNAPSHOT_BUDGET, 'four hundred reports would not fit: the budget is out of step with the report')
+  assert(text.length * 400 < SNAPSHOT_BUDGET, 'four hundred reports wouldn’t fit: the budget is out of step with the report')
 })
 
 await check('a practice session keeps every line and leaves its photographs behind', async () => {
@@ -191,8 +191,8 @@ check('a first copy as soon as there is a serve, then every few', () => {
   const held: SnapshotMeta = { name: 'x', at: 1, serves: 3 }
   assert(snapshotDue(undefined, 1) && !snapshotDue(undefined, 0), 'the first copy waited, or came with nothing')
   assert(!snapshotDue(held, SNAPSHOT_EVERY - 1), 'a copy came early')
-  assert(snapshotDue(held, SNAPSHOT_EVERY), 'a copy did not come')
-  assert(snapshotDue(held, 1, SNAPSHOT_EVERY - 1), 'a practice session\'s serves did not count')
+  assert(snapshotDue(held, SNAPSHOT_EVERY), 'a copy didn’t come')
+  assert(snapshotDue(held, 1, SNAPSHOT_EVERY - 1), 'a practice session\'s serves didn’t count')
 })
 
 await check('after each save it makes a copy when due, and only then', async () => {
@@ -287,7 +287,7 @@ await check('a history lost and refilmed keeps its one good copy to the end', as
 })
 
 check('room is left for the reports', () => {
-  assert(roomFor(1000) && roomFor(1000, { usage: 0, quota: 0 }), 'a browser that will not say was refused')
+  assert(roomFor(1000) && roomFor(1000, { usage: 0, quota: 0 }), 'a browser that won’t say was refused')
   assert(roomFor(1000, { usage: 7000, quota: 10_000 }), 'room was refused')
   assert(!roomFor(1000, { usage: 7001, quota: 10_000 }), 'a copy took the last of the room')
 })
@@ -302,10 +302,10 @@ heading('Asking the browser to keep it')
 
 check('not on the first serve, and on a second visit or once installed', () => {
   const base = { persisted: false, installed: false, serves: PERSIST_AFTER_SERVES, firstFiledAt: NOW - 2 * DAY, now: NOW }
-  assert(persistenceWorthAsking(base), 'a returning player was not asked for')
+  assert(persistenceWorthAsking(base), 'a returning player wasn’t asked for')
   assert(!persistenceWorthAsking({ ...base, firstFiledAt: NOW - 60_000 }), 'asked on the first visit')
   assert(!persistenceWorthAsking({ ...base, serves: 1 }), 'asked on one serve')
-  assert(persistenceWorthAsking({ ...base, installed: true, serves: 1, firstFiledAt: NOW }), 'an installed app was not asked for')
+  assert(persistenceWorthAsking({ ...base, installed: true, serves: 1, firstFiledAt: NOW }), 'an installed app wasn’t asked for')
   assert(!persistenceWorthAsking({ ...base, persisted: true }), 'asked again once it was granted')
   assert(!persistenceWorthAsking({ ...base, askedAt: NOW - DAY }), 'asked again straight after a refusal')
   assert(persistenceWorthAsking({ ...base, askedAt: NOW - PERSIST_RETRY_MS }), 'never asked again')
@@ -344,10 +344,10 @@ check('every line says what a copy covers and what only a file does, in the voic
     assert(!/—/.test(line), `an em dash in "${line}"`)
     if (v.serves) {
       assert(/damaged history/.test(line) && /mistaken clear/.test(line), `what it covers: "${line}"`)
-      assert(/lost phone/.test(line), `what it does not: "${line}"`)
+      assert(/lost phone/.test(line), `what it doesn’t: "${line}"`)
     }
   }
-  assert(/Safari/.test(protectionLine(variants[2])), 'iOS not installed did not name Safari')
+  assert(/Safari/.test(protectionLine(variants[2])), 'iOS not installed didn’t name Safari')
   // A laptop is not told about a lost phone (N5.8).
   for (const v of variants.filter((x) => x.available)) {
     const line = protectionLine({ ...v, device: 'computer' })
@@ -376,8 +376,8 @@ heading('The way back')
 check('offered on a history emptied or damaged, and not on one that merely shrank', () => {
   const on = (o: Partial<Parameters<typeof recoveryReason>[0]>) => recoveryReason({ opened: true, rows: 0, readable: 0, held: 10, ...o })
   assert(on({}) === 'emptied', 'an empty store with a copy offered nothing')
-  assert(on({ rows: 12, readable: 3 }) === 'damaged', 'rows that will not read offered nothing')
-  assert(on({ opened: false }) === 'damaged', 'a store that will not open offered nothing')
+  assert(on({ rows: 12, readable: 3 }) === 'damaged', 'rows that won’t read offered nothing')
+  assert(on({ opened: false }) === 'damaged', 'a store that won’t open offered nothing')
   assert(on({ rows: 6, readable: 6 }) === undefined, 'a player who deleted serves was offered them back')
   assert(on({ held: 0 }) === undefined && on({ held: undefined }) === undefined, 'offered with nothing to bring back')
   assert(on({ rows: 12, readable: 11, held: 10 }) === undefined, 'offered with the store ahead of the copy')
@@ -398,10 +398,10 @@ await check('the offer names what it holds; a copy with nothing behind it is no 
   const unopened = await recoveryOffer(undefined, {
     ...w.deps,
     rows: async () => {
-      throw new Error('will not open')
+      throw new Error('won’t open')
     },
     readable: async () => {
-      throw new Error('will not open')
+      throw new Error('won’t open')
     },
   })
   assert(unopened?.reason === 'damaged', JSON.stringify(unopened))
@@ -422,9 +422,9 @@ await check('a restore goes through the import and brings the history back, the 
   const result = (await restoreFromSnapshot(w.deps))!
   assert(result.added === 3 && w.reports.size === 3, `${result.added} added, ${w.reports.size} on file`)
   assert(result.trips === 1 && w.trips.length === 1, `${result.trips} trips back`)
-  assert((await w.store.listServeTags()).length === 1, 'the taps did not come through the copy')
+  assert((await w.store.listServeTags()).length === 1, 'the taps didn’t come through the copy')
   const back = w.reports.get('serve-s1-0')!
-  assert(back.overall === real.overall, 'the numbers did not come back')
+  assert(back.overall === real.overall, 'the numbers didn’t come back')
   assert(back.phases.every((p) => !p.thumbnail), 'a photograph came from nowhere')
   assert((await recoveryOffer(undefined, w.deps)) === undefined, 'the offer outlived the restore')
 })
@@ -439,14 +439,14 @@ await check('a restore never rolls back what is on file', async () => {
   assert(w.reports.get(newer.id)!.overall === 91, 'an older copy overwrote a newer report')
 })
 
-await check('a copy that will not read falls back to the other, and none at all resolves to nothing', async () => {
+await check('a copy that won’t read falls back to the other, and none at all resolves to nothing', async () => {
   const w = world({}, { reports: [reportAt(1), reportAt(2)] })
   await protectAfterSave({}, w.deps)
   const [good] = snapshotsOn([...w.files.keys()])
   w.files.set(`history-${NOW + 1}-9.json`, 'not json at all {')
   w.reports.clear()
   const result = await restoreFromSnapshot(w.deps)
-  assert(result?.added === 2, `the good copy ${good.name} was not reached`)
+  assert(result?.added === 2, `the good copy ${good.name} wasn’t reached`)
   w.files.clear()
   assert((await restoreFromSnapshot(w.deps)) === undefined, 'a restore from nothing')
   assert((await restoreFromSnapshot({ ...w.deps, shelf: async () => undefined })) === undefined, 'a restore with no shelf')
@@ -536,9 +536,9 @@ await check('a copy goes in, reads back whole, lists by name, and comes out', as
   assert(shelf.kind === 'opfs', shelf.kind)
   await shelf.write('history-5-2.json', 'hello')
   assert((await shelf.names()).join() === 'history-5-2.json', (await shelf.names()).join())
-  assert((await shelf.read('history-5-2.json')) === 'hello', 'did not read back')
+  assert((await shelf.read('history-5-2.json')) === 'hello', 'didn’t read back')
   await shelf.remove('history-5-2.json')
-  assert((await shelf.names()).length === 0, 'did not come out')
+  assert((await shelf.names()).length === 0, 'didn’t come out')
 })
 
 await check('a write that fails leaves no empty copy behind', async () => {

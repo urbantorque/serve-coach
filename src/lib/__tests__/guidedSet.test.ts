@@ -98,14 +98,14 @@ check('the intro names the step, the count and the cue', () => {
 })
 check('a clean serve is counted; a named one is counted and gets the cue again', () => {
   const said = play(DROP, 'cn')
-  assert(said[0].line === 'Clean, 1 of 1 clean so far.', said[0].line)
-  assert(said[1].line === 'Not yet, 1 of 2 clean so far. Let the tip fall behind you.', said[1].line)
-  assert(!said[0].done && !said[1].done, 'two serves are not a set')
+  assert(said[0].line === 'Clean, 1 of 1 without the fault so far.', said[0].line)
+  assert(said[1].line === 'Not yet, 1 of 2 without the fault so far. Let the tip fall behind you.', said[1].line)
+  assert(!said[0].done && !said[1].done, 'two serves aren’t a set')
 })
-check('a serve the engine could not judge is said to be that, and counts neither way', () => {
+check('a serve the engine couldn’t judge is said to be that, and counts neither way', () => {
   const said = play(DROP, 'cu')
-  assert(said[1].line.startsWith('I could not judge that one'), said[1].line)
-  assert(!said[1].line.includes('clean so far'), said[1].line)
+  assert(said[1].line.startsWith('I couldn’t judge that one'), said[1].line)
+  assert(!said[1].line.includes('without the fault so far'), said[1].line)
 })
 check('a passed set says so and ends', () => {
   const said = play(DROP, 'cccccc')
@@ -122,13 +122,13 @@ check('a set past reaching its bar ends early, and says to stay', () => {
   note(`ended after ${end + 1} serves: ${said[end].line}`)
 })
 
-check('a step with no served ball cannot be filmed as a check; a served one and a plain drill can (W5.2)', () => {
+check('a step with no served ball can’t be filmed as a check; a served one and a plain drill can (W5.2)', () => {
   const ladder = everyProgression().find(([f]) => f === 'toss_arm_drops')![1]
   const self = ladder.steps.find((s) => s.check.by === 'self')!
   const served = ladder.steps.find((s) => s.check.by === 'engine')!
   assert(!filmable('toss_arm_drops', self.name), `"${self.name}" was filmable`)
-  assert(filmable('toss_arm_drops', served.name), `"${served.name}" was not filmable`)
-  assert(filmable('toss_arm_drops', 'A card drill'), 'a plain drill was not filmable')
+  assert(filmable('toss_arm_drops', served.name), `"${served.name}" wasn’t filmable`)
+  assert(filmable('toss_arm_drops', 'A card drill'), 'a plain drill wasn’t filmable')
 })
 
 report()

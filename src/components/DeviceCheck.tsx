@@ -69,8 +69,8 @@ export default function DeviceCheck() {
           {recording.chosen
             ? 'This phone can record a serve and check it.'
             : recording.deadEnd
-              ? 'This browser only records files it cannot open, so there is no record button. Film with your camera app.'
-              : 'This browser cannot record here. Film with your camera app, then pick the video.'}
+              ? 'This browser only records files it can’t open, so there is no record button. Film with your camera app.'
+              : 'This browser can’t record here. Film with your camera app, then pick the video.'}
         </span>
       </p>
 
@@ -113,7 +113,7 @@ export default function DeviceCheck() {
         label="Room for reports"
         value={
           storage.quotaMb === undefined
-            ? 'this browser would not say'
+            ? 'this browser wouldn’t say'
             : `${storage.usedMb ?? 0} MB used of ${storage.quotaMb} MB`
         }
       />
@@ -159,7 +159,7 @@ export default function DeviceCheck() {
       )}
 
       <p className="sheet-note">
-        Nothing here is sent anywhere. It is read from your browser, shown to you, and forgotten
+        Nothing here leaves your phone. I get it from your browser, show it to you, and forget it
         when you close this.
       </p>
 
@@ -192,7 +192,7 @@ export default function DeviceCheck() {
         {copied === 'done'
           ? 'Copied to clipboard.'
           : copied === 'failed'
-            ? 'Could not copy automatically. Select the text above and copy it by hand.'
+            ? 'Couldn’t copy automatically. Select the text above and copy it by hand.'
             : ''}
       </p>
       {copied === 'failed' && (

@@ -37,7 +37,7 @@ export default function CadencePicker({ value, onChange }: Props) {
           </button>
         ))}
       </div>
-      <p className="hand-pick-note">I keep your streak going while you play at this pace, with a few days to spare.</p>
+      <p className="hand-pick-note">Your streak keeps going as long as you play about this often, with a few days to spare.</p>
     </fieldset>
   )
 }

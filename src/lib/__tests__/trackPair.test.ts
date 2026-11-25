@@ -239,7 +239,7 @@ check('nothing below the hips comes back, and everything above it does', () => {
   for (const lm of [LM.nose, LM.leftShoulder, LM.rightShoulder, LM.leftWrist, LM.rightWrist, LM.leftHip, LM.rightHip]) {
     assert(sample.image[lm] !== null, `landmark ${lm} is at or above the hips and came back null`)
   }
-  assert(sample.image.length === 33, `a row of ${sample.image.length} landmarks cannot be indexed by name`)
+  assert(sample.image.length === 33, `a row of ${sample.image.length} landmarks can’t be indexed by name`)
 })
 
 check('contact is the zero of the older swing, and the samples run in time order', () => {
@@ -252,7 +252,7 @@ check('contact is the zero of the older swing, and the samples run in time order
   )
   assert(
     pair.samples[0].fromContact < 0 && pair.samples[pair.samples.length - 1].fromContact > 0,
-    'the swing does not span contact',
+    'the swing doesn’t span contact',
   )
 })
 
@@ -356,7 +356,7 @@ check('an angle claimed as measured with no number behind it is unmeasured', () 
   )
 })
 
-check('the refusal is symmetric — the angle gate does not care which serve is older', () => {
+check('the refusal is symmetric — the angle gate doesn’t care which serve is older', () => {
   const wide = pairTracks(serve({ yaw: 50 }), serve({ yaw: 40 }))
   const other = pairTracks(serve({ yaw: 40 }), serve({ yaw: 50 }))
   assert(

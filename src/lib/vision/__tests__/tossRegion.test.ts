@@ -114,8 +114,8 @@ check('a distant player’s ball is placed to the pixel in the column, and only 
   const miss = (cs: { x: number; y: number }[]) =>
     Math.min(...cs.map((c) => Math.hypot(c.x * W - bx, c.y * H - by)))
   note(`ball placed within ${miss(inColumn).toFixed(2)} px in the column, ${miss(whole).toFixed(2)} px from the 256-px frame`)
-  assert(miss(inColumn) < 1, 'the column read did not place a ball it could see at full resolution')
-  assert(miss(whole) > miss(inColumn) * 2, 'the shrunk frame placed the ball as sharply — the test is not testing anything')
+  assert(miss(inColumn) < 1, 'the column read didn’t place a ball it could see at full resolution')
+  assert(miss(whole) > miss(inColumn) * 2, 'the shrunk frame placed the ball as sharply — the test isn’t testing anything')
 })
 
 report()

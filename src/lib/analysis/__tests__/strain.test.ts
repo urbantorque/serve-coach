@@ -93,7 +93,7 @@ check('a trip counts once even when only one of its serves was flagged', () => {
 
 heading('The denominator only counts trips that could answer')
 
-check('a refused clip is not a clean trip', () => {
+check('a refused clip isn’t a clean trip', () => {
   // Three refusals around two flagged trips. If refusals counted, the sentence
   // would read "2 of your last 5" — the app inventing three good days.
   const trips: StrainSource[][] = [
@@ -108,7 +108,7 @@ check('a refused clip is not a clean trip', () => {
   assert(found?.of === 2, `denominator was ${found?.of}, expected 2 — refusals must not count as clean`)
 })
 
-check('a trip whose spine was never readable is not a clean trip', () => {
+check('a trip whose spine was never readable isn’t a clean trip', () => {
   const noSpine = { ...cleanSignals() }
   delete noSpine.spine_lean_deg
   const trips: StrainSource[][] = [
@@ -117,7 +117,7 @@ check('a trip whose spine was never readable is not a clean trip', () => {
     [serve([BACK])],
   ]
   const found = backIn(trips)
-  assert(found?.of === 2, `denominator was ${found?.of}, expected 2 — an unreadable spine is not a straight one`)
+  assert(found?.of === 2, `denominator was ${found?.of}, expected 2 — an unreadable spine isn’t a straight one`)
 })
 
 check('the denominator is per flag, not shared', () => {
@@ -156,23 +156,23 @@ check('the readability test is the same one the flags are raised through', () =>
     for (const signal of INJURY_INPUTS[flag]) {
       const missing = { ...cleanSignals() }
       delete missing[signal]
-      assert(!injuryInputsRead(missing, flag), `${flag} should not read without ${signal}`)
+      assert(!injuryInputsRead(missing, flag), `${flag} shouldn’t read without ${signal}`)
       assert(
         !injuryInputsRead({ ...cleanSignals(), [signal]: Number.NaN }, flag),
-        `${flag} should not read a NaN ${signal}`,
+        `${flag} shouldn’t read a NaN ${signal}`,
       )
     }
   }
-  assert(!injuryInputsRead(undefined, BACK), 'a report with no diagnosis cannot answer')
+  assert(!injuryInputsRead(undefined, BACK), 'a report with no diagnosis can’t answer')
 })
 
 heading('Still live, or silent')
 
-check('a pattern that stopped two trips ago is not reported', () => {
+check('a pattern that stopped two trips ago isn’t reported', () => {
   assert(backIn(tripsWhere([true, true, false, false])) === undefined, 'a fixed pattern should go quiet')
 })
 
-check('one clean trip since does not silence it', () => {
+check('one clean trip since doesn’t silence it', () => {
   const found = backIn(tripsWhere([true, true, false]))
   assert(found !== undefined, 'a flag on the trip before last is still live')
   assert(found!.tripsSince === 1, `tripsSince was ${found!.tripsSince}, expected 1`)
@@ -193,7 +193,7 @@ check('the window only looks back so far', () => {
   assert(found?.trips === 2, `counted ${found?.trips}, expected 2 — the old pair is out of the window`)
 })
 
-check('unanswerable trips do not consume the window', () => {
+check('unanswerable trips don’t consume the window', () => {
   // Twenty refused trips between the flagged ones. The window is six trips that
   // could answer, not six rows of history.
   const refusals = Array.from({ length: 20 }, () => [serve([], { status: 'rejected' })])
@@ -206,7 +206,7 @@ heading('Nothing to say')
 
 check('an empty history says nothing', () => {
   assert(recurringStrain([]).length === 0, 'no trips, no records')
-  assert(recurringStrain([[]]).length === 0, 'an empty trip is not evidence')
+  assert(recurringStrain([[]]).length === 0, 'an empty trip isn’t evidence')
 })
 
 check('a player with no flags at all says nothing', () => {
@@ -231,7 +231,7 @@ check('the flag on more trips leads', () => {
   assert(found[0].flag === BACK, `${found[0].flag} led, expected the one on three trips`)
 })
 
-check('severity breaks a tie the counts cannot', () => {
+check('severity breaks a tie the counts can’t', () => {
   const worseWrist: StrainSource = {
     triage: {
       status: 'ok',
@@ -269,7 +269,7 @@ check('every flag has words, and they fit the editor', () => {
 
 check('the sentence states the count it was given', () => {
   const line = strainLine({ flag: BACK, trips: 4, of: 6 })
-  assert(line!.includes('4 of your last 6 trips'), `read "${line}"`)
+  assert(line!.includes('4 of your last 6 sessions'), `read "${line}"`)
 })
 
 check('a flag this build has no words for produces no sentence', () => {
@@ -292,7 +292,7 @@ check('the bar to say it stopped is higher than the bar to warn', () => {
   // Two clean trips is not enough. The asymmetry is the point: the cost of a
   // premature warning is a player checking their back; the cost of a premature
   // all-clear is a player no longer watching something they still do.
-  assert(clearedBack(tripsWhere([true, true, false, false])) === undefined, 'two clean trips is not cleared')
+  assert(clearedBack(tripsWhere([true, true, false, false])) === undefined, 'two clean trips isn’t cleared')
   assert(CLEARED_TRIPS > MIN_STRAIN_TRIPS, 'the clearing floor must be harder to reach than the warning floor')
 })
 
@@ -305,7 +305,7 @@ check('a live pattern is never also reported as stopped', () => {
 check('nothing that was never a pattern can be cleared', () => {
   // One occurrence, then a long clean run. The report said it at the time; this
   // block has nothing to close.
-  assert(clearedBack(tripsWhere([true, false, false, false])) === undefined, 'one occurrence is not a pattern')
+  assert(clearedBack(tripsWhere([true, false, false, false])) === undefined, 'one occurrence isn’t a pattern')
 })
 
 check('a player who never raised the flag hears nothing', () => {
@@ -320,7 +320,7 @@ check('the subject closes once it is far enough behind', () => {
   assert(clearedBack(tripsWhere(edge))?.since === STRAIN_WINDOW, 'the last trip inside the window still speaks')
 })
 
-check('trips that could not answer neither clear a pattern nor count as clean', () => {
+check('trips that couldn’t answer neither clear a pattern nor count as clean', () => {
   // Three refused trips after two flagged ones. Nothing was measured, so
   // nothing has stopped — reading those as a clean run would be the denominator
   // bug wearing the opposite sign.
@@ -331,7 +331,7 @@ check('trips that could not answer neither clear a pattern nor count as clean', 
     [serve([], { status: 'rejected' })],
     [serve([], { status: 'rejected' })],
   ]
-  assert(clearedBack(trips) === undefined, 'refusals are not evidence of a fix')
+  assert(clearedBack(trips) === undefined, 'refusals aren’t evidence of a fix')
 })
 
 check('one flag can be live while another is cleared', () => {
@@ -344,7 +344,7 @@ check('one flag can be live while another is cleared', () => {
   ]
   assert(backIn(trips)?.trips === 2, 'the back is still live')
   assert(clearedStrain(trips).find((r) => r.flag === WRIST)?.since === 3, 'the wrist has stopped')
-  assert(clearedStrain(trips).find((r) => r.flag === BACK) === undefined, 'the back is not cleared')
+  assert(clearedStrain(trips).find((r) => r.flag === BACK) === undefined, 'the back isn’t cleared')
 })
 
 check('the stopped sentence fits the editor and states its run', () => {
@@ -388,14 +388,14 @@ check('the denominator behind a report counts only answerable trips', () => {
 
 check('it looks back exactly as far as the sheet does', () => {
   const found = strainBehind(tripsWhere([true, ...Array(STRAIN_WINDOW).fill(false)]), BACK)
-  assert(found === undefined, 'a flag older than the window is not behind this serve')
+  assert(found === undefined, 'a flag older than the window isn’t behind this serve')
 })
 
 check('the sentence is plain, fits the editor, and gets its plural right', () => {
   const one = strainBehindLine({ trips: 1, of: 1 })
-  assert(one === 'Also on 1 of your 1 court trip before this one.', `read "${one}"`)
+  assert(one === 'Also in 1 of your 1 session before this one.', `read "${one}"`)
   const many = strainBehindLine({ trips: 2, of: 5 })
-  assert(many === 'Also on 2 of your 5 court trips before this one.', `read "${many}"`)
+  assert(many === 'Also in 2 of your 5 sessions before this one.', `read "${many}"`)
   for (const text of [one!, many!]) {
     assert(cueIssues(text).length === 0, cueIssues(text).join('; '))
     assert(wordCount(text) <= MAX_WORDS, `runs to ${wordCount(text)} words`)

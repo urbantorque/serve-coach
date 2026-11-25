@@ -32,7 +32,7 @@ function holed(frames: Frame[], toss: number, n: number, before = 1): Frame[] {
   )
 }
 
-heading('A lift the tracker did not see')
+heading('A lift the tracker didn’t see')
 
 check('a lift with a hole in it is no reading, not a perfect toss', () => {
   let named = 0
@@ -51,7 +51,7 @@ check('a lift with a hole in it is no reading, not a perfect toss', () => {
     }
   }
   note(`the wandering toss named on ${named} of 12 whole takes; ${read5} holed takes, none read`)
-  assert(named >= 10, 'the wandering toss was not named on the whole takes')
+  assert(named >= 10, 'the wandering toss wasn’t named on the whole takes')
 })
 
 check('a hole the tracker bridged is still read, along the time it covers', () => {
@@ -84,7 +84,7 @@ function dimmed(frames: Frame[], wrist: number, from: number, to: number): Frame
   )
 }
 
-check('a lift nobody saw hedges the card, and an arm lost after the release does not', () => {
+check('a lift nobody saw hedges the card, and an arm lost after the release doesn’t', () => {
   for (const [name, frames] of [
     ['the rig', rigOnFile({ tossWobble: 0.15 }, 7000, 30)],
     ['a Bath serve from behind', realOnFile(REAL_SERVES[0], { bearing: 180, distance: 6 }, 7000, 30)],
@@ -97,7 +97,7 @@ check('a lift nobody saw hedges the card, and an arm lost after the release does
     const after = read(dimmed(frames, wrist, keys.toss + 1, keys.contact))
     const conf = (r: typeof base | undefined) => r?.row?.confidence ?? 0
     note(`${name}: ${conf(base).toFixed(2)} seen, ${conf(lift).toFixed(2)} with the lift unseen, ${conf(after).toFixed(2)} with the arm unseen after`)
-    assert(lift?.row === undefined || conf(lift) < SOFT_MEASUREMENT, `${name}: an unseen lift was not hedged`)
+    assert(lift?.row === undefined || conf(lift) < SOFT_MEASUREMENT, `${name}: an unseen lift wasn’t hedged`)
     near(conf(after), conf(base), 0.05, `${name}: an arm unseen after the release moved the toss path's confidence`)
   }
 })

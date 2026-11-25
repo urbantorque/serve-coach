@@ -49,18 +49,18 @@ check('every address the certificate can name is one the authority may vouch for
 
 check('the authority’s constraint is the whole permitted list, critical, and localhost', () => {
   const line = nameConstraintsLine() as string
-  assert(line.startsWith('critical,'), 'the constraint is not critical, so a phone could ignore it')
+  assert(line.startsWith('critical,'), 'the constraint isn’t critical, so a phone could ignore it')
   for (const [net, mask] of PERMITTED as [string, string][]) assert(line.includes(`permitted;IP:${net}/${mask}`), `${net} is missing`)
-  assert(line.endsWith('permitted;DNS:localhost'), 'localhost is not permitted, and the certificate names it')
+  assert(line.endsWith('permitted;DNS:localhost'), 'localhost isn’t permitted, and the certificate names it')
   assert(!line.includes('excluded'), 'an excluded subtree crept in')
 })
 
 check('unasked, nothing is served over HTTPS', () => {
   const config = fs.readFileSync('vite.config.ts', 'utf8')
-  assert(config.includes('const lanTlsDir = process.env.LAN_TLS_DIR'), 'the TLS switch is not LAN_TLS_DIR')
+  assert(config.includes('const lanTlsDir = process.env.LAN_TLS_DIR'), 'the TLS switch isn’t LAN_TLS_DIR')
   assert(config.includes('...(lanTls ? { server: { https: lanTls }, preview: { https: lanTls } } : {})'), 'HTTPS is on without the switch')
   const script = fs.readFileSync('scripts/lan-preview.mjs', 'utf8')
-  assert(script.includes('LAN_TLS_DIR: dir'), 'the LAN preview does not turn HTTPS on')
+  assert(script.includes('LAN_TLS_DIR: dir'), 'the LAN preview doesn’t turn HTTPS on')
   assert(!/fetch\(/.test(script), 'the LAN preview fetches something')
 })
 

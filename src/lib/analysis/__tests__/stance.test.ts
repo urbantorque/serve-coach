@@ -20,12 +20,12 @@ heading('The stance, from the feet closing')
 check('the pinpoint dial is read from the guide placement: flat feet, an undecided middle, a slide', () => {
   const row = [0, 0.3, 0.5, 0.8].map((p) => stanceOf({ pinpointSlide: p }))
   note(row.map((s, i) => `${[0, 0.3, 0.5, 0.8][i]} → ${s ? `${s.kind} ${s.closure}` : 'no call'}`).join(' · '))
-  assert(row[0]?.kind === 'platform', 'feet that never moved were not a platform')
+  assert(row[0]?.kind === 'platform', 'feet that never moved weren’t a platform')
   assert(row[1] === undefined, 'a slide a third of the way was called either way')
-  assert(row[2]?.kind === 'pinpoint' && row[3]?.kind === 'pinpoint', 'a back foot slid up was not a pinpoint')
+  assert(row[2]?.kind === 'pinpoint' && row[3]?.kind === 'pinpoint', 'a back foot slid up wasn’t a pinpoint')
 })
 
-check('tracker noise does not flip the call', () => {
+check('tracker noise doesn’t flip the call', () => {
   for (const [p, want] of [
     [0, 'platform'],
     [0.6, 'pinpoint'],
@@ -37,7 +37,7 @@ check('tracker noise does not flip the call', () => {
   }
 })
 
-check('from a corner the stance is not read at all', () => {
+check('from a corner the stance isn’t read at all', () => {
   assert(stanceOf({ cameraYaw: 45 }, 'angled') === undefined, 'a corner camera called a stance')
 })
 

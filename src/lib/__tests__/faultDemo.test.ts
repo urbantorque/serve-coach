@@ -31,7 +31,7 @@ const shown = Object.keys(DEMOS) as FlawId[]
 
 /** The engine's verdict on a demo serve, read with the ball the picture draws. */
 function finding(flaw: FlawId, rig: { frames: Frame[]; ball?: BallFlight } | undefined, racket: 'left' | 'right') {
-  assert(rig !== undefined, `${flaw}: the rig serve could not be built`)
+  assert(rig !== undefined, `${flaw}: the rig serve couldn’t be built`)
   const skel = detectServe(rig!.frames, DEMO_FPS, racket)
   return diagnose(rig!.frames, skel, { tier: TIER, ball: rig!.ball }).flaws.find((f) => f.flaw === flaw)
 }
@@ -45,7 +45,7 @@ for (const racket of ['right', 'left'] as const) {
       // Under the camera the picture is drawn from (C1.2).
       const cameraYaw = yawOf(spec)
       const fault = finding(flaw, demoRig({ ...spec.dials, cameraYaw }, racket, spec.apex), racket)
-      assert(fault?.detected === true, `${flaw}: the engine does not name it on the demo serve`)
+      assert(fault?.detected === true, `${flaw}: the engine doesn’t name it on the demo serve`)
       const clean = finding(flaw, demoRig({ ...CLEAN_SERVE, cameraYaw }, racket), racket)
       assert(clean?.detected !== true, `${flaw}: the fix is named with the fault too`)
     })
@@ -173,7 +173,7 @@ check('every demo builds, for either hand, with contact on both clocks', () => {
         assert(contact !== undefined, `${flaw} ${racket}: a serve with no contact`)
         const t = side.frames[contact!.frame].t
         assert(Math.abs(t - side.contactT) < 1e-9, `${flaw} ${racket}: contact frame and clock disagree`)
-        assert(side.phases[0].frame === 0, `${flaw} ${racket}: the loop does not start at ready`)
+        assert(side.phases[0].frame === 0, `${flaw} ${racket}: the loop doesn’t start at ready`)
       }
       assert(demo!.racket === racket, `${flaw}: built for the wrong hand`)
     }
@@ -186,13 +186,13 @@ check('a left-hander sees the racket arm on their own side', () => {
     const at = fault.frames[fault.phases.find((p) => p.id === 'contact')!.frame]
     return at.image[LM.rightWrist].y < at.image[LM.leftWrist].y ? 'right' : 'left'
   }
-  assert(up('right') === 'right', 'right-hander: the right hand is not the one up at contact')
-  assert(up('left') === 'left', 'left-hander: the left hand is not the one up at contact')
+  assert(up('right') === 'right', 'right-hander: the right hand isn’t the one up at contact')
+  assert(up('left') === 'left', 'left-hander: the left hand isn’t the one up at contact')
 })
 
-check('the pancake and the faults with no shape are not offered', () => {
+check('the pancake and the faults with no shape aren’t offered', () => {
   for (const flaw of ['pancake_contact' as FlawId, ...(Object.keys(NO_DEMO) as FlawId[])]) {
-    assert(!hasDemo(flaw), `${flaw} is offered a demonstration it cannot show`)
+    assert(!hasDemo(flaw), `${flaw} is offered a demonstration it can’t show`)
   }
   assert(!hasDemo(undefined), 'a report with no named fault offered a demo')
   note(`demonstrated: ${FLAWS.filter((f) => hasDemo(f.flaw)).map((f) => f.flaw).join(', ')}`)

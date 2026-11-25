@@ -262,7 +262,7 @@ check('the streak counts a trip whatever the serve was scored against', () => {
   const withOldRubric = [serve(90, 97, { rubric: 1 }), ...CLEAN]
   assert(
     tripStreak(withOldRubric, CLEAN[7].createdAt) >= tripStreak(CLEAN, CLEAN[7].createdAt),
-    'an old-rubric trip was not counted towards the streak',
+    'an old-rubric trip wasn’t counted towards the streak',
   )
 })
 
@@ -270,7 +270,7 @@ check('the longest run counts a trip whatever kind of serve was hit', () => {
   const withKick = [serve(20, 96, { type: 'kick' }), ...CLEAN]
   assert(
     longestStreak(withKick) >= longestStreak(CLEAN),
-    'a kick-serve trip was not counted towards the longest run',
+    'a kick-serve trip wasn’t counted towards the longest run',
   )
 })
 

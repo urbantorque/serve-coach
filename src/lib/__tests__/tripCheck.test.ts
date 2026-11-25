@@ -84,7 +84,7 @@ check('too few judged serves asks for more, by how many', () => {
   assert(tripCheckLine(c).includes(`Film ${CHECK_SERVES - 3} more`), tripCheckLine(c))
 })
 
-check('serves from another trip do not count', () => {
+check('serves from another trip don’t count', () => {
   // Two days back: the app's trip is any run of serves under a day apart.
   const yesterday = today(['c', 'c', 'c'], 5 * DAY)
   const serves = [...lastWeek(), ...yesterday, ...today(['c', 'c', 'c'])]
@@ -102,7 +102,7 @@ check('serves filmed before the player moved up count for the step below, not th
   assert(c.rung === 2, `on rung ${c.rung}`)
 })
 
-check('only the newest six count, so a trip that faded has not passed', () => {
+check('only the newest six count, so a trip that faded hasn’t passed', () => {
   const serves = [...lastWeek(), ...today(['c', 'c', 'c', 'c', 'c', 'c', 'n', 'n', 'n', 'n', 'n', 'n'])]
   const c = tripDrillCheck(serves, serves[serves.length - 1])!
   assert(c.outcome === 'not_yet' && c.clean === 0, `${c.clean} clean, outcome ${c.outcome}`)
@@ -117,7 +117,7 @@ check('a drill chosen from the week plan is the one checked, over the plan\'s to
   assert(c.clean === 0 && c.read === 3, `${c.clean} of ${c.read}`)
 })
 
-check('a refused serve is not judged, and nothing is said from none', () => {
+check('a refused serve isn’t judged, and nothing is said from none', () => {
   const refused = { ...serve(7 * DAY, []), triage: { status: 'rejected' } } as unknown as Session
   assert(tripDrillCheck([refused], refused) === undefined, 'a check was built from a refused serve')
 })

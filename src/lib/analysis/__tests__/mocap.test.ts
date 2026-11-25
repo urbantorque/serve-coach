@@ -217,7 +217,7 @@ check('two frame rates agree on arm extension', () => {
   }
 })
 
-check('a real arm is not told it stayed short, on a clean clip from anywhere', () => {
+check('a real arm isn’t told it stayed short, on a clean clip from anywhere', () => {
   // All forty reach 145° in the capture, the floor of the band. Off the sampled
   // poses a clean clip read 49 of 400 of them short of it, and off curves none.
   const floor = METRICS.armExtension.ideal[0]
@@ -277,14 +277,14 @@ check('load ratio reads the same at every frame rate', () => {
   })
 })
 
-check('legs that did not load are timed from the arms, whatever the knees say', () => {
+check('legs that didn’t load are timed from the arms, whatever the knees say', () => {
   // The rig's rigid legs barely sink, and their trophy comes from the arms. Noise
   // can dig these knees a trough anywhere, and the moment does not follow it.
   const frames = buildServe({ trophyKneeAngle: 174 }, 50)
   const skel = detectServe(frames, 50)
   const arms = frames[skel.armsTrophy].t
   assert(skel.derivation.trophyFromArms, 'the rig stopped finding this trophy from the arms')
-  assert(skel.keys.trophy === skel.armsTrophy, 'the trophy found from the arms is not the arms\' trophy')
+  assert(skel.keys.trophy === skel.armsTrophy, 'the trophy found from the arms isn’t the arms\' trophy')
   assert(loadBottom(frames, skel) === arms, 'a trophy found from the arms was moved')
   const fromKnees = {
     ...skel,
@@ -304,7 +304,7 @@ check('legs that loaded on the rig bottom out with the knees', () => {
 
 heading('Real serve motion: KNOWN disagreements (ANALYSIS-REVIEW.md §9)')
 
-check('a real racket drop is not called shallow, from any placement', () => {
+check('a real racket drop isn’t called shallow, from any placement', () => {
   // Was pinned as KNOWN: all 40 Bath serves were told their drop was shallow,
   // because the bands wanted the hand down the back. Re-anchored to the hand
   // near the shoulder (`drop_depth_ratio`, `dropDepth`), so real drops pass —
@@ -347,7 +347,7 @@ check('the camera\'s angle to the court is read from the swing, from every place
   }
 })
 
-check("the guide's own placement is filed as side-on, and the back fence is not", () => {
+check("the guide's own placement is filed as side-on, and the back fence isn’t", () => {
   // Was pinned as KNOWN. A textbook stance points the shoulder line at the
   // net, so from the baseline, where `FilmingGuide.tsx` puts the phone, both
   // shoulders are spread across the picture and the shoulder-span reading comes

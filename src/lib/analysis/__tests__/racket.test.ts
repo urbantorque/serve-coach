@@ -35,8 +35,8 @@ check('the head lands beyond the box centre, away from the wrist', () => {
   const cy = box().y + box().height / 2
   const wrist = { x: cx - 0.2, y: cy + 0.2 }
   const est = racketFromBox(box(), wrist)!
-  assert(est.head.x > cx, `head.x ${est.head.x} did not move past the box centre ${cx}`)
-  assert(est.head.y < cy, `head.y ${est.head.y} did not move past the box centre ${cy}`)
+  assert(est.head.x > cx, `head.x ${est.head.x} didn’t move past the box centre ${cx}`)
+  assert(est.head.y < cy, `head.y ${est.head.y} didn’t move past the box centre ${cy}`)
 })
 
 check('confidence is the detector score, clamped', () => {
@@ -52,14 +52,14 @@ check('a wrist nowhere near the box is refused — a different racket in frame',
   // This wrist sits two full diagonals out, comfortably past it.
   const cx = box().x + box().width / 2
   const farWrist = { x: cx + 0.335 * 2, y: box().y + box().height / 2 }
-  assert(racketFromBox(box(), farWrist) === undefined, 'a distant box should not be attributed to this wrist')
+  assert(racketFromBox(box(), farWrist) === undefined, 'a distant box shouldn’t be attributed to this wrist')
 })
 
 check('a wrist just inside the boundary is still attributed', () => {
   const cx = box().x + box().width / 2
   const cy = box().y + box().height / 2
   const nearWrist = { x: cx + 0.335 * 1.0, y: cy }
-  assert(racketFromBox(box(), nearWrist) !== undefined, 'a box within reach of the wrist should not be refused')
+  assert(racketFromBox(box(), nearWrist) !== undefined, 'a box within reach of the wrist shouldn’t be refused')
 })
 
 check('a degenerate box (no area) is refused rather than divided by zero', () => {
@@ -125,7 +125,7 @@ check('a box under the floor falls back to the wrist estimate rather than drawin
 })
 
 check('with neither strong enough, nothing is drawn', () => {
-  assert(racketToDraw(est(0.3), () => est(0.4)) === undefined, 'a weak guess should not be drawn')
+  assert(racketToDraw(est(0.3), () => est(0.4)) === undefined, 'a weak guess shouldn’t be drawn')
   assert(racketToDraw(undefined, () => undefined) === undefined, 'no evidence should draw nothing')
 })
 

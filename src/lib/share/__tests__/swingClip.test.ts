@@ -84,7 +84,7 @@ await check('no word of the reading shows before the swing reaches the ball', as
   const shown = rec.texts.filter((t) => t.alpha > 0).map((t) => t.text)
   assert(!shown.includes(String(base.overall)), 'the score showed before the swing landed')
   assert(!shown.includes('Working on'), 'the fix showed before the swing landed')
-  assert(shown.includes('Ready') && shown.includes('Contact'), `the moments were not named as they passed: ${[...new Set(shown)].join(', ')}`)
+  assert(shown.includes('Ready') && shown.includes('Contact'), `the moments weren’t named as they passed: ${[...new Set(shown)].join(', ')}`)
 })
 
 await check('the number counts up to the score', async () => {
@@ -93,7 +93,7 @@ await check('the number counts up to the score', async () => {
   for (let s = p.total - 3.6; s <= p.total; s += 0.05) p.draw(s)
   const numbers = rec.texts.map((t) => t.text).filter((t) => /^\d+$/.test(t)).map(Number)
   const scores = numbers.filter((n) => n <= base.overall)
-  assert(scores.some((n) => n < base.overall) && scores[scores.length - 1] === base.overall, 'the number did not count up to the score')
+  assert(scores.some((n) => n < base.overall) && scores[scores.length - 1] === base.overall, 'the number didn’t count up to the score')
 })
 
 heading('Slowing into the ball')
@@ -101,13 +101,13 @@ heading('Slowing into the ball')
 await check('steady through the wind-up, slowest at the ball, and stopped there', () => {
   const t = timeline(1.5)
   const at = (s: number) => t.clock(s)
-  assert(Math.abs(at(0) + 1.5) < 1e-9, 'the swing does not start at its beginning')
-  assert(Math.abs(at(t.total)) < 1e-9, 'the swing does not stop at the ball')
+  assert(Math.abs(at(0) + 1.5) < 1e-9, 'the swing doesn’t start at its beginning')
+  assert(Math.abs(at(t.total)) < 1e-9, 'the swing doesn’t stop at the ball')
   const start = (at(0.6) - at(0.5)) / 0.1
   const end = (at(0.5 + t.play) - at(0.4 + t.play)) / 0.1
   note(`start ${start.toFixed(2)}x real speed, at the ball ${end.toFixed(2)}x, clip ${t.total.toFixed(1)} s`)
-  assert(end < start / 2, 'the ball is not the slowest part')
-  assert(t.total > 7 && t.total < 11, 'a clip people would not sit through, or one too short to read')
+  assert(end < start / 2, 'the ball isn’t the slowest part')
+  assert(t.total > 7 && t.total < 11, 'a clip people wouldn’t sit through, or one too short to read')
 })
 
 await check('the body glides between tracked frames rather than stepping', () => {

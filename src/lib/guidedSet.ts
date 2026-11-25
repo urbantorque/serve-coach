@@ -44,7 +44,7 @@ export function repLine(flaw: FlawId, judged: Judged, check: TripCheck | undefin
   const ladder = progressionFor(flaw)
   if (!ladder) return undefined
   if (check && setDone(check)) return tripCheckLine(check)
-  if (judged === 'unread') return `I could not judge that one for this drill, so it does not count. ${ladder.say}.`
-  const so = check ? `, ${check.clean} of ${check.read} clean so far` : ''
+  if (judged === 'unread') return `I couldn’t judge that one for this drill, so it doesn’t count. ${ladder.say}.`
+  const so = check ? `, ${check.clean} of ${check.read} without the fault so far` : ''
   return judged === 'clean' ? `Clean${so}.` : `Not yet${so}. ${ladder.say}.`
 }

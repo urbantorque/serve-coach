@@ -173,7 +173,7 @@ check('serves are found by their number in the clip, not their place in the arra
 check('a gap naming a serve that was never measured pairs nothing', () => {
   assert(
     servesInGap(basket, { ...gap, best: 99, worst: 1 }) === undefined,
-    'claimed a pair from a serve that is not in the sweep',
+    'claimed a pair from a serve that isn’t in the sweep',
   )
 })
 

@@ -38,7 +38,7 @@ check('the order the faults are worked in moves with level, at the rung the sour
   const low = groups(ARM_FIRST_AT)
   const high = groups(ARM_FIRST_AT + 2)
   note(`club and below: ${low.join(' > ')}; above: ${high.join(' > ')}`)
-  assert(low.indexOf('drop') < low.indexOf('legs') && high.indexOf('legs') < high.indexOf('drop'), 'level does not move the arm against the legs')
+  assert(low.indexOf('drop') < low.indexOf('legs') && high.indexOf('legs') < high.indexOf('drop'), 'level doesn’t move the arm against the legs')
 })
 
 check('on a serve with both faults, a stated level changes the first fix and its drill', () => {
@@ -49,7 +49,7 @@ check('on a serve with both faults, a stated level changes the first fix and its
   const strong = at(7)
   note(`rung 3 fixes "${club.focus.title}" with ${club.focus.drill?.name}; rung 7 fixes "${strong.focus.title}" with ${strong.focus.drill?.name}`)
   assert(club.focus.title !== strong.focus.title, 'a still-learning and a strong club player were told the same first fix')
-  assert(club.focus.drill?.name !== strong.focus.drill?.name, 'the first fix moved and the drill did not')
+  assert(club.focus.drill?.name !== strong.focus.drill?.name, 'the first fix moved and the drill didn’t')
 })
 
 report()

@@ -79,7 +79,7 @@ check('the points fit the clip: whole bodies, in time, upright, the moment insid
   assert(replay.frames.every((f, i) => i === 0 || f.t > replay.frames[i - 1].t), 'frames out of order')
   const held = replay.phases.find((p) => p.id === replay.moment)
   assert(!!held && held.frame >= 0 && held.frame < replay.frames.length, 'the moment is outside the frames kept')
-  assert(Math.abs(replay.frames[held!.frame].t - held!.t) < 0.02, 'the moment’s frame is not at its time')
+  assert(Math.abs(replay.frames[held!.frame].t - held!.t) < 0.02, 'the moment’s frame isn’t at its time')
   assert(replay.phases.some((p) => p.id === 'toss'), 'no toss to slow down at')
   assert(replay.world.length === 33, 'the held moment has no 3D points for its near side')
 })

@@ -83,9 +83,9 @@ ${context?.marks?.length ? `<h2>What the player drew on it</h2><ul class="notes"
 ${pics ? `<h2>Six moments, as the tracked body</h2><div class="stills">${pics}</div>` : ''}
 <h2>Every measurement, against its band</h2>
 <table><thead><tr><th>Area</th><th>Measurement</th><th>Reading</th><th>Band</th><th>Verdict</th></tr></thead><tbody>${rows}</tbody></table>
-<h2>What this cannot see</h2>
+<h2>What this can’t see</h2>
 <ul class="notes">${lines(CANNOT_SEE)}</ul>
-<p class="foot">Measured on the player's phone by Serve Coach from one filmed serve. The video was not sent; this page holds no script and loads nothing.</p>
+<p class="foot">Measured on the player's phone by Serve Coach from one filmed serve. The video wasn’t sent; this page holds no script and loads nothing.</p>
 </body>
 </html>
 `

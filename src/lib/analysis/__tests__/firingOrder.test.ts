@@ -20,7 +20,7 @@ const read = (dials: Partial<ServeDials>, fps: number) => {
 
 heading('The order the body fires in')
 
-check('legs late enough to follow the elbow are read as out of order, and a clean serve is not', () => {
+check('legs late enough to follow the elbow are read as out of order, and a clean serve isn’t', () => {
   for (const fps of [60, 120]) {
     const row = [0, 0.5, 1].map((lateLegDrive) => read({ lateLegDrive }, fps))
     note(`${fps} fps: legs at ${row.map((d) => d.chain.legs.ms).join(' / ')} ms, elbow at ${row.map((d) => d.chain.elbow.ms).join(' / ')}`)
@@ -35,7 +35,7 @@ check('tracker noise never puts a clean serve out of order', () => {
   assert(wrong.length === 0, `${wrong.length} clean serves were called out of order`)
 })
 
-check('below 60 fps the order is not read', () => {
+check('below 60 fps the order isn’t read', () => {
   assert(read({ lateLegDrive: 1 }, 30).firingOrder === undefined, 'the order was read at 30 fps')
 })
 
@@ -52,7 +52,7 @@ check('the real serves fire in order', () => {
   assert(seen.every((o) => o!.inOrder), `a real serve read out of order: ${JSON.stringify(orders)}`)
 })
 
-check('real serves filmed from behind are not told the order, and from a corner never told it is wrong', () => {
+check('real serves filmed from behind aren’t told the order, and from a corner never told it is wrong', () => {
   // Seen from behind the swing towards the net is depth, so the elbow's speed
   // in the picture peaks with the legs: these serves read "legs late" on one
   // take in six at 60 and 120 fps until the order was kept to the side.
@@ -75,7 +75,7 @@ check('the timeline names every link it draws and says the order in words', () =
   const d = read({ lateLegDrive: 1 }, 60)
   const html = renderToStaticMarkup(createElement(FiringTimeline, { chain: d.chain, order: d.firingOrder! }))
   for (const label of ['Legs', 'Trunk', 'Elbow', 'Hand']) assert(html.includes(`>${label}</text>`), `no ${label} label`)
-  assert(html.includes('before your legs finished'), 'the out-of-order case was not said')
+  assert(html.includes('before your legs finished'), 'the out-of-order case wasn’t said')
 })
 
 report()

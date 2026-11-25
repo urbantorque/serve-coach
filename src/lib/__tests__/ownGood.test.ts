@@ -39,7 +39,7 @@ check('a serve earlier today says so', () => {
   assert(line.includes('earlier today'), line)
 })
 
-check('nothing from a serve it could not judge, the serve itself, or a later one', () => {
+check('nothing from a serve it couldn’t judge, the serve itself, or a later one', () => {
   const sessions = [serve('u', NOW - DAY, 'u'), serve('now', NOW, 'c'), serve('later', NOW + DAY, 'c'), serve('n', NOW - DAY, 'n')]
   assert(ownGoodLine(sessions, NOWSERVE, FLAW, NOW) === undefined, 'pointed at a serve that proves nothing')
   assert(ownGoodLine(undefined, NOWSERVE, FLAW, NOW) === undefined, 'no history, and a line anyway')

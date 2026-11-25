@@ -150,7 +150,7 @@ export const SIGNALS: Record<string, SignalSpec> = {
     // it is capped so a mis-detection cannot read as a virtue.
     anchors: { 3: [8, 220], 5: [22, 220], 7: [36, 220], 9: [50, 220] },
     seriousMiss: 45,
-    source: { unnamed: 'arming_the_ball is not named: see UNDER_RESOLVED.hip_lead_ms and van Trigt 2024' },
+    source: { unnamed: 'arming_the_ball isn’t named: see UNDER_RESOLVED.hip_lead_ms and van Trigt 2024' },
   },
   separation_deg: {
     id: 'separation_deg',
@@ -318,7 +318,7 @@ export const SIGNALS: Record<string, SignalSpec> = {
     // actually reads rather than to what a forearm can do.
     anchors: { 3: [12, 200], 5: [20, 200], 7: [28, 200], 9: [36, 200] },
     seriousMiss: 16,
-    source: { unnamed: 'pancake_contact is not named: see UNDER_RESOLVED.pronation_deg' },
+    source: { unnamed: 'pancake_contact isn’t named: see UNDER_RESOLVED.pronation_deg' },
   },
   /*
    * How far the hips rise from the deepest load to contact, in standing

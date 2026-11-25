@@ -129,7 +129,7 @@ export function setDoneLine(result: SetResult, results: readonly SetResult[]): s
   const head = `Set of ${SET_SIZE} ${SERVES_WORD[result.serveNumber]}: ${result.inServes} in.`
   const aim =
     result.target === undefined
-      ? ' That is your mark to beat next time.'
+      ? ' That’s your mark to beat next time.'
       : result.inServes >= result.target
         ? ` You reached your aim of ${result.target}.`
         : ` Your aim was ${result.target}.`

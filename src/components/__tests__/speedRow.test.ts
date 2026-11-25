@@ -30,7 +30,7 @@ check('a reading sits in the hero: the figure and its likely range (lift: the un
   const mph = top.includes('<strong>81</strong>\u00a0mph') && top.includes('76 to 86\u00a0mph')
   assert(kmh || mph, 'the figure or its range is missing')
   note(kmh ? 'rendered in km/h' : 'rendered in mph')
-  assert(/class="term-word"[^>]*>Likely</.test(top), '"Likely" is not defined on a tap')
+  assert(/class="term-word"[^>]*>Likely</.test(top), '"Likely" isn’t defined on a tap')
   assert(html.indexOf('aria-label="Serve speed"') > html.indexOf('class="hero"'), 'the speed row is above the score')
 })
 
@@ -38,7 +38,7 @@ check('a miss is said once, inside the fold, as its sentence', () => {
   const html = render({ miss: 'frame_rate' })
   assert(!aboveFold(html).includes('Serve speed'), 'a miss reached the top of the report')
   const line = SPEED_MISS_LINE.frame_rate
-  assert(html.slice(html.indexOf('report-more')).includes(line), 'the miss sentence is not in the fold')
+  assert(html.slice(html.indexOf('report-more')).includes(line), 'the miss sentence isn’t in the fold')
 })
 
 check('no speed and no miss show nothing at all', () => {
@@ -55,9 +55,9 @@ check('the reading never wears a score colour', () => {
 
 heading('The serve speed, on the glance')
 
-check('a reading is one line on the glance, and a miss is not there at all', () => {
+check('a reading is one line on the glance, and a miss isn’t there at all', () => {
   const read = renderToStaticMarkup(createElement(Glance, { analysis: { ...base, speed: reading }, onOpenReport: noop, onBack: noop }))
-  assert(/About (130\u00a0km\/h|81\u00a0mph) off the racket, likely (122 to 139|76 to 86)\./.test(read), 'the glance does not say the speed')
+  assert(/About (130\u00a0km\/h|81\u00a0mph) off the racket, likely (122 to 139|76 to 86)\./.test(read), 'the glance doesn’t say the speed')
   const missed = renderToStaticMarkup(createElement(Glance, { analysis: { ...base, speed: { miss: 'not_found' } }, onOpenReport: noop, onBack: noop }))
   assert(!missed.includes(SPEED_MISS_LINE.not_found) && !missed.includes('off the racket'), 'the glance said a miss')
 })
@@ -81,8 +81,8 @@ check('the record and a clear trend are said; without readings there is no secti
   const quicker = renderToStaticMarkup(createElement(Progress, { ...props, sessions: [at(0, 0, 33), at(0, 1, 33.5), at(1, 0, 40), at(1, 1, 40.5)] }))
   assert(quicker.includes('id="progress-speed"'), 'no speed section with readings')
   // 40.5 overlaps the 40 that took the record, so the record stands, not new.
-  assert(/>Fastest serve: about/.test(quicker), "the record is not said, or is said as new")
-  assert(/Serving faster than your last time on court/.test(quicker), 'a clear rise between trips is not said')
+  assert(/>Fastest serve: about/.test(quicker), "the record isn’t said, or is said as new")
+  assert(/Serving faster than your last time on court/.test(quicker), 'a clear rise between trips isn’t said')
   const none = renderToStaticMarkup(createElement(Progress, { ...props, sessions: [at(0, 0), at(0, 1), at(1, 0)] }))
   assert(!none.includes('progress-speed'), 'a speed section with nothing in it')
 })

@@ -52,7 +52,7 @@ check('the fall is ½·g·t² from the apex to contact, the same from every plac
     for (const f of falls) {
       assert(f.fall !== undefined, 'no fall read')
       const expected = ballFallMetres(f.ball, f.contactT)
-      assert(Math.abs(f.fall!.value - expected) < 1e-9, 'the reading is not ½·g·t²')
+      assert(Math.abs(f.fall!.value - expected) < 1e-9, 'the reading isn’t ½·g·t²')
     }
     const values = falls.map((f) => f.fall!.value)
     const spread = Math.max(...values) - Math.min(...values)
@@ -79,9 +79,9 @@ check('a camera that drifts hedges the picture heights and not the fall', () => 
   const still = fall(toss)
   const zoomed = fall(toss, { cameraZoom: 0.2 })
   note(`fall ${still.fall!.value.toFixed(3)} → ${zoomed.fall!.value.toFixed(3)} m; toss peak confidence ${still.height!.confidence.toFixed(2)} → ${zoomed.height!.confidence.toFixed(2)}`)
-  assert(Math.abs(zoomed.fall!.value - ballFallMetres(zoomed.ball, zoomed.contactT)) < 1e-9, 'the reading under the zoom is not ½·g·t²')
-  assert(zoomed.fall!.confidence >= SOFT_MEASUREMENT, 'the fall was hedged for a camera it does not depend on')
-  assert(zoomed.height!.confidence < SOFT_MEASUREMENT, 'the picture height was not hedged under the zoom')
+  assert(Math.abs(zoomed.fall!.value - ballFallMetres(zoomed.ball, zoomed.contactT)) < 1e-9, 'the reading under the zoom isn’t ½·g·t²')
+  assert(zoomed.fall!.confidence >= SOFT_MEASUREMENT, 'the fall was hedged for a camera it doesn’t depend on')
+  assert(zoomed.height!.confidence < SOFT_MEASUREMENT, 'the picture height wasn’t hedged under the zoom')
 })
 
 check('feet out of frame guess the standing height, and the fall needs none', () => {

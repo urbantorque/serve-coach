@@ -5,7 +5,12 @@ import { causalPlan, faultMoveLine, refusalFor, rotationMoveLine } from '../lib/
 import type { FaultMove, RotationMove } from '../lib/analysis/carryForward'
 import { SERVE_OUTCOMES, type ServeOutcome } from '../lib/storage/db'
 import type { Analysis } from '../lib/analysis/types'
-import { OUTCOME_LABEL, SERVE_NUMBER_LABEL } from '../lib/serveTagCopy'
+import { OUTCOME_LABEL, SERVE_NUMBER_LABEL, serveTagSummary } from '../lib/serveTagCopy'
+
+/** The tag fold's line: a link, without the browser's triangle. */
+const TAG_SUMMARY = { listStyle: 'none', cursor: 'pointer', minHeight: 44, display: 'flex', alignItems: 'center' } as const
+/** An invisible copy of the Stay here chip, holding the row's height once the countdown stops. */
+const HOLD_SPACE = { visibility: 'hidden' } as const
 import { hasLocalVoice, onVoicesChanged, speakLocally, stopSpeaking } from '../lib/speech'
 import { scoreMoveCaption, scoreMoveWords, type ScoreMove } from '../lib/progress'
 import { canMoveUp, tripCheckLine, tripDrillCheck } from '../lib/tripCheck'
@@ -230,6 +235,8 @@ export default function Glance({
   // And then back to the camera, counted down where it can be seen, with any
   // touch of this screen — a tag, a scroll — keeping it here instead.
   const [backIn, setBackIn] = useState<number | null>(() => (handsFree && onRecordAnother && !setOver ? BACK_TO_CAMERA_S : null))
+  // Whether this screen opened counting down, so the stopped row keeps its place.
+  const counted = useRef(backIn !== null)
   const recordAnotherRef = useRef(onRecordAnother)
   recordAnotherRef.current = onRecordAnother
   useEffect(() => {
@@ -256,6 +263,8 @@ export default function Glance({
       // wants, and the one this screen cannot show from the baseline.
       `${reading ? `${speedSpokenLine(reading, unit)} Score ` : ''}${analysis.overall}${scoreMove ? `, ${scoreMoveWords(scoreMove)}` : ''}. ${first ? `${first.title}. ${first.why}` : 'Nothing stood out on that one. Hit another.'}`
   const [voiced, setVoiced] = useState(() => hasLocalVoice())
+  // The tag fold keeps its own open state: the countdown re-renders this screen every second.
+  const [tagsOpen, setTagsOpen] = useState(false)
   useEffect(() => onVoicesChanged(() => setVoiced(hasLocalVoice())), [])
   useEffect(() => {
     if (!speak || !voiced) return
@@ -265,14 +274,27 @@ export default function Glance({
 
   // Under the readout in court mode, where a player walking back is looking;
   // at the foot, by the button it presses, otherwise.
-  const nextRow = backIn !== null && (
-    <p className="court-next" role="timer" aria-live="off">
-      <span>Back to the camera in {backIn}{'\u00a0'}s</span>
-      <button type="button" className="chip chip--button" onClick={() => setBackIn(null)}>
-        Stay here
-      </button>
-    </p>
-  )
+  /*
+   * Once stopped, the row stays with the same height: it used to vanish on the
+   * pointer-down that stopped it, so everything below jumped up before the tap
+   * landed, and the first tap on anything under it hit the wrong thing.
+   */
+  const nextRow =
+    backIn !== null ? (
+      <p className="court-next" role="timer" aria-live="off">
+        <span>Back to the camera in {backIn}{'\u00a0'}s</span>
+        <button type="button" className="chip chip--button" onClick={() => setBackIn(null)}>
+          Stay here
+        </button>
+      </p>
+    ) : counted.current ? (
+      <p className="court-next">
+        <span>I’ll stay on this screen</span>
+        <span className="chip chip--button" aria-hidden="true" style={HOLD_SPACE}>
+          Stay here
+        </span>
+      </p>
+    ) : null
 
   return (
     <div className={`screen glance${court ? ' glance--court' : ''}`} onPointerDown={backIn !== null ? () => setBackIn(null) : undefined}>
@@ -490,65 +512,79 @@ export default function Glance({
         closed elsewhere in this app, applied here while writing rather than in a
         later accessibility pass.
       */}
-      {onTagServe && !refusal && (
-        <div className="glance-actions">
-          <span className="t-overline">Which serve was it?</span>
-          {/* One row of chips since Q8, as the landing below has always been:
-              two full-width buttons were most of a screen for a two-way tap. */}
-          <div className="reading-chips">
-            {([1, 2] as const).map((n) => (
-              <button
-                key={n}
-                className="chip chip--button"
-                aria-pressed={serveNumber === n}
-                onClick={() => onTagServe(serveNumber === n ? undefined : n)}
-              >
-                {SERVE_NUMBER_LABEL[n]}
-              </button>
-            ))}
+      {/* Both tag rows folded to one line that says what is known (2026-11-25):
+          optional, and open while a set of ten is counting, which needs the
+          landing taps. */}
+      {(onTagServe || onTagOutcome) && !refusal && (
+        <details
+          className="glance-tags"
+          open={tagsOpen || Boolean(set?.running)}
+          onToggle={(e) => setTagsOpen((e.currentTarget as HTMLDetailsElement).open)}
+        >
+          <summary className="link-btn" style={TAG_SUMMARY}>
+            {serveTagSummary(serveNumber, outcome)}
+          </summary>
+        {onTagServe && (
+          <div className="glance-actions">
+            <span className="t-overline">Which serve was it?</span>
+            {/* One row of chips since Q8, as the landing below has always been:
+                two full-width buttons were most of a screen for a two-way tap. */}
+            <div className="reading-chips">
+              {([1, 2] as const).map((n) => (
+                <button
+                  key={n}
+                  className="chip chip--button"
+                  aria-pressed={serveNumber === n}
+                  onClick={() => onTagServe(serveNumber === n ? undefined : n)}
+                >
+                  {SERVE_NUMBER_LABEL[n]}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/*
-        Where it landed, in one tap. R56.
+        {/*
+          Where it landed, in one tap. R56.
 
-        CHIPS, NOT FOUR MORE FULL-WIDTH BUTTONS. Two stacked ghost buttons was
-        the right trade for a two-way choice; four would be most of a phone
-        screen, on the one screen in this app that exists because reading takes
-        time the next serve needs. `.chip--button` already carries a 44px tap
-        target and is built for wrapping rows — its own comment says so — and
-        `.reading-chips` is three properties of flex wrap. Borrowed from the
-        report rather than copied into a new class, which is constraint 3 taken
-        as written: nothing new, and no restyle of what was borrowed.
+          CHIPS, NOT FOUR MORE FULL-WIDTH BUTTONS. Two stacked ghost buttons was
+          the right trade for a two-way choice; four would be most of a phone
+          screen, on the one screen in this app that exists because reading takes
+          time the next serve needs. `.chip--button` already carries a 44px tap
+          target and is built for wrapping rows — its own comment says so — and
+          `.reading-chips` is three properties of flex wrap. Borrowed from the
+          report rather than copied into a new class, which is constraint 3 taken
+          as written: nothing new, and no restyle of what was borrowed.
 
-        THE APP DOES NOT SEE THE COURT AND NEVER CLAIMS TO. There is no service
-        box here, no line, no judgement — four words a player would use, stored
-        exactly as tapped. "Wide" is safe beside the fault line above it, which
-        renders as "Further out this time": `wider` is an enum and never
-        reaches the screen. The heading is what keeps the two apart.
+          THE APP DOES NOT SEE THE COURT AND NEVER CLAIMS TO. There is no service
+          box here, no line, no judgement — four words a player would use, stored
+          exactly as tapped. "Wide" is safe beside the fault line above it, which
+          renders as "Further out this time": `wider` is an enum and never
+          reaches the screen. The heading is what keeps the two apart.
 
-        AND NOTHING IS SAID BACK. R56 names the trap in its own words — "your
-        toss drifts more on the serves you miss" is a correlation over six
-        points — so this round stores the tap and draws nothing from it. The
-        claim is a later round's problem and it starts blocked.
-      */}
-      {onTagOutcome && !refusal && (
-        <div className="glance-actions">
-          <span className="t-overline">Where did it land?</span>
-          <div className="reading-chips">
-            {SERVE_OUTCOMES.map((o) => (
-              <button
-                key={o}
-                className="chip chip--button"
-                aria-pressed={outcome === o}
-                onClick={() => onTagOutcome(outcome === o ? undefined : o)}
-              >
-                {OUTCOME_LABEL[o]}
-              </button>
-            ))}
+          AND NOTHING IS SAID BACK. R56 names the trap in its own words — "your
+          toss drifts more on the serves you miss" is a correlation over six
+          points — so this round stores the tap and draws nothing from it. The
+          claim is a later round's problem and it starts blocked.
+        */}
+        {onTagOutcome && (
+          <div className="glance-actions">
+            <span className="t-overline">Where did it land?</span>
+            <div className="reading-chips">
+              {SERVE_OUTCOMES.map((o) => (
+                <button
+                  key={o}
+                  className="chip chip--button"
+                  aria-pressed={outcome === o}
+                  onClick={() => onTagOutcome(outcome === o ? undefined : o)}
+                >
+                  {OUTCOME_LABEL[o]}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+        </details>
       )}
 
       {/*

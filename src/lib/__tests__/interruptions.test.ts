@@ -76,14 +76,14 @@ check('a timeout runs out only while the page is visible, and starts again when 
   clock.advance(5999)
   assert(fired === 0, 'the allowance after waking was cut short')
   clock.advance(1)
-  assert(fired === 1 && page.listening() === 0, 'did not fire once, and clean up, after the page came back')
+  assert(fired === 1 && page.listening() === 0, 'didn’t fire once, and clean up, after the page came back')
 
   // Visible throughout: an ordinary timeout.
   const plain = fakeClock()
   let once = 0
   timeoutWhileVisible(() => once++, 100, fakePage(), plain)
   plain.advance(100)
-  assert(once === 1, 'a visible page did not time out')
+  assert(once === 1, 'a visible page didn’t time out')
 
   // Cancelled while waiting for the page: nothing left behind.
   const waiting = fakePage(true)
@@ -108,7 +108,7 @@ await check('a seek on a hidden page waits for it rather than carrying on withou
   page.show()
   ;(video as unknown as EventTarget).dispatchEvent(new Event('seeked'))
   await wait
-  assert(done, 'the seek did not land once the page came back')
+  assert(done, 'the seek didn’t land once the page came back')
 
   // And on a visible page the timeout still ends a seek that never lands.
   const visible = fakePage()
@@ -122,7 +122,7 @@ await check('a seek on a hidden page waits for it rather than carrying on withou
   assert(ended, 'a visible page waited forever on a seek')
 })
 
-check('an analysis the page did not finish is said once, on the next load', () => {
+check('an analysis the page didn’t finish is said once, on the next load', () => {
   const store = new Map<string, string>()
   const fake = {
     getItem: (k: string) => store.get(k) ?? null,
@@ -136,7 +136,7 @@ check('an analysis the page did not finish is said once, on the next load', () =
   markReading('serve.mp4', 2000, fake)
   // The page reloads here.
   const cut = takeInterrupted(fake)
-  assert(cut?.fileName === 'serve.mp4' && cut.startedAt === 2000, 'the cut-off analysis was not found')
+  assert(cut?.fileName === 'serve.mp4' && cut.startedAt === 2000, 'the cut-off analysis wasn’t found')
   assert(takeInterrupted(fake) === undefined, 'the same interruption was said twice')
   store.set('serve-coach:reading', '{not json')
   assert(takeInterrupted(fake) === undefined, 'a damaged marker was read as an interruption')
@@ -170,7 +170,7 @@ check('the analysing screen and the home screen say it', () => {
         interrupted,
       }),
     )
-  assert(home(interruptedLine()).includes('stopped part way'), 'home did not say the reading was cut off')
+  assert(home(interruptedLine()).includes('stopped part way'), 'home didn’t say the reading was cut off')
   assert(!home().includes('stopped part way'), 'home said it with nothing interrupted')
 })
 

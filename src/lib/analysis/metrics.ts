@@ -884,10 +884,10 @@ function headlineFor(metrics: Metric[], label: string, areaScore: number): strin
   const weakest = [...metrics].sort((a, b) => a.score - b.score)[0]
   // Nothing graded here on this clip, which is a fact about the clip (L1.1,
   // `isMeasured`) — said as one, so the card does not open on a blank.
-  if (!weakest) return cue('Not measured on this clip, so it does not count towards your score.')
+  if (!weakest) return cue('Not measured in this video, so it doesn’t count towards your score.')
   const area = label.toLowerCase()
   const weak = weakest.label.toLowerCase()
-  if (weakest.score >= 85) return cue(`Your ${area} is good. Leave it alone.`)
+  if (weakest.score >= 85) return cue(`Your ${area} ${area.endsWith('s') ? 'are' : 'is'} good. Leave ${area.endsWith('s') ? 'them' : 'it'} alone.`)
   if (weakest.score >= 70) return cue(`Solid ${area}. Next to work on: ${weak}.`)
   if (areaScore >= 70) return cue(`Decent ${area}. ${weakest.label} is holding it back.`)
   return weakest.insight

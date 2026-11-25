@@ -65,7 +65,7 @@ export function earlyRefusal(file: { size: number; type: string }): { title: str
   // browser with no HEVC support.
   if (looksLikeNonVideo(file.type)) {
     return {
-      title: 'That does not look like a video',
+      title: 'That doesn’t look like a video',
       hints: ['Pick a video clip from your camera roll rather than a photo or a document.', 'MP4 and MOV clips from a phone camera work best.'],
     }
   }
@@ -98,7 +98,7 @@ export function readFailure(online: boolean): { title: string; hints: string[] }
         hints: ['Try a clip straight from your camera roll, not a shared link.', 'MP4 or MOV clips from a phone camera work best.'],
       }
     : {
-        title: `The coach is not on this ${deviceNoun()} yet`,
+        title: `The coach isn’t on this ${deviceNoun()} yet`,
         hints: ['Connect to the internet once, on Wi-Fi if you can, and the coach downloads.', 'After that it works with no signal at all.'],
       }
 }

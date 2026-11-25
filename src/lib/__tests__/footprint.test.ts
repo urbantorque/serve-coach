@@ -92,7 +92,7 @@ const SEEN = 0.05
 const overheadShare = overhead / wholeFrameBytes
 note(
   overheadShare > SEEN
-    ? `one frame: ${wholeFrameBytes.toFixed(0)} bytes, of which ${overhead.toFixed(0)} is not landmarks`
+    ? `one frame: ${wholeFrameBytes.toFixed(0)} bytes, of which ${overhead.toFixed(0)} isn’t landmarks`
     : `one frame: ${wholeFrameBytes.toFixed(0)} bytes, landmarks and nothing this can measure — ` +
         `the rest reads ${(overheadShare * 100).toFixed(0)}% against a ${SEEN * 100}% noise floor`,
 )
@@ -109,7 +109,7 @@ check('the frame is never reported as holding less than nothing', () => {
   // the frame changed shape, and this note needs rewriting rather than widening.
   assert(
     Math.abs(overheadShare) < 0.5,
-    `the frame and its landmarks disagree by ${(overheadShare * 100).toFixed(0)}%, which is not noise`,
+    `the frame and its landmarks disagree by ${(overheadShare * 100).toFixed(0)}%, which isn’t noise`,
   )
 })
 
@@ -202,7 +202,7 @@ check('a basket that keeps its balls stays inside the budget, and the balls are 
 // canvases are the smallest thing here, and a 4K clip does not make them bigger.
 note(
   `canvases: ball pass ${mb(canvasBytes(256, 144))} MB, stills ${mb(canvasBytes(420, 236))} MB — ` +
-    `both scaled down, so 4K footage does not enlarge them`,
+    `both scaled down, so 4K footage doesn’t enlarge them`,
 )
 note('not counted, and named in UNSEEN:')
 for (const u of UNSEEN) note(`  · ${u}`)
@@ -215,12 +215,12 @@ check('in memory it is the landmarks that dominate, not the stills', () => {
   // fact as the other is how somebody optimises the wrong thing.
   assert(oneServe.frames > oneServe.stills, `frames ${oneServe.frames} against stills ${oneServe.stills}`)
   note(
-    `  a stored copy of the same report is ${mb(oneServe.stills)} MB — the frames do not survive saving`,
+    `  a stored copy of the same report is ${mb(oneServe.stills)} MB — the frames don’t survive saving`,
   )
 })
 
 check('an absent still costs nothing, rather than counting as an empty one', () => {
-  assert(stillBytes([undefined, undefined]) === 0, 'counted bytes for stills that are not there')
+  assert(stillBytes([undefined, undefined]) === 0, 'counted bytes for stills that aren’t there')
 })
 
 check('a canvas is four bytes a pixel and never negative', () => {
@@ -237,7 +237,7 @@ note(
 )
 note(`budget ${mb(HEAP_BUDGET_BYTES)} MB, headroom ${(HEAP_BUDGET_BYTES / worst.total).toFixed(1)}×`)
 
-check('the constants cannot allow more than the budget', () => {
+check('the constants can’t allow more than the budget', () => {
   // Read off MAX_FINE_FRAMES and MAX_SERVES themselves rather than copied from
   // them, so raising either is what turns this red. That is the point: the two
   // numbers that bound the largest allocation in the app were a module-private
@@ -262,11 +262,11 @@ check('raising either constant is what the budget is watching', () => {
   // frames, and nothing anywhere saying what that costs.
   assert(
     worstCase(MAX_FINE_FRAMES, 64, STILL.length).total > HEAP_BUDGET_BYTES,
-    'a serve cap of 64 did not breach the budget',
+    'a serve cap of 64 didn’t breach the budget',
   )
   assert(
     worstCase(MAX_FINE_FRAMES * 8, MAX_SERVES, STILL.length).total > HEAP_BUDGET_BYTES,
-    'eight times the frames did not breach the budget',
+    'eight times the frames didn’t breach the budget',
   )
 })
 
@@ -453,7 +453,7 @@ check('keyframes lifted out of a track are the same bytes the report stores toda
   }
   assert(
     JSON.stringify(downgraded) === JSON.stringify(rigPoses),
-    'a track does not reproduce the stored keyframes — the downgrade is lossy',
+    'a track doesn’t reproduce the stored keyframes — the downgrade is lossy',
   )
   note(`downgrade: ${(sizeOf(rigTrack) / 1024).toFixed(1)} kB of track becomes ${(sizeOf(rigPoses) / 1024).toFixed(1)} kB of keyframes, unchanged`)
 })
@@ -494,7 +494,7 @@ check('the pressure ladder gains a rung that beats deleting a report', () => {
   const freedByDeletingOne = STILLS_PER_REPORT + RIG_TRACK_BYTES
   assert(
     freedByDowngrade > freedByDeletingOne,
-    `downgrading frees ${(freedByDowngrade / 1024).toFixed(0)} kB, less than the ${(freedByDeletingOne / 1024).toFixed(0)} kB of deleting one report — the rung is not worth having`,
+    `downgrading frees ${(freedByDowngrade / 1024).toFixed(0)} kB, less than the ${(freedByDeletingOne / 1024).toFixed(0)} kB of deleting one report — the rung isn’t worth having`,
   )
   note(`downgrading ${KEEP_ALL_UNDER_PRESSURE} tracks frees ${(freedByDowngrade / 1024).toFixed(0)} kB before a single report is deleted`)
 })
@@ -564,7 +564,7 @@ check('a track on every kept report stays inside the store ratchet', () => {
 
 /* ------------------------------------------- and everything that is not a picture -- */
 
-heading('What the ratchet was not counting')
+heading('What the ratchet wasn’t counting')
 
 /*
  * THE GAP THIS ROUND FOUND. `storeWorstCase` above is stills plus track and
@@ -584,7 +584,7 @@ note(
     `${(RIG_PHASES_BYTES / 1024).toFixed(1)} kB of captions`,
 )
 
-check('the words on a report are worth counting, and were not being counted', () => {
+check('the words on a report are worth counting, and weren’t being counted', () => {
   /*
    * Not a defect in the ratchet's arithmetic — a gap in its scope, stated as a
    * number so nobody has to guess at it again. The claim is only that this is
@@ -595,7 +595,7 @@ check('the words on a report are worth counting, and were not being counted', ()
   assert(
     words > RIG_TRACK_BYTES / 4,
     `the rest of a report is ${(words / 1024).toFixed(1)} kB against a ${(RIG_TRACK_BYTES / 1024).toFixed(1)} kB track — ` +
-      'small enough that leaving it out of the ratchet costs nothing, which was not true when this was written',
+      'small enough that leaving it out of the ratchet costs nothing, which wasn’t true when this was written',
   )
 })
 
@@ -691,11 +691,11 @@ check('and a longer history is what would breach it', () => {
    */
   assert(
     storeWorstCase(KEEP_TRACKS * 2, RIG_TRACK_BYTES) > STORE_RATCHET_BYTES,
-    'twice the tracks did not breach the ratchet — it is set too loose to catch anything',
+    'twice the tracks didn’t breach the ratchet — it is set too loose to catch anything',
   )
   assert(
     storeWorstCase(KEEP_TRACKS, RIG_TRACK_BYTES * 4) > STORE_RATCHET_BYTES,
-    'a track four times as wide did not breach the ratchet',
+    'a track four times as wide didn’t breach the ratchet',
   )
 })
 
@@ -737,7 +737,7 @@ check('a trip in the season ledger is about half a kilobyte', () => {
   const bytes = sizeOf(row)
   note(`one trip row: ${bytes} bytes; a year of three trips a week is ${((bytes * 156) / 1024).toFixed(0)} kB`)
   assert(bytes < 640, `a trip row is ${bytes} bytes, past the half a kilobyte the ledger is sized on`)
-  assert(row.serves === 12, 'the fixture was not one trip')
+  assert(row.serves === 12, 'the fixture wasn’t one trip')
 })
 
 report()

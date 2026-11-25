@@ -107,7 +107,7 @@ check('the ghost re-measures to the exact words on its own caption', () => {
     readoutOf('contactHeight', remeasured) === g.label,
     `the ghost measures "${readoutOf('contactHeight', remeasured)}" and its plate says "${g.label}"`,
   )
-  assert(g.label === metric!.target, 'the plate is not the card’s own target phrase')
+  assert(g.label === metric!.target, 'the plate isn’t the card’s own target phrase')
   note(
     `  measured ${metric!.value.toFixed(4)} against [${lo}, ${hi}] · ` +
       `ghost re-measures ${remeasured.toFixed(6)} · plate "${g.label}"`,
@@ -239,11 +239,11 @@ check('nothing is drawn below the hips', () => {
   const ghostAbove = (scale.groundY - g.image[ankle].y) / scale.bodyHeight
   assert(
     ghostAbove > trackedAbove,
-    'the translation did not lift the ghost off the court — this test no longer proves anything',
+    'the translation didn’t lift the ghost off the court — this test no longer proves anything',
   )
   note(
     `  tracked ankle ${trackedAbove.toFixed(3)} above the court, ghost ankle ${ghostAbove.toFixed(3)} — ` +
-      `which is why the legs are not in GHOST_BONES`,
+      `which is why the legs aren’t in GHOST_BONES`,
   )
 })
 

@@ -72,7 +72,7 @@ check('a practice counts as one trip towards graduation, not one per serve', () 
   // each of two practices on two days does it.
   const stamped = (s: Session) => ({ ...s, scoringVersion: SCORING_VERSION }) as Session
   const both = sessionEvidence([practice(5 * DAY, 'cccccc'), practice(9 * DAY, 'ccc')])
-  assert(graduation([stamped(named(0)), ...both], DROP) !== undefined, 'clean serves across two practices on two days did not graduate it')
+  assert(graduation([stamped(named(0)), ...both], DROP) !== undefined, 'clean serves across two practices on two days didn’t graduate it')
   assert(both.every((e) => e.scoringVersion === SCORING_VERSION), 'evidence went unstamped, which cuts the rubric era')
 })
 

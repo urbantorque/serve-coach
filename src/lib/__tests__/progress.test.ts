@@ -94,7 +94,7 @@ check('the boundary itself belongs to "different trip"', () => {
   assert(!sameTrip(a, b), 'exactly the threshold apart was still read as the same trip')
 })
 
-check('order does not matter', () => {
+check('order doesn’t matter', () => {
   const a = savedServe(0)
   const b = savedServe(60_000)
   assert(sameTrip(a, b) === sameTrip(b, a), 'sameTrip disagreed with itself about argument order')
@@ -134,7 +134,7 @@ check('the oldest and the newest are chosen, not two in the middle', () => {
   )
 })
 
-check('one report cannot be its own before-and-after', () => {
+check('one report can’t be its own before-and-after', () => {
   assert(thenAndNow([savedServe(0)], 60) === undefined, 'a single report produced a pair')
   assert(thenAndNow([], 60) === undefined, 'no reports at all produced a pair')
 })
@@ -162,7 +162,7 @@ check('an improvement over six weeks is said, trip against trip, with both numbe
   const sessions = [...trip(0, [50, 52, 54], 'f'), ...trip(6 * WEEK, [70, 71, 72], 'r')]
   const line = sixWeekMilestone(buildProgress(sessions)!)
   assert(line !== undefined, 'six real weeks of improvement produced nothing')
-  assert(line!.includes('52') && line!.includes('71'), `the two trip medians did not appear in "${line}"`)
+  assert(line!.includes('52') && line!.includes('71'), `the two trip medians didn’t appear in "${line}"`)
 })
 
 check('a stretch that went backwards is still reported, not hidden', () => {
@@ -171,7 +171,7 @@ check('a stretch that went backwards is still reported, not hidden', () => {
   const sessions = [...trip(0, [76, 78, 80], 'f'), ...trip(6 * WEEK, [54, 55, 56], 'r')]
   const line = sixWeekMilestone(buildProgress(sessions)!)
   assert(line !== undefined, 'a regression over six real weeks said nothing at all')
-  assert(line!.includes('78') && line!.includes('55'), `the two trip medians did not appear in "${line}"`)
+  assert(line!.includes('78') && line!.includes('55'), `the two trip medians didn’t appear in "${line}"`)
 })
 
 check('a six-week move the camera could make on its own is "about where you started"', () => {
@@ -189,14 +189,14 @@ check('a six-week move the camera could make on its own is "about where you star
 check('Today says it from the second trip: in trips under a week, in weeks after (D1.3)', () => {
   const days = [...trip(0, [60, 61, 62], 'f'), ...trip(3 * DAY, [70, 71, 72], 'r')]
   const short = sixWeekMilestone(buildProgress(days)!, 0)
-  assert(short !== undefined && short.startsWith('2 court trips in'), `two trips three days apart: "${short}"`)
+  assert(short !== undefined && short.startsWith('2 sessions in'), `two trips three days apart: "${short}"`)
   assert(sixWeekMilestone(buildProgress(days)!) === undefined, 'Progress spoke before six weeks')
   const one = [...trip(0, [60, 61, 62], 'f'), ...trip(8 * DAY, [70, 71, 72], 'r')]
-  assert(sixWeekMilestone(buildProgress(one)!, 0)!.startsWith('A week in'), 'a week is not one weeks')
+  assert(sixWeekMilestone(buildProgress(one)!, 0)!.startsWith('A week in'), 'a week isn’t one weeks')
   assert(sixWeekMilestone(buildProgress(trip(0, [60, 61, 62], 'f'))!, 0) === undefined, 'one trip has no trend to give')
 })
 
-check('a first serve on its own is not the "before"', () => {
+check('a first serve on its own isn’t the "before"', () => {
   // One lucky or unlucky take used to decide the whole sentence (L3.2). The
   // stretch has to run between two trips of three serves or more.
   const sessions = [savedServe(0, 'lone', 40), ...trip(DAY * 2, [60, 61, 62], 'a'), ...trip(6 * WEEK, [62, 63, 64], 'b')]
@@ -206,7 +206,7 @@ check('a first serve on its own is not the "before"', () => {
   assert(line !== undefined && !line.includes('40'), `the lone first serve was used: "${line}"`)
 })
 
-check('a recalibration cannot be quietly used as the "before"', () => {
+check('a recalibration can’t be quietly used as the "before"', () => {
   // The same guard every other comparison in this file already has:
   // subtracting across a rubric break measures the recalibration, not six
   // weeks of practice.
@@ -229,7 +229,7 @@ check('no history is a streak of nothing', () => {
 
 check('a first-ever trip counts as a streak of one', () => {
   const sessions = [savedServe(0)]
-  assert(tripStreak(sessions, 0) === 1, 'a single recent trip was not counted at all')
+  assert(tripStreak(sessions, 0) === 1, 'a single recent trip wasn’t counted at all')
 })
 
 check('a lapsed streak reads as zero, not as whatever it once reached', () => {
@@ -240,7 +240,7 @@ check('a lapsed streak reads as zero, not as whatever it once reached', () => {
 
 check('trips well inside the window chain into one streak', () => {
   const sessions = [savedServe(0, 'a'), savedServe(5 * DAY, 'b'), savedServe(11 * DAY, 'c')]
-  assert(tripStreak(sessions, 11 * DAY) === 3, 'three trips each within nine days of the last did not chain')
+  assert(tripStreak(sessions, 11 * DAY) === 3, 'three trips each within nine days of the last didn’t chain')
 })
 
 check('one wide gap caps the streak at the run since it', () => {
@@ -264,7 +264,7 @@ check('exactly the boundary gap still counts as kept', () => {
   assert(tripStreak(sessions, STREAK_GAP_MS) === 2, 'a gap of exactly the window broke the streak')
 })
 
-check('session order does not matter', () => {
+check('session order doesn’t matter', () => {
   const forward = [savedServe(0, 'a'), savedServe(5 * DAY, 'b')]
   const backward = [savedServe(5 * DAY, 'b'), savedServe(0, 'a')]
   assert(
@@ -289,19 +289,19 @@ check('seeded fortnightly trips show a streak, said at their pace', () => {
   const fortnightly = everyFew(14, 6)
   const now = 103 * DAY
   // The fixed nine days used to break this every time.
-  assert(tripStreak(fortnightly, now) <= 1, 'the fixture is not one the old rule broke')
+  assert(tripStreak(fortnightly, now) <= 1, 'the fixture isn’t one the old rule broke')
   assert(inferCadence(fortnightly) === 'fortnightly', `inferred ${inferCadence(fortnightly)}`)
   const line = streakLine(fortnightly, now)
   note(line ?? 'no line')
-  assert(line === '6 court trips in a row, roughly every two weeks.', `"${line}"`)
+  assert(line === '6 sessions in a row, roughly every two weeks.', `"${line}"`)
 })
 
-check('a weekly player is read as weekly, and one missed week does not make them fortnightly', () => {
+check('a weekly player is read as weekly, and one missed week doesn’t make them fortnightly', () => {
   const weekly = everyFew(7, 8)
   assert(inferCadence(weekly) === 'weekly', `inferred ${inferCadence(weekly)}`)
   const missed = weekly.filter((_, i) => i !== 4)
   assert(inferCadence(missed) === 'weekly', 'one missed week changed the cadence')
-  assert(inferCadence(everyFew(30, 5)) === 'monthly', 'a monthly player was not read as monthly')
+  assert(inferCadence(everyFew(30, 5)) === 'monthly', 'a monthly player wasn’t read as monthly')
   assert(inferCadence(everyFew(30, 2)) === 'weekly', 'two visits were enough to read a pace from')
 })
 
@@ -309,28 +309,28 @@ check('the cadence a player sets wins over the one read off their visits', () =>
   const fortnightly = everyFew(14, 6)
   const now = 103 * DAY
   assert(streakLine(fortnightly, now, { cadence: 'weekly' }) === undefined, 'a weekly player was let off a fortnight')
-  assert(/roughly monthly/.test(streakLine(fortnightly, now, { cadence: 'monthly' }) ?? ''), 'the set cadence was not used')
+  assert(/roughly monthly/.test(streakLine(fortnightly, now, { cadence: 'monthly' }) ?? ''), 'the set cadence wasn’t used')
   // A value this build does not know is ignored, not trusted.
   const odd = streakLine(fortnightly, now, { cadence: 'daily' as never })
   assert(/every two weeks/.test(odd ?? ''), `an unknown cadence was used: "${odd}"`)
   assert(CADENCE_GAP_MS.weekly === STREAK_GAP_MS, 'the weekly allowance moved from the nine days it always had')
 })
 
-check('a practice session that read serves is a visit; one that read nothing is not', () => {
+check('a practice session that read serves is a visit; one that read nothing isn’t', () => {
   const serves = everyFew(7, 2, 100)
   const now = 101 * DAY
   const session = (at: number, lines: number) => ({ createdAt: at, updatedAt: at + HOUR, lines: Array.from({ length: lines }) })
-  assert(tripStreak(serves, now, STREAK_GAP_MS, [], [session(86 * DAY, 12)]) === 3, 'a practice session did not count')
+  assert(tripStreak(serves, now, STREAK_GAP_MS, [], [session(86 * DAY, 12)]) === 3, 'a practice session didn’t count')
   assert(tripStreak(serves, now, STREAK_GAP_MS, [], [session(86 * DAY, 0)]) === 2, 'an unread session counted as a trip')
 })
 
 check('a run that has since lapsed is still the longest streak, unlike tripStreak itself', () => {
   const sessions = [savedServe(0, 'a'), savedServe(5 * DAY, 'b'), savedServe(11 * DAY, 'c')]
   const longAfter = 11 * DAY + STREAK_GAP_MS + 30 * DAY
-  assert(tripStreak(sessions, longAfter) === 0, 'the fixture itself is not lapsed, this check is invalid')
+  assert(tripStreak(sessions, longAfter) === 0, 'the fixture itself isn’t lapsed, this check is invalid')
   assert(
     longestStreak(sessions) === 3,
-    `a lapsed three-trip run was not remembered as the longest streak: ${longestStreak(sessions)}`,
+    `a lapsed three-trip run wasn’t remembered as the longest streak: ${longestStreak(sessions)}`,
   )
 })
 
@@ -347,7 +347,7 @@ check('an earlier, longer run beats a shorter run still in progress', () => {
   ]
   assert(
     longestStreak(sessions) === 3,
-    `an earlier three-trip run was not picked over a later two-trip one: ${longestStreak(sessions)}`,
+    `an earlier three-trip run wasn’t picked over a later two-trip one: ${longestStreak(sessions)}`,
   )
 })
 
@@ -359,8 +359,8 @@ check('the current streak reads "yet" exactly when it equals the longest one', (
   const sessions = [savedServe(0, 'a'), savedServe(5 * DAY, 'b'), savedServe(11 * DAY, 'c')]
   const line = longestStreakLine(sessions, 11 * DAY)
   assert(line !== undefined, 'a real three-trip longest streak produced no line')
-  assert(line!.includes('yet'), `a streak currently at its own record did not read as current: "${line}"`)
-  assert(line!.includes('3'), `the streak length itself did not appear: "${line}"`)
+  assert(line!.includes('yet'), `a streak currently at its own record didn’t read as current: "${line}"`)
+  assert(line!.includes('3'), `the streak length itself didn’t appear: "${line}"`)
 })
 
 check('a lapsed record reads "was", not "yet", once the current streak has fallen behind it', () => {
@@ -369,7 +369,7 @@ check('a lapsed record reads "was", not "yet", once the current streak has falle
   const line = longestStreakLine(sessions, longAfter)
   assert(line !== undefined, 'a lapsed three-trip record produced no line')
   assert(!line!.includes('yet'), `a lapsed record still read as current: "${line}"`)
-  assert(line!.includes('was'), `a lapsed record did not read as a past fact: "${line}"`)
+  assert(line!.includes('was'), `a lapsed record didn’t read as a past fact: "${line}"`)
 })
 
 check('a single trip has nothing to be a streak record against yet', () => {
@@ -411,7 +411,7 @@ check('the smallest gap across every basket wins, not the most recent', () => {
   const record = bestConsistencyGap(trend)
   assert(record !== undefined, 'three baskets produced no record at all')
   assert(record!.gap === 8, `wrong basket won: gap ${record!.gap}, expected 8`)
-  assert(record!.createdAt === DAY, 'the record was not attributed to the basket that actually set it')
+  assert(record!.createdAt === DAY, 'the record wasn’t attributed to the basket that actually set it')
 })
 
 check('a tie keeps the earlier basket as the record, not the newer one', () => {
@@ -440,21 +440,21 @@ heading('The record is decided by what is on screen, not by what is newest')
 check('the basket that set the record reads as current, by its own createdAt', () => {
   const record = { gap: 3, createdAt: DAY }
   const line = bestGapLine(record, DAY)
-  assert(line.includes('yet'), `the record basket was not read as current: "${line}"`)
+  assert(line.includes('yet'), `the record basket wasn’t read as current: "${line}"`)
 })
 
 check('a different, older basket on screen reads as "so far", dated, not as current', () => {
   const record = { gap: 3, createdAt: DAY }
   const line = bestGapLine(record, 0)
   assert(!line.includes('yet'), `an old basket was still credited with the record: "${line}"`)
-  assert(line.includes('so far'), `an old basket did not read as "so far": "${line}"`)
+  assert(line.includes('so far'), `an old basket didn’t read as "so far": "${line}"`)
 })
 
 heading('The tightest gap, stated with no basket on screen to compare it against')
 
 check('states the record plainly, in bestGapEverLine\'s own phrasing rather than bestGapLine\'s per-basket one', () => {
   const line = bestGapEverLine({ gap: 6, createdAt: DAY })
-  assert(line.includes('6'), `the gap itself did not appear: "${line}"`)
+  assert(line.includes('6'), `the gap itself didn’t appear: "${line}"`)
   assert(line.includes('was 6 points'), `not the aggregate phrasing this function owns: "${line}"`)
   assert(!line.includes('between your best serve'), `used bestGapLine's per-basket phrasing instead: "${line}"`)
 })
@@ -471,7 +471,7 @@ check('a shrinking gap — an improvement — reads as "tighter", not as a bad-d
   const trend = buildConsistencyTrend(sessions)!
   const line = gapDeltaLine(trend.gapDelta)
   assert(line !== undefined, 'a real, non-noise change produced nothing')
-  assert(line!.includes('tighter'), `a shrinking gap did not read as an improvement: "${line}"`)
+  assert(line!.includes('tighter'), `a shrinking gap didn’t read as an improvement: "${line}"`)
   assert(line!.includes('25'), `wrong magnitude: "${line}"`)
 })
 
@@ -480,7 +480,7 @@ check('a widening gap reads as "wider"', () => {
   const trend = buildConsistencyTrend(sessions)!
   const line = gapDeltaLine(trend.gapDelta)
   assert(line !== undefined, 'a real, non-noise change produced nothing')
-  assert(line!.includes('wider'), `a widening gap did not read as a regression: "${line}"`)
+  assert(line!.includes('wider'), `a widening gap didn’t read as a regression: "${line}"`)
   assert(line!.includes('25'), `wrong magnitude: "${line}"`)
 })
 
@@ -544,10 +544,10 @@ check('the trip with the highest median sets the record, among trips of three', 
   const record = bestTrip(sessions, 'flat')
   assert(record !== undefined, 'no record produced across three full trips')
   assert(record!.score === 85, `wrong trip picked as the record: ${record!.score}`)
-  assert(record!.from === 2 * DAY && record!.to === 2 * DAY + 2 * HOUR, 'the record was not dated to its trip')
+  assert(record!.from === 2 * DAY && record!.to === 2 * DAY + 2 * HOUR, 'the record wasn’t dated to its trip')
 })
 
-check('a better trip of another serve type is not counted', () => {
+check('a better trip of another serve type isn’t counted', () => {
   const sessions = [
     ...trip(0, [60, 70, 65], 'a'),
     ...trip(2 * DAY, [55, 65, 60], 'b'),
@@ -565,7 +565,7 @@ check('one full trip has nothing to be a record against yet', () => {
   )
 })
 
-check('a better trip from before a recalibration is not this rubric\'s record', () => {
+check('a better trip from before a recalibration isn’t this rubric\'s record', () => {
   const sessions = [
     ...trip(0, [88, 88, 88], 'old', { scoringVersion: 1 }),
     ...trip(2 * DAY, [60, 70, 65], 'a', { scoringVersion: 2 }),
@@ -580,7 +580,7 @@ check('a better trip from before a recalibration is not this rubric\'s record', 
 check('the report on screen reads as part of the record trip when it is', () => {
   const record = { score: 88, from: DAY, to: DAY + 2 * HOUR }
   const inside = bestTripLine(record, DAY + HOUR)
-  assert(inside.includes('yet') && inside.includes('88'), `a report on the record trip was not read as current: "${inside}"`)
+  assert(inside.includes('yet') && inside.includes('88'), `a report on the record trip wasn’t read as current: "${inside}"`)
   const outside = bestTripLine(record, 0)
   assert(!outside.includes('yet') && outside.includes('so far'), `a report off the record trip was credited: "${outside}"`)
   assert(bestTripEverLine(record).includes('88') && bestTripEverLine(record).includes(' on '), 'the season line lost its score or date')
@@ -592,7 +592,7 @@ check('the headline is the latest trip: its median, its range, and its count', (
   const p = buildProgress([...trip(0, [40, 44, 50], 'a'), ...trip(2 * DAY, [66, 75, 71, 69, 72], 'b')])!
   assert(p.latestTrip.overall === 71, `median ${p.latestTrip.overall}`)
   assert(p.latestTrip.low === 66 && p.latestTrip.high === 75 && p.latestTrip.serves === 5, 'the range or count was wrong')
-  assert(tripRangeLine(p.latestTrip) === 'your 5 serves ran 66–75', `range read "${tripRangeLine(p.latestTrip)}"`)
+  assert(tripRangeLine(p.latestTrip) === 'your 5 serves scored 66 to 75', `range read "${tripRangeLine(p.latestTrip)}"`)
   assert(tripRangeLine({ serves: 1, low: 70, high: 70 }) === undefined, 'a trip of one was given a range')
   assert(p.trips.length === 2 && p.points.length === 8, 'the trips or the serves behind them went missing')
 })
@@ -615,9 +615,9 @@ check('a trip is named by its day: today, a weekday this week, or a date', () =>
   const now = new Date(2026, 9, 17, 18).getTime()
   assert(tripDay(now - HOUR, now) === 'today', tripDay(now - HOUR, now))
   const tuesday = new Date(2026, 9, 13, 10).getTime()
-  assert(tripDay(tuesday, now) === new Date(tuesday).toLocaleDateString(undefined, { weekday: 'long' }), 'a trip this week was not named by its weekday')
+  assert(tripDay(tuesday, now) === new Date(tuesday).toLocaleDateString(undefined, { weekday: 'long' }), 'a trip this week wasn’t named by its weekday')
   const old = new Date(2026, 8, 1).getTime()
-  assert(tripDay(old, now) === shortDate(old), 'an old trip was not named by its date')
+  assert(tripDay(old, now) === shortDate(old), 'an old trip wasn’t named by its date')
 })
 
 heading('The one warning worth saying on a court')
@@ -653,7 +653,7 @@ check('a live pattern the serve just raised is worth saying', () => {
   assert(found?.trips === 2, `counted ${found?.trips}, expected 2`)
 })
 
-check('a pattern the serve in front of you did not raise stays quiet', () => {
+check('a pattern the serve in front of you didn’t raise stays quiet', () => {
   // The back is a live pattern, but this serve's back was fine. Saying it here
   // would be a non-sequitur between serves, which is what the second gate is
   // for — the sheet is where a player goes to be told about their season.
@@ -663,7 +663,7 @@ check('a pattern the serve in front of you did not raise stays quiet', () => {
 
 check('a first occurrence is the report’s job, here too', () => {
   const history = [flagged(now - WEEK, []), flagged(now, [BACK])]
-  assert(glanceStrain(history, history[1]) === undefined, 'one trip is not a pattern')
+  assert(glanceStrain(history, history[1]) === undefined, 'one trip isn’t a pattern')
 })
 
 check('a refused clip says nothing, because it raised nothing', () => {
@@ -684,7 +684,7 @@ check('one warning, never a list, and it is the worst-recurring one', () => {
 
 check('the court sentence is the shortest of the three, and passes the editor', () => {
   const line = strainGlanceLine({ flag: BACK, trips: 3, of: 6 })
-  assert(line === 'That is your lower back on 3 of your last 6 trips.', `read "${line}"`)
+  assert(line === 'That’s your lower back in 3 of your last 6 sessions.', `read "${line}"`)
   assert(cueIssues(line!).length === 0, cueIssues(line!).join('; '))
   const long = strainLine({ flag: BACK, trips: 3, of: 6 })
   assert(wordCount(line!) < wordCount(long!), 'the glance form must be shorter than the sheet form')
@@ -765,7 +765,7 @@ check('the tightest swept basket on the trip is the one reported', () => {
   assert(s!.tightestGap === 6, `reported a gap of ${s!.tightestGap}, expected the tighter 6`)
 })
 
-check('a warning that recurs across the season but was silent today is not on today card', () => {
+check('a warning that recurs across the season but was silent today isn’t on today card', () => {
   /*
    * Both gates, and the second is the one worth having. A strain reading is a
    * fact about trips plural — one trip cannot know a warning keeps coming back —
@@ -797,10 +797,10 @@ check('every field on the card survives a report with no clip left', () => {
     }),
   ]
   const s = tripSummary(trip, trip)!
-  assert(s.serves === 2 && s.best.overall === 71, 'the basics did not survive')
-  assert(s.tightestGap === 6, 'the repeatability reading did not survive')
-  assert(s.focus === 'Racket stops short', 'the instruction did not survive')
-  assert(typeof s.from === 'number', 'the date did not survive')
+  assert(s.serves === 2 && s.best.overall === 71, 'the basics didn’t survive')
+  assert(s.tightestGap === 6, 'the repeatability reading didn’t survive')
+  assert(s.focus === 'Racket stops short', 'the instruction didn’t survive')
+  assert(typeof s.from === 'number', 'the date didn’t survive')
 })
 
 /* ================================ what a render of the progress sheet costs = */
@@ -992,16 +992,16 @@ check('a move the camera makes on its own is said as about the same, with no num
   const words = scoreMoveWords(move)
   note(`74 after ${74 - (REAL_CHANGE.overall - 1)}: "${words}"`)
   assert(words === 'about the same as your last serve', `said "${words}"`)
-  assert(!/d/.test(words), 'a digit was said for a move the chip would not print')
+  assert(!/d/.test(words), 'a digit was said for a move the chip wouldn’t print')
   assert(scoreMoveCaption(move) === 'vs your last serve', 'the caption changed for a plain move')
 })
 
 check('a real move is said with its size and direction', () => {
-  assert(scoreMoveWords(scoreMoveAgainst(scored(80), 5, before(70))!) === 'up 10 on your last serve', 'a gain was not said')
-  assert(scoreMoveWords(scoreMoveAgainst(scored(60), 5, before(70))!) === 'down 10 on your last serve', 'a fall was not said')
+  assert(scoreMoveWords(scoreMoveAgainst(scored(80), 5, before(70))!) === 'up 10 on your last serve', 'a gain wasn’t said')
+  assert(scoreMoveWords(scoreMoveAgainst(scored(60), 5, before(70))!) === 'down 10 on your last serve', 'a fall wasn’t said')
 })
 
-check('two serves measured on different rows are not compared, in words or on the chip', () => {
+check('two serves measured on different rows aren’t compared, in words or on the chip', () => {
   const move = scoreMoveAgainst(scored(80), 5, before(70, ['releaseHeight']))!
   assert(move.alike === false, 'different rows read alike')
   assert(scoreMoveWords(move) === 'measured differently from your last serve', `said "${scoreMoveWords(move)}"`)

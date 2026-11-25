@@ -116,7 +116,7 @@ check('every suite calls report() exactly once', () => {
   )
   assert(
     wrong.length === 0,
-    `${wrong.length} suite(s) do not tally exactly once:\n` +
+    `${wrong.length} suite(s) don’t tally exactly once:\n` +
       wrong
         .map((s) => `      ${path.relative(ROOT, s.f)} — ${s.n === 0 ? 'never calls report()' : `calls it ${s.n} times`}`)
         .join('\n'),
@@ -142,7 +142,7 @@ check('nothing executes after the tally', () => {
 
   assert(
     late.length === 0,
-    `${late.length} suite(s) have code after their tally, which cannot fail the run:\n` +
+    `${late.length} suite(s) have code after their tally, which can’t fail the run:\n` +
       late
         .map((s) => `      ${path.relative(ROOT, s.f)} — report() at line ${s.tally + 1}, code at ${s.last + 1}`)
         .join('\n'),
@@ -159,7 +159,7 @@ check('this scan can actually see the thing it is looking for', () => {
    * Run against strings rather than against a file on disk, so proving the
    * pattern works costs nothing and leaves nothing behind.
    */
-  assert(tallyLines('report()\n').length === 1, 'a bare tally was not seen')
+  assert(tallyLines('report()\n').length === 1, 'a bare tally wasn’t seen')
   assert(tallyLines('report()\nreport()\n').length === 2, 'two tallies were seen as one')
   assert(tallyLines('  report()\n').length === 0, 'an indented call was read as a top-level tally')
   assert(tallyLines('// report()\n').length === 0, 'a commented-out call was read as a tally')
@@ -167,7 +167,7 @@ check('this scan can actually see the thing it is looking for', () => {
 
   const dead = "check('x', () => {})\nreport()\ncheck('y', () => {})\n"
   const [t] = tallyLines(dead)
-  assert(t < lastCodeLine(dead), 'a check after the tally was not seen as late')
+  assert(t < lastCodeLine(dead), 'a check after the tally wasn’t seen as late')
 
   const fine = 'report()\n\n/* a closing comment */\n'
   const [t2] = tallyLines(fine)

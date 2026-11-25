@@ -48,7 +48,7 @@ check('the newest trip is set against the one before it, not the first', () => {
   assert(t === undefined, 'the newest trip was compared with the oldest')
 })
 
-check(`a trip needs ${MIN_SPEED_SERVES} readings, and refused reports and second serves do not count`, () => {
+check(`a trip needs ${MIN_SPEED_SERVES} readings, and refused reports and second serves don’t count`, () => {
   assert(summarise([served(0, 'a', 40)]) === undefined, 'one reading made a trip figure')
   assert(summarise([served(0, 'a', 40), served(1, 'b', 40, 0.05, true)]) === undefined, 'a refused report was counted')
   const sessions = [...trip(0, [33, 33]), ...trip(1, [40, 40])]
@@ -59,7 +59,7 @@ check(`a trip needs ${MIN_SPEED_SERVES} readings, and refused reports and second
 check('a trip is held no tighter than one serve: the middle of its serves’ ranges', () => {
   const s = summarise(trip(0, [30, 40, 50]))!
   assert(s.ms === 40 && Math.abs(s.low - 38) < 1e-9 && Math.abs(s.high - 42) < 1e-9, JSON.stringify(s))
-  assert(apart({ low: 43, high: 47 }, s) === 'faster' && apart({ low: 41, high: 47 }, s) === undefined, 'apart is not strict')
+  assert(apart({ low: 43, high: 47 }, s) === 'faster' && apart({ low: 41, high: 47 }, s) === undefined, 'apart isn’t strict')
 })
 
 heading('Every trip, for the chart (C5)')
@@ -76,7 +76,7 @@ check('the trend is read off the same bars the chart draws', () => {
   const sessions = [...trip(0, [33, 34, 33]), ...trip(1, [36, 36]), ...trip(2, [41, 40])]
   const bars = speedByTrip(sessions, [])
   const t = speedTrend(sessions, [])!
-  assert(JSON.stringify(t.now) === JSON.stringify(bars[2]), 'the trend compared a trip the chart does not show')
+  assert(JSON.stringify(t.now) === JSON.stringify(bars[2]), 'the trend compared a trip the chart doesn’t show')
   assert(JSON.stringify(t.then) === JSON.stringify(bars[1]), 'the trend skipped the trip before the newest')
 })
 

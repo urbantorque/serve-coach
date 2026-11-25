@@ -29,7 +29,7 @@ check('the first drill, the cause, gets the most time, and a check of six follow
   assert(drills[0].minutes >= drills[1].minutes && drills[1].minutes >= drills[2].minutes, `drill minutes ${drills.map((d) => d.minutes).join(', ')}`)
   const kinds = blocks.map((b) => b.kind)
   assert(kinds.indexOf('check') > kinds.lastIndexOf('drill'), 'the check came before the drills')
-  assert(blocks.find((b) => b.kind === 'check')!.line.includes('6'), 'the check did not say six')
+  assert(blocks.find((b) => b.kind === 'check')!.line.includes('6'), 'the check didn’t say six')
 })
 
 check('with nothing to work on, it says to serve and film one', () => {
@@ -44,7 +44,7 @@ check('a throwing drill runs once, and its spare time goes to free serves (N7.3)
     const throwing = blocks.find((b) => b.line.startsWith('Overhead throws'))!
     assert(throwing.minutes <= 3, `${m} minutes gave the throws ${throwing.minutes}`)
     assert(/once\.$/.test(throwing.line) && !/repeat/.test(throwing.line), `"${throwing.line}"`)
-    assert(blocks.reduce((s, b) => s + b.minutes, 0) === m, `${m} minutes did not add up`)
+    assert(blocks.reduce((s, b) => s + b.minutes, 0) === m, `${m} minutes didn’t add up`)
   }
 })
 

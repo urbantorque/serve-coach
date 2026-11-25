@@ -17,10 +17,10 @@ const VIDEO_ADVICE = /camera roll|MP4|MOV/
 heading('Offline errors that say so')
 
 check('a failed engine load is classified by why it failed', () => {
-  assert(engineFailureOf(new DownloadStalled('/models/x'), true) === 'stalled', 'a stall was not called one')
+  assert(engineFailureOf(new DownloadStalled('/models/x'), true) === 'stalled', 'a stall wasn’t called one')
   // By name too: a class duplicated across chunks fails instanceof.
   assert(engineFailureOf({ name: 'DownloadStalled' }, true) === 'stalled', 'a stall from another chunk was missed')
-  assert(engineFailureOf(new TypeError('Failed to fetch'), false) === 'offline', 'no signal and no coach was not called offline')
+  assert(engineFailureOf(new TypeError('Failed to fetch'), false) === 'offline', 'no signal and no coach wasn’t called offline')
   assert(engineFailureOf(new TypeError('Failed to fetch'), true) === 'failed', 'a failure with a signal was called offline')
   assert(engineFailureOf(new DownloadStalled('/m'), false) === 'stalled', 'a stall offline lost its own reason')
 })
@@ -41,7 +41,7 @@ check('each failure carries its own advice, and none of it is about the video fi
   }
   note(rows.join(' · '))
   const offline = new EngineLoadError(new TypeError('Failed to fetch'), false, 57)
-  assert(/57 MB/.test(offline.hints.join(' ')), 'the offline advice does not say how big the download is')
+  assert(/57 MB/.test(offline.hints.join(' ')), 'the offline advice doesn’t say how big the download is')
 })
 
 check('the first run says the download only while there is one to make', () => {
@@ -65,7 +65,7 @@ check('the first run says the download only while there is one to make', () => {
     return html.slice(html.indexOf('first-foot'))
   }
   assert(!foot(true).includes('one-time download'), 'a downloaded coach was offered again')
-  assert(foot(false).includes('one-time download'), 'the download is not said before it happens')
+  assert(foot(false).includes('one-time download'), 'the download isn’t said before it happens')
   assert(!foot(undefined).includes('signal'), 'said something about the signal before the cache had answered')
 })
 

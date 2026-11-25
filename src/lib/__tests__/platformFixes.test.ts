@@ -31,7 +31,7 @@ check('a clip too large or not a video is refused before the decoder is asked, w
   const big = earlyRefusal({ size: MAX_BYTES + 1, type: 'video/mp4' })
   assert(big?.title === 'That video is too large to open here' && big.hints.length === 3, JSON.stringify(big))
   const photo = earlyRefusal({ size: 1000, type: 'image/jpeg' })
-  assert(photo?.title === 'That does not look like a video', JSON.stringify(photo))
+  assert(photo?.title === 'That doesn’t look like a video', JSON.stringify(photo))
   assert(earlyRefusal({ size: 1000, type: 'video/mp4' }) === undefined, 'a small video was refused')
   assert(earlyRefusal({ size: 1000, type: '' }) === undefined, 'a file with no type, as some phones send, was refused')
 })
@@ -56,7 +56,7 @@ check('the record tap unlocks the voice, through a voice on the phone or not at 
     assert(primeSpeech('en-GB') === false && spoken.length === 0, 'primed through a voice that sends text away')
     const local = { localService: true, lang: 'en-GB', default: false }
     g.window = { speechSynthesis: synth([{ localService: false, lang: 'en-GB', default: true }, local]) }
-    assert(primeSpeech('en-GB') === true, 'did not prime with a local voice there')
+    assert(primeSpeech('en-GB') === true, 'didn’t prime with a local voice there')
     assert(spoken.length === 1 && spoken[0].volume === 0 && spoken[0].voice === local, 'the priming was heard, or not through the local voice')
     note(`primed with "${spoken[0].text}" at volume ${spoken[0].volume}`)
   } finally {

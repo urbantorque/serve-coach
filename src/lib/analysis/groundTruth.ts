@@ -469,7 +469,7 @@ export function validateFixtureSchema(input: unknown): FixtureSchemaIssue[] {
           bad(
             `tolerance.${key}`,
             `${value} is ${(value / base).toFixed(1)}× the default ${base} — past ` +
-              `${MAX_TOLERANCE_MULTIPLE}× the check cannot fail on anything that would change ` +
+              `${MAX_TOLERANCE_MULTIPLE}× the check can’t fail on anything that would change ` +
               `the player's advice. If the engine disagrees, that is the finding (fixtures/README.md)`,
           )
         }
@@ -516,7 +516,7 @@ export function validateFixtureSchema(input: unknown): FixtureSchemaIssue[] {
     // refuse. Both at once means one half is never checked, and which half is
     // decided by an early `return` in validateFixture rather than by anyone.
     if (Object.keys(keyframes).length || Object.keys(metrics).length) {
-      bad('expect', 'rejected clips cannot also carry keyframes or metrics — pick one')
+      bad('expect', 'rejected clips can’t also carry keyframes or metrics — pick one')
     }
   } else if (
     !Object.keys(keyframes).length &&
@@ -534,7 +534,7 @@ export function validateFixtureSchema(input: unknown): FixtureSchemaIssue[] {
     // not in the condition: nothing compares it, it only selects which metrics
     // the pipeline is asked for, so a `view`-only expectation genuinely cannot
     // fail.
-    bad('expect', 'no keyframes, no metrics, no handedness and not rejected — this fixture cannot fail')
+    bad('expect', 'no keyframes, no metrics, no handedness and not rejected — this fixture can’t fail')
   }
 
   if (expect.handedness !== undefined && expect.handedness !== 'left' && expect.handedness !== 'right') {
@@ -586,7 +586,7 @@ export function validateFixtureSchema(input: unknown): FixtureSchemaIssue[] {
     ) {
       bad(
         `expect.metricSource.${id}`,
-        `"${source}" does not describe a measurement taken outside the app`,
+        `"${source}" doesn’t describe a measurement taken outside the app`,
       )
     }
   }
@@ -596,7 +596,7 @@ export function validateFixtureSchema(input: unknown): FixtureSchemaIssue[] {
       // Harmless on its own, but it is the residue of a deleted metric, and the
       // next person to add a metric with that id inherits somebody else's
       // provenance note without noticing.
-      bad(`expect.metricSource.${id}`, 'describes a metric that is not expected — stale, delete it')
+      bad(`expect.metricSource.${id}`, 'describes a metric that isn’t expected — stale, delete it')
     }
   }
 

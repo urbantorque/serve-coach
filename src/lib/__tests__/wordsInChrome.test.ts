@@ -48,8 +48,8 @@ check('every term has a meaning that passes the copy rules', () => {
 
 check('a term is a button that says whether its meaning is open', () => {
   const html = renderToStaticMarkup(createElement(Term, { id: 'trophy' }))
-  assert(/<button[^>]*class="term-word"[^>]*aria-expanded="false"/.test(html), 'the word is not a closed disclosure')
-  assert(html.includes('aria-controls='), 'the word does not name its meaning')
+  assert(/<button[^>]*class="term-word"[^>]*aria-expanded="false"/.test(html), 'the word isn’t a closed disclosure')
+  assert(html.includes('aria-controls='), 'the word doesn’t name its meaning')
   assert(html.includes('>Trophy<'), 'the word is missing')
 })
 
@@ -58,9 +58,9 @@ check('trophy, racket drop, stance and firing order are each a tap away on the r
   const html = renderToStaticMarkup(createElement(Report, { analysis: a, onBack: noop, onAnalyzeAnother: noop }))
   const words = [...html.matchAll(/class="term-word"[^>]*>([^<]+)</g)].map((m) => m[1])
   note(`terms on the report: ${words.join(', ')}`)
-  for (const w of ['Trophy', 'Racket drop']) assert(words.includes(w), `${w} is not defined on a tap`)
-  assert(words.some((w) => /stance/i.test(w)) === Boolean(a.diagnosis?.stance), 'the stance chip is not a term')
-  assert(words.includes('The order your body moved in') === html.includes('The order your body moved in'), 'firing order is not a term')
+  for (const w of ['Trophy', 'Racket drop']) assert(words.includes(w), `${w} isn’t defined on a tap`)
+  assert(words.some((w) => /stance/i.test(w)) === Boolean(a.diagnosis?.stance), 'the stance chip isn’t a term')
+  assert(words.includes('The order your body moved in') === html.includes('The order your body moved in'), 'firing order isn’t a term')
   assert(html.includes('The order your body moved in') && a.diagnosis?.stance !== undefined, 'the fixture shows neither stance nor firing order')
 })
 
@@ -103,7 +103,7 @@ check('every font size in every stylesheet is at least 14px', () => {
     }
   }
   note(`${files.length} stylesheets read`)
-  assert(files.length > 5, 'the stylesheets were not found')
+  assert(files.length > 5, 'the stylesheets weren’t found')
   assert(small.length === 0, `text under 14px:\n    ${small.join('\n    ')}`)
 })
 

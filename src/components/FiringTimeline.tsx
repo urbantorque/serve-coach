@@ -87,7 +87,7 @@ export default function FiringTimeline({ chain, order }: { chain: ChainTiming; o
       <figcaption className="chart-readout">
         <span>{firingLine(order)}</span>
       </figcaption>
-      <p className="chart-hint firing-note">I show the trunk without checking it, because one camera cannot see its turn clearly.</p>
+      <p className="chart-hint firing-note">I show the trunk without checking it, because one camera can’t see its turn clearly.</p>
     </figure>
   )
 }

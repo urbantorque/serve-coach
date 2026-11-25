@@ -44,13 +44,13 @@ check("the cache the app asks is the one this build's worker fills", () => {
   assert(ENGINE_CACHE === expected, `the app asks ${ENGINE_CACHE}, the worker fills ${expected}`)
 })
 
-await check("readiness is this build's cache alone, and asking does not create it", async () => {
+await check("readiness is this build's cache alone, and asking doesn’t create it", async () => {
   const stale = fakeCaches({ [OLD]: [MODEL, WASM], [PRECACHE]: ['/index.html'] })
   assert(!(await inEngineCache([MODEL, WASM], stale.cs)), "last version's files read as ready")
   assert(stale.opened.length === 0 && !stale.store.has(ENGINE_CACHE), 'asking created the cache it asked about')
 
   const fresh = fakeCaches({ [ENGINE_CACHE]: [MODEL, WASM] })
-  assert(await inEngineCache([MODEL, WASM], fresh.cs), "this version's files did not read as ready")
+  assert(await inEngineCache([MODEL, WASM], fresh.cs), "this version's files didn’t read as ready")
   const half = fakeCaches({ [ENGINE_CACHE]: [MODEL] })
   assert(!(await inEngineCache([MODEL, WASM], half.cs)), 'half the files read as ready')
   assert(!(await inEngineCache([MODEL], undefined)), 'no cache storage read as ready')

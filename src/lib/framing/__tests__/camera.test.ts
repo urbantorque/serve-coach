@@ -77,7 +77,7 @@ check('a recording carries what the camera gave, read as it started', () => {
     { stopped: (file, chunks) => (got = { file, chunks }), failed: () => {} },
     () => new Date(2026, 9, 17, 10, 30),
   ) as FakeRecorder
-  assert(rec.state === 'recording' && rec.options.mimeType === 'video/mp4', 'the recorder was not started on the chosen type')
+  assert(rec.state === 'recording' && rec.options.mimeType === 'video/mp4', 'the recorder wasn’t started on the chosen type')
   rec.deliver(1000)
   rec.deliver(0)
   rec.deliver(500)
@@ -86,7 +86,7 @@ check('a recording carries what the camera gave, read as it started', () => {
   note(`${got!.file.name}, ${got!.file.size} bytes in ${got!.chunks} chunks, camera ${cameraLine(cameraOf(got!.file))}`)
   assert(got!.chunks === 2 && got!.file.size === 1500, 'an empty chunk was counted, or a real one lost')
   assert(got!.file.type === 'video/mp4', 'the file lost its type')
-  assert(JSON.stringify(cameraOf(got!.file)) === JSON.stringify({ width: 1920, height: 1080, frameRate: 60 }), 'the camera was not remembered')
+  assert(JSON.stringify(cameraOf(got!.file)) === JSON.stringify({ width: 1920, height: 1080, frameRate: 60 }), 'the camera wasn’t remembered')
 })
 
 check('a phone that gives less than asked is recorded as what it gave, and an empty stop as empty', () => {
@@ -127,7 +127,7 @@ check('the device check says what the last recording got, kept without opening t
   storeLastCamera({ width: 1920, height: 1080, frameRate: 60 }, fake)
   const last = lastCamera(fake)
   assert(cameraLine(last) === 'camera last 1920×1080 at 60 fps', cameraLine(last))
-  assert(cameraLine(undefined) === 'camera last none', 'no recording did not say so')
+  assert(cameraLine(undefined) === 'camera last none', 'no recording didn’t say so')
   const block = deviceReportText({
     recording: { containers: [], chosen: undefined, deadEnd: false },
     canvasRecord: { api: false, track: false },

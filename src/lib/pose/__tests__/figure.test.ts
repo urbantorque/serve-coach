@@ -31,7 +31,7 @@ check('fitted to the body, the figure fills its tile instead of floating in it',
   assert((bottom - top) / 400 >= 0.7, `the body fills ${(((bottom - top) / 400) * 100).toFixed(0)}% of the tile`)
 })
 
-check('one scale both ways, so a 16:9 body is not squashed sideways', () => {
+check('one scale both ways, so a 16:9 body isn’t squashed sideways', () => {
   const f = frame()
   const r = fitBody(f, ASPECT, 300, 400)
   const across = at(r, f.image[12]).x - at(r, f.image[11]).x
@@ -40,12 +40,12 @@ check('one scale both ways, so a 16:9 body is not squashed sideways', () => {
   assert(Math.abs(across / down - truth) < 1e-9, `drawn ${(across / down).toFixed(3)} against ${truth.toFixed(3)}`)
 })
 
-check('a bone with an unsure end is set apart to be drawn faded; a sure one is not', () => {
+check('a bone with an unsure end is set apart to be drawn faded; a sure one isn’t', () => {
   const f = frame()
   f.image[13] = { ...f.image[13], visibility: 0.2 }
   const bones = [[11, 13, 1, 1], [11, 12, 1, 1]] as const
   const { sure, unsure } = splitBones(f, bones)
-  assert(unsure.length === 1 && unsure[0][1] === 13, 'the bone to an unsure elbow was not set apart')
+  assert(unsure.length === 1 && unsure[0][1] === 13, 'the bone to an unsure elbow wasn’t set apart')
   assert(sure.length === 1 && sure[0][1] === 12, 'a seen bone was faded')
   assert(splitBones(frame(1), bones).unsure.length === 0, 'a fully seen body had unsure bones')
 })

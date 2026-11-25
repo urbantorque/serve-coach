@@ -17,17 +17,17 @@ check('the offset between the reach and the impact is learned from the clip', ()
   const h = hearPeaks(peaks, [...impacts, ...distractors])!
   near(h.offset, 0.04, 0.005, 'learned offset')
   assert(h.pairs === peaks.length, `paired ${h.pairs}`)
-  assert(h.heard.every(Boolean), 'a serve with its impact was not heard')
+  assert(h.heard.every(Boolean), 'a serve with its impact wasn’t heard')
 })
 
-check('a peak with no impact near its moment is not heard, even with sounds around it', () => {
+check('a peak with no impact near its moment isn’t heard, even with sounds around it', () => {
   const quiet = new Set([2, 7])
   const h = hearPeaks(peaks, [...impacts.filter((_, i) => !quiet.has(i)), ...distractors])!
   assert(JSON.stringify([...quiet].map((i) => h.heard[i])) === '[false,false]', 'a silent swing was heard')
   assert(h.heard.filter(Boolean).length === peaks.length - quiet.size, 'a heard serve was lost')
 })
 
-check('an impact past the window around its moment does not count', () => {
+check('an impact past the window around its moment doesn’t count', () => {
   // Most impacts where they should be, so the offset is theirs; the last three
   // a beat late, as a partner's shot landing just after the swing would be.
   const late = peaks.map((p) => p + 0.04 + HEARD_WINDOW * 1.5)

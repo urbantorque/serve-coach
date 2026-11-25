@@ -50,7 +50,7 @@ note(`under pressure: keep ${KEEP_STILLS_UNDER_PRESSURE} with stills and tracks,
 
 check('the limits nest: stills inside tracks, and pressure tighter than routine', () => {
   assert(KEEP_STILLS < KEEP_TRACKS, 'the stills outlive the tracks they sit beside')
-  assert(KEEP_STILLS_UNDER_PRESSURE < KEEP_STILLS, 'pressure did not tighten the stills limit')
+  assert(KEEP_STILLS_UNDER_PRESSURE < KEEP_STILLS, 'pressure didn’t tighten the stills limit')
   assert(KEEP_ALL_UNDER_PRESSURE < KEEP_TRACKS, 'pressure keeps more whole reports than routine keeps tracks')
 })
 
@@ -83,8 +83,8 @@ check('after one save, only the reports it pushed over a limit are looked at', (
   const { toDelete, toStrip, toDowngrade } = planPrune(all, 'routine', 'recent')
   assert(toDelete.length === 0, 'a routine save deleted a report')
   assert(toStrip.length === ROUTINE_BAND && toDowngrade.length === ROUTINE_BAND, `looked at ${toStrip.length} and ${toDowngrade.length}`)
-  assert(toStrip[ROUTINE_BAND - 1] === all[300 - KEEP_STILLS - 1], 'the report just past the stills limit was not in the band')
-  assert(toDowngrade[ROUTINE_BAND - 1] === all[300 - KEEP_TRACKS - 1], 'the report just past the track limit was not in the band')
+  assert(toStrip[ROUTINE_BAND - 1] === all[300 - KEEP_STILLS - 1], 'the report just past the stills limit wasn’t in the band')
+  assert(toDowngrade[ROUTINE_BAND - 1] === all[300 - KEEP_TRACKS - 1], 'the report just past the track limit wasn’t in the band')
 })
 
 check('a history well under both limits is untouched', () => {
@@ -107,14 +107,14 @@ check('stills-level pressure strips and downgrades almost everything, and delete
   const { toDelete, toStrip, toDowngrade } = planPrune(all, 'stills')
   assert(toDelete.length === 0, `stills-level pressure deleted ${toDelete.length} reports`)
   assert(toStrip.length === 300 - KEEP_STILLS_UNDER_PRESSURE, `stripped ${toStrip.length}`)
-  assert(toDowngrade.length === toStrip.length, 'the tracks did not go with the stills under pressure')
+  assert(toDowngrade.length === toStrip.length, 'the tracks didn’t go with the stills under pressure')
 })
 
 check('hard-level pressure deletes down to KEEP_ALL_UNDER_PRESSURE, oldest first', () => {
   const all = keys(300)
   const { toDelete, toStrip } = planPrune(all, 'hard')
   assert(toDelete.length === 300 - KEEP_ALL_UNDER_PRESSURE, `deleted ${toDelete.length}`)
-  assert(toDelete.every((k, i) => k === all[i]), 'hard pruning did not delete the oldest reports first')
+  assert(toDelete.every((k, i) => k === all[i]), 'hard pruning didn’t delete the oldest reports first')
   assert(toStrip.length === KEEP_ALL_UNDER_PRESSURE - KEEP_STILLS_UNDER_PRESSURE, `stripped ${toStrip.length}`)
   assertPartition(all.length, toDelete, toStrip, 'hard pressure')
 })
@@ -180,7 +180,7 @@ check('a whole comparison block survives the read unchanged', () => {
   assert(s?.consistency !== undefined, 'a complete comparison block was dropped')
   assert(
     JSON.stringify(s!.consistency!.serveNumbers) === '[4,6]',
-    `the serve numbers were not carried through: ${JSON.stringify(s!.consistency!.serveNumbers)}`,
+    `the serve numbers weren’t carried through: ${JSON.stringify(s!.consistency!.serveNumbers)}`,
   )
   assert(s!.consistency!.gap?.best === 6, 'the gap was dropped from a complete block')
 })
@@ -212,7 +212,7 @@ check('a block with no serve numbers reads back with an empty list, not a missin
   assert(s?.consistency !== undefined, 'a block missing only its serve numbers was dropped whole')
   assert(
     Array.isArray(s!.consistency!.serveNumbers),
-    'serveNumbers came back as something a panel cannot index',
+    'serveNumbers came back as something a panel can’t index',
   )
   assert(
     s!.consistency!.serveNumbers.length === 0,
@@ -220,7 +220,7 @@ check('a block with no serve numbers reads back with an empty list, not a missin
   )
 })
 
-check('serve numbers that are not numbers are dropped rather than printed', () => {
+check('serve numbers that aren’t numbers are dropped rather than printed', () => {
   const s = normalise(storedBasket({ ...wholeConsistency(), serveNumbers: ['4', null] }))
   assert(s!.consistency!.serveNumbers.length === 0, 'non-numeric serve numbers survived the read')
 })
@@ -237,7 +237,7 @@ check('an ungraded delta survives the read with its bound attached', () => {
   assert(d!.bound === 2, `the bound came back as ${d!.bound}`)
 })
 
-check('a delta written under another rule is not printed again', () => {
+check('a delta written under another rule isn’t printed again', () => {
   // Before H44 the arm, landing and sequence lines were bounded by one pair's
   // noise, or none, and printed on most baskets of a still serve; before H45 the
   // arm line ran on angled phones. Such a row clears its own stored bound, so it
@@ -263,11 +263,11 @@ check('a stored row with no score is dropped, not ranked as the one that changes
   assert(s!.consistency!.weakest?.id === 'releaseHeight', `named ${s!.consistency!.weakest?.label}`)
 })
 
-check('what the basket could not find of the drop is read back, and nothing malformed is', () => {
+check('what the basket couldn’t find of the drop is read back, and nothing malformed is', () => {
   const kept = normalise(storedBasket({ ...wholeConsistency(), missingDrop: { serves: 2, leftOut: true } }))
-  assert(JSON.stringify(kept!.consistency!.missingDrop) === '{"serves":2,"leftOut":true}', 'the missing drop was not read back')
+  assert(JSON.stringify(kept!.consistency!.missingDrop) === '{"serves":2,"leftOut":true}', 'the missing drop wasn’t read back')
   const one = normalise(storedBasket({ ...wholeConsistency(), missingDrop: { serves: 1, leftOut: true } }))
-  assert(one!.consistency!.missingDrop?.serves === 1, 'one serve of two, left out, was not read back')
+  assert(one!.consistency!.missingDrop?.serves === 1, 'one serve of two, left out, wasn’t read back')
   // A count over the basket, a fraction, or a left-out the rule never writes would
   // print a sentence no basket earned: "I found no racket drop on 9 of them" (H46).
   for (const bad of [
@@ -377,7 +377,7 @@ const storedWithTriage = (triage: unknown): unknown => ({
   triage,
 })
 
-check('a quality block stored before yaw_measured does not come back claiming one', () => {
+check('a quality block stored before yaw_measured doesn’t come back claiming one', () => {
   /*
    * The one older shape of `triage.quality` that actually exists in the wild:
    * the five fields it shipped with, before this round added a sixth. Every
@@ -561,7 +561,7 @@ check('a landing written by this build survives the read intact', () => {
   )
   const landing = fresh?.diagnosis?.landing
   assert(landing?.offset === 0.066, `a current reading came back as ${landing?.offset}`)
-  assert(landing?.secondsAfterContact === 0.44, 'the window was not preserved')
+  assert(landing?.secondsAfterContact === 0.44, 'the window wasn’t preserved')
 })
 
 
@@ -595,7 +595,7 @@ check('a complete triage block survives the read unchanged', () => {
   assert(s?.triage?.quality?.yaw_measured === true, 'a measured angle came back unmeasured')
 })
 
-check('a quality block short of a field is dropped, and the verdict is not', () => {
+check('a quality block short of a field is dropped, and the verdict isn’t', () => {
   /*
    * R65's decision, and the half it left named rather than made: there is no
    * honest default for a missing `confidence`. Inventing 0.9 manufactures a
@@ -637,7 +637,7 @@ check('an angle nobody measured reads as unmeasured, whatever the row says', () 
   assert(s?.triage?.quality?.yaw_measured === false, 'an absent flag defaulted to measured')
 })
 
-check('an injury flag that is not an object is dropped, and the rest kept', () => {
+check('an injury flag that isn’t an object is dropped, and the rest kept', () => {
   const s = normalise(
     storedTriage({
       schema: 1,
@@ -669,7 +669,7 @@ check('a complete tag survives the read', () => {
   assert(t?.serveNumber === 2, `a complete tag came back as ${JSON.stringify(t)}`)
 })
 
-check('a serve number that is not one or two is refused, not clamped', () => {
+check('a serve number that isn’t one or two is refused, not clamped', () => {
   /*
    * Checked against its two legal values rather than for being a number. A 3
    * would partition a basket into a bucket no screen draws, and clamping it to 2
@@ -695,7 +695,7 @@ check('a bad serve number costs the field, not the outcome beside it', () => {
    * tap was corrupt would be the storage deciding what they meant.
    */
   const t = normaliseServeTag({ ...wholeTag(), serveNumber: 3, outcome: 'net' })
-  assert(t?.outcome === 'net', `the outcome did not survive a bad serve number: ${JSON.stringify(t)}`)
+  assert(t?.outcome === 'net', `the outcome didn’t survive a bad serve number: ${JSON.stringify(t)}`)
   assert(t?.serveNumber === undefined, 'a serve number of 3 was kept')
 })
 
@@ -707,7 +707,7 @@ check('an outcome outside the four is dropped, and never guessed at', () => {
   }
 })
 
-check('a row that says nothing is not a tag', () => {
+check('a row that says nothing isn’t a tag', () => {
   // A stored row carrying only a timestamp is a claim that the player said
   // something. They did not, and the store's own count is what tells a later
   // screen whether this feature is used at all.
@@ -724,11 +724,11 @@ check('one tap never clears the other', () => {
    * gone, with nothing on screen to say so.
    */
   const first = withServeTag(undefined, 'serve-abc', { serveNumber: 2 }, 10)
-  assert(first?.serveNumber === 2 && first?.outcome === undefined, 'the first tap did not store')
+  assert(first?.serveNumber === 2 && first?.outcome === undefined, 'the first tap didn’t store')
   const second = withServeTag(first, 'serve-abc', { outcome: 'wide' }, 20)
   assert(second?.serveNumber === 2, 'tagging the outcome cleared which serve it was')
-  assert(second?.outcome === 'wide', 'the outcome did not store')
-  assert(second?.taggedAt === 20, 'the moment was not moved to the newer tap')
+  assert(second?.outcome === 'wide', 'the outcome didn’t store')
+  assert(second?.taggedAt === 20, 'the moment wasn’t moved to the newer tap')
 })
 
 check('taking one tap back leaves the other, and taking both back deletes the row', () => {
@@ -742,7 +742,7 @@ check('taking one tap back leaves the other, and taking both back deletes the ro
   // which is the difference that makes one call able to do both.
   const cleared = withServeTag(both, 'serve-abc', { serveNumber: undefined }, 30)
   assert(cleared?.outcome === 'net', 'untagging the serve number took the outcome with it')
-  assert(cleared?.serveNumber === undefined, 'the serve number did not clear')
+  assert(cleared?.serveNumber === undefined, 'the serve number didn’t clear')
   const empty = withServeTag(cleared, 'serve-abc', { outcome: undefined }, 40)
   assert(empty === undefined, 'a row with nothing left on it was kept')
   const untouched = withServeTag(both, 'serve-abc', {}, 50)
@@ -815,7 +815,7 @@ check('a report that already names a profile keeps it', () => {
   assert(s?.profileId === 'squad-2', `a named profile came back as ${s?.profileId}`)
 })
 
-check('an empty profile is not a profile', () => {
+check('an empty profile isn’t a profile', () => {
   // A hand-edited backup, or a writer that stamped a blank. Reading it as a real
   // profile would give one player a history nobody can select.
   const s = normalise({
@@ -836,7 +836,7 @@ check('the filter keeps one player and nobody else', () => {
   assert(mine.every((s) => s.profileId === 'me'), 'somebody else reached the filtered list')
 })
 
-check('a profile with no reports is not a profile', () => {
+check('a profile with no reports isn’t a profile', () => {
   /*
    * Derived from the reports rather than kept in a store, for the same reason a
    * tag dies with its report: a profile with no serves under it is a name and

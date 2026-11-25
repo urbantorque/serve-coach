@@ -36,7 +36,7 @@ check('the manifest lists narrow and wide screenshots, each the size its file re
   note(entries.map((e) => `${e.src} ${e.w}x${e.h}`).join(' · '))
 })
 
-check('the screenshots are not precached into every install', () => {
+check('the screenshots aren’t precached into every install', () => {
   assert(config.includes("'**/screenshots/**'"), 'screenshots would be precached')
 })
 

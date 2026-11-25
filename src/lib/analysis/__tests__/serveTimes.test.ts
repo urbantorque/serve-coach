@@ -138,7 +138,7 @@ check('how many marked serves the finder finds, and what else it takes for one',
   assert(taken <= FLOOR.wrong, `took ${taken} marked non-serves for serves, more than the ${FLOOR.wrong} before`)
 })
 
-check('a serve whose toss reached highest is found at its hit, and a caught toss is not (W6.11)', () => {
+check('a serve whose toss reached highest is found at its hit, and a caught toss isn’t (W6.11)', () => {
   // The hands as negated image y, the head at -0.35, feet still. The tossing
   // (left) arm peaks at 1.0 s, higher than the racket (right) hand at 1.5 s.
   const sample = (t: number, left: number, right: number): ReachSample => ({
@@ -158,7 +158,7 @@ check('a serve whose toss reached highest is found at its hit, and a caught toss
   const finds = classifyServes(clip)
   note(`found ${finds.serves.map((t) => t.toFixed(2)).join(', ')}; not sure ${finds.unsure.map((t) => t.toFixed(2)).join(', ')}`)
   assert(finds.serves.length === 2, `found ${finds.serves.length} serves, not 2`)
-  assert(finds.serves.every((t, i) => Math.abs(t - [3.5, 7.5][i]) < 0.1), 'a serve was not placed at its hit')
+  assert(finds.serves.every((t, i) => Math.abs(t - [3.5, 7.5][i]) < 0.1), 'a serve wasn’t placed at its hit')
   assert(!finds.serves.some((t) => t > 9), 'a caught toss was called a serve')
   assert(TOSS_TO_HIT < MIN_SERVE_GAP, 'the hit after a toss can land past the next serve')
 })

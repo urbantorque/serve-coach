@@ -121,7 +121,7 @@ check('the usual is the median, the spread a scaled MAD, the noise never under t
   assert(Boolean(knee), 'twelve serves over three trips made no baseline')
   near(knee!.typical, 50, 1e-9, 'the usual')
   near(knee!.spread, 5 * 1.4826, 1e-9, 'the spread')
-  assert(knee!.noise === knee!.spread, 'a spread wider than the camera was not the noise')
+  assert(knee!.noise === knee!.spread, 'a spread wider than the camera wasn’t the noise')
   const flat = base!.rows.find((r) => r.metricId === 'contactHeight')!
   assert(flat.spread === 0 && flat.noise === CARD_NOISE_SD.contactHeight, 'a dead steady row went under the camera')
   assert(base!.serves === 12 && base!.trips === 3 && base!.ids.length === 12, JSON.stringify(base))
@@ -147,14 +147,14 @@ heading('Too little to say')
 check('below the minimum the baseline is absent, not guessed', () => {
   const offsets = TWELVE(5)
   const enough = spaced(around('kneeBend', 50, offsets), 3)
-  assert(playerBaseline(enough) !== undefined, 'twelve serves over three trips were not enough')
+  assert(playerBaseline(enough) !== undefined, 'twelve serves over three trips weren’t enough')
   assert(playerBaseline(enough.slice(0, MIN_BASELINE_SERVES - 1)) === undefined, 'eleven serves made a baseline')
   assert(playerBaseline([]) === undefined, 'an empty history made a baseline')
   const serve = stub(later(enough), row('kneeBend', 90))
   assert(baselineFor(serve, enough.slice(0, 11)) === undefined, 'a serve found a usual in eleven')
 })
 
-check('one trip cannot make a usual, however many serves it holds', () => {
+check('one trip can’t make a usual, however many serves it holds', () => {
   const offsets = [...TWELVE(5), ...TWELVE(5), ...TWELVE(5)]
   assert(playerBaseline(spaced(around('kneeBend', 50, offsets), 1)) === undefined, 'thirty-six serves in a day made a usual')
   assert(playerBaseline(spaced(around('kneeBend', 50, offsets), 2)) === undefined, 'two trips made a usual')
@@ -227,7 +227,7 @@ check('other scoring versions never mix, and a new rubric starts again', () => {
   assert(baselineFor(first, old) === undefined, 'a new rubric borrowed the old usual')
 })
 
-check('an era in the middle is not stitched over', () => {
+check('an era in the middle isn’t stitched over', () => {
   const a = spaced(around('kneeBend', 90, TWELVE(5)), 3)
   const b = spaced(around('kneeBend', 20, TWELVE(5)), 3, { scoringVersion: VERSION + 1 }, later(a))
   const c = spaced(around('kneeBend', 50, TWELVE(5)), 3, {}, later(b))
@@ -261,7 +261,7 @@ check('another camera angle is another usual', () => {
   const side = spaced(around('kneeBend', 50, TWELVE(5)), 3)
   const behind = spaced(around('kneeBend', 90, TWELVE(5)).slice(0, 8), 3, { quality: { view: 'front-back' } } as Partial<Session>, 0.5 * HOUR)
   const all = [...side, ...behind]
-  assert(playerBaseline(all)!.view === 'side', 'the commonest angle was not chosen')
+  assert(playerBaseline(all)!.view === 'side', 'the commonest angle wasn’t chosen')
   assert(playerBaseline(all)!.rows.find((r) => r.metricId === 'kneeBend')!.typical === 50, 'two angles were pooled')
   const serve = stub(later(all), row('kneeBend', 90), { quality: { view: 'front-back' } } as Partial<Session>)
   assert(baselineFor(serve, all) === undefined, 'eight serves from behind made a usual for that angle')
@@ -273,7 +273,7 @@ check('a serve is never read against a usual it helped set', () => {
   const outlier = stub(later(history), row('kneeBend', 95))
   const all = [...history, outlier]
   assert(againstUsual(outlier, playerBaseline(all)!).length === 0, 'a serve inside the baseline was read')
-  assert(againstUsual(outlier, baselineFor(outlier, all)!).length === 1, 'baselineFor did not leave the serve out')
+  assert(againstUsual(outlier, baselineFor(outlier, all)!).length === 1, 'baselineFor didn’t leave the serve out')
 })
 
 check('an old report reads as it would have on the day', () => {
@@ -292,7 +292,7 @@ check('the usual follows the player: only the newest serves are in it', () => {
   assert(base.rows.find((r) => r.metricId === 'kneeBend')!.typical === 60, 'a changed serve never became the usual')
 })
 
-check('a player who films twenty a trip still has a usual, and half a day is not a day', () => {
+check('a player who films twenty a trip still has a usual, and half a day isn’t a day', () => {
   // The newest thirty serves are two trips here, and two trips can never make a
   // usual. Reaching back a whole trip at a time keeps the rule and the player.
   const offsets = [...TWELVE(1), ...TWELVE(1), ...TWELVE(1), ...TWELVE(1), ...TWELVE(1)]
@@ -348,7 +348,7 @@ check('inside the reach says nothing, and the camera sets the floor', () => {
 check('a wide player needs a wider move than a steady one', () => {
   const steady = playerBaseline(spaced(around('kneeBend', 50, TWELVE(1)), 3))!.rows.find((r) => r.metricId === 'kneeBend')!
   const wide = playerBaseline(spaced(around('kneeBend', 50, TWELVE(5)), 3))!.rows.find((r) => r.metricId === 'kneeBend')!
-  assert(reachOf(wide) > reachOf(steady), 'the player\'s own spread did not widen the line')
+  assert(reachOf(wide) > reachOf(steady), 'the player\'s own spread didn’t widen the line')
   near(reachOf(wide), spreadMultiple(12) * wide.spread, 1e-9, 'the reach of a wide player')
 })
 
@@ -496,7 +496,7 @@ check('a shift from day to day stays near the rate, which is what counting trips
 
 check('a stronger shift is reported, not hidden', () => {
   const { rate } = falseRate(2000, 24, 6, 8, 1, 5)
-  note(`24 serves over 6 trips, a day shifting a whole spread: ${pct(rate)}. The stated rate does not cover this.`)
+  note(`24 serves over 6 trips, a day shifting a whole spread: ${pct(rate)}. The stated rate doesn’t cover this.`)
   assert(rate <= 0.12, `${pct(rate)} on a shift as big as the spread`)
 })
 
@@ -592,7 +592,7 @@ check('knees bent further are found, and said as a body position', () => {
   const found = againstUsual(serve, base!)
   note(found.map((f) => `${f.line} (${f.metricId}, ${f.size}${f.unit}, ${f.strength} noises)`).join(' · ') || 'nothing')
   const knee = found.find((f) => f.metricId === 'kneeBend')
-  assert(knee?.direction === 'higher', `the deeper knees were not found: ${JSON.stringify(found.map((f) => f.metricId))}`)
+  assert(knee?.direction === 'higher', `the deeper knees weren’t found: ${JSON.stringify(found.map((f) => f.metricId))}`)
   assert(knee!.size >= 14, `moved ${knee!.size}°`)
 })
 
@@ -626,7 +626,7 @@ check('the best is the highest earlier serve of the same kind, and has to stand 
   const { history, best } = withBest(50, 85)
   const serve = stub(later(history), row('kneeBend', 25))
   const base = baselineFor(serve, history)!
-  assert(earlierBest(serve, history, base)?.id === best.id, 'the clear best was not found')
+  assert(earlierBest(serve, history, base)?.id === best.id, 'the clear best wasn’t found')
 
   // Three points over the usual is the luckiest serve of a steady player.
   const { history: lucky } = withBest(50, 73)
@@ -717,7 +717,7 @@ check('reaching what made the best the best is said', () => {
   assert(reached!.line === 'I saw you match your earlier best on **knee bend at trophy**.', reached!.line)
 })
 
-check('no reward for a row the best did not stand out on, or a serve short of it', () => {
+check('no reward for a row the best didn’t stand out on, or a serve short of it', () => {
   const { history, best } = withBest(50, 85)
   const base = baselineFor(stub(later(history), row('kneeBend', 25)), history)!
   assert(closestToBest(stub(later(history), row('kneeBend', 26)), best, base) === undefined, 'the usual serve was rewarded')

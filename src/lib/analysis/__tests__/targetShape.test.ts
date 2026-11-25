@@ -216,7 +216,7 @@ check('both figures are fitted in one box, so the difference is to scale', () =>
   const own = boundsOf([large])
   assert(
     box.max.y >= own.max.y - 1e-12 && box.min.y <= own.min.y + 1e-12,
-    'the shared box does not contain the larger figure',
+    'the shared box doesn’t contain the larger figure',
   )
   const alone = boundsOf([small])
   assert(
@@ -246,7 +246,7 @@ check('a measurement with no shape gets no shape', () => {
   note(`  ${DRAWN.length} measurements drawn, everything else refused`)
 })
 
-check('a value that is not a number never becomes a picture', () => {
+check('a value that isn’t a number never becomes a picture', () => {
   /*
    * `metrics.ts` drops a measurement it could not take rather than flooring it
    * — the fabrication its `build()` docstring is written about. A figure

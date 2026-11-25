@@ -59,7 +59,7 @@ check('a row is the trip the trend draws: median, range, areas, faults and ladde
   assert(row.serves === 4 && row.median === 63 && row.low === 50 && row.high === 70, 'median or range wrong')
   assert(row.byArea.toss === 61 && row.byArea.contact === 65, `areas ${JSON.stringify(row.byArea)}`)
   assert(row.named.shallow_drop === 3 && row.named.toss_height === 1, `faults ${JSON.stringify(row.named)}`)
-  assert(row.ladder?.shallow_drop === 2, 'the ladder step was not kept')
+  assert(row.ladder?.shallow_drop === 2, 'the ladder step wasn’t kept')
 })
 
 check('serve types and rubrics are rows of their own', () => {
@@ -89,15 +89,15 @@ const row = (from: number, to: number, serves: number, median = 70, extra: Parti
   ...extra,
 })
 
-check('a new trip is written, and an unchanged one is not written again', () => {
-  assert(mergeTripRecords([], [row(0, HOUR, 3)]).write.length === 1, 'a new trip was not written')
+check('a new trip is written, and an unchanged one isn’t written again', () => {
+  assert(mergeTripRecords([], [row(0, HOUR, 3)]).write.length === 1, 'a new trip wasn’t written')
   const same = mergeTripRecords([row(0, HOUR, 3)], [row(0, HOUR, 3)])
   assert(same.write.length === 0 && same.drop.length === 0, 'an identical row was written again')
 })
 
-check('a trip that grew replaces its row; a pruned remnant does not', () => {
+check('a trip that grew replaces its row; a pruned remnant doesn’t', () => {
   const grew = mergeTripRecords([row(0, HOUR, 3)], [row(0, 2 * HOUR, 4, 72)])
-  assert(grew.write.length === 1 && grew.drop.length === 0, 'a growing trip did not update its row')
+  assert(grew.write.length === 1 && grew.drop.length === 0, 'a growing trip didn’t update its row')
   // The oldest serves were pruned: the live trip now starts later and has fewer.
   const remnant = row(2 * HOUR, 3 * HOUR, 2, 90)
   const kept = mergeTripRecords([row(0, 3 * HOUR, 6)], [remnant])
@@ -110,7 +110,7 @@ check('a row for the same visit under another id is dropped when replaced', () =
   assert(merged.write.length === 1 && merged.drop[0] === tripRecordId('flat', 5, 0), JSON.stringify(merged))
 })
 
-check('another serve type on the same afternoon is not the same visit', () => {
+check('another serve type on the same afternoon isn’t the same visit', () => {
   const kick = row(0, HOUR, 1, 80, { serveType: 'kick', id: tripRecordId('kick', 5, 0) })
   const merged = mergeTripRecords([row(0, HOUR, 5)], [kick])
   assert(merged.write.length === 1 && merged.drop.length === 0, 'a kick trip replaced the flat one')
@@ -124,7 +124,7 @@ check('a stored row is read back whole or not at all', () => {
   assert(normaliseTripRecord({ ...good, serveType: 'banana' }) === undefined, 'an unknown serve type was kept')
   assert(normaliseTripRecord({ ...good, to: -1 }) === undefined, 'a trip ending before it began was kept')
   const junk = normaliseTripRecord({ ...good, named: { shallow_drop: 'x', toss_height: 1 } })
-  assert(junk?.named.toss_height === 1 && !('shallow_drop' in junk.named), 'a bad count was not dropped')
+  assert(junk?.named.toss_height === 1 && !('shallow_drop' in junk.named), 'a bad count wasn’t dropped')
 })
 
 heading('A pruned history keeps its season')
@@ -212,7 +212,7 @@ await check('a restore says how many reports it pruned, and their trips stay', a
   const result = await importBackup(file, fresh.store)
   note(`restore: ${result.added} added, ${result.pruned} pruned, ${fresh.records().length} trips kept`)
   assert(result.added === 90 && result.pruned === 65, `added ${result.added}, pruned ${result.pruned}`)
-  assert(fresh.records().length === 30, 'the trips of the pruned reports were not kept')
+  assert(fresh.records().length === 30, 'the trips of the pruned reports weren’t kept')
 })
 
 report()

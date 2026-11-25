@@ -149,7 +149,7 @@ export default function PracticeCard({ focus, onLogDrill, onUndoDrill, sameAsFoc
         {focus.drilled ? (
           <div className="drill-logged">
             <p>
-              Marked done {focus.drilled} {focus.drilled === 1 ? 'time' : 'times'} since the first of these{' '}
+              You’ve marked it done {focus.drilled} {focus.drilled === 1 ? 'time' : 'times'} over these{' '}
               {focus.sessionsConsidered} serves.
             </p>
             {onUndoDrill && (

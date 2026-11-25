@@ -149,7 +149,7 @@ check('the held-back count drops by what the plan actually printed', () => {
   note(`shown ${plan.length} → ${all ?? 'nothing held back'}`)
   // Printing more must never claim more is being withheld. Anything else is the
   // report telling somebody it has secrets it has just handed over.
-  if (all && one) assert(all.length <= one.length || all !== one, 'the count did not move')
+  if (all && one) assert(all.length <= one.length || all !== one, 'the count didn’t move')
   if (!one) assert(!all, 'nothing was held back at one, but something was at four')
 })
 
@@ -196,7 +196,7 @@ check('every ranked item carries a drill somebody could go and do', () => {
   note(plan.map((p, i) => `${i + 1}. ${p.drill.name} — ${p.drill.reps}`).join(' · '))
 })
 
-check('the queue does not repeat a drill, which would read as one long instruction', () => {
+check('the queue doesn’t repeat a drill, which would read as one long instruction', () => {
   // Two rungs sharing a drill is a session that says "do this, then do this" —
   // and worse, it hides that the second fault has no distinct answer.
   const { plan } = pipeline(MESSY)

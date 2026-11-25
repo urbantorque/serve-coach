@@ -40,15 +40,15 @@ check('a first trip has nothing to be a best against', () => {
 check('reaching the target rung for the first time is a best, said as the body position', () => {
   const bests = bodyBests([...trip(0, [-0.2, -0.18, -0.22]), ...trip(3, [0.15, 0.18, 0.2])])
   note(bests.map(bodyBestLine).join(' | ') || 'none')
-  assert(bests.length === 1 && bodyBestLine(bests[0]) === 'Racket drop: first court trip at "Hand below the shoulder".', JSON.stringify(bests))
+  assert(bests.length === 1 && bodyBestLine(bests[0]) === 'Racket drop: "Hand below the shoulder" for the first time.', JSON.stringify(bests))
 })
 
-check('a rung reached before is not a best again', () => {
+check('a rung reached before isn’t a best again', () => {
   const sessions = [...trip(0, [0.15, 0.16, 0.17]), ...trip(3, [-0.2, -0.2, -0.2]), ...trip(6, [0.2, 0.2, 0.2])]
   assert(bodyBests(sessions).length === 0, 'a rung already reached was celebrated twice')
 })
 
-check('a crossing inside the camera\'s own wobble is not a best', () => {
+check('a crossing inside the camera\'s own wobble isn’t a best', () => {
   // The rung edge is 0.1; the earlier trip sat just below it and this one just above.
   const edge = 0.1
   const wobble = 1.5 * CARD_NOISE_SD.dropDepth
@@ -62,8 +62,8 @@ check('moving away from the target is never a best', () => {
   assert(bodyBests(sessions).length === 0, 'going past the band to a new rung was called a best')
 })
 
-check('approximate readings and thin trips do not count', () => {
-  assert(bodyBests([...trip(0, [-0.2, -0.2, -0.2]), ...trip(3, [0.2, 0.2, 0.2], 0.3)]).length === 0, 'readings the card did not stand behind set a best')
+check('approximate readings and thin trips don’t count', () => {
+  assert(bodyBests([...trip(0, [-0.2, -0.2, -0.2]), ...trip(3, [0.2, 0.2, 0.2], 0.3)]).length === 0, 'readings the card didn’t stand behind set a best')
   assert(bodyBests([...trip(0, [-0.2, -0.2, -0.2]), ...trip(3, [0.2, 0.2])]).length === 0, 'a trip of two set a best')
 })
 
@@ -86,7 +86,7 @@ const after = rigTrip(3, { ...LOADED, dropBelowShoulder: 0.35 })
 check('a racket that starts falling sets the best, on its own rung', () => {
   const bests = bodyBests([...before, ...after])
   note(bests.map(bodyBestLine).join(' | ') || 'none')
-  assert(bests.some((b) => b.metricId === 'dropDepth' && b.tag === 'Hand below the shoulder'), 'the rig\'s drop did not set its best')
+  assert(bests.some((b) => b.metricId === 'dropDepth' && b.tag === 'Hand below the shoulder'), 'the rig\'s drop didn’t set its best')
   assert(bodyBests([...before, ...rigTrip(3, { ...LOADED, dropBelowShoulder: -0.25 })]).length === 0, 'the same serve again set a best')
 })
 
@@ -95,7 +95,7 @@ check('the progress screen lists it with the records', () => {
   const html = renderToStaticMarkup(
     createElement(Progress, { sessions, onBack: () => {}, onLogDrill: () => {}, onUndoDrill: () => {}, seeded: false }),
   )
-  assert(html.includes('first court trip at &quot;Hand below the shoulder&quot;'), 'the best did not render')
+  assert(html.includes('&quot;Hand below the shoulder&quot; for the first time'), 'the best didn’t render')
 })
 
 report()

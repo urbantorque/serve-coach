@@ -64,7 +64,7 @@ check('a racket held high through the swing is a racket that never fell', () => 
   assert(detectServe(frames, 30).derivation.dropOnTrophy, 'a racket that never fell was given a drop')
 })
 
-heading('A drop that may have fallen into a lost frame is not called absent (N2.5)')
+heading('A drop that may have fallen into a lost frame isn’t called absent (N2.5)')
 
 /** The lost dip, with the frame where it would have been lost too, as the bench's smaller copy read. */
 function withALostFrame(fps: number): Frame[] {

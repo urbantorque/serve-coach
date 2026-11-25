@@ -58,7 +58,7 @@ check('the two claims are never the same class', () => {
   )
 })
 
-heading('The stylesheet cannot make the claim on its own')
+heading('The stylesheet can’t make the claim on its own')
 
 /**
  * The rule as it stands, read off disk.
@@ -89,7 +89,7 @@ check('the caption accent is gated on both modifiers, and only those', () => {
   for (const modifier of ['pair-shots--better-left', 'pair-shots--better-right']) {
     assert(
       CSS.includes(`.${modifier}`),
-      `${modifier} is not in the stylesheet, so that half of the claim draws nothing`,
+      `${modifier} isn’t in the stylesheet, so that half of the claim draws nothing`,
     )
   }
   note('both ranking modifiers are styled; neither is reachable without a caller passing leftIsBetter')

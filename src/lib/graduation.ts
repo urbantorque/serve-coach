@@ -164,7 +164,7 @@ const count = (n: number) => COUNT_WORDS[n] ?? String(n)
 export function graduationLine(g: Graduation, next?: FlawId): string {
   const part = next ? PART_NAME[HIERARCHY[hierarchyIndex(next)]?.group] : undefined
   return (
-    `${FAULT_NAME[g.flaw]}: clean on ${g.clean} of your last ${g.read} serves, over ${count(g.trips)} trips. ` +
+    `${FAULT_NAME[g.flaw]}: not seen on ${g.clean} of your last ${g.read} serves, over ${count(g.trips)} sessions. ` +
     (part ? `Next: ${part}.` : 'Keep filming to hold it.')
   )
 }

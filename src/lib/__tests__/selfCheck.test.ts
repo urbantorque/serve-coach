@@ -37,10 +37,10 @@ const WEBM9 = 'video/webm; codecs="vp9"'
 heading('Asking a browser what it will play')
 
 check('the three answers are named, and the blank one is a refusal', () => {
-  assert(playback(plays(MP4), MP4) === 'yes', 'probably did not read as yes')
+  assert(playback(plays(MP4), MP4) === 'yes', 'probably didn’t read as yes')
   assert(playback({ canPlayType: () => 'maybe' }, MP4) === 'maybe', 'maybe was collapsed')
-  assert(playback(plays(), MP4) === 'no', 'the empty string did not read as a refusal')
-  assert(playback(undefined, MP4) === 'no', 'a missing decoder was not a refusal')
+  assert(playback(plays(), MP4) === 'no', 'the empty string didn’t read as a refusal')
+  assert(playback(undefined, MP4) === 'no', 'a missing decoder wasn’t a refusal')
 })
 
 check('a decoder that throws is a no about that container, not a broken check', () => {
@@ -55,7 +55,7 @@ check('a decoder that throws is a no about that container, not a broken check', 
 
 heading('Whether this browser can record something it can then read')
 
-check('a browser with no MediaRecorder is not a dead end, it is no button', () => {
+check('a browser with no MediaRecorder isn’t a dead end, it is no button', () => {
   // The distinction matters to the player: nothing to press is the designed
   // fallback, and a button that produces an unreadable file is the defect.
   const v = recordingVerdict(undefined, plays(MP4))
@@ -69,14 +69,14 @@ check('the ordinary browser records MP4 and plays it', () => {
   assert(v.deadEnd === false, 'called a working browser a dead end')
 })
 
-check('a container this browser cannot open is not the one it records in', () => {
+check('a container this browser can’t open isn’t the one it records in', () => {
   // The failure the recording path was designed around, arriving from the
   // direction nothing could test: a browser that will encode WebM and will not
   // decode it. The choosing used to hand that back, because its ordering is a
   // guess about decoders and this is the case where the guess is wrong.
   const v = recordingVerdict(records('video/webm;codecs=vp9'), plays(MP4))
-  assert(v.chosen === undefined, `chose ${v.chosen}, which this browser cannot open`)
-  assert(v.deadEnd === true, 'a browser that records nothing readable was not flagged')
+  assert(v.chosen === undefined, `chose ${v.chosen}, which this browser can’t open`)
+  assert(v.deadEnd === true, 'a browser that records nothing readable wasn’t flagged')
 })
 
 check('the readable container is preferred over the higher-ranked unreadable one', () => {
@@ -90,7 +90,7 @@ check('the readable container is preferred over the higher-ranked unreadable one
   assert(v.deadEnd === false, 'flagged a browser that found a working container')
 })
 
-check('Safari saying maybe about everything is not a dead end', () => {
+check('Safari saying maybe about everything isn’t a dead end', () => {
   // Safari answers `maybe` for files it plays perfectly. Reading that as a
   // refusal would report the recording path broken on the browser where it
   // matters most, which is the exact overclaim this whole check is against.
@@ -119,7 +119,7 @@ const generous = await storageVerdict({
   persisted: () => Promise.resolve(true),
 } as unknown as StorageManager)
 
-check('a browser that will not estimate leaves the fields absent, not zero', () => {
+check('a browser that won’t estimate leaves the fields absent, not zero', () => {
   // Zero megabytes of quota is a sentence about a broken phone. Absent is a
   // sentence about a browser that would not say, and they are different things
   // to read at a court.
@@ -182,7 +182,7 @@ check('a report can only contain strings from a fixed vocabulary', () => {
   const allowed = new Set<string>(REPORT_VOCABULARY)
   for (const [at, s] of strings(full, 'report')) {
     const ok = allowed.has(s) || /^\d+×\d+$/.test(s)
-    assert(ok, `${at} carried "${s}", which is not in the report vocabulary`)
+    assert(ok, `${at} carried "${s}", which isn’t in the report vocabulary`)
   }
 })
 
@@ -290,7 +290,7 @@ check('a browser with no captureStream is reported as having none', () => {
   )
 })
 
-check('a stream with no video track is not a recordable canvas', () => {
+check('a stream with no video track isn’t a recordable canvas', () => {
   /*
    * The case that would otherwise read as a pass. `captureStream` existing is
    * not the same as it yielding something `MediaRecorder` can consume, and a

@@ -352,7 +352,7 @@ export default function App() {
         await saveSession(analysis)
       } catch {
         setSaveWarning(
-          `This report could not be saved, because your ${deviceNoun()} has run out of storage. Export your history from Settings, or free up space and try this video again.`,
+          `This report couldn’t be saved, because your ${deviceNoun()} has run out of storage. Export your history from Settings, or free up space and try this video again.`,
         )
       }
       refreshSessions()
@@ -1061,7 +1061,7 @@ export default function App() {
           {view.kind === 'error' && (
             <div className="screen problem">
               <div className="problem-text">
-                <span className="next-label problem-kicker">I could not check that video</span>
+                <span className="next-label problem-kicker">I couldn’t check that video</span>
                 <h1 className="t-display">{view.title}</h1>
                 <ul>
                   {view.hints.map((h) => (

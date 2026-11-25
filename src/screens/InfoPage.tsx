@@ -24,9 +24,9 @@ const LEDES: Record<InfoPageId, string> = {
   pricing: PRICE_LINE
     ? 'What stays free, what Plus adds, and what it costs. Your video never leaves your device on either.'
     : 'What stays free and what Plus adds. Your video never leaves your device on either.',
-  accuracy: 'What I measure, how reliable each measurement is, how I know, and what I cannot see.',
+  accuracy: 'What I measure, how reliable each measurement is, how I know, and what I can’t see.',
   privacy: 'Your video never leaves your device. Here is everything I keep, and where it lives.',
-  terms: 'What Serve Coach is, what it is not, and what you agree to by using it.',
+  terms: 'What Serve Coach is, what it isn’t, and what you agree to by using it.',
   credits: 'The research, models and tools this app is built on.',
 }
 
@@ -109,7 +109,7 @@ function Pricing({ onFilm }: { onFilm?: () => void }) {
     <>
       {!GATED && (
         <Section title="Everything is open for now">
-          <p>Every feature on this page is free while Plus is not on sale. When it starts, the free column is what stays free.</p>
+          <p>Every feature on this page is free while Plus isn’t on sale. When it starts, the free column is what stays free.</p>
         </Section>
       )}
       {PAYMENTS !== 'off' && (plus ? <YourPlus until={entitlement.until} /> : <GetPlus />)}
@@ -300,12 +300,12 @@ function Accuracy({ onPage }: { onPage: Go }) {
               <li key={b.id}>{b.label}</li>
             ))}
           </ul>
-          <p>My test serves come from a lab with no ball in it, so I have not tested how reliable these are.</p>
+          <p>My test serves come from a lab with no ball in it, so I haven’t tested how reliable these are.</p>
         </Section>
       )}
 
       <Section title="Shown, never graded">
-        <p>Hip and shoulder turn. One camera cannot see them well enough to grade, so I show them and say so.</p>
+        <p>Hip and shoulder turn. One camera can’t see them well enough to grade, so I show them and say so.</p>
         <p>Serve speed comes as a likely range, worked out from your racket and body. No radar has checked it.</p>
       </Section>
 
@@ -313,21 +313,21 @@ function Accuracy({ onPage }: { onPage: Go }) {
         <p>I checked six serves recorded in a motion capture lab, 240 times each, adding typical phone camera errors every time.</p>
         <p>Each copy goes through the same steps as your video. That shows how much a measurement varies on one serve.</p>
         <p>Besides the lab serves, I use a test serve I built to show each fault on purpose.</p>
-        <p>This does not prove my measurements match the lab. One camera cannot be that accurate, and I do not claim it is.</p>
+        <p>This doesn’t prove my measurements match the lab. One camera can’t be that accurate, and I don’t claim it is.</p>
         <p>A real camera can be less accurate than my test, so every figure here is the smallest error to expect.</p>
         <p>I also checked two small public videos again, made darker, further away, smaller and a frame later.</p>
         <p>Heights changed most there, because I measure them against your body, which changed too. Those figures need sharper footage to test.</p>
       </Section>
 
-      <Section title="What I cannot see">
+      <Section title="What I can’t see">
         <ul className="info-list">
           <li>Depth. One camera sees a flat picture, so I measure movement toward or away from it less well.</li>
           <li>Slow motion: my figures come from normal-speed video. Slow motion gives me more frames of the swing, which is why I suggest it.</li>
-          <li>A racket drop the camera blurs. I can miss it entirely, and I have not fixed that yet.</li>
+          <li>A racket drop the camera blurs. I can miss it entirely, and I haven’t fixed that yet.</li>
           <li>Your real height. I measure heights against your own body in the picture, never in metres.</li>
         </ul>
         <p>
-          When a video is not clear enough to measure something, I mark it as unsure or leave it out. The{' '}
+          When a video isn’t clear enough to measure something, I mark it as unsure or leave it out. The{' '}
           <a href={pathFor({ kind: 'page', page: 'privacy' }, import.meta.env.BASE_URL)} onClick={onPage('privacy')}>
             privacy page
           </a>{' '}
@@ -358,7 +358,7 @@ function Privacy() {
         <p>A picture or a clip shows a drawn figure, never a photo of you.</p>
       </Section>
       <Section title="No tracking">
-        <p>No analytics, no advertising and no cookies that follow you. I do not know who you are.</p>
+        <p>No analytics, no advertising and no cookies that follow you. I don’t know who you are.</p>
       </Section>
       {PAYMENTS !== 'off' && (
         <Section title="If you buy Plus">
@@ -380,7 +380,7 @@ function Terms({ onPage }: { onPage: Go }) {
   return (
     <>
       <Section title="What this is">
-        <p>Serve Coach checks a tennis serve from a video and suggests what to work on. It is a coaching aid, not a coach.</p>
+        <p>Serve Coach checks a tennis serve from a video and suggests what to work on. It’s a coaching aid, not a coach.</p>
         {SITE.operator && <p>{SITE.operator} runs Serve Coach.</p>}
       </Section>
       <Section title="How far to trust it">
@@ -400,7 +400,7 @@ function Terms({ onPage }: { onPage: Go }) {
         <p>Your videos and results stay yours, on your own device. You can delete them from your browser at any time.</p>
       </Section>
       <Section title="Fair use">
-        <p>Use the app for your own serve, or for someone else's with their permission. Do not try to break, copy or resell it.</p>
+        <p>Use the app for your own serve, or for someone else's with their permission. Don’t try to break, copy or resell it.</p>
       </Section>
       {PAYMENTS !== 'off' && (
         <Section title="Plus">

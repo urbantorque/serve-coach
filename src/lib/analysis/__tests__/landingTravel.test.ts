@@ -29,7 +29,7 @@ check('from the side the rig reads its travel dial either sign, at the picture s
     const row = [-0.3, -0.15, 0, 0.15, 0.3].map((landingTravel) => rig({ landingTravel, cameraYaw })!.forward)
     note(`yaw ${cameraYaw}: ${row.join(' / ')} for -0.3 / -0.15 / 0 / 0.15 / 0.3 m`)
     near(row[2], 0, 0.002, `standing still read from yaw ${cameraYaw}`)
-    assert(row[0] < row[1] && row[1] < row[2] && row[2] < row[3] && row[3] < row[4], 'the reading is not in the order of the dial')
+    assert(row[0] < row[1] && row[1] < row[2] && row[2] < row[3] && row[3] < row[4], 'the reading isn’t in the order of the dial')
     near(row[1], -row[3], 0.002, 'a fall back and the same travel forward read different sizes')
     // Square to the lens the whole travel is across the picture; turned 30°
     // from it, the cosine of the turn.

@@ -57,12 +57,12 @@ check('the focus fault is set against the best serve on its own card row', () =>
   if (bestRow && nowRow && nowRow.score < bestRow.score) {
     // In the card's own readouts since L1.5, never the engine's figure.
     const said = (m: { readout: string }) => m.readout.charAt(0).toLowerCase() + m.readout.slice(1)
-    assert(Boolean(line?.includes(said(bestRow))), 'the line does not read the best serve out as its card did')
-    assert(Boolean(line?.includes(said(nowRow))), 'the line does not read this serve out as its card did')
+    assert(Boolean(line?.includes(said(bestRow))), 'the line doesn’t read the best serve out as its card did')
+    assert(Boolean(line?.includes(said(nowRow))), 'the line doesn’t read this serve out as its card did')
     assert(!line?.includes(bestRow.display) && !line?.includes(nowRow.display), 'a raw figure reached the line')
     // Against a last serve that drifted further, this one is closer.
     const worse = { ...sampleAnalysis({ tossWobble: 0.14 }), id: 'last' }
-    assert(Boolean(focusAgainstBest('toss_drift', now, best, worse)?.includes('Closer')), 'a toss closer to the best was not said to be')
+    assert(Boolean(focusAgainstBest('toss_drift', now, best, worse)?.includes('Closer')), 'a toss closer to the best wasn’t said to be')
   } else {
     assert(line === 'This reading is as good as your best serve.', `the line read "${line}"`)
   }

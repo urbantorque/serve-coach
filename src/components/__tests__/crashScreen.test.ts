@@ -18,7 +18,7 @@ const noop = () => {}
 const screen = (o: Partial<Parameters<typeof CrashScreen>[0]>) =>
   renderToStaticMarkup(
     createElement(CrashScreen, {
-      message: 'Cannot read properties of undefined',
+      message: 'Can’t read properties of undefined',
       backup: 'idle',
       confirming: false,
       clearing: false,
@@ -33,15 +33,15 @@ const screen = (o: Partial<Parameters<typeof CrashScreen>[0]>) =>
 
 heading('A crash screen that backs up first')
 
-check('the backup is offered, and clearing does not delete on the first tap', () => {
+check('the backup is offered, and clearing doesn’t delete on the first tap', () => {
   const idle = screen({})
   assert(idle.includes('Save a backup first'), 'no backup offered before the way out')
   assert(idle.includes('Clear saved reports and reload') && !idle.includes('Delete them'), 'clearing was one tap from deleting')
   const asked = screen({ confirming: true })
   assert(asked.includes('Delete them and reload') && asked.includes('Keep them'), 'the confirmation lost a choice')
-  assert(asked.includes('Save a backup first if you can'), 'the confirmation did not point back at the backup')
+  assert(asked.includes('Save a backup first if you can'), 'the confirmation didn’t point back at the backup')
   const backedUp = screen({ confirming: true, backup: 'saved' })
-  assert(backedUp.includes('Backup saved') && backedUp.includes('Your backup file can bring them back'), 'a saved backup was not acknowledged')
+  assert(backedUp.includes('Backup saved') && backedUp.includes('Your backup file can bring them back'), 'a saved backup wasn’t acknowledged')
   assert(screen({ backup: 'failed' }).includes('The backup failed'), 'a failed backup went unsaid')
 })
 
@@ -75,7 +75,7 @@ await check('the backup taken from the raw stores restores through the ordinary 
     writePrefs: (patch) => (prefs = { ...prefs, ...patch }),
   }
   const result = await importBackup(JSON.stringify(file), store)
-  assert(saved.has('serve-rescued'), 'the readable report did not come back')
+  assert(saved.has('serve-rescued'), 'the readable report didn’t come back')
   assert(!saved.has('serve-broken'), 'the unreadable record that crashed the app came back with it')
   assert(result.added === 1 && prefs.handedness === 'left', `restored ${result.added}, hand ${prefs.handedness}`)
 })

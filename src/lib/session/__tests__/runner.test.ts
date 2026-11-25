@@ -54,7 +54,7 @@ async function run(opts: {
         controller.abort()
         throw Object.assign(new Error('stopped'), { name: 'Cancelled' })
       }
-      if (opts.unreadable?.includes(index)) throw new NotAServeError('I could not find a serve there.', [])
+      if (opts.unreadable?.includes(index)) throw new NotAServeError('I couldn’t find a serve there.', [])
       if (opts.refused?.includes(index)) return REFUSED
       return SERVE
     },
@@ -85,7 +85,7 @@ await check('every chosen serve is read once, and the row is saved after each', 
   assert(JSON.stringify(result.lines[0]).length < 1500, 'a line is past a kilobyte and a half')
 })
 
-await check('a serve that cannot be read, or is refused, costs that serve and nothing else', async () => {
+await check('a serve that can’t be read, or is refused, costs that serve and nothing else', async () => {
   const chosen = sampleServes(50)
   const { result } = await run({ count: 50, unreadable: [chosen[2]], refused: [chosen[5]] })
   const unclear = result.lines.filter((l) => l.status === 'unclear').map((l) => l.number - 1)
@@ -123,7 +123,7 @@ await check('every serve of a thirty-minute session is one row that grows a line
   assert(previous < 200 * 1024, `the row is ${previous} bytes`)
 })
 
-await check('the overheads the scan was not sure of are kept with the session, and counted apart (L2.10)', async () => {
+await check('the overheads the scan wasn’t sure of are kept with the session, and counted apart (L2.10)', async () => {
   const io: SessionIO = {
     locate: async () => ({ found: [5, 17, 29], unsure: [11.5] }),
     read: async () => SERVE,
@@ -134,7 +134,7 @@ await check('the overheads the scan was not sure of are kept with the session, a
   assert(JSON.stringify(result.unsure) === '[11.5]', `kept ${JSON.stringify(result.unsure)}`)
   assert(result.found!.length === 3 && result.lines.length === 3, 'a not-sure overhead was read as a serve')
   const back = normalisePracticeSession(JSON.parse(JSON.stringify(result)))!
-  assert(JSON.stringify(back.unsure) === '[11.5]', 'the not-sure list did not survive the store')
+  assert(JSON.stringify(back.unsure) === '[11.5]', 'the not-sure list didn’t survive the store')
 })
 
 heading('Stopping, and carrying on')
@@ -146,7 +146,7 @@ await check('a stop between serves keeps what was read and where it was', async 
   assert(toRead(result).length === 8, `${toRead(result).length} left to read`)
 })
 
-await check('a stop mid-serve loses only the serve in flight, and is not called unclear', async () => {
+await check('a stop mid-serve loses only the serve in flight, and isn’t called unclear', async () => {
   const { result } = await run({ count: 50, stopDuring: 3 })
   assert(result.phase === 'stopped', `ended ${result.phase}`)
   assert(result.lines.length === 2, `kept ${result.lines.length} lines`)
@@ -159,13 +159,13 @@ await check('running a stopped session again reads only what is left, without sc
   const second = await run({ start: stored, count: 50 })
   assert(second.locates === 0, 'the resumed session scanned the file again')
   assert(second.reads.length === 7, `read ${second.reads.length} serves on resume`)
-  assert(second.result.phase === 'done' && second.result.lines.length === 12, 'the resumed session did not finish')
+  assert(second.result.phase === 'done' && second.result.lines.length === 12, 'the resumed session didn’t finish')
   assert(new Set(second.result.lines.map((l) => l.number)).size === 12, 'a serve was read twice')
 })
 
 heading('A phone running hot')
 
-check('a critical reading stops the reading once, and anything less does not', () => {
+check('a critical reading stops the reading once, and anything less doesn’t', () => {
   let tell: (records: { state: string }[]) => void = () => {}
   let source = ''
   let disconnected = false
@@ -207,9 +207,9 @@ check('a line keeps the graded readings, the faults, the toss and the footing', 
   const graded = SERVE.fundamentals.flatMap((f) => f.metrics).length
   assert(Object.keys(line.readings!).length === graded, `kept ${Object.keys(line.readings!).length} of ${graded} readings`)
   assert(line.overall === SERVE.overall && line.number === 3 && line.t === 41.5, 'the line lost its place or its score')
-  assert(Array.isArray(line.named) && Array.isArray(line.judged), 'the faults were not kept')
+  assert(Array.isArray(line.named) && Array.isArray(line.judged), 'the faults weren’t kept')
   assert(line.judged!.length >= line.named!.length, 'more faults named than judged')
-  assert(line.scale !== undefined, 'the footing was not kept')
+  assert(line.scale !== undefined, 'the footing wasn’t kept')
   assert(lineOf(REFUSED, 1, 0).status === 'unclear', 'a refused serve was filed as read')
 })
 

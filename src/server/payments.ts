@@ -87,7 +87,7 @@ export async function handlePayments(req: Request, env: PayEnv, send: Fetch = (i
   const route = url.pathname.replace(/^.*\/api\//, '').replace(/\/+$/, '')
   if (req.method !== 'POST') return reply(405, { error: 'Use POST.' })
   if (!env.STRIPE_SECRET_KEY || !env.STRIPE_PRICE_ID || !env.ENTITLEMENT_PRIVATE_JWK) {
-    return reply(503, { error: 'Paying is not switched on for this site yet.' })
+    return reply(503, { error: 'Paying isn’t switched on for this site yet.' })
   }
   const call = stripe(env, send)
   const origin = (env.SITE_URL ?? url.origin).replace(/\/+$/, '')
@@ -106,7 +106,7 @@ export async function handlePayments(req: Request, env: PayEnv, send: Fetch = (i
     if (route === 'checkout') {
       // Monthly unless a year was asked for and the owner sells one (F1.1).
       const yearly = body.plan === 'annual'
-      if (yearly && !env.STRIPE_ANNUAL_PRICE_ID) return reply(400, { error: 'Paying by the year is not on sale yet.' })
+      if (yearly && !env.STRIPE_ANNUAL_PRICE_ID) return reply(400, { error: 'Paying by the year isn’t on sale yet.' })
       const trial = Number(env.TRIAL_DAYS)
       const s = await call<{ url: string }>('POST', 'checkout/sessions', {
         mode: 'subscription',
@@ -120,15 +120,15 @@ export async function handlePayments(req: Request, env: PayEnv, send: Fetch = (i
     }
     if (route === 'claim') {
       const id = String(body.sessionId ?? '')
-      if (!/^cs_[A-Za-z0-9_]+$/.test(id)) return reply(400, { error: 'That is not a checkout I know.' })
+      if (!/^cs_[A-Za-z0-9_]+$/.test(id)) return reply(400, { error: 'That’s not a checkout I know.' })
       const s = await call<{ status: string; subscription?: StripeSub | string | null }>('GET', `checkout/sessions/${id}?expand%5B%5D=subscription`)
       const sub = typeof s.subscription === 'object' && s.subscription ? s.subscription : undefined
       const pass = s.status === 'complete' && sub ? await passFor(sub) : undefined
-      return pass ? reply(200, { pass }) : reply(402, { error: 'That payment has not gone through.' })
+      return pass ? reply(200, { pass }) : reply(402, { error: 'That payment hasn’t gone through.' })
     }
     if (route === 'refresh' || route === 'portal') {
       const c = await held()
-      if (!c) return reply(401, { error: 'That pass is not one I signed.' })
+      if (!c) return reply(401, { error: 'That pass isn’t one I signed.' })
       const sub = await call<StripeSub>('GET', `subscriptions/${encodeURIComponent(c.sub)}`)
       if (route === 'portal') {
         const p = await call<{ url: string }>('POST', 'billing_portal/sessions', { customer: sub.customer, return_url: `${origin}/pricing` })
@@ -139,7 +139,7 @@ export async function handlePayments(req: Request, env: PayEnv, send: Fetch = (i
     }
     return reply(404, { error: 'No such route.' })
   } catch (e) {
-    if (e instanceof StripeError && e.status === 404) return reply(404, { error: 'Stripe does not know that one.' })
-    return reply(502, { error: 'The payment service did not answer. Try again in a minute.' })
+    if (e instanceof StripeError && e.status === 404) return reply(404, { error: 'Stripe doesn’t know that one.' })
+    return reply(502, { error: 'The payment service didn’t answer. Try again in a minute.' })
   }
 }

@@ -47,7 +47,7 @@ check('a speed adds its seeks to every serve read, and nothing when not asked fo
   const plain = sessionCost(base)
   const sped = sessionCost({ ...base, withSpeed: true })
   assert(plain.speed === 0 && sped.speed === 12 * SPEED_READ_SAMPLES, `speed seeks ${plain.speed} / ${sped.speed}`)
-  assert(Math.abs(sped.seconds - plain.seconds - (12 * SPEED_READ_SAMPLES * 100) / 1000) < 1e-9, 'the seconds do not carry the speed seeks')
+  assert(Math.abs(sped.seconds - plain.seconds - (12 * SPEED_READ_SAMPLES * 100) / 1000) < 1e-9, 'the seconds don’t carry the speed seeks')
   note(`a speed adds ${SPEED_READ_SAMPLES} seeks to a light read of ${LIGHT_READ_SAMPLES}: ${Math.round((SPEED_READ_SAMPLES / LIGHT_READ_SAMPLES) * 100)}% more a serve`)
 })
 
@@ -61,7 +61,7 @@ check('each choice carries its price with speeds, and the line says the extra fo
   const gaps = choices.map((c) => shown(c.speedSeconds!) - shown(c.seconds!))
   const said = [...line.matchAll(/about (a|\d+) minutes?/g)].map((m) => (m[1] === 'a' ? 1 : Number(m[1])))
   assert(said.join() === gaps.join(), `said ${said.join()} more, the times differ by ${gaps.join()}`)
-  assert(line.includes(SPEED_PLACEMENT.distance), 'the line does not say where to film from')
+  assert(line.includes(SPEED_PLACEMENT.distance), 'the line doesn’t say where to film from')
   const untimed = speedCostLine(planChoices({ duration: 600, serves: 40 }))
   assert(!/\d/.test(untimed.split('.')[0]), `an untimed file was given a figure: ${untimed}`)
 })
@@ -86,8 +86,8 @@ check('the plan sheet offers speeds, off until chosen, with their price', () => 
     }),
   )
   assert(/aria-label="Serve speeds"/.test(html), 'no speed choice on the plan')
-  assert(/aria-pressed="true"[^>]*>Without speeds</.test(html), 'speeds are not off by default')
-  assert(html.includes('Speeds add about'), 'the price of speeds is not said')
+  assert(/aria-pressed="true"[^>]*>Without speeds</.test(html), 'speeds aren’t off by default')
+  assert(html.includes('Speeds add about'), 'the price of speeds isn’t said')
 })
 
 heading('Kept, and stored on each serve')
@@ -95,7 +95,7 @@ heading('Kept, and stored on each serve')
 check('the choice survives a reload, and a broken stored speed is dropped, not shown', () => {
   const back = normalisePracticeSession({ ...session, withSpeed: true })!
   assert(back.withSpeed === true, 'the speed choice was lost on reload')
-  assert(normalisePracticeSession(session)!.withSpeed === undefined, 'a session that did not choose speeds came back with them')
+  assert(normalisePracticeSession(session)!.withSpeed === undefined, 'a session that didn’t choose speeds came back with them')
   const broken = normalisePracticeSession({ ...session, lines: [{ ...session.lines[0], speed: { ms: 40, low: 45, high: 50 } }] })!
   assert(broken.lines[0].speed === undefined && broken.lines[0].status === 'read', 'a speed out of order was kept, or took its line with it')
 })
@@ -124,7 +124,7 @@ check('the fastest is the serve surest to be fast; the typical needs two', () =>
 
 check('a session with speeds says them; one read for speeds with none says how; one without says nothing', () => {
   const read = renderToStaticMarkup(createElement(SessionDashboard, { session }))
-  assert(read.includes('id="session-speed"') && /(Fastest serve|Your serves were all) about/.test(read) && /across 8 serves/.test(read), 'the speeds are not said')
+  assert(read.includes('id="session-speed"') && /(Fastest serve|Your serves were all) about/.test(read) && /across 8 serves/.test(read), 'the speeds aren’t said')
   const none = { ...session, withSpeed: true, lines: found.map((t, i) => lineOf(noSpeedAnalysis, i + 1, t)) }
   assert(renderToStaticMarkup(createElement(SessionDashboard, { session: none })).includes(NO_SESSION_SPEED), 'no word on a speed session that read none')
   const plain = { ...session, lines: none.lines }

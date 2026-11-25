@@ -53,7 +53,7 @@ export function DeltaBars({ deltas }: { deltas: AreaDelta[] }) {
       <li className="dbars-note">
         A dash means the change is too small to count: filming the same serve twice could give it. Some areas need a bigger change than others to count.
         {deltas.some((d) => deltaStatus(d.delta, d.id, d.alike) === 'soft') &&
-          ' ≈ marks an area measured differently on the two serves, so its change is not counted.'}
+          ' ≈ marks an area measured differently on the two serves, so its change isn’t counted.'}
       </li>
     </ul>
   )
@@ -80,8 +80,8 @@ export function TrendTable({ points }: { points: TripPoint[] }) {
     <>
       <table className="dtable">
         <caption className="sr-only">
-          Typical serve score for each court trip, with the lowest and highest score
-          {broken ? ', with court trips scored the old way marked' : ''}
+          Typical score for each session, with the lowest and highest
+          {broken ? ', with sessions scored the old way marked' : ''}
         </caption>
         <thead>
           <tr>

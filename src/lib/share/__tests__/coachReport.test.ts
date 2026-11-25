@@ -35,7 +35,7 @@ check('it carries the plan, the drills, and every measurement against its band',
   assert(!html.includes('**'), 'a bold marker leaked into the text')
 })
 
-check('text from the report is escaped, so it cannot become markup', () => {
+check('text from the report is escaped, so it can’t become markup', () => {
   const evil = coachReportHtml(analysis, [{ title: '<img src=x onerror=alert(1)>', why: 'w', drill: { name: 'd', how: 'h', reps: 'r' } }], [])
   assert(!evil.includes('<img src=x'), 'markup in a title reached the page')
 })

@@ -201,7 +201,7 @@ export default function SideBySide({ swing, moment, label, work, racket, checks,
           ))}
         </ul>
       )}
-      {beside === 'model' && <p className="side-note">The model is a real serve, captured in a lab. It is a good serve to learn from, not the only right one.</p>}
+      {beside === 'model' && <p className="side-note">The model is a real serve, captured in a lab. It’s a good serve to learn from, not the only right one.</p>}
     </section>
   )
 }

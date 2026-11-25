@@ -51,10 +51,10 @@ const LINES: Record<LoopOutcome, (drill: string) => string> = {
   away: (d) => `After ${d}, this serve moved away from the target, past your usual spread. One serve can, so film a few more.`,
   level: (d) => `After ${d}, this serve moved past your usual spread but stayed on target. A change, not a fix.`,
   within: (d) => `After ${d}, this serve sits inside your usual spread. No change I can trust yet, so keep going.`,
-  no_usual: (d) => `After ${d}, I do not know your usual spread for this yet, so this is one serve’s read.`,
-  no_usual_clean: (d) => `After ${d}, this serve came back clean of it. I do not know your usual spread yet, so it is one serve.`,
-  no_usual_named: (d) => `After ${d}, this serve still shows it. I do not know your usual spread yet, so it is one serve.`,
-  unread: (d) => `After ${d}, I could not read this on this serve, so I cannot say if the drill moved it.`,
+  no_usual: (d) => `After ${d}, I don’t know your usual spread for this yet, so this is one serve’s read.`,
+  no_usual_clean: (d) => `After ${d}, this serve came back clean of it. I don’t know your usual spread yet, so it is one serve.`,
+  no_usual_named: (d) => `After ${d}, this serve still shows it. I don’t know your usual spread yet, so it is one serve.`,
+  unread: (d) => `After ${d}, I couldn’t read this on this serve, so I can’t say if the drill moved it.`,
 }
 
 /**

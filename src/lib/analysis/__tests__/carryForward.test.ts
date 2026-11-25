@@ -128,7 +128,7 @@ check('the serve being asked about is never compared against itself', () => {
   assert(prev === undefined, 'a serve was compared against itself')
 })
 
-check('a serve on an earlier trip is not a comparison', () => {
+check('a serve on an earlier trip isn’t a comparison', () => {
   const now = serve(3 * DAY, 'now')
   const prev = previousOnTrip(
     [serve(0, 'old'), now],
@@ -138,7 +138,7 @@ check('a serve on an earlier trip is not a comparison', () => {
   assert(prev === undefined, 'reached back past the trip boundary')
 })
 
-check('a serve filed after this one is not a "previous"', () => {
+check('a serve filed after this one isn’t a "previous"', () => {
   const now = serve(0, 'now')
   const prev = previousOnTrip([serve(60_000, 'later')], now, () => true)
   assert(prev === undefined, 'a later serve was treated as the earlier one')
@@ -159,7 +159,7 @@ check('a move smaller than the signal can resolve reads as no change', () => {
 check('a move past the floor is reported, and in the right direction', () => {
   const before = serve(0, 'a', { miss: 0.1 })
   const after = serve(60_000, 'b', { miss: 0.1 - FLOOR * 1.5 })
-  assert(faultMove(before, after)?.verdict === 'closer', 'a real improvement was not reported')
+  assert(faultMove(before, after)?.verdict === 'closer', 'a real improvement wasn’t reported')
 })
 
 check('a fault that got worse is reported as plainly as one that improved', () => {
@@ -186,13 +186,13 @@ check('every graded signal has a floor for this to rest on', () => {
 
 heading('What it refuses, and refuses silently')
 
-check('a serve type switch is not a comparison', () => {
+check('a serve type switch isn’t a comparison', () => {
   const before = serve(0, 'a', { serveType: 'flat' })
   const after = serve(60_000, 'b', { serveType: 'kick', miss: 0.01 })
   assert(faultMove(before, after) === undefined, 'compared across two different target bands')
 })
 
-check('a target tier that moved between the two serves is not a comparison', () => {
+check('a target tier that moved between the two serves isn’t a comparison', () => {
   const before = serve(0, 'a', { tier: 4 })
   const after = serve(60_000, 'b', { tier: 5, miss: 0.3 })
   assert(
@@ -201,7 +201,7 @@ check('a target tier that moved between the two serves is not a comparison', () 
   )
 })
 
-check('a reading under the evidence bar on either serve is not a comparison', () => {
+check('a reading under the evidence bar on either serve isn’t a comparison', () => {
   const weakBefore = faultMove(
     serve(0, 'a', { confidence: MIN_EVIDENCE - 0.01 }),
     serve(60_000, 'b'),
@@ -210,11 +210,11 @@ check('a reading under the evidence bar on either serve is not a comparison', ()
     serve(0, 'a'),
     serve(60_000, 'b', { confidence: MIN_EVIDENCE - 0.01 }),
   )
-  assert(weakBefore === undefined, 'built a result on a reading the earlier clip could not take')
-  assert(weakAfter === undefined, 'built a result on a reading this clip could not take')
+  assert(weakBefore === undefined, 'built a result on a reading the earlier clip couldn’t take')
+  assert(weakAfter === undefined, 'built a result on a reading this clip couldn’t take')
 })
 
-check('a fault the later clip could not measure at all is not a comparison', () => {
+check('a fault the later clip couldn’t measure at all isn’t a comparison', () => {
   const before = serve(0, 'a')
   const after = serve(60_000, 'b', { flaws: [] })
   assert(faultMove(before, after) === undefined, 'an absent reading was read as an improvement')
@@ -243,7 +243,7 @@ check('naming the fault again is dropped when the heading above already carries 
   const fresh = faultMoveLine(move, false)!
   const again = faultMoveLine(move, true)!
   note(`fresh: "${fresh}" · again: "${again}"`)
-  assert(fresh.length > again.length, 'the repeat form was not shorter than the full one')
+  assert(fresh.length > again.length, 'the repeat form wasn’t shorter than the full one')
   assert(!again.startsWith('Last serve'), 'repeated the fault under a heading that already says it')
   assert(again.toLowerCase().includes('last serve'), 'the repeat form lost what it compares against')
 })
@@ -257,7 +257,7 @@ check('naming the fault again is dropped when the heading above already carries 
 check('the repeat form says it is about the fault, so it is never read as the score', () => {
   for (const verdict of ['cleared', 'closer', 'same', 'wider'] as const) {
     const line = faultMoveLine({ flaw: FLAW, signal: SIGNAL, before: 1, after: 0, floor: FLOOR, verdict }, true)!
-    assert(/\bfault\b/i.test(line), `"${line}" does not say what it is about`)
+    assert(/\bfault\b/i.test(line), `"${line}" doesn’t say what it is about`)
     assert(!/^no change\b/i.test(line), `"${line}" reads as a verdict on the score`)
   }
 })
@@ -306,7 +306,7 @@ function rotServe(opts: {
 check('a change past the floor is reported, with the floor it cleared', () => {
   // 20° apart at equal lean, against a ~16.7° floor.
   const m = rotationMove(rotServe({ deg: 40, lean: 10 }), rotServe({ deg: 60, lean: 10 }))
-  assert(!!m, 'a 20° change at equal posture was not reported')
+  assert(!!m, 'a 20° change at equal posture wasn’t reported')
   assert(Math.abs(m!.delta - 20) < 1e-9, `reported a delta of ${m!.delta}`)
   assert(
     Math.abs(m!.bound - Math.SQRT2 * 11.8) < 1e-6,
@@ -356,7 +356,7 @@ check('without both leans there is no bound, so there is no comparison', () => {
   )
 })
 
-check('a kick against a flat is not a comparison, on this surface either', () => {
+check('a kick against a flat isn’t a comparison, on this surface either', () => {
   assert(
     !rotationMove(rotServe({ deg: 40, lean: 10, type: 'flat' }), rotServe({ deg: 70, lean: 10, type: 'kick' })),
     'two different serves were compared',

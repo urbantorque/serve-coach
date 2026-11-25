@@ -151,7 +151,7 @@ check('the same faults are found, and the same one is named first', () => {
   )
 })
 
-heading('And a faulty one, so the symmetry is not only true of a clean serve')
+heading('And a faulty one, so the symmetry isn’t only true of a clean serve')
 
 const faulty = bothHands({
   trophyKneeAngle: 166,
@@ -175,7 +175,7 @@ check('and lands on the same keyframes', () => {
   }
 })
 
-check('a left-hander is never told their serve is not a serve', () => {
+check('a left-hander is never told their serve isn’t a serve', () => {
   // `assertPlausible` measures the swing off the racket arm and rescues a clip
   // where the *other* arm swung. Reading the wrong arm on a left-hander is
   // exactly the state it exists to catch, so it must not fire on one that was

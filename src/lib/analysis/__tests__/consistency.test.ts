@@ -108,7 +108,7 @@ check('the noise table covers what the camera does to every card reading', () =>
   note(`${Object.keys(worst).length} readings measured against the table`)
 })
 
-heading('Noise alone is not called a wandering serve')
+heading('Noise alone isn’t called a wandering serve')
 
 check('a real serve filmed six times is called steady, from the side and from behind', () => {
   // None told a row changes most; at most one in a hundred told a row drifts,
@@ -225,7 +225,7 @@ check('one serve too dim to compare is left out, not the whole basket', () => {
   assert(buildConsistency(six.map(() => dim), 6) === undefined, 'a basket of nothing firm was compared')
 })
 
-check('two serves with a drop and four without are not called steady, and a drop left out is said on every line', () => {
+check('two serves with a drop and four without aren’t called steady, and a drop left out is said on every line', () => {
   /*
    * Where most serves were named for a drop the engine could not find, the drop's
    * rows were left out and the basket said "Almost nothing moved" about serves that
@@ -257,7 +257,7 @@ check('two serves with a drop and four without are not called steady, and a drop
       assert(!m || m.leftOut === m.serves * 2 >= b.serves, `${name}: ${m?.serves} of ${b.serves} named, left out ${m?.leftOut}`)
       assert(cueIssues(headline).length === 0, name + ': "' + headline + '": ' + cueIssues(headline).join('; '))
       if (!m?.leftOut) continue
-      assert(/no racket drop on .* so I left it out\.$/.test(headline), `${name}: the drop was left out and the headline did not say so: "${headline}"`)
+      assert(/no racket drop on .* so I left it out\.$/.test(headline), `${name}: the drop was left out and the headline didn’t say so: "${headline}"`)
       assert(!b.metrics.some((r) => DROP_ROWS.includes(r.id)), `${name}: a drop row was graded under "${headline}"`)
     }
     if (name === 'two with a drop and four without') assert(!baskets.some(bare), `${name}: a drop that came and went was called steady`)
@@ -269,7 +269,7 @@ check('two serves with a drop and four without are not called steady, and a drop
   assert(said >= 0.9 * steady.length, `only ${said} of ${steady.length} said the drop was left out`)
 })
 
-check('a serve with no drop is not told its drop drifts', () => {
+check('a serve with no drop isn’t told its drop drifts', () => {
   /*
    * The commonest club serve: rigid legs and a racket left up. With no drop to
    * find, the drop lands on the toss or the trophy by take, and the row read
@@ -384,7 +384,7 @@ check('a steady fault is marked off target, not praised', () => {
     serves: { count: 6, index: i },
   })) as unknown as Analysis[]
   const row = buildConsistency(takes, 6)!.metrics.find((m) => m.id === 'kneeBend')!
-  assert(row.offTarget === true, 'six straight-legged serves were not marked off target')
+  assert(row.offTarget === true, 'six straight-legged serves weren’t marked off target')
   assert(row.score >= 85, `a reading that held still scored ${row.score} for steadiness`)
 })
 
@@ -421,7 +421,7 @@ check('best against worst needs a gap the score can tell apart', () => {
   assert(buildConsistency(apart, 2)!.gap === undefined, 'a best and worst measured on different rows were paired')
 })
 
-heading('A change of side is not a change of server (L2.3)')
+heading('A change of side isn’t a change of server (L2.3)')
 
 /** What a sweep reads of one serve's scale, from the virtual phone. */
 const scaleOf = (frames: Frame[]) => {
@@ -457,7 +457,7 @@ check('somebody a fifth shorter on the same spot is still flagged', () => {
     const frames = filmMocap(serve, { distance: 4 })
     const player = scaleOf(frames)
     const other = scaleOf(otherBody(frames, 0.8))
-    assert(possibleHandoff([player, player, other]), `${serve.id}: a shorter body on the same spot was not flagged`)
+    assert(possibleHandoff([player, player, other]), `${serve.id}: a shorter body on the same spot wasn’t flagged`)
   }
 })
 

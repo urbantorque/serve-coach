@@ -26,14 +26,14 @@ const reopened = (props: Record<string, unknown>) =>
 
 check('a reopened report with its clip kept says it is kept, not that it was never saved', () => {
   const out = reopened({ kept: { url: 'blob:kept' }, keepsClips: true })
-  assert(out.includes('the video is kept on this phone only'), 'a kept clip was not said to be kept')
+  assert(out.includes('the video is kept on this phone only'), 'a kept clip wasn’t said to be kept')
   assert(!out.includes(NEVER), '"never saved" printed under a kept video')
 })
 
 check('with the setting on and this clip not kept, the lines say so', () => {
   const out = reopened({ keepsClips: true })
-  assert(out.includes('this video was not kept'), 'a clip that was not kept was not said to be')
-  assert(out.includes('This video was not saved on your phone') && !out.includes(NEVER), 'the replay note still said never saved')
+  assert(out.includes('this video wasn’t kept'), 'a clip that wasn’t kept wasn’t said to be')
+  assert(out.includes('This video wasn’t saved on your phone') && !out.includes(NEVER), 'the replay note still said never saved')
 })
 
 check('with the setting off, the old promise stands', () => {
@@ -41,11 +41,11 @@ check('with the setting off, the old promise stands', () => {
   assert(out.includes(NEVER) && out.includes('Your video never left your phone'), 'the never-saved lines went missing')
 })
 
-check('a live report says when its clip could not be kept', () => {
+check('a live report says when its clip couldn’t be kept', () => {
   const live = (keepFailed: boolean) =>
     renderToStaticMarkup(createElement(Report, { analysis: sampleAnalysis(), keepsClips: true, keepFailed, onBack: noop, onAnalyzeAnother: noop }))
-  assert(live(true).includes('I could not keep this video on the phone'), 'a failed keep went unsaid')
-  assert(!live(false).includes('could not keep'), 'a kept clip was said to have failed')
+  assert(live(true).includes('I couldn’t keep this video on the phone'), 'a failed keep went unsaid')
+  assert(!live(false).includes('couldn’t keep'), 'a kept clip was said to have failed')
 })
 
 report()

@@ -181,7 +181,7 @@ function open(): Promise<IDBDatabase> {
       }
       resolve(db)
     }
-    req.onerror = () => reject(req.error ?? new Error('Could not open local storage'))
+    req.onerror = () => reject(req.error ?? new Error('Couldn’t open local storage'))
   })
   // A failed open must not poison the rest of the session. Safari in particular
   // rejects transiently after the app is backgrounded — caching that rejection
@@ -1268,7 +1268,7 @@ function readAll(shape: (s: Session) => Session, created?: IDBKeyRange): Promise
           if (s) out.push(shape(s))
           cursor.continue()
         }
-        req.onerror = () => reject(req.error ?? new Error('Could not read local storage'))
+        req.onerror = () => reject(req.error ?? new Error('Couldn’t read local storage'))
       }),
   )
 }

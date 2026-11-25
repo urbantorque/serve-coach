@@ -47,16 +47,16 @@ check('the typical serve and the ribbon come before every section, and the recor
   const path = servePath(sessions)!
   note(`typical ${form.latestTrip.overall}, ${form.trips.length} trips`)
   const top = html.slice(shape, firstSection)
-  assert(top.includes(`>${form.latestTrip.overall}<`), 'the head does not show the trip median')
+  assert(top.includes(`>${form.latestTrip.overall}<`), 'the head doesn’t show the trip median')
   assert(top.includes('class="ribbon'), 'no ribbon')
-  assert(top.includes('id="progress-records"') && top.includes('serves filmed'), 'the records are not under the ribbon')
+  assert(top.includes('id="progress-records"') && top.includes('serves filmed'), 'the records aren’t under the ribbon')
   // The path stays one tap away, every part on it.
   assert((html.match(/class="path-part /g) ?? []).length === path.parts.length, 'one row per part of the path')
 })
 
 heading('Every serve, in its own sheet')
 
-check('the screen ends on one way to the list, and the list is not on the page', () => {
+check('the screen ends on one way to the list, and the list isn’t on the page', () => {
   assert(html.includes('class="progress-all"') && html.includes(`>${sessions.length}<`), 'no way to the list, or not the count')
   assert(!html.includes('history-trip'), 'the whole list is back on the page')
 })
@@ -100,7 +100,7 @@ check('the bar grows as the gap closes, and the note says so', () => {
   const widths = [...out.matchAll(/gap-fill" style="width:([\d.]+)%/g)].map((m) => Number(m[1]))
   note(`bars ${widths.join(', ')} for gaps 20, 12, 30 (newest first)`)
   // Newest first: gaps 20, 12, 30.
-  assert(widths[1] > widths[0] && widths[0] > widths[2], 'the bars do not grow with steadiness')
+  assert(widths[1] > widths[0] && widths[0] > widths[2], 'the bars don’t grow with steadiness')
   assert(out.includes('A longer bar means steadier serves'), 'the note still reads the old way round')
 })
 
@@ -110,7 +110,7 @@ check('the sheet has one share button, with each card inside it', () => {
   assert((html.match(/Share your progress/g) ?? []).length === 1, 'not exactly one share button')
   for (const old of ['Share your season', 'Share this trip', 'Share: ']) assert(!html.includes(old), `"${old}" is still its own button`)
   const menu = html.slice(html.indexOf('class="share-menu"'))
-  assert(menu.includes('This trip'), 'the trip card is not inside the share button')
+  assert(menu.includes('This session'), 'the trip card isn’t inside the share button')
 })
 
 report()

@@ -264,7 +264,7 @@ check('the z-dependent measurements are the noisiest, and are bounded', () => {
 check('contact depth never comes out mirrored', () => {
   const { baseline, runs } = ensemble({}, POOR_NOISE, TYPICAL_DROPOUT * 2)
   const clean = baseline.metrics.contactAhead
-  assert(clean !== undefined, 'the clean side-on serve did not produce a contact depth at all')
+  assert(clean !== undefined, 'the clean side-on serve didn’t produce a contact depth at all')
   assert(clean > 0, `the rig's model serve has contact behind the hips (${clean.toFixed(1)}%)`)
 
   const measured = runs.filter((r) => 'contactAhead' in r.metrics)
@@ -290,7 +290,7 @@ check('contact depth is dropped, not guessed, when the swing has no sideways tra
   )
 })
 
-check('the body-height reference does not inflate with noise', () => {
+check('the body-height reference doesn’t inflate with noise', () => {
   // Every height in the report is a ratio against this one number, so a bias
   // here bends all of them at once and in the same direction — the failure the
   // median-not-extremes choice in phases.ts exists to prevent. A drift test on
@@ -338,7 +338,7 @@ check('a dialled-in fault is still named as the thing to work on', () => {
   assert(named >= SEEDS - 2, `focus flipped away from the knee bend in ${SEEDS - named} runs`)
 })
 
-check('a clean serve is not told to fix something at poor tracking quality', () => {
+check('a clean serve isn’t told to fix something at poor tracking quality', () => {
   // The inverse failure: inventing a fault out of noise. A serve dialled to sit
   // inside every band should keep scoring well even when the tracking is bad.
   const { runs } = ensemble({}, POOR_NOISE, TYPICAL_DROPOUT * 2)
@@ -382,7 +382,7 @@ check('a hand-off to somebody standing nearby is caught', () => {
   assert(jump > IMPLAUSIBLE_JUMP, `a subject switch measured only ${jump.toFixed(3)}`)
 })
 
-check('the report says so, and stops claiming confidence it has not got', () => {
+check('the report says so, and stops claiming confidence it hasn’t got', () => {
   const frames = buildServe({}, FPS)
   const skel = detectServe(frames, FPS)
   const clean = assessQuality(frames, skel, FPS)
@@ -439,7 +439,7 @@ check('a short clip is read whole at four a second, then closer around its peaks
   // It was read whole at `SCAN_FPS`, half the wait for a first read. Now the
   // first pass is sparser and the candidates are re-read at the full rate.
   const plan = planScan(4)
-  assert(plan.coarse, 'a four-second clip was not given a closer look')
+  assert(plan.coarse, 'a four-second clip wasn’t given a closer look')
   near(plan.step, 1 / FIRST_PASS_FPS, 1e-9, 'step on a short clip')
   assert(plan.times.length === 16, `sampled ${plan.times.length} times, expected 16`)
   assert(FIRST_PASS_FPS >= SCAN_FLOOR_FPS, 'the first pass is sparser than the floor a long clip keeps')
@@ -627,12 +627,12 @@ check('every serve in a basket or a session is found, and nothing else is (L2.1)
     const matched = trace.peaks.filter((p) => found.some((f) => Math.abs(f - p) < 0.25))
     const stray = found.filter((f) => !trace.peaks.some((p) => Math.abs(f - p) < 0.25))
     note(`${serves} serves in ${minutes} min: found ${matched.length}, ${stray.length} stray, ${read} samples read`)
-    assert(matched.length === serves, `${serves - matched.length} of ${serves} serves were not found in ${minutes} min`)
-    assert(stray.length === 0, `${stray.length} serves were found that were not there: ${stray.map((x) => x.toFixed(1)).join(', ')}s`)
+    assert(matched.length === serves, `${serves - matched.length} of ${serves} serves weren’t found in ${minutes} min`)
+    assert(stray.length === 0, `${stray.length} serves were found that weren’t there: ${stray.map((x) => x.toFixed(1)).join(', ')}s`)
   }
 })
 
-check('an overhead early on does not mute the serves after it (L2.1)', () => {
+check('an overhead early on doesn’t mute the serves after it (L2.1)', () => {
   // The smash at 40 s reaches 30% above the first serve. Judged against the
   // clip's best, the tired serves half an hour later sat below its tolerance.
   const trace = sessionTrace(120, 30, 11, 40)
@@ -656,7 +656,7 @@ check('on reach alone, an overhead within two minutes still mutes the serves nea
   assert(matched.length < 10, 'reach alone now tells a smash apart, and this check no longer shows why the shape is needed')
 })
 
-check('with the serve’s shape, a smash among the serves mutes nothing and is not called a serve (L2.10)', () => {
+check('with the serve’s shape, a smash among the serves mutes nothing and isn’t called a serve (L2.10)', () => {
   /*
    * Was KNOWN since L2.1. The smash's other arm goes up, as a serve's toss
    * does, but it is hit on the move; a serve is hit from a still stance. So
@@ -669,7 +669,7 @@ check('with the serve’s shape, a smash among the serves mutes nothing and is n
   note(`with a smash in the basket and the shape read: ${matched.length} of 10 serves, ${unsure.length} not sure`)
   assert(matched.length === 10, `${10 - matched.length} serves were still muted`)
   assert(!found.some((f) => Math.abs(f - trace.overheads[0]) < 0.5), 'the smash was called a serve')
-  assert(unsure.some((u) => Math.abs(u - trace.overheads[0]) < 0.5), 'the smash was not put on the not-sure list')
+  assert(unsure.some((u) => Math.abs(u - trace.overheads[0]) < 0.5), 'the smash wasn’t put on the not-sure list')
 })
 
 check('a session with smashes through it finds every serve and only the serves (L2.10)', () => {
@@ -732,7 +732,7 @@ check('a shadow serve has every shape of a serve but the sound, and is set aside
   assert(Math.abs((heard.offset ?? 0) - 0.035) <= 0.5 / SCAN_FPS, `learned an offset of ${heard.offset}`)
 })
 
-check('a phone too far to hear most serves is not believed, and loses none (L2.9)', () => {
+check('a phone too far to hear most serves isn’t believed, and loses none (L2.9)', () => {
   const trace = sessionTrace(30, 6, 5, [100, 250], 0, [60, 160, 280])
   const faint = locate(trace, true, trace.impacts(0.035, 0.3))
   const matched = trace.peaks.filter((p) => faint.found.some((f) => Math.abs(f - p) < 0.25)).length
@@ -762,7 +762,7 @@ check('coarse sampling still finds every serve in a basket', () => {
   // so without refinement an under-read serve is dropped, not just imprecise.
   const duration = 180
   const plan = planScan(duration)
-  assert(plan.coarse, 'a three-minute clip did not hit the budget')
+  assert(plan.coarse, 'a three-minute clip didn’t hit the budget')
 
   const coarse = basketSamples(6, 25, plan.step, duration)
   const refineTimes = planRefinement(peakCandidates(coarse.samples), duration)
@@ -839,7 +839,7 @@ check('a long clip with nobody serving is reported as no serves, not a false one
   assert(findServes(flat).length === 0, 'reported a serve in a clip of somebody standing still')
 })
 
-check('refinement windows around adjacent serves are not paid for twice', () => {
+check('refinement windows around adjacent serves aren’t paid for twice', () => {
   // Two serves 1.7s apart — just outside MIN_SERVE_GAP — have overlapping
   // windows. Sampling the shared frames once is the difference between the
   // budget holding and drifting.
@@ -923,7 +923,7 @@ check('the trend follows one serve type, not all of them', () => {
   assert(progress!.overallDelta === 3, `delta was ${progress!.overallDelta}, expected 3`)
 })
 
-check('trying one new serve does not wipe the history behind it', () => {
+check('trying one new serve doesn’t wipe the history behind it', () => {
   // A player with two months of flat serves films a single kick. Following the
   // newest type blindly would replace their whole chart with one point, which
   // reads as the app having lost it.
@@ -974,7 +974,7 @@ check('reports saved before serve types existed count as flat', () => {
   assert(progress.setAside === 0, 'treated a legacy report as a different serve')
 })
 
-check('practice advice does not average across serve types', () => {
+check('practice advice doesn’t average across serve types', () => {
   // Racket drop is terrible on the flat serves and fine on the kicks. Advice for
   // somebody now working on kicks must not be driven by the flat ones.
   const sessions = [
@@ -996,7 +996,7 @@ check('practice advice does not average across serve types', () => {
   )
 })
 
-check('advice about a serve you are not currently filming says which serve it is', () => {
+check('advice about a serve you’re not currently filming says which serve it is', () => {
   // One kick serve, two flat ones. There is nothing to say about the kick yet, so
   // the advice is about the flat serves — which is useful, but only if the
   // sentence admits it. "Across your last 2 serves" would be quietly wrong the
@@ -1007,7 +1007,7 @@ check('advice about a serve you are not currently filming says which serve it is
   assert(focus!.serveType === 'flat', `claimed to be about ${focus!.serveType}`)
   const headline = practiceHeadline(focus!)
   note(headline)
-  assert(/flat serves/.test(headline), `the headline does not name the serve: "${headline}"`)
+  assert(/flat serves/.test(headline), `the headline doesn’t name the serve: "${headline}"`)
 })
 
 heading('The practice window counts trips to the court, not reports')
@@ -1044,7 +1044,7 @@ check('trips come back oldest first, without reordering the caller’s array', (
   assert(given[0].createdAt === 9 * day, 'the caller’s array was sorted underneath it')
 })
 
-check('one visit cannot crowd the earlier ones out of the window', () => {
+check('one visit can’t crowd the earlier ones out of the window', () => {
   // The defect. Racket drop was terrible on the first visit and has been fine
   // ever since — but the most recent visit alone holds six serves, so a window
   // of five *reports* saw nothing but that visit and reported the measurement
@@ -1099,7 +1099,7 @@ check('every serve type reads naturally in the headline', () => {
     const headline = practiceHeadline(focus!)
     assert(
       new RegExp(`${type} serves`).test(headline),
-      `${type} does not read naturally: "${headline}"`,
+      `${type} doesn’t read naturally: "${headline}"`,
     )
   }
 })
@@ -1248,9 +1248,9 @@ check('the engine resolves its paths without a bundler having been involved', ()
   // than producing `undefinedmodels/...` or throwing.
   const paths = enginePaths()
   note(`model ${paths.model}`)
-  assert(paths.model.startsWith('/'), `model path is not absolute: ${paths.model}`)
+  assert(paths.model.startsWith('/'), `model path isn’t absolute: ${paths.model}`)
   assert(!paths.model.includes('undefined'), `model path swallowed a missing base: ${paths.model}`)
-  assert(paths.wasm.startsWith('/'), `wasm path is not absolute: ${paths.wasm}`)
+  assert(paths.wasm.startsWith('/'), `wasm path isn’t absolute: ${paths.wasm}`)
   assert(!paths.wasm.includes('undefined'), `wasm path swallowed a missing base: ${paths.wasm}`)
   assert(
     paths.model.endsWith('/models/pose_landmarker_full.task'),
@@ -1261,18 +1261,18 @@ check('the engine resolves its paths without a bundler having been involved', ()
 
 /* ------------------------------------------------------------ unreadable files */
 
-heading('Explaining a file the browser cannot open')
+heading('Explaining a file the browser can’t open')
 
 check('every error the app raises carries advice, and it is reachable', () => {
   // The UI reads hints structurally rather than by class, so that a duplicated
   // module cannot silently turn every friendly explanation into a crash screen.
   const notServe = new NotAServeError('nope', ['do this'])
-  const unreadable = new UnreadableVideoError('cannot decode', ['do that', 'or this'])
+  const unreadable = new UnreadableVideoError('can’t decode', ['do that', 'or this'])
   assert(hintsOf(notServe)?.length === 1, 'a not-a-serve error lost its advice')
   assert(hintsOf(unreadable)?.length === 2, 'an unreadable-video error lost its advice')
   assert(hintsOf(new Error('bare')) === undefined, 'invented advice for a plain error')
   assert(hintsOf(undefined) === undefined, 'invented advice for nothing at all')
-  assert(hintsOf({ hints: [1, 2] }) === undefined, 'accepted advice that is not text')
+  assert(hintsOf({ hints: [1, 2] }) === undefined, 'accepted advice that isn’t text')
 })
 
 check('the two failure kinds stay distinguishable', () => {
@@ -1280,7 +1280,7 @@ check('the two failure kinds stay distinguishable', () => {
   // filmed, the other about what the file is. Telling somebody whose phone saved
   // an HEVC clip to keep their feet in frame sends them off to refilm something
   // that will fail in exactly the same way.
-  const unreadable = new UnreadableVideoError('cannot decode', ['x'])
+  const unreadable = new UnreadableVideoError('can’t decode', ['x'])
   assert(!isNotAServeError(unreadable), 'a codec failure was read as a filming problem')
   assert(isNotAServeError(new NotAServeError('nope', ['x'])), 'a filming problem stopped matching')
 })
@@ -1328,11 +1328,11 @@ check('a backup file is recognised, and anything else is refused', () => {
     } catch {
       ok = false
     }
-    assert(!ok, `accepted a file that is not a backup: ${bad}`)
+    assert(!ok, `accepted a file that isn’t a backup: ${bad}`)
   }
 })
 
-check('importing an old backup does not roll back newer training', () => {
+check('importing an old backup doesn’t roll back newer training', () => {
   // The failure that would actually hurt: a player restores a three-month-old
   // file onto a phone they have kept using, and loses the months in between.
   const onDevice = [{ id: 'a', createdAt: 500, overall: 78 }]
@@ -1351,7 +1351,7 @@ check('importing brings back what is missing and leaves the rest alone', () => {
   const { result, final } = mergeBackup(fromFile, onDevice)
   note(`${result.added} added, ${result.updated} updated, ${result.skipped} already current`)
   assert(result.added === 1 && result.skipped === 1, `unexpected merge: ${JSON.stringify(result)}`)
-  assert(final.length === 2, 'the restored report did not land')
+  assert(final.length === 2, 'the restored report didn’t land')
 })
 
 check('a corrupt report inside a backup is dropped, not the whole file', () => {
@@ -1445,7 +1445,7 @@ check('re-scoring leaves the measurements themselves untouched', () => {
   assert(after.frames === before.frames, 'the frames were rebuilt rather than reused')
 })
 
-check('the in-session cache keeps what is being used and drops what is not', () => {
+check('the in-session cache keeps what is being used and drops what isn’t', () => {
   forgetAll()
   const make = (id: string) => ({ ...analysisFrom('flat'), id })
   for (const id of ['a', 'b', 'c', 'd']) {
@@ -1469,7 +1469,7 @@ check('the in-session cache keeps what is being used and drops what is not', () 
     'the two hands share a cache slot',
   )
   forgetAll()
-  assert(cacheSize() === 0, 'a new clip did not clear the cache')
+  assert(cacheSize() === 0, 'a new clip didn’t clear the cache')
 })
 
 check('re-scoring as a kick re-judges the toss the kick card allows', () => {
@@ -1489,7 +1489,7 @@ check('re-scoring as a kick re-judges the toss the kick card allows', () => {
   const flat = rescore(base, 'flat')
   const kick = rescore(base, 'kick')
   note(`flat: ${named(flat).join(', ') || 'nothing'} · kick: ${named(kick).join(', ') || 'nothing'}`)
-  assert(named(flat).includes('toss_height'), 'a flat serve tossed to racket reach was not told')
+  assert(named(flat).includes('toss_height'), 'a flat serve tossed to racket reach wasn’t told')
   assert(!named(kick).includes('toss_height'), "the kick re-score kept the flat serve's toss fault")
   const frames = base.frames
   const skel = detectServe(frames, FPS)
@@ -1500,7 +1500,7 @@ check('re-scoring as a kick re-judges the toss the kick card allows', () => {
   )
 })
 
-check('a report with no frames cannot be re-scored, and says so', () => {
+check('a report with no frames can’t be re-scored, and says so', () => {
   // A saved report kept its numbers but not the landmarks behind them, so there
   // is nothing to re-measure. Returning undefined is what makes the caller fall
   // back to a real re-run instead of showing stale scores under new targets.
@@ -1532,15 +1532,15 @@ check('a kick serve is judged against kick bands, not flat ones', () => {
   const kick = measureAs(KICK_DIALS, 'kick').metric('contactAhead')
   assert(
     flat.ideal[0] !== kick.ideal[0] || flat.ideal[1] !== kick.ideal[1],
-    'the contact-depth band did not move for a kick serve',
+    'the contact-depth band didn’t move for a kick serve',
   )
   note(`contact depth band: flat ${flat.ideal.join('–')}, kick ${kick.ideal.join('–')}`)
   // Same measured value, different target: a kick serve wants contact closer to
   // over the head, so the band has to sit lower.
-  assert(kick.ideal[0] < flat.ideal[0], 'the kick band is not shifted back towards the head')
+  assert(kick.ideal[0] < flat.ideal[0], 'the kick band isn’t shifted back towards the head')
 })
 
-check('the shoulder tilt a kick serve needs is not marked down', () => {
+check('the shoulder tilt a kick serve needs isn’t marked down', () => {
   // 42° of cartwheel is a good kick serve and a steep flat one: the flat band
   // stops at 36, 1.5 deviations over the published 25° (D2.1).
   const flat = measureAs({ shoulderTilt: 42 }, 'flat').metric('shoulderTilt')
@@ -1592,7 +1592,7 @@ heading('Which hand holds the racket')
 check('a stated hand is used, and the detector still reports what it saw', () => {
   const frames = buildServe({}, FPS)
   const skel = detectServe(frames, FPS, 'right')
-  assert(skel.racket === 'right', 'the stated hand was not used')
+  assert(skel.racket === 'right', 'the stated hand wasn’t used')
   assert(skel.detectedRacket === 'right', 'the detector no longer reports what it saw')
   within(skel.detectionConfidence, 0.5, 1, 'detection confidence on a clear right-handed serve')
 })
@@ -1621,7 +1621,7 @@ check('the wrong hand is diagnosed as the wrong hand, not as a bad clip', () => 
   // warns in words, and the hand badge re-reads it in one tap.
   const frames = buildServe({}, FPS)
   const skel = detectServe(frames, FPS, 'left')
-  assert(skel.racket === 'left', 'the stated hand was not honoured')
+  assert(skel.racket === 'left', 'the stated hand wasn’t honoured')
   assert(
     skel.detectedRacket === 'right',
     `the detector lost the hand it actually saw: ${skel.detectedRacket}`,
@@ -1809,7 +1809,7 @@ check('a hand the app is unsure of stops the sign it can mirror arriving crisp',
   }
   note(`shoulderTilt: ${metricConfidence('shoulderTilt', base).toFixed(2)} → ${metricConfidence('shoulderTilt', unsure).toFixed(2)}`)
   within(metricConfidence('shoulderTilt', base), SOFT_MEASUREMENT, 1, 'shoulder tilt when the hand is clear')
-  within(metricConfidence('shoulderTilt', unsure), 0, SOFT_MEASUREMENT, 'shoulder tilt when the hand is not')
+  within(metricConfidence('shoulderTilt', unsure), 0, SOFT_MEASUREMENT, 'shoulder tilt when the hand isn’t')
 
   // And only that one. Every other measurement is either unsigned or signed
   // against something the hand has no say in, so an uncertain hand must leave
@@ -1853,7 +1853,7 @@ check('forcing the wrong hand mirrors the tilt and leaves the coil untouched', (
   )
   assert(
     of(asLeft, 'hipShoulderSeparation') === of(asRight, 'hipShoulderSeparation'),
-    `the hand moved a coil it cannot mirror: ${of(asRight, 'hipShoulderSeparation')} → ${of(asLeft, 'hipShoulderSeparation')}`,
+    `the hand moved a coil it can’t mirror: ${of(asRight, 'hipShoulderSeparation')} → ${of(asLeft, 'hipShoulderSeparation')}`,
   )
 })
 
@@ -1981,8 +1981,8 @@ check('past that, a large pan reads the swing travelling the wrong way', () => {
   // hands to `contactAhead` is confidently the opposite of the truth.
   const clean = pannedServe(0)
   const reversed = pannedServe(1.6)
-  assert(clean.contactAhead! > 0, 'the clean baseline was not the positive case this check assumes')
-  assert(reversed.contactAhead! < 0, `a large pan did not flip the sign: ${reversed.contactAhead}`)
+  assert(clean.contactAhead! > 0, 'the clean baseline wasn’t the positive case this check assumes')
+  assert(reversed.contactAhead! < 0, `a large pan didn’t flip the sign: ${reversed.contactAhead}`)
   near(Math.abs(reversed.contactAhead!), Math.abs(clean.contactAhead!), 1e-6, 'the flipped magnitude')
 })
 
@@ -2042,7 +2042,7 @@ check('the dial leaves the first frame at true scale and grows the apparent size
   near(lastFrac, 1.2, 1e-6, 'apparent size at the last frame, scaled by 1 + cameraZoom')
 })
 
-check('height-normalised readings inflate with the zoom; angle readings do not move at all', () => {
+check('height-normalised readings inflate with the zoom; angle readings don’t move at all', () => {
   const clean = zoomedServe(0)
   // A fifth of the frame by the end of the clip — a phone that visibly
   // drifts closer over one serve, not an extreme dial value.
@@ -2094,7 +2094,7 @@ check('a zoom drift is seen, and contact height is hedged with the reason, not s
   const clean = measured({ cameraZoom: 0 })
   const zoomed = measured({ cameraZoom: 0.2 })
   assert(!clean.skel.derivation.cameraMoved, 'a still camera was called moved')
-  assert(zoomed.skel.derivation.cameraMoved === true, 'a 20% zoom drift was not seen')
+  assert(zoomed.skel.derivation.cameraMoved === true, 'a 20% zoom drift wasn’t seen')
   const before = clean.measurement('contactHeight')!
   const after = zoomed.measurement('contactHeight')!
   note(`contact height ${before.value.toFixed(3)} at ${before.confidence.toFixed(2)} → ${after.value.toFixed(3)} at ${after.confidence.toFixed(2)}`)
@@ -2106,18 +2106,18 @@ check('a zoom drift is seen, and contact height is hedged with the reason, not s
     swingSamples: zoomed.quality.swingSamples,
     view: zoomed.quality.view,
   })
-  assert(/camera moved/.test(why ?? ''), `the hedge does not say the camera moved: "${why}"`)
+  assert(/camera moved/.test(why ?? ''), `the hedge doesn’t say the camera moved: "${why}"`)
   // Angles do not depend on the scale, so they are not hedged by it.
   assert(zoomed.measurement('kneeBend')!.confidence === clean.measurement('kneeBend')!.confidence, 'an angle paid for the zoom')
 })
 
 check('a camera tipping on its stand is seen through the ground line', () => {
   const tipped = measured({ cameraTilt: 0.05 })
-  assert(tipped.skel.derivation.cameraMoved === true, 'a 5% tilt was not seen')
+  assert(tipped.skel.derivation.cameraMoved === true, 'a 5% tilt wasn’t seen')
   assert(tipped.measurement('contactHeight')!.confidence < SOFT_MEASUREMENT, 'heights stayed firm under a tilt')
 })
 
-check('tracker noise and a pan are not a moving camera, and the plan names nothing from a moved one', () => {
+check('tracker noise and a pan aren’t a moving camera, and the plan names nothing from a moved one', () => {
   for (const dials of [{ noise: 0.008, seed: 5 }, { noise: 0.006, depthNoise: 3, seed: 7 }, { cameraPan: 0.2 }]) {
     assert(!measured(dials).skel.derivation.cameraMoved, `${JSON.stringify(dials)} was called a moved camera`)
   }
@@ -2126,7 +2126,7 @@ check('tracker noise and a pan are not a moving camera, and the plan names nothi
     const frames = buildServe(dials, FPS)
     return diagnose(frames, detectServe(frames, FPS), { tier: 5 }).flaws.find((f) => f.flaw === 'low_contact')
   }
-  assert(plan({ contactReach: 1.0 })?.detected === true, 'the still low contact was not named')
+  assert(plan({ contactReach: 1.0 })?.detected === true, 'the still low contact wasn’t named')
   assert(plan({ contactReach: 1.0, cameraZoom: 0.2 })?.detected !== true, 'a low contact was named off a moving camera')
 })
 
@@ -2185,7 +2185,7 @@ check('a clean, fully visible serve trusts everything it measured', () => {
 
 check('cropped feet soften the heights and leave the angles alone', () => {
   const { skel, metric } = measured({}, cropFeet)
-  assert(skel.derivation.scaleFromTorso, 'the torso fallback did not fire on cropped feet')
+  assert(skel.derivation.scaleFromTorso, 'the torso fallback didn’t fire on cropped feet')
 
   const height = metric('contactHeight')!
   const angle = metric('armExtension')!
@@ -2197,13 +2197,13 @@ check('cropped feet soften the heights and leave the angles alone', () => {
   assert(Boolean(height.softness), 'no explanation offered for the soft height')
   assert(
     height.softness!.toLowerCase().includes('feet'),
-    `the explanation does not mention the feet: "${height.softness}"`,
+    `the explanation doesn’t mention the feet: "${height.softness}"`,
   )
 })
 
 check('rigid legs soften only what is read at the trophy', () => {
   const { skel, measurement } = measured({ trophyKneeAngle: 174 })
-  assert(skel.derivation.trophyFromArms, 'the arm fallback did not fire on rigid legs')
+  assert(skel.derivation.trophyFromArms, 'the arm fallback didn’t fire on rigid legs')
   const atTrophy = measurement('loadRatio')!
   // A reading since D2.1, and still the one that never looks at the trophy.
   const elsewhere = measurement('totalTime')!
@@ -2226,7 +2226,7 @@ check('few frames through the swing soften only the swing timing', () => {
   const timing = all.find((m) => m.id === 'dropToContact')!
   const depth = all.find((m) => m.id === 'dropDepth')!
   note(`${quality.swingSamples} swing samples · drop-to-contact ${timing.confidence.toFixed(2)}, drop depth ${depth.confidence.toFixed(2)}`)
-  assert(timing.confidence < depth.confidence, 'sparse sampling did not soften the timing')
+  assert(timing.confidence < depth.confidence, 'sparse sampling didn’t soften the timing')
 })
 
 check('the headline advice is never built on a measurement it distrusts', () => {
@@ -2308,7 +2308,7 @@ check('the first fix stands on a firm reading whenever there is one (L1.2)', () 
   }
 })
 
-check('an area is not condemned by a measurement the app cannot see', () => {
+check('an area isn’t condemned by a measurement the app can’t see', () => {
   // Same serve, once framed properly and once with the feet cut off. The heights
   // read low in the cropped version purely because the scale is wrong — that
   // must not turn into a worse verdict on the player's contact.
@@ -2364,12 +2364,12 @@ check('confidence falls smoothly as the light drops, before the clip is refused'
   for (const id of ['dropDepth', 'kneeBend', 'contactHeight']) {
     const b = conf(bright, id)
     const d = conf(dusk, id)
-    assert(d < b, `${id}: dusk (${d.toFixed(2)}) was not softer than daylight (${b.toFixed(2)})`)
+    assert(d < b, `${id}: dusk (${d.toFixed(2)}) wasn’t softer than daylight (${b.toFixed(2)})`)
     note(`${id}: ${b.toFixed(2)} in daylight, ${d.toFixed(2)} at dusk`)
   }
 })
 
-check('the value itself does not move — only what the app is willing to say about it', () => {
+check('the value itself doesn’t move — only what the app is willing to say about it', () => {
   // The whole point of confidence over silence: the number the camera actually
   // read is still the honest one, and dusk should hedge it rather than
   // invent a different one. Position was never touched by `lightLevel`.
@@ -2387,7 +2387,7 @@ check('past the visibility floor the clip is refused, not quietly reported at lo
   // not "a bit unsure", it cannot be trusted to have seen a person at all, and
   // a number under that line is a guess wearing a confidence score.
   const dark = litServe(LIMITS.visibility - 0.05)
-  assert(dark.reason === 'body_not_visible', `a clip below the visibility floor was not refused: ${dark.reason}`)
+  assert(dark.reason === 'body_not_visible', `a clip below the visibility floor wasn’t refused: ${dark.reason}`)
 })
 
 heading('A racket arm silhouetted by backlight')
@@ -2451,7 +2451,7 @@ check('a fully silhouetted racket arm is refused, and named for the arm rather t
   // this pins the behaviour the wrong-premise version of this test would have
   // been the only thing exercising.
   const backlit = backlitArmServe(0.15)
-  assert(backlit.reason === 'too_blurry', `a fully silhouetted racket arm was not refused as too_blurry: ${backlit.reason}`)
+  assert(backlit.reason === 'too_blurry', `a fully silhouetted racket arm wasn’t refused as too_blurry: ${backlit.reason}`)
 })
 
 check('short of a full silhouette, confidence softens only the measurements that read the racket arm', () => {
@@ -2472,7 +2472,7 @@ check('short of a full silhouette, confidence softens only the measurements that
   for (const id of ['dropDepth', 'contactHeight']) {
     const c = conf(clean, id)
     const h = conf(hazy, id)
-    assert(h < c, `${id}: a hazy racket arm did not soften it (clean ${c.toFixed(2)}, hazy ${h.toFixed(2)})`)
+    assert(h < c, `${id}: a hazy racket arm didn’t soften it (clean ${c.toFixed(2)}, hazy ${h.toFixed(2)})`)
     note(`${id}: ${c.toFixed(2)} clean, ${h.toFixed(2)} with the racket arm hazy`)
   }
 
@@ -2515,7 +2515,7 @@ function confidenceCtx(over: Partial<ConfidenceContext> = {}): ConfidenceContext
  * player goes off and refilms their whole serve, and the small pale ball is still
  * invisible against the same wall.
  */
-check('a ball the app could not follow is reported as a ball problem', () => {
+check('a ball the app couldn’t follow is reported as a ball problem', () => {
   const ctx = confidenceCtx({ ballConfidence: 0.3 })
   for (const id of ['tossPeakHeight', 'contactBelowPeak']) {
     within(metricConfidence(id, ctx), 0, SOFT_MEASUREMENT, `${id} on a badly tracked ball`)
@@ -2545,7 +2545,7 @@ check('a ball the app followed cleanly is never blamed', () => {
  * entirely from inferred world z, was scored and stated crisply in exactly the
  * camera position the app's own geometry calls unreadable.
  */
-check('a camera that cannot see depth softens what is read from depth', () => {
+check('a camera that can’t see depth softens what is read from depth', () => {
   const seen = confidenceCtx({ view: 'side' })
   const collapsed = confidenceCtx({ view: 'side', depthUnreliable: true })
   for (const id of ['hipShoulderSeparation', 'shoulderTilt']) {
@@ -2591,7 +2591,7 @@ check('a readable camera angle still leaves the depth measurements alone', () =>
  * was explained as the hand — the player checked a badge that was already right,
  * and the camera position that actually broke the reading was never named.
  */
-check('a depth problem outranks a hand that could not have changed the reading', () => {
+check('a depth problem outranks a hand that couldn’t have changed the reading', () => {
   const base = confidenceCtx({ depthUnreliable: true })
   const unsure = {
     ...base,
@@ -2600,7 +2600,7 @@ check('a depth problem outranks a hand that could not have changed the reading',
   const why = softnessReason('hipShoulderSeparation', unsure)!
   note(why)
   assert(/camera/i.test(why), `named something other than the camera: "${why}"`)
-  assert(!/hand/i.test(why), `blamed a hand that cannot move this reading: "${why}"`)
+  assert(!/hand/i.test(why), `blamed a hand that can’t move this reading: "${why}"`)
 })
 
 /**
@@ -2679,7 +2679,7 @@ check('a trunk that genuinely never turned is still measured, not hedged', () =>
  * already said it could not see. Hedging and instructing off one reading is the
  * worst pairing available: the instruction is the half a player acts on.
  */
-check('a camera that cannot see depth cannot name the coil fault either', () => {
+check('a camera that can’t see depth can’t name the coil fault either', () => {
   // An already-open chest, filmed dead side-on — the rig's default camera, and
   // outside the window `assessSpatial` calls readable in depth.
   const frames = buildServe({ shoulderYaw: 82, hipYaw: 108 }, FPS)
@@ -2713,7 +2713,7 @@ check('a camera that cannot see depth cannot name the coil fault either', () => 
   // this trunk turns on time: the shoulders are where the clean serve's are,
   // and only the hips were wound further back.
   const sideOn = d.flaws.find((f) => f.flaw === 'early_shoulder_rotation')
-  assert(sideOn?.signal === 'chest_open_ms', 'the side camera did not read the chest turn in its place')
+  assert(sideOn?.signal === 'chest_open_ms', 'the side camera didn’t read the chest turn in its place')
   assert(!sideOn?.detected, `a chest that turned ${sideOn?.value} ms after the drop was named early`)
   assert(
     d.signals.separation_deg === undefined,
@@ -2734,7 +2734,7 @@ check('a camera that cannot see depth cannot name the coil fault either', () => 
  * confidence context. That reordering is safe only while everything it was hoisted
  * over leaves the frames and the skeleton exactly as it found them.
  */
-check('measuring the serve does not disturb the camera read taken before it', () => {
+check('measuring the serve doesn’t disturb the camera read taken before it', () => {
   const frames = buildServe({}, FPS)
   const skel = detectServe(frames, FPS)
   const before = assessResilience(frames, skel)
@@ -2781,7 +2781,7 @@ check('the racket points away from the elbow, not back along the arm', () => {
   assert(armX * racketX + armY * racketY > 0, 'the racket points back down the arm')
 })
 
-check('nothing is drawn when the hand cannot be seen', () => {
+check('nothing is drawn when the hand can’t be seen', () => {
   // Behind the back at the drop is exactly where the knuckles go missing, and a
   // metre-long object drawn from a guessed direction is worse than no racket.
   const frames = buildServe({}, FPS)
@@ -2857,7 +2857,7 @@ check('a fixture with a mislabelled keyframe is caught', () => {
   assert(result.issues.some((i) => i.what.includes('contact')), 'wrong issue reported')
 })
 
-check('a clip that is not a serve is validated as rejected', () => {
+check('a clip that isn’t a serve is validated as rejected', () => {
   const fixture: Fixture = {
     id: 'not-a-serve',
     label: 'Someone standing around holding a racket',
@@ -2866,7 +2866,7 @@ check('a clip that is not a serve is validated as rejected', () => {
     frames: packFrames(buildServe({ noSwing: true }, FPS)),
     expect: { rejected: true },
   }
-  assert(validateFixture(fixture).passed, 'an idle clip was not rejected')
+  assert(validateFixture(fixture).passed, 'an idle clip wasn’t rejected')
 })
 
 /* ---------------------------------------------------------- framing pre-flight */
@@ -2909,7 +2909,7 @@ check('a clip nothing can be read from is stopped before the full analysis', () 
   // reference that does not exist.
   for (const issues of [['nobody-visible'], ['feet-cropped', 'head-cropped']]) {
     const blocked = blockingFramingIssue(issues)
-    assert(blocked !== undefined, `did not stop for ${issues.join(' + ')}`)
+    assert(blocked !== undefined, `didn’t stop for ${issues.join(' + ')}`)
     assert(blocked!.hints.length > 0, `stopped for ${issues.join(' + ')} without saying what to do`)
   }
 })
@@ -2939,14 +2939,14 @@ check('a clip the scan found nothing in is still read at a usable rate', () => {
   )
   // Guessing the end of the clip, because the serve someone wants read is the
   // one they just hit.
-  assert(w.end === 18.7, `did not read to the end of the clip: ${w.end}`)
+  assert(w.end === 18.7, `didn’t read to the end of the clip: ${w.end}`)
   note(`whole clip ${whole.toFixed(1)} fps -> fallback window ${rate.toFixed(1)} fps`)
 })
 
 check('a located serve is still read exactly where it was found', () => {
   const w = readWindow(30, [10, 20], -1)
   assert(w.located, 'a found serve was reported as a guess')
-  assert(w.serves.count === 2 && w.serves.index === 1, 'did not default to the last serve')
+  assert(w.serves.count === 2 && w.serves.index === 1, 'didn’t default to the last serve')
   assert(w.start > 17 && w.end < 21, `window drifted off the serve: ${w.start}-${w.end}`)
   assert(samplingRateFor(w.end - w.start) >= 30, 'a located serve lost sampling rate')
 
@@ -2957,7 +2957,7 @@ check('a located serve is still read exactly where it was found', () => {
 check('a short clip is read whole, not guessed at', () => {
   const w = readWindow(3.5, [], -1)
   assert(w.located, 'a clip read whole was reported as a guess')
-  assert(w.start === 0 && w.end === 3.5, `did not read the whole short clip: ${w.start}-${w.end}`)
+  assert(w.start === 0 && w.end === 3.5, `didn’t read the whole short clip: ${w.start}-${w.end}`)
 })
 
 check('the frame budget binds only on windows with no contact time to aim at', () => {
@@ -2990,7 +2990,7 @@ check('the frame budget binds only on windows with no contact time to aim at', (
   ] as const) {
     const w = readWindow(duration, [], -1)
     const span = w.end - w.start
-    assert(span > CROSSOVER, `${name} spans ${span}, so the budget does not bind after all`)
+    assert(span > CROSSOVER, `${name} spans ${span}, so the budget doesn’t bind after all`)
     assert(samplingRateFor(span) < FINE_FPS, `${name} is capped by FINE_FPS, not by the budget`)
   }
 
@@ -3044,14 +3044,14 @@ check('a clip with no hand in it is refused, and told why', () => {
   assert(far !== undefined, 'a clip with nothing measurable in it was let through')
   assert(
     /too far/i.test(far!.message),
-    `the player was not told the thing they can act on: "${far!.message}"`,
+    `the player wasn’t told the thing they can act on: "${far!.message}"`,
   )
   const close = blockingFramingIssue(['hands-unseen'])
   assert(close !== undefined, 'a clip with no visible hand was let through')
   assert(/racket hand/i.test(close!.message), `unhelpful refusal: "${close!.message}"`)
 })
 
-check('a clip that is merely hard to read is not stopped here', () => {
+check('a clip that is merely hard to read isn’t stopped here', () => {
   // This gate runs before a single frame has been tracked, so whatever it stops
   // for can never reach the machinery built to cope with it. Both of these used
   // to be stopped, and both were shadowing something softer further down.
@@ -3105,7 +3105,7 @@ for (const fixture of RECORDED) {
 
 /* ------------------------------------------- platform against pinpoint -------- */
 
-heading('The stance the rig could not build')
+heading('The stance the rig couldn’t build')
 
 /**
  * `pinpointSlide`, added by R60·1 because R60 and R64 were both stuck on the
@@ -3161,7 +3161,7 @@ check('a platform stance is bit-identical to a rig that never had the dial', () 
   }
 })
 
-check('a pinpoint stance narrows, and a platform stance does not', () => {
+check('a pinpoint stance narrows, and a platform stance doesn’t', () => {
   const platform = buildServe({ seed: 4242 }, 50)
   const pinpoint = buildServe({ pinpointSlide: 0.8, seed: 4242 }, 50)
 
@@ -3198,7 +3198,7 @@ check('the slide is finished before the legs load, not during the swing', () => 
     Math.abs(atTrophy - atContact) < 0.01,
     `the stance was still moving after the trophy: ${atTrophy.toFixed(3)} m against ${atContact.toFixed(3)} m at contact`,
   )
-  assert(atTrophy < gaps[0] * 0.4, 'the slide had not finished by the trophy')
+  assert(atTrophy < gaps[0] * 0.4, 'the slide hadn’t finished by the trophy')
 })
 
 check('the front foot stays where it was — only the back one travels', () => {
@@ -3214,7 +3214,7 @@ check('the front foot stays where it was — only the back one travels', () => {
     'the front foot moved when the back one slid up',
   )
   const back = [platform[i].world[LM.rightAnkle], pinpoint[i].world[LM.rightAnkle]]
-  assert(back[0].z !== back[1].z || back[0].x !== back[1].x, 'the back foot did not move at all')
+  assert(back[0].z !== back[1].z || back[0].x !== back[1].x, 'the back foot didn’t move at all')
 })
 
 
@@ -3268,7 +3268,7 @@ check('the three search windows are windows, and seconds suit them', () => {
   const k = detectServe(frames, FPS).keys
   const t = (i: number) => frames[i].t
   assert(t(k.contact) - t(k.ready) < 2.0, 'the whole motion no longer fits inside the 2 s search window')
-  assert(t(k.toss) - t(k.ready) > 0, 'the ready keyframe is not before the toss')
+  assert(t(k.toss) - t(k.ready) > 0, 'the ready keyframe isn’t before the toss')
 })
 
 check('the finish keyframe holds still as a share of the serve, and drifts in seconds', () => {
@@ -3372,7 +3372,7 @@ check('the trough between trophy and drop moves with tempo, and no hitch is pose
   }
 
   const rungs = [0.95, 1.15, 1.35, 1.6, 1.85].map((m) => ({ m, r: trough(m) }))
-  assert(rungs.every((x) => Number.isFinite(x.r)), 'the rig could not produce a trough at every tempo')
+  assert(rungs.every((x) => Number.isFinite(x.r)), 'the rig couldn’t produce a trough at every tempo')
   note(rungs.map((x) => `${x.m}s→${x.r.toFixed(4)}`).join(', '))
 
   /*

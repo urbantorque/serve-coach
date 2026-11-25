@@ -145,7 +145,7 @@ check('a steady session finds no change, one side, one footing and no fault', ()
 
 heading('A serve that changes')
 
-check('a reading that moves over the last third is found, and the others are not', () => {
+check('a reading that moves over the last third is found, and the others aren’t', () => {
   let found = 0
   let others = 0
   const runs = 100
@@ -156,10 +156,10 @@ check('a reading that moves over the last third is found, and the others are not
   }
   note(`a drop that moved three noise deviations: found in ${found} of ${runs}, ${others} others flagged`)
   assert(found >= runs * 0.9, `found in only ${found} of ${runs}`)
-  assert(others <= runs * 0.03, `${others} readings that did not move were flagged`)
+  assert(others <= runs * 0.03, `${others} readings that didn’t move were flagged`)
 })
 
-check('a move inside the camera’s noise is not called a change, however many serves', () => {
+check('a move inside the camera’s noise isn’t called a change, however many serves', () => {
   let flagged = 0
   for (let s = 0; s < 50; s++) {
     const st = sessionStats(timeline(3000 + s, { n: 120, drift: { id: 'kneeBend', by: DRIFT_NOISE * 0.6 } }))
@@ -212,7 +212,7 @@ check('the start and the end are compared on one side and one footing only', () 
 
 heading('Which faults the session has')
 
-check('a fault on most serves is the session’s; one on a few is not, unless it is far out', () => {
+check('a fault on most serves is the session’s; one on a few isn’t, unless it is far out', () => {
   const st = sessionStats(
     timeline(7000, {
       faults: {
@@ -224,9 +224,9 @@ check('a fault on most serves is the session’s; one on a few is not, unless it
     }),
   )
   const verdict = new Set(st.verdict)
-  assert(verdict.has('no_leg_drive'), 'a fault on three serves in four was not given to the session')
+  assert(verdict.has('no_leg_drive'), 'a fault on three serves in four wasn’t given to the session')
   assert(!verdict.has('toss_drift'), 'a fault on one serve in seven was given to the session')
-  assert(verdict.has('shallow_drop'), 'a fault on nearly half the serves, far out each time, was not given')
+  assert(verdict.has('shallow_drop'), 'a fault on nearly half the serves, far out each time, wasn’t given')
   assert(!verdict.has('posture_collapse'), 'a fault on under half the serves, by a hair each time, was given')
   // Causal order, the triage hierarchy's: the toss before the legs before the drop.
   const order = st.faults.map((f) => f.flaw)
@@ -316,10 +316,10 @@ check('a planted fault the takes name on most serves is the basket’s too', () 
   const st = sessionStats(lines)
   note(`named on ${(rate * 100).toFixed(0)}% of takes; the basket's verdict: ${st.verdict.join(', ') || 'nothing'}`)
   assert(rate >= 0.5, `the planted fault was named on only ${(rate * 100).toFixed(0)}% of takes`)
-  assert(st.verdict.includes('no_leg_drive'), 'a fault named on most takes was not given to the basket')
+  assert(st.verdict.includes('no_leg_drive'), 'a fault named on most takes wasn’t given to the basket')
 })
 
-check('real serves on one side and one footing are not split or said to have moved', () => {
+check('real serves on one side and one footing aren’t split or said to have moved', () => {
   for (const lines of bathBaskets({})) {
     const st = sessionStats(lines)
     assert(st.sides.length === 1 && st.segments.length === 1, `${st.sides.length} sides, ${st.segments.length} segments`)

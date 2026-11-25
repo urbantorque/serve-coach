@@ -74,14 +74,14 @@ check('a crop stays inside the frame, keeps the stage\'s shape, and holds the bo
       const crop = cropOn(real, stage, aspect)
       assert(crop.x >= -1e-9 && crop.y >= -1e-9, 'a crop started outside the frame')
       assert(crop.x + crop.w <= Math.max(aspect, crop.w) + 1e-9 && crop.y + crop.h <= 1 + 1e-9, 'a crop ran past the frame')
-      assert(Math.abs(crop.w / crop.h - stage) < 1e-9, 'the crop is not the stage\'s shape')
+      assert(Math.abs(crop.w / crop.h - stage) < 1e-9, 'the crop isn’t the stage\'s shape')
     }
   }
 })
 
 check('a small player is brought up, a filling one is left alone', () => {
   const small = real.map((f) => ({ ...f, image: f.image.map((p) => ({ ...p, x: 0.5 + (p.x - 0.5) * 0.4, y: 0.5 + (p.y - 0.5) * 0.4 })) }))
-  assert(cropOn(small, 1, 1).h < cropOn(real, 1, 1).h, 'a small player was not brought up')
+  assert(cropOn(small, 1, 1).h < cropOn(real, 1, 1).h, 'a small player wasn’t brought up')
 })
 
 report()

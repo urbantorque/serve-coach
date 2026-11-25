@@ -289,11 +289,11 @@ check('every refusal the app can produce is produced by at least one check', () 
   assert(
     unexercised.length === 0,
     `never produced by any check: ${unexercised.join(', ')}. A refusal that never fires looks ` +
-      'exactly like a refusal that is not needed.',
+      'exactly like a refusal that isn’t needed.',
   )
 })
 
-check('the refusal list has not fallen behind the unions it tracks', () => {
+check('the refusal list hasn’t fallen behind the unions it tracks', () => {
   /*
    * The half every list in this repo has had to grow. A hand-written list of
    * enum values goes stale the first time somebody adds one — which is how
@@ -343,7 +343,7 @@ check('the refusal list has not fallen behind the unions it tracks', () => {
   assert(declared.size >= 10, `only ${declared.size} refusal values found — the scan may have broken`)
   assert(
     missing.length === 0,
-    `these exist in the source and are not in this file's list: ${missing.join(', ')}`,
+    `these exist in the source and aren’t in this file's list: ${missing.join(', ')}`,
   )
   // And the exclusions must still be found, or they are three lines of prose
   // about tokens that are no longer there — the stale-ruling half every list in

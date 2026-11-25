@@ -55,7 +55,7 @@ export interface Refusal {
 
 const REFUSALS: Record<RejectReason, { title: string; hints: string[] }> = {
   body_not_visible: {
-    title: 'I could not see enough of you',
+    title: 'I couldn’t see enough of you',
     hints: [
       'Keep your whole body in frame for the entire serve, from your feet to the racket at the top.',
       'Move the camera back a few steps instead of zooming in.',
@@ -80,7 +80,7 @@ const REFUSALS: Record<RejectReason, { title: string; hints: string[] }> = {
     ],
   },
   camera_unusable: {
-    title: 'I could not work out where the camera was',
+    title: 'I couldn’t work out where the camera was',
     hints: [
       `Rest the phone on something steady ${PLACEMENT.height}, ${PLACEMENT.distance} to your side.`,
       'Keep it still. If the phone moves, every measurement moves with it.',
@@ -109,7 +109,7 @@ export function refusalFor(triage: Triage | undefined): Refusal | undefined {
   if (!known) {
     return {
       reason: triage.reason ?? 'camera_unusable',
-      title: 'I could not read that clip',
+      title: 'I couldn’t read that clip',
       hints: [
         `Film side-on from ${PLACEMENT.distance} away, ${PLACEMENT.where}, with your whole body in frame.`,
         'Bright light and slow motion fix most of what goes wrong.',
@@ -211,7 +211,7 @@ const RECURRING: Record<InjuryFlag, string> = {
 export function strainLine(record: Pick<StrainRecord, 'flag' | 'trips' | 'of'>): string | undefined {
   const subject = RECURRING[record.flag]
   if (!subject) return undefined
-  return cue(`${subject} on ${record.trips} of your last ${record.of} trips.`)
+  return cue(`${subject} in ${record.trips} of your last ${record.of} sessions.`)
 }
 
 /**
@@ -279,7 +279,7 @@ export function strainGlanceLine(
 ): string | undefined {
   const joint = JOINT[record.flag]
   if (!joint) return undefined
-  return cue(`That is ${joint} on ${record.trips} of your last ${record.of} trips.`)
+  return cue(`That’s ${joint} in ${record.trips} of your last ${record.of} sessions.`)
 }
 
 /**
@@ -296,8 +296,8 @@ export function strainGlanceLine(
  */
 export function strainBehindLine(record: { trips: number; of: number }): string | undefined {
   if (record.trips < 1 || record.of < 1) return undefined
-  const trips = record.of === 1 ? 'court trip' : 'court trips'
-  return cue(`Also on ${record.trips} of your ${record.of} ${trips} before this one.`)
+  const trips = record.of === 1 ? 'session' : 'sessions'
+  return cue(`Also in ${record.trips} of your ${record.of} ${trips} before this one.`)
 }
 
 /**
@@ -348,7 +348,7 @@ interface FlawCopy {
 const FLAW_COPY: Record<FlawId, FlawCopy> = {
   waiters_tray: {
     title: 'Palm turned up under the racket',
-    low: 'Your hand sits flat under the handle, so the strings face the sky and the arm cannot turn through the ball.',
+    low: 'Your hand sits flat under the handle, so the strings face the sky and the arm can’t turn through the ball.',
   },
   toss_height: {
     // "Short" means depth in tennis, and every good serve is struck on the way
@@ -392,7 +392,7 @@ const FLAW_COPY: Record<FlawId, FlawCopy> = {
     low: 'Your elbow sits below your shoulder, so your forearm does the swinging instead of your whole arm.',
   },
   shallow_drop: {
-    title: 'The racket does not fall behind your back',
+    title: 'The racket doesn’t fall behind your back',
     // The racket head falls; the hand stays near the shoulder (D7.1). The old
     // line asked for the hand down the back, the picture the band dropped.
     low: 'Your racket head never falls behind your back, so the swing starts halfway up and meets the ball slower.',
@@ -405,7 +405,7 @@ const FLAW_COPY: Record<FlawId, FlawCopy> = {
     low: 'Your chest turns to the court before the racket drops, so your legs and body add nothing to the swing.',
   },
   no_leg_drive: {
-    title: 'Your legs do not push you up',
+    title: 'Your legs don’t push you up',
     low: 'Your hips barely rise between the knee bend and the hit, so your arm does the work your legs should.',
   },
   // Not named any more — see `arming_the_ball` in flaws.ts. Kept for the reports

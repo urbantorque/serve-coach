@@ -8,9 +8,9 @@ const rate = (inn: number, of: number, at = 0): InRate => ({ inn, of, at })
 
 heading('Clearly more in, not luckily more in')
 
-check('a small lucky step is not a change, and a real one is', () => {
+check('a small lucky step isn’t a change, and a real one is', () => {
   assert(!clearlyMoreIn(rate(8, 10), rate(6, 10)), '6 of 10 to 8 of 10 was called a change')
-  assert(clearlyMoreIn(rate(17, 20), rate(9, 20)), '9 of 20 to 17 of 20 was not')
+  assert(clearlyMoreIn(rate(17, 20), rate(9, 20)), '9 of 20 to 17 of 20 wasn’t')
   assert(!clearlyMoreIn(rate(9, 20), rate(17, 20)), 'a drop was called more in')
   assert(!clearlyMoreIn(rate(7, 7), rate(0, 7)), `fewer than ${MIN_TAGGED} a side was judged`)
   assert(!clearlyMoreIn(rate(10, 10), rate(10, 10)), 'all in against all in was called a change')

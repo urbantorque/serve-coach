@@ -107,7 +107,7 @@ check('no serves, no programme; the default goal is the plan\'s first fault, wor
   const h = history(trip(190, 3, [TOSS, DROP]))
   const p = programmeFor(h, prefs(), 191 * DAY)!
   const plan = weekPlan(h, undefined, 191 * DAY)!
-  assert(p.goal.kind === 'fault' && p.goal.flaw === plan.items[0].flaw, 'the goal was not the plan\'s first fault')
+  assert(p.goal.kind === 'fault' && p.goal.flaw === plan.items[0].flaw, 'the goal wasn’t the plan\'s first fault')
   assert(p.title === GOAL_TITLE[TOSS] && !p.chosen, `title "${p.title}", chosen ${p.chosen}`)
   note(`${p.title}: ${p.why}`)
 })
@@ -127,11 +127,11 @@ check('one row per rung from the player\'s own, then the hold across two trips',
   note(p.weeks.map((w) => `${w.label} ${w.title} [${w.state}]`).join(' | '))
   const steps = p.weeks.filter((w) => w.kind === 'step')
   assert(steps[steps.length - 1].step!.at === ladder.steps.length, 'the ladder\'s last rung is missing')
-  assert(p.weeks[p.weeks.length - 1].kind === 'hold', 'the last row was not the hold')
+  assert(p.weeks[p.weeks.length - 1].kind === 'hold', 'the last row wasn’t the hold')
   assert(GRADUATION_TRIPS === 2, 'the copy says two trips')
   const current = p.weeks.find((w) => w.state === 'current')!
   assert(current === p.current && current.step!.at === 3, `current was ${current.title}`)
-  assert(current.title === ladder.steps[2].name && current.drill.name === ladder.steps[2].name, 'the current row is not the player\'s rung')
+  assert(current.title === ladder.steps[2].name && current.drill.name === ladder.steps[2].name, 'the current row isn’t the player\'s rung')
   assert(current.filmed && /Film a basket of 6/.test(current.check), `the check read "${current.check}"`)
   assert(current.know.includes(`${ladder.pass} of ${CHECK_SERVES}`), `how to know read "${current.know}"`)
 })
@@ -184,8 +184,8 @@ check('the player\'s cadence, stated or read, sets the labels and the estimate',
   assert(at('monthly').weeks[0].label === 'Weeks 1 to 4', at('monthly').weeks[0].label)
   // Never said, and three visits a fortnight apart read as fortnightly.
   const spaced = history(trip(150, 2, [DROP]), trip(164, 2, [DROP]), trip(178, 2, [DROP]))
-  assert(programmeFor(spaced, prefs(), 179 * DAY)!.cadence === 'fortnightly', 'the cadence was not read off the visits')
-  assert(at('sometimes' as never).cadence === 'weekly', 'a stored cadence this build does not know was believed')
+  assert(programmeFor(spaced, prefs(), 179 * DAY)!.cadence === 'fortnightly', 'the cadence wasn’t read off the visits')
+  assert(at('sometimes' as never).cadence === 'weekly', 'a stored cadence this build doesn’t know was believed')
 })
 
 heading('Evidence moves it, not time')
@@ -198,13 +198,13 @@ check('a calendar never completes a week', () => {
   assert(soon.ratio === late.ratio && soon.weeksLeft === late.weeksLeft, 'time alone moved the ratio')
 })
 
-check('falling behind says what is next and does not scold', () => {
+check('falling behind says what is next and doesn’t scold', () => {
   const h = history(trip(190, 3, [DROP]))
   const onTime = programmeFor(h, prefs(), 195 * DAY)!
   const late = programmeFor(h, prefs(), 190 * DAY + CADENCE_GAP_MS.weekly + DAY)!
   assert(!onTime.behind && late.behind, `on time ${onTime.behind}, late ${late.behind}`)
   note(`${onTime.next} / ${late.next}`)
-  assert(late.next.includes(late.current.title), 'it did not say what is next')
+  assert(late.next.includes(late.current.title), 'it didn’t say what is next')
   assert(!/miss|behind|late|overdue|should|fell|lost|again/i.test(late.next), `a scolding line: "${late.next}"`)
   // The same gap is on time for a monthly player.
   assert(!programmeFor(h, prefs({ cadence: 'monthly' }), 190 * DAY + CADENCE_GAP_MS.weekly + DAY)!.behind, 'a monthly player was called behind after ten days')
@@ -214,10 +214,10 @@ check('a practice session counts as a visit', () => {
   const h = history(trip(100, 3, [DROP]))
   const practice = [{ createdAt: 150 * DAY, updatedAt: 150 * DAY, lines: [{}] }]
   assert(programmeFor(h, prefs(), 151 * DAY)!.behind, 'the fixture meant a long gap')
-  assert(!programmeFor(h, prefs(), 151 * DAY, [], { practice })!.behind, 'a practice session did not count as being on court')
+  assert(!programmeFor(h, prefs(), 151 * DAY, [], { practice })!.behind, 'a practice session didn’t count as being on court')
 })
 
-check('passing a basket offers the move and does not make it: the ladder moves on the player\'s say-so', () => {
+check('passing a basket offers the move and doesn’t make it: the ladder moves on the player\'s say-so', () => {
   const rung = 2 // Rung three is the first served step of this ladder.
   const moved = { ladder: { [DROP]: rung }, ladderMovedAt: { [DROP]: 150 * DAY } }
   const before = programmeFor(history(trip(160, 3, [DROP])), prefs(moved), 170 * DAY)!
@@ -227,17 +227,17 @@ check('passing a basket offers the move and does not make it: the ladder moves o
   assert(after.current.step!.at === rung + 1, 'the row moved before the ladder did')
   const moving = { ladder: { [DROP]: rung + 1 }, ladderMovedAt: { [DROP]: 171 * DAY } }
   const next = programmeFor(history(trip(160, 3, [DROP]), trip(170, 6, [], [DROP])), prefs(moving), 172 * DAY)!
-  assert(next.current.step!.at === rung + 2 && next.moveUp === undefined, 'moving the ladder did not move the row, or old serves passed the new step')
+  assert(next.current.step!.at === rung + 2 && next.moveUp === undefined, 'moving the ladder didn’t move the row, or old serves passed the new step')
 })
 
-check('a step the player judges is theirs to call: a clean basket does not offer it', () => {
+check('a step the player judges is theirs to call: a clean basket doesn’t offer it', () => {
   // Rung two is the ball in a sock: no served ball, so nothing filmed speaks for it.
   const h = history(trip(160, 3, [DROP]), trip(170, 6, [], [DROP]))
   const p = programmeFor(h, prefs({ ladder: { [DROP]: 1 } }), 171 * DAY)!
   assert(p.title === GOAL_TITLE[DROP] && !p.current.filmed && p.moveUp === undefined, JSON.stringify(p.moveUp))
 })
 
-check('a serve the fault could not be judged on passes nothing', () => {
+check('a serve the fault couldn’t be judged on passes nothing', () => {
   const unread = trip(170, 6, [], [])
   const p = programmeFor(history(trip(160, 3, [DROP]), unread), prefs({ ladder: { [DROP]: 2 }, ladderMovedAt: { [DROP]: 165 * DAY } }), 171 * DAY)!
   assert(p.moveUp === undefined, 'serves that never judged the fault moved a step')
@@ -277,7 +277,7 @@ check('the next fault takes over, with nothing stored', () => {
   assert(reached.length === 1 && reached[0].goal.kind === 'fault' && reached[0].goal.flaw === DROP, JSON.stringify(reached))
 })
 
-check('a fault that was not the goal clearing is not a goal reached', () => {
+check('a fault that wasn’t the goal clearing isn’t a goal reached', () => {
   // The legs lead this plan; the racket drop clears beneath them.
   const h = history(trip(160, 3, [LEGS, DROP]), trip(170, 3, [LEGS], [DROP]), trip(177, 3, [LEGS], [DROP]))
   const reached = goalsReached(h, prefs(), 178 * DAY)
@@ -291,7 +291,7 @@ check('a practice session\'s judged serves count towards reaching it', () => {
   const h = history(trip(160, 3, [DROP, LOW]), trip(170, 3, [LOW], [DROP]))
   assert((programmeFor(h, prefs(), 178 * DAY)!.goal as { flaw: FlawId }).flaw === DROP, 'the fixture meant it not to have graduated')
   const p = programmeFor(h, prefs(), 178 * DAY, sessionEvidence(practice))!
-  assert((p.goal as { flaw: FlawId }).flaw === LOW, 'the practice serves did not move the goal on')
+  assert((p.goal as { flaw: FlawId }).flaw === LOW, 'the practice serves didn’t move the goal on')
 })
 
 check('a picked goal holds over the plan, ends when reached, and a relapse brings it back', () => {
@@ -299,18 +299,18 @@ check('a picked goal holds over the plan, ends when reached, and a relapse bring
   assert(chosen.goal?.kind === 'fault' && chosen.goal.flaw === DROP && chosen.goal.startedAt === 165 * DAY, JSON.stringify(chosen))
   const mixed = history(trip(160, 3, [TOSS, DROP]))
   const held = programmeFor(mixed, prefs(chosen), 166 * DAY)!
-  assert((held.goal as { flaw: FlawId }).flaw === DROP && held.chosen && held.startedAt === 165 * DAY, 'the pick did not take')
+  assert((held.goal as { flaw: FlawId }).flaw === DROP && held.chosen && held.startedAt === 165 * DAY, 'the pick didn’t take')
   assert(held.why === 'You picked this one.', held.why)
-  assert(held.plan.items[0].flaw === DROP && held.plan.items[1].flaw === TOSS, 'today does not lead with the goal')
+  assert(held.plan.items[0].flaw === DROP && held.plan.items[1].flaw === TOSS, 'today doesn’t lead with the goal')
   const clear = history(trip(160, 3, [TOSS, DROP]), trip(170, 3, [TOSS], [DROP]), trip(177, 3, [TOSS], [DROP]))
   const moved = programmeFor(clear, prefs(chosen), 178 * DAY)!
-  assert((moved.goal as { flaw: FlawId }).flaw === TOSS && !moved.chosen, 'a reached pick did not move on')
-  assert(goalsReached(clear, prefs(chosen), 178 * DAY).length === 1, 'a reached pick was not reached')
+  assert((moved.goal as { flaw: FlawId }).flaw === TOSS && !moved.chosen, 'a reached pick didn’t move on')
+  assert(goalsReached(clear, prefs(chosen), 178 * DAY).length === 1, 'a reached pick wasn’t reached')
   const relapse = history(trip(160, 3, [TOSS, DROP]), trip(170, 3, [TOSS], [DROP]), trip(177, 3, [TOSS], [DROP]), trip(184, 3, [TOSS, DROP]))
-  assert((programmeFor(relapse, prefs(chosen), 185 * DAY)!.goal as { flaw: FlawId }).flaw === DROP, 'a relapse did not undo it')
+  assert((programmeFor(relapse, prefs(chosen), 185 * DAY)!.goal as { flaw: FlawId }).flaw === DROP, 'a relapse didn’t undo it')
 })
 
-check('a pick this build cannot read is no pick at all', () => {
+check('a pick this build can’t read is no pick at all', () => {
   const h = history(trip(190, 3, [DROP]))
   for (const goal of [{ kind: 'fault', flaw: 'nonsense', startedAt: 1 }, { kind: 'fault', flaw: 'pancake_contact', startedAt: 1 }, { kind: 'moon' }]) {
     const p = programmeFor(h, prefs({ goal: goal as Prefs['goal'] }), 191 * DAY)!
@@ -344,9 +344,9 @@ check('picked, it is defined against the trip it started from, and always carrie
   const start = goalOptions(h, prefs(), 181 * DAY).find((o) => o.goal.kind === 'speed')!
   const p = programmeFor(h, prefs(chooseGoal(start.goal, 181 * DAY)), 182 * DAY)!
   assert(p.goal.kind === 'speed' && p.chosen && p.note === SPEED_NOTE, JSON.stringify(p.goal))
-  assert(p.goal.kind === 'speed' && p.goal.from.ms === 36, 'the bar is not the player\'s own trip')
+  assert(p.goal.kind === 'speed' && p.goal.from.ms === 36, 'the bar isn’t the player\'s own trip')
   const last = p.weeks[p.weeks.length - 1]
-  assert(last.kind === 'speed' && /faster than this one: about/.test(last.know) && /likely/.test(last.know), last.know)
+  assert(last.kind === 'speed' && /faster than this in a session: about/.test(last.know) && /likely/.test(last.know), last.know)
   // A range, never a promised number.
   assert(!/reach \d|hit \d|target/i.test(linesOf(p).join(' ')), 'a number was promised')
   note(`${p.title}: ${p.why}`)
@@ -362,7 +362,7 @@ check('reached only when a later trip\'s range clears it, not on an overlap, and
   assert(programmeFor(oneServe, picked, 191 * DAY)!.goal.kind === 'speed', 'one fast serve reached the goal')
   const clear = history(flatTrip(180, 36), flatTrip(190, 42))
   const moved = programmeFor(clear, picked, 191 * DAY)!
-  assert(moved.goal.kind === 'fault' && !moved.chosen, 'a cleared range did not move on')
+  assert(moved.goal.kind === 'fault' && !moved.chosen, 'a cleared range didn’t move on')
   const reached = goalsReached(clear, picked, 191 * DAY)
   assert(reached[0]?.goal.kind === 'speed' && reached[0].cleared?.ms === 42, JSON.stringify(reached))
 })
@@ -386,8 +386,8 @@ check('its weeks follow the plan\'s fault that costs speed, or the legs', () => 
   const noSpeedFault = history(trip(180, 3, [TOSS], [], 36))
   const legs = progressionFor(LEGS)!
   const q = programmeFor(noSpeedFault, picked, 181 * DAY)!
-  assert(q.plan.items[0].flaw === LEGS && q.weeks[0].step!.of === legs.steps.length, 'the leg drive ladder did not stand in')
-  assert(q.today.some((b) => b.kind === 'check' && /first serves from the side/.test(b.line)), 'today\'s check did not ask for a speed')
+  assert(q.plan.items[0].flaw === LEGS && q.weeks[0].step!.of === legs.steps.length, 'the leg drive ladder didn’t stand in')
+  assert(q.today.some((b) => b.kind === 'check' && /first serves from the side/.test(b.line)), 'today\'s check didn’t ask for a speed')
 })
 
 check('with no fault left, speed is the goal the programme picks by itself', () => {
@@ -398,11 +398,11 @@ check('with no fault left, speed is the goal the programme picks by itself', () 
   const up = history(trip(180, 3, [], [], 36), trip(190, 3, [], [], 42))
   const q = programmeFor(up, prefs(), 191 * DAY)!
   assert(q.goal.kind === 'speed' && q.goal.from.ms === 42, JSON.stringify(q.goal))
-  assert(goalsReached(up, prefs(), 191 * DAY)[0]?.cleared?.ms === 42, 'the clear was not a goal reached')
+  assert(goalsReached(up, prefs(), 191 * DAY)[0]?.cleared?.ms === 42, 'the clear wasn’t a goal reached')
   const twice = history(trip(180, 3, [], [], 36), trip(190, 3, [], [], 42), trip(200, 3, [], [], 50))
   const r = programmeFor(twice, prefs(), 201 * DAY)!
   assert(r.goal.kind === 'speed' && r.goal.from.ms === 50, `the bar stopped at ${JSON.stringify(r.goal)}`)
-  assert(goalsReached(twice, prefs(), 201 * DAY)[0]?.cleared?.ms === 50, 'the newest clear was not the one said')
+  assert(goalsReached(twice, prefs(), 201 * DAY)[0]?.cleared?.ms === 50, 'the newest clear wasn’t the one said')
   assert(programmeFor(history(trip(180, 3, [], [])), prefs(), 181 * DAY) === undefined, 'a goal out of nothing')
 })
 
@@ -412,14 +412,14 @@ check('today is the court plan with the goal first, at any length', () => {
   const h = history(trip(190, 3, [TOSS, DROP, LEGS]))
   const p = programmeFor(h, prefs({ courtMinutes: 30 }), 191 * DAY)!
   assert(p.minutes === 30, `minutes ${p.minutes}`)
-  assert(p.today.reduce((s, b) => s + b.minutes, 0) === 30, 'today did not add up to the player\'s minutes')
+  assert(p.today.reduce((s, b) => s + b.minutes, 0) === 30, 'today didn’t add up to the player\'s minutes')
   for (const m of COURT_MINUTES) {
     const blocks = todayFor(p, m)
     assert(blocks.reduce((s, b) => s + b.minutes, 0) === m, `${m} minutes added up wrong`)
-    assert(blocks.find((b) => b.kind === 'drill')!.line.startsWith(p.plan.items[0].drill.name), 'the first drill is not the goal\'s')
+    assert(blocks.find((b) => b.kind === 'drill')!.line.startsWith(p.plan.items[0].drill.name), 'the first drill isn’t the goal\'s')
   }
   const picked = programmeFor(h, prefs(chooseGoal({ kind: 'fault', flaw: LEGS }, 190 * DAY)), 191 * DAY)!
-  assert(picked.today.find((b) => b.kind === 'drill')!.line.startsWith(picked.current.drill.name), 'a picked goal did not lead today')
+  assert(picked.today.find((b) => b.kind === 'drill')!.line.startsWith(picked.current.drill.name), 'a picked goal didn’t lead today')
 })
 
 check('a picked fault the plan has moved past still has a day', () => {
@@ -433,11 +433,11 @@ check('the options are the plan\'s other faults, then speed, and never the goal 
   const options = goalOptions(h, prefs(), 191 * DAY)
   note(options.map((o) => `${o.title} (${o.line})`).join(' | '))
   assert(options.every((o) => !(o.goal.kind === 'fault' && o.goal.flaw === TOSS)), 'the goal in force was offered')
-  assert(options[options.length - 1].goal.kind === 'speed' && options.length >= 2, 'speed did not come last')
+  assert(options[options.length - 1].goal.kind === 'speed' && options.length >= 2, 'speed didn’t come last')
   clean(options.flatMap((o) => [o.title, o.line]))
   // One tap: the first option, picked, is the programme.
   const tapped = programmeFor(h, prefs(chooseGoal(options[0].goal, 191 * DAY)), 191 * DAY)!
-  assert(tapped.title === options[0].title, 'a tap did not change the goal')
+  assert(tapped.title === options[0].title, 'a tap didn’t change the goal')
   assert(!goalOptions(h, prefs(chooseGoal(options[options.length - 1].goal, 191 * DAY)), 191 * DAY).some((o) => o.goal.kind === 'speed'), 'speed was offered while it was the goal')
 })
 
@@ -500,18 +500,18 @@ check('offered once a trip has enough tagged second serves, and run with its own
   assert(p.title === goalTitle(p.goal) && p.note !== undefined, 'no title or note')
   const last = p.weeks[p.weeks.length - 1]
   assert(last.kind === 'second' && !last.filmed, `the closing row is ${last.kind}`)
-  assert(/3 of 10/.test(p.why), `why does not name the trip to beat: ${p.why}`)
-  assert(p.today.some((b) => b.kind === 'check' && /tag/i.test(b.line)), 'today does not ask for second serves tagged')
+  assert(/3 of 10/.test(p.why), `why doesn’t name the trip to beat: ${p.why}`)
+  assert(p.today.some((b) => b.kind === 'check' && /tag/i.test(b.line)), 'today doesn’t ask for second serves tagged')
   clean([p.title, p.why, p.note!, last.check, last.know, option!.line])
 })
 
-check('a later trip with clearly more in reaches it; a lucky small step does not', () => {
+check('a later trip with clearly more in reaches it; a lucky small step doesn’t', () => {
   const a = trip(170, 10, [TOSS])
   const b = trip(185, 10, [TOSS])
   const chosen = prefs(chooseGoal({ kind: 'second', from: { inn: 0, of: 0, at: 0 } }, 172 * DAY))
   const reached = goalsReached(history(a, b), chosen, 186 * DAY, [], { tags: [...seconds(a, 3), ...seconds(b, 9)] })
   const got = reached.find((g) => g.goal.kind === 'second')
-  assert(got?.secondCleared?.inn === 9, '3 of 10 to 9 of 10 did not reach the goal')
+  assert(got?.secondCleared?.inn === 9, '3 of 10 to 9 of 10 didn’t reach the goal')
   const after = programmeFor(history(a, b), chosen, 186 * DAY, [], { tags: [...seconds(a, 3), ...seconds(b, 9)] })!
   assert(after.goal.kind !== 'second', 'a reached goal stayed in force')
   const lucky = goalsReached(history(a, b), chosen, 186 * DAY, [], { tags: [...seconds(a, 5), ...seconds(b, 7)] })

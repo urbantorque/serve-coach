@@ -66,7 +66,7 @@ check('an address the app hands out opens what it named, at the root and under a
   }
 })
 
-check('an address the app does not know opens Today, never a blank page', () => {
+check('an address the app doesn’t know opens Today, never a blank page', () => {
   for (const p of ['/nope', '/serve', '/serve/', '/serve/a/b', '/practice', '/other-base/progress', '/progress/x', '/privacy/x', '/Accuracy']) {
     const r = parsePath(p, p.startsWith('/other') ? '/serve-coach/' : '/')
     assert(r.kind === 'home', `${p} opened ${r.kind}`)
@@ -81,7 +81,7 @@ check('every screen titles its tab, and the title names the app', () => {
   }
 })
 
-check('the PWA falls back to the page for an address it has not cached', () => {
+check('the PWA falls back to the page for an address it hasn’t cached', () => {
   // A deep link opened offline is a navigation the service worker must answer
   // with the app, or the installed app shows the browser's offline page.
   const config = fs.readFileSync(path.join(process.cwd(), 'vite.config.ts'), 'utf8')

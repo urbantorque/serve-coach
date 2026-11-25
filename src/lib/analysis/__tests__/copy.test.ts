@@ -398,7 +398,7 @@ const CLAIMED: Record<string, Claimed> = {
     // vocabulary that clears the voice lint (it is not on the jargon list) and
     // still loses a player who has never met the term. The rungs claimed below
     // are unchanged: a racket that fires with no pause is an explosive swing.
-    stamp: '990595ee',
+    stamp: '864b05c2',
     insight: {
       low: ['Fast swing to the ball'],
       ok: ['Quick swing to the ball'],
@@ -458,7 +458,7 @@ const CLAIMED: Record<string, Claimed> = {
 
   /* The lines a serve type replaces, claimed where they are written. */
   'kick.contactAhead': {
-    stamp: '6242295b',
+    stamp: '186aaa15',
     insight: {
       low: ['Struck behind the head'],
       // Over the head or in front since D2.1: published kicks are struck in
@@ -494,12 +494,12 @@ const CLAIMED: Record<string, Claimed> = {
   'depth.tossPathWobble': {
     // The clean lines say which half of the toss the camera saw (N2.10), and
     // claim the same rungs as the plain clean lines they replace.
-    stamp: '8d71973f',
+    stamp: 'f9021d4f',
     insight: { low: ['Perfectly straight toss'], ok: ['Perfectly straight toss', 'Straight toss'], high: ['Toss off line', 'Toss well off line'] },
     aim: { high: 'Straight toss' },
   },
   'lateral.tossPathWobble': {
-    stamp: 'beaadd9c',
+    stamp: '8b759260',
     insight: { low: ['Perfectly straight toss'], ok: ['Perfectly straight toss', 'Straight toss'], high: ['Toss off line', 'Toss well off line'] },
     aim: { high: 'Straight toss' },
   },
@@ -727,7 +727,7 @@ check('every fix aims at a position the same card would praise', () => {
         assert(aim !== undefined, `${site}.fix.${side} never says which position it aims at`)
         assert(
           praised.includes(aim as string),
-          `${label} ${id} fix.${side} aims at "${aim}", which this card would not praise ` +
+          `${label} ${id} fix.${side} aims at "${aim}", which this card wouldn’t praise ` +
             `(${praised.join(', ')}):\n        "${copy.fix[side]}"`,
         )
       }
@@ -755,7 +755,7 @@ check('a serve type that rewrites a fault also rewrites the order that corrects 
   // correctly. The reverse is what has now gone wrong twice.
   for (const [type, copy] of Object.entries(SERVE_TYPES)) {
     for (const [id, insight] of Object.entries(copy.insight ?? {})) {
-      assert(METRICS[id] !== undefined, `${type} rewrites copy for ${id}, which is not a measurement`)
+      assert(METRICS[id] !== undefined, `${type} rewrites copy for ${id}, which isn’t a measurement`)
       for (const side of ['low', 'high'] as const) {
         if (!insight[side]) continue
         // Nothing to reorder where the flat card carries no order: a band that
@@ -787,7 +787,7 @@ check('a body axis that rewrites a fault also rewrites the order that corrects i
   // axis carrying its own words and the other axis's exercise sends the player
   // to practise the one thing that cannot move their number.
   for (const [id, byAxis] of Object.entries(AXIS_COPY)) {
-    assert(METRICS[id] !== undefined, `an axis rewrites copy for ${id}, which is not a measurement`)
+    assert(METRICS[id] !== undefined, `an axis rewrites copy for ${id}, which isn’t a measurement`)
     for (const [axis, copy] of Object.entries(byAxis)) {
       for (const side of ['low', 'high'] as const) {
         if (!copy.insight?.[side]) continue
@@ -910,7 +910,7 @@ console.log('\n\x1b[1mThe slop filter\x1b[0m')
 check('pleasantries and throat-clearing are stripped', () => {
   const cases: [string, string][] = [
     ['Great job on your serve, but your elbow bends.', 'Your elbow bends.'],
-    ['It looks like you are dropping the arm early.', 'You are dropping the arm early.'],
+    ['It looks like you’re dropping the arm early.', 'You’re dropping the arm early.'],
     ['You should try to keep the arm straight.', 'Keep the arm straight.'],
     ['Basically, sink until the knees bend.', 'Sink until the knees bend.'],
   ]
@@ -932,7 +932,7 @@ check('a multi-paragraph answer is cut to two sentences', () => {
   assert(got === 'Your toss drifts. Fix it with a fence drill.', `got "${got}"`)
 })
 
-check('a decimal point is not the end of a sentence', () => {
+check('a decimal point isn’t the end of a sentence', () => {
   // The cut used to split on every stop, so a line quoting a reading — "this
   // one 1.9%" — was printed as "this one 1." and lost its number.
   const got = command('Your best serve read 0.3% here, this one 1.9%. Closer than last time.')
@@ -951,7 +951,7 @@ check('a cut never leaves the rest of the report in bold', () => {
   assert((got.match(/\*\*/g)?.length ?? 0) % 2 === 0, `unbalanced markers: "${got}"`)
 })
 
-check('the filter is idempotent, so copy cannot be shortened twice', () => {
+check('the filter is idempotent, so copy can’t be shortened twice', () => {
   for (const { where, text } of everyCue()) {
     assert(command(command(text)) === command(text), `${where} changes on a second pass`)
   }
@@ -1012,7 +1012,7 @@ check('every flaw the engine can name has words and an exercise', () => {
     assert(Boolean(FLAW_DRILL[spec.flaw]), `${spec.flaw} has no drill id`)
     assert(
       Boolean(DRILLS[FLAW_DRILL[spec.flaw]]),
-      `${spec.flaw} points at drill "${FLAW_DRILL[spec.flaw]}", which does not exist`,
+      `${spec.flaw} points at drill "${FLAW_DRILL[spec.flaw]}", which doesn’t exist`,
     )
   }
 })
@@ -1041,7 +1041,7 @@ check('every axis a flaw can be measured along has words and an exercise of its 
       assert(Boolean(words?.low?.trim()), `${flaw}/${axis} has a heading but nothing under it`)
 
       const id = drillIdFor(flaw as FlawId, axis)
-      assert(Boolean(DRILLS[id]), `${flaw}/${axis} points at drill "${id}", which does not exist`)
+      assert(Boolean(DRILLS[id]), `${flaw}/${axis} points at drill "${id}", which doesn’t exist`)
       assert(
         id !== drillIdFor(flaw as FlawId),
         `${flaw}/${axis} falls back to the axis-neutral drill, so the axis buys nothing`,
@@ -1076,7 +1076,7 @@ check('a refusal names something the player can film differently', () => {
     assert(copy.hints.length >= 2, `${reason} offers fewer than two things to try`)
     for (const hint of copy.hints) {
       assert(wordCount(hint) <= 30, `${reason} hint runs to ${wordCount(hint)} words`)
-      assert(/[.!?]$/.test(hint.trim()), `${reason} hint is not a finished sentence`)
+      assert(/[.!?]$/.test(hint.trim()), `${reason} hint isn’t a finished sentence`)
     }
   }
 })
@@ -1143,7 +1143,7 @@ check('the ungraded delta line says a direction and never a figure', () => {
   )
   // Serve numbers are the exception and have to be there: a change with no
   // serves attached is not a fact about two serves, it is an assertion.
-  assert(/serve 4/.test(text!) && /serve 1/.test(text!), `the two serves are not named: "${text}"`)
+  assert(/serve 4/.test(text!) && /serve 1/.test(text!), `the two serves aren’t named: "${text}"`)
 })
 
 check('the landing delta line describes a body position and grades nothing', () => {
@@ -1164,7 +1164,7 @@ check('the landing delta line describes a body position and grades nothing', () 
     !/fell|falling|lost|off balance|unbalanced|collaps/i.test(text!),
     `the line grades a reading nothing grades: ""`,
   )
-  assert(/serve 5/.test(text!) && /serve 2/.test(text!), `the two serves are not named: ""`)
+  assert(/serve 5/.test(text!) && /serve 2/.test(text!), `the two serves aren’t named: ""`)
 })
 
 check('a reading with no line of its own prints nothing rather than something generic', () => {
@@ -1246,7 +1246,7 @@ check('the sequence delta line names legs and arm, and grades neither direction'
     !/good|better|worse|should|too (late|early)/i.test(text!),
     `the line grades a reading nothing grades: "${text}"`,
   )
-  assert(/serve 4/.test(text!) && /serve 1/.test(text!), `the two serves are not named: "${text}"`)
+  assert(/serve 4/.test(text!) && /serve 1/.test(text!), `the two serves aren’t named: "${text}"`)
 })
 
 check('every area headline, assembled at runtime, passes the editor', () => {
@@ -1320,7 +1320,7 @@ check('every name, label, ladder line and caption passes the editor', () => {
   )
 })
 
-check('"drop" is held to the racket, and the rule does not catch the racket', () => {
+check('"drop" is held to the racket, and the rule doesn’t catch the racket', () => {
   for (const wrong of ['Your tossing arm drops early.', 'Let the ball drop on the line.', 'Your hitting shoulder dropped.']) {
     assert(cueIssues(wrong).some((i) => i.includes('racket drop')), `missed: "${wrong}"`)
   }

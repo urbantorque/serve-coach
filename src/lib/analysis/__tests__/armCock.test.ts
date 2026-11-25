@@ -37,7 +37,7 @@ check('a later cock reads lower, in step with the dial, from every camera', () =
   assert(dev.sd * 3 < row[0] - row[4], 'the reading moves as far with the camera noise as across its dial')
 })
 
-check('no knee trough, no reading: a trophy found from the arms is not read', () => {
+check('no knee trough, no reading: a trophy found from the arms isn’t read', () => {
   const frames = buildServe({ trophyKneeAngle: 174 }, FPS)
   const skel = detectServe(frames, FPS)
   if (skel.derivation.trophyFromArms) {

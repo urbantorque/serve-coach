@@ -383,13 +383,13 @@ check('a change is same, soft or a direction, and soft only between two serves r
   const scopes: ChangeScope[] = ['overall', 'swing', 'toss']
   for (const scope of scopes) {
     const floor = REAL_CHANGE[scope]
-    assert(changeOf(floor - 1, scope) === 'same', `${scope}: just under the floor was not the same`)
-    assert(changeOf(-(floor - 1), scope, false) === 'same', `${scope}: a small move read differently was not the same`)
-    assert(changeOf(floor, scope) === 'up', `${scope}: the floor itself was not a change`)
-    assert(changeOf(-floor, scope) === 'down', `${scope}: a fall at the floor was not a change`)
-    assert(changeOf(floor, scope, false) === 'soft', `${scope}: read differently at the floor was not soft`)
+    assert(changeOf(floor - 1, scope) === 'same', `${scope}: just under the floor wasn’t the same`)
+    assert(changeOf(-(floor - 1), scope, false) === 'same', `${scope}: a small move read differently wasn’t the same`)
+    assert(changeOf(floor, scope) === 'up', `${scope}: the floor itself wasn’t a change`)
+    assert(changeOf(-floor, scope) === 'down', `${scope}: a fall at the floor wasn’t a change`)
+    assert(changeOf(floor, scope, false) === 'soft', `${scope}: read differently at the floor wasn’t soft`)
     const wider = READ_DIFFERENTLY[scope]
-    if (wider !== undefined) assert(changeOf(-wider, scope, false) === 'down', `${scope}: past the wider floor was not a change`)
+    if (wider !== undefined) assert(changeOf(-wider, scope, false) === 'down', `${scope}: past the wider floor wasn’t a change`)
     else assert(changeOf(99, scope, false) === 'soft', `${scope}: with no wider floor, read differently was claimed`)
   }
 })
@@ -401,7 +401,7 @@ check('two reports read alike only when the same rows were graded', () => {
     )
   const full = card({ swing: ['dropDepth', 'elbowAtDrop', 'dropToContact', 'handUnderElbow'], rhythm: ['loadRatio'], toss: ['releaseHeight'] })
   const collapsed = card({ swing: ['dropDepth', 'handUnderElbow'], rhythm: [], toss: ['releaseHeight'] })
-  assert(readAlike(full, full), 'a report did not read alike with itself')
+  assert(readAlike(full, full), 'a report didn’t read alike with itself')
   assert(!readAlike(full, collapsed), 'a collapse read alike on the overall')
   assert(!readAlike(full, collapsed, 'swing'), 'a collapse read alike on the swing')
   assert(readAlike(full, collapsed, 'toss'), 'the toss read differently when only the swing changed')
@@ -414,7 +414,7 @@ check('the best–worst bar rises with the basket and holds at its ends', () => 
   for (let n = 3; n <= 6; n++) assert(bestWorstGap(n) >= bestWorstGap(n - 1), `the bar fell from ${n - 1} to ${n} serves`)
   assert(bestWorstGap(1) === bestWorstGap(2), 'one serve has its own bar')
   assert(bestWorstGap(12) === bestWorstGap(6), 'a big basket fell off the table')
-  assert(bestWorstGap(2) === REAL_CHANGE.overall, 'two serves are not held to the plain overall floor')
+  assert(bestWorstGap(2) === REAL_CHANGE.overall, 'two serves aren’t held to the plain overall floor')
 })
 
 report()

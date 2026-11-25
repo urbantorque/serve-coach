@@ -57,7 +57,7 @@ check('every graded band names its footing, and a motion-derived one names its f
     }
   }
   for (const id of Object.keys(MOTION_FAULTS)) {
-    assert(id in METRICS && 'motion' in METRICS[id].source, `${id} has a rig fault here but is not a motion-derived band`)
+    assert(id in METRICS && 'motion' in METRICS[id].source, `${id} has a rig fault here but isn’t a motion-derived band`)
   }
 })
 
@@ -70,7 +70,7 @@ check('a measurement is graded or a reading, never both', () => {
   const frames = buildServe({}, 50)
   const areas = measure(frames, detectServe(frames, 50), true)
   const shown = areas.flatMap((f) => (f.readings ?? []).map((r) => r.id))
-  for (const id of Object.keys(READINGS)) assert(shown.includes(id), `${id} was not shown`)
+  for (const id of Object.keys(READINGS)) assert(shown.includes(id), `${id} wasn’t shown`)
   for (const m of areas.flatMap((f) => f.metrics)) assert(!(m.id in READINGS), `${m.id} was graded`)
 })
 
@@ -79,7 +79,7 @@ check('a band re-derived on real motion holds the fault the rig dials outside it
     const clean = graded({}, id, fault.sideView ?? true)
     const dialled = graded(fault.dials, id, fault.sideView ?? true)
     const [lo, hi] = METRICS[id].ideal
-    assert(dialled !== undefined, `${id} was not read with its fault dialled`)
+    assert(dialled !== undefined, `${id} wasn’t read with its fault dialled`)
     const outside = fault.side === 'low' ? dialled!.value < lo : dialled!.value > hi
     note(`${id}: clean ${clean?.value.toFixed(2) ?? 'unread'}, dialled ${dialled!.value.toFixed(2)} against ${lo}–${hi}`)
     assert(outside, `${id} read ${dialled!.value.toFixed(2)} with its fault dialled, inside ${lo}–${hi}`)
@@ -133,11 +133,11 @@ check('every diagnosis signal names what its band stands on', () => {
     const src = spec.source
     assert(src !== undefined, `${id} has no source`)
     if ('card' in src) {
-      assert(CARD_SIGNAL[src.card] === id, `${id} claims ${src.card}'s band and is not paired with it`)
+      assert(CARD_SIGNAL[src.card] === id, `${id} claims ${src.card}'s band and isn’t paired with it`)
       const [lo, hi] = METRICS[src.card].ideal
       for (const tier of [3, 5, 7, 9] as const) {
         const [a, b] = spec.anchors[tier]
-        assert(a === lo && b === hi, `${id} at rung ${tier} is not ${src.card}'s band`)
+        assert(a === lo && b === hi, `${id} at rung ${tier} isn’t ${src.card}'s band`)
       }
     } else if ('study' in src) {
       assert(/\b(19|20)\d\d\b/.test(src.study), `${id} claims a study and names no year`)
@@ -151,7 +151,7 @@ check('every diagnosis signal names what its band stands on', () => {
   // And every card pairing is a declared footing.
   for (const [card, signal] of Object.entries(CARD_SIGNAL)) {
     const src = SIGNALS[signal].source
-    assert('card' in src && src.card === card, `${signal} reads ${card}'s number and does not say so`)
+    assert('card' in src && src.card === card, `${signal} reads ${card}'s number and doesn’t say so`)
   }
 })
 
@@ -180,7 +180,7 @@ check('a re-derived diagnosis band holds real serves in and the rig fault out', 
     }
     const fault = rig(sig.dials, 3)
     note(`${id}: Bath ${Math.min(...reads).toFixed(3)} to ${Math.max(...reads).toFixed(3)} against ${club.join(' to ')}; rig fault ${fault?.value}`)
-    assert(fault?.detected === true, `${id}: the rig's ${sig.flaw} is not named at the most lenient rung`)
+    assert(fault?.detected === true, `${id}: the rig's ${sig.flaw} isn’t named at the most lenient rung`)
     assert(!rig({}, 9)?.detected, `${id}: the rig's clean serve is named at the strictest rung`)
   }
 })

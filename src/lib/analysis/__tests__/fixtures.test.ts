@@ -101,7 +101,7 @@ check('a rejected-clip fixture needs no keyframes', () => {
 
 heading('Fixture schema — malformed files')
 
-check('a file that is not an object is rejected', () => {
+check('a file that isn’t an object is rejected', () => {
   assert(validateFixtureSchema(null).length > 0, 'null accepted')
   assert(validateFixtureSchema('{}').length > 0, 'a string accepted')
   assert(validateFixtureSchema([good()]).length > 0, 'an array of fixtures accepted')
@@ -151,7 +151,7 @@ check('malformed structure is fatal, so the engine is never run on it', () => {
   const result = validateFixture(f)
   assert(!result.passed, 'a broken fixture passed')
   assert(result.error !== undefined, 'a broken fixture produced no error line')
-  assert(result.checks.length === 0, 'comparisons were reported against frames that do not exist')
+  assert(result.checks.length === 0, 'comparisons were reported against frames that don’t exist')
 })
 
 /* ------------------------------------------------------- unlabelled dumps */
@@ -167,7 +167,7 @@ check("the engine's own answers left attached are rejected", () => {
   raises({ ...good(), _engineRejection: 'no swing found' }, '_engineRejection', 'a leftover sidecar')
 })
 
-check('the draft the app exports cannot pass as ground truth', () => {
+check('the draft the app exports can’t pass as ground truth', () => {
   // End to end: whatever `src/dev/exportFixture.ts` hands the labeller must be
   // refused until they have done the labelling. If this ever goes green the
   // export and the validator have drifted apart and an app dump can pad the
@@ -198,7 +198,7 @@ const refuses = (what: string, fn: () => unknown) => {
   assert(/label/i.test(message ?? ''), `${what}: refused for the wrong reason — ${message}`)
 }
 
-check('a draft cannot be built without a description', () => {
+check('a draft can’t be built without a description', () => {
   // The placeholder used to be the default value of this field, so the commonest
   // way to produce an unlabelled fixture was to do nothing at all. Both drafts
   // are checked because the refusal path is one function and a caller that
@@ -256,7 +256,7 @@ check('the gaps list says everything the gate would say', () => {
   for (const issue of validateFixtureSchema(draft)) {
     assert(
       gaps.some((g) => g.includes(issue.problem)),
-      `the gate objects to ${issue.where} and the gaps list does not mention it`,
+      `the gate objects to ${issue.where} and the gaps list doesn’t mention it`,
     )
   }
   // The three the schema cannot see. A corrected keyframe looks exactly like an
@@ -354,7 +354,7 @@ check('provenance left behind by a deleted metric is rejected', () => {
 
 /* --------------------------------------------------- fixtures that cannot fail */
 
-heading('Fixture schema — fixtures that cannot fail')
+heading('Fixture schema — fixtures that can’t fail')
 
 check('a fixture expecting nothing is rejected', () => {
   // Real footage, real pose output, `expect` emptied. Instantly green, and one
@@ -365,7 +365,7 @@ check('a fixture expecting nothing is rejected', () => {
   raises(f, 'expect', 'a fixture with nothing expected of it')
 })
 
-check('a clip cannot be both refused and measured', () => {
+check('a clip can’t be both refused and measured', () => {
   const f = good()
   f.expect.rejected = true
   raises(f, 'expect', 'a fixture that is a serve and not a serve')
@@ -401,7 +401,7 @@ check('a fixture that only says which hand can still fail, and is allowed', () =
   )
 })
 
-check('a view on its own is not an expectation', () => {
+check('a view on its own isn’t an expectation', () => {
   // Nothing compares `view`; it only picks which metrics the pipeline is asked
   // for. So this one really cannot fail.
   const f = good()
@@ -421,7 +421,7 @@ check('a tolerance widened until nothing can fail is rejected', () => {
   raises(f, 'tolerance.contactSeconds', 'a wide-open contact allowance')
   raises(f, 'tolerance.degrees', 'a wide-open angle allowance')
   const result = validateFixture(f)
-  assert(!result.passed, 'a fixture that cannot fail passed')
+  assert(!result.passed, 'a fixture that can’t fail passed')
 })
 
 check('a tolerance a labeller could argue for is allowed', () => {
@@ -461,10 +461,10 @@ check('a labelling fault fails the fixture and says why', () => {
   f.expect.metrics = { contactHeight: 1.42 }
   const result = validateFixture(f)
   assert(!result.passed, 'an unattributed metric passed validateFixture')
-  assert(result.schema.length > 0, 'schema issues were not reported')
+  assert(result.schema.length > 0, 'schema issues weren’t reported')
   assert(
     result.issues.some((i) => i.what.startsWith('schema ')),
-    `schema faults did not reach the issue list: ${JSON.stringify(result.issues)}`,
+    `schema faults didn’t reach the issue list: ${JSON.stringify(result.issues)}`,
   )
 })
 
@@ -511,7 +511,7 @@ check('a fixture carrying the ball replays the two ball measurements', () => {
   note(`replayed: ${result.checks.map((c) => `${c.what} ${c.ok ? 'ok' : 'off'}`).join(', ')}`)
   for (const id of ['tossPeakHeight', 'contactBelowPeak']) {
     const seen = result.checks.find((c) => c.what === `metric ${id}`)
-    assert(Boolean(seen) && seen!.ok, `${id} did not replay: ${JSON.stringify(seen)}`)
+    assert(Boolean(seen) && seen!.ok, `${id} didn’t replay: ${JSON.stringify(seen)}`)
   }
 
   // And without the ball the same labels have nothing to be checked against,
@@ -520,11 +520,11 @@ check('a fixture carrying the ball replays the two ball measurements', () => {
   assert(!blind.passed, 'ball readings passed a replay that had no ball')
   assert(
     blind.issues.some((i) => i.actual === 'not produced'),
-    'a ball reading with no ball was not reported as missing',
+    'a ball reading with no ball wasn’t reported as missing',
   )
 })
 
-check('a ball that is not a flight is refused before the engine runs', () => {
+check('a ball that isn’t a flight is refused before the engine runs', () => {
   raises({ ...good(), ball: { samples: [] } }, 'ball', 'a ball with no fit')
   raises({ ...good(), ball: { ...tossedBall(buildServe({}, FPS), detectServe(buildServe({}, FPS), FPS), 1.7), confidence: Number.NaN } }, 'ball', 'a ball with no confidence')
 })
@@ -583,7 +583,7 @@ check('a part-full list fails', () => {
       Array.from({ length: n }, (_, i) => stub(`clip-${i}`)),
       6,
     )
-    assert(gate.level === 'fail', `${n} of 6 recorded fixtures did not fail the suite`)
+    assert(gate.level === 'fail', `${n} of 6 recorded fixtures didn’t fail the suite`)
     assert(gate.counted === n, `counted ${gate.counted}, expected ${n}`)
   }
 })
@@ -593,7 +593,7 @@ check('a full, spread list is quiet', () => {
   assert(gate.level === 'ok', `a full, spread fixture set reported ${gate.level}: ${gate.lines.join(' ')}`)
 })
 
-check('six clips of the same kind do not satisfy the gate', () => {
+check('six clips of the same kind don’t satisfy the gate', () => {
   // The state the gate's own fail message calls dangerous, reached by the
   // easiest route to six clips there is: one player, one hand, one frame rate,
   // one angle. The count alone used to be the whole test, so this returned `ok`
@@ -607,13 +607,13 @@ check('six clips of the same kind do not satisfy the gate', () => {
 
 check('each missing axis is named on its own', () => {
   const oneHand = spread().map((f) => ({ ...f, expect: { ...f.expect, handedness: 'right' as const } }))
-  assert(/handedness/.test(fixtureGate(oneHand, 6).lines.join(' ')), 'a one-handed set was not named as such')
+  assert(/handedness/.test(fixtureGate(oneHand, 6).lines.join(' ')), 'a one-handed set wasn’t named as such')
 
   const oneRate = spread().map((f) => ({ ...f, fps: 30 }))
-  assert(/frame rate/.test(fixtureGate(oneRate, 6).lines.join(' ')), 'a single-frame-rate set was not named')
+  assert(/frame rate/.test(fixtureGate(oneRate, 6).lines.join(' ')), 'a single-frame-rate set wasn’t named')
 
   const oneView = spread().map((f) => ({ ...f, expect: { ...f.expect, view: 'side' as const } }))
-  assert(/camera view/.test(fixtureGate(oneView, 6).lines.join(' ')), 'a single-angle set was not named')
+  assert(/camera view/.test(fixtureGate(oneView, 6).lines.join(' ')), 'a single-angle set wasn’t named')
 })
 
 check('an unlabelled clip is named, not counted towards the spread', () => {
@@ -625,7 +625,7 @@ check('an unlabelled clip is named, not counted towards the spread', () => {
   assert(gate.level === 'fail', 'an unlabelled fixture passed the spread check')
   assert(
     gate.lines.some((l) => l.includes(set[0].id)),
-    `the unlabelled fixture was not named: ${gate.lines.join(' ')}`,
+    `the unlabelled fixture wasn’t named: ${gate.lines.join(' ')}`,
   )
 })
 
@@ -645,7 +645,7 @@ check('a refusal clip is counted without being asked which hand it served with',
   assert(gate.counted === 7, `a refusal clip stopped counting towards the minimum: ${gate.counted}`)
 })
 
-check('a set of nothing but refusals is not a spread', () => {
+check('a set of nothing but refusals isn’t a spread', () => {
   // The other half of the same decision. Refusals count towards the minimum, so
   // six of them reach the spread check with no serve in the set at all — and
   // three lines about missing hands and views would read as a labelling problem
@@ -658,11 +658,11 @@ check('a set of nothing but refusals is not a spread', () => {
   assert(gate.level === 'fail', 'six clips of nobody serving satisfied the gate')
   assert(
     gate.lines.some((l) => /refusals/.test(l)),
-    `the gate did not say the set has no serves in it: ${gate.lines.join(' ')}`,
+    `the gate didn’t say the set has no serves in it: ${gate.lines.join(' ')}`,
   )
 })
 
-check('a synthetic fixture does not count towards the minimum', () => {
+check('a synthetic fixture doesn’t count towards the minimum', () => {
   // Otherwise the cheapest route to a quiet gate is six calls to the rig, and
   // the tally would say "validated against reality" about the rig validating
   // itself.
@@ -759,7 +759,7 @@ check('the only thing a fixture says about a person is what they typed', () => {
   assert(draft.label === 'Adult male, right handed, side-on, 30 fps, iPhone 13', 'the label was rewritten')
   assert(
     !/\d{4}-\d{2}-\d{2}T/.test(draft.label),
-    'a timestamp reached the label, which the labeller did not type',
+    'a timestamp reached the label, which the labeller didn’t type',
   )
   assert(
     (draft.notes ?? '').includes('Captured') && (draft.notes ?? '').includes('sampled at'),

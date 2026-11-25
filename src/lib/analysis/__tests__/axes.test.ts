@@ -93,7 +93,7 @@ check('the two gains are the legs of one unit vector at every angle', () => {
     within(lateral.gain, 0, 1, `lateral gain at ${yaw}°`)
     // Shares are a split of one reading, so they account for all of it and no
     // more. A pair that summed past 1 would be claiming two measurements.
-    near(depth.share + lateral.share, 1, 1e-12, `shares at ${yaw}° do not sum to 1`)
+    near(depth.share + lateral.share, 1, 1e-12, `shares at ${yaw}° don’t sum to 1`)
   }
 })
 
@@ -167,7 +167,7 @@ check('the doubt lands in the confidence, not in the value', () => {
 
   const steep = readImageX(rigImageX(0.05, 0, 78), 'depth', imageXSplit(78))
   near(steep.confidence, 0.96, 0.005, 'depth confidence at 78°')
-  assert(steep.confidence > shallow.confidence, 'a better angle did not buy more confidence')
+  assert(steep.confidence > shallow.confidence, 'a better angle didn’t buy more confidence')
 })
 
 check('an axis pointing at the lens is refused, not scaled up', () => {
@@ -183,7 +183,7 @@ check('an axis pointing at the lens is refused, not scaled up', () => {
   assert(kept.value !== null, 'depth was refused at 85°, where it is all image x carries')
 })
 
-check('a yaw that could not be measured refuses everything', () => {
+check('a yaw that couldn’t be measured refuses everything', () => {
   for (const bad of [Number.NaN, -1, 91, Number.POSITIVE_INFINITY]) {
     const split = imageXSplit(bad)
     assert(split.framing === 'unknown', `${bad} framed as ${split.framing}`)
@@ -247,7 +247,7 @@ check('a corner camera keeps both axes, a side-on one keeps only depth', () => {
   )
 })
 
-check('a shaky vertical costs the axis; a collapsed depth axis does not', () => {
+check('a shaky vertical costs the axis; a collapsed depth axis doesn’t', () => {
   /*
    * This used to assert that a reading inherits `Spatial.confidence` whole, and
    * pinned the wrong behaviour in place. That number is `rollCost × yawCost`,
@@ -351,7 +351,7 @@ check('a toss that wanders sideways is named sideways, and drilled that way', ()
   note(`face-on: "${focus!.title}" → ${focus!.drill.name}`)
 })
 
-check('the two do not swap', () => {
+check('the two don’t swap', () => {
   /*
    * The check that would have caught the original bug on its own, and the reason
    * it is worth having beside the two above: both of those could pass on an
@@ -441,7 +441,7 @@ check('a left-hander reads the same court', () => {
     const frames = mirrorFrames(buildServe({ cameraYaw: dial }, FPS), 1)
     const skel = detectServe(frames, FPS)
     const s = assessSpatial(frames, skel.keys.ready, skel.bodyHeight, skel)
-    assert(skel.racket === 'left', 'the mirrored serve was not read left-handed')
+    assert(skel.racket === 'left', 'the mirrored serve wasn’t read left-handed')
     within(s.court_yaw_deg, courtOfDial(dial) - 2, courtOfDial(dial) + 2, `left-handed at ${dial}°`)
   }
 })
@@ -456,7 +456,7 @@ check('a swing too short to point anywhere falls back to the stance', () => {
   assert(none.court_yaw_from === 'stance', 'with no swing handed over, the stance is all there is')
 })
 
-heading('A camera angle that could not be read, told apart from one that reads 45')
+heading('A camera angle that couldn’t be read, told apart from one that reads 45')
 
 check('the fallback yaw is labelled rather than left to look like a measurement', () => {
   /*
@@ -732,7 +732,7 @@ check('side-on, the stance stands well clear of its own noise', () => {
   )
 })
 
-check('the noise floor does not move with the camera', () => {
+check('the noise floor doesn’t move with the camera', () => {
   /*
    * Jitter is a fraction of the frame and has nothing to do with where the
    * camera stands — which used to be the whole problem and is now why the ratio
@@ -829,7 +829,7 @@ check('even the loosest framing the app accepts barely reaches the doubles court
   )
   assert(
     frameWidthM > COURT_SINGLES_WIDTH_M,
-    'the loosest framing does not even reach the singles court, which makes the refusal stronger than stated',
+    'the loosest framing doesn’t even reach the singles court, which makes the refusal stronger than stated',
   )
 })
 

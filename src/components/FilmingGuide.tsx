@@ -143,7 +143,7 @@ export default function FilmingGuide({ racket = 'right' }: { racket?: 'left' | '
       </div>
 
       <p className="guide-note">
-        Filming from the front or back still works, but I cannot see how far in front of you the ball is hit.
+        Filming from the front or back still works, but I can’t see how far in front of you the ball is hit.
       </p>
 
       <details className="guide-model" onToggle={(e) => setWatching((e.currentTarget as HTMLDetailsElement).open)}>

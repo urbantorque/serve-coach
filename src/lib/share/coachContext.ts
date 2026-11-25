@@ -33,7 +33,7 @@ export const CANNOT_SEE = [
   'Where the ball landed, unless the player said so.',
   "The racket face and the spin. The racket is estimated from the hand, not tracked.",
   'Anything about pain or injury beyond the positions it reads off the body.',
-  'Speed is an estimate from the video and has not been checked against a radar.',
+  'Speed is an estimate from the video and hasn’t been checked against a radar.',
 ]
 
 const bare = (s: string) => s.replace(/\*\*/g, '')

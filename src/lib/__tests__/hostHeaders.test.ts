@@ -19,14 +19,14 @@ check('the parser reads paths, headers and comments the way the host does', () =
   const r = parseHeaders('# a note\n/*\n  A: 1\n  # an aside\n/x/*\n  B: two: parts\n')
   assert(r.length === 2 && r[0].pattern === '/*' && r[0].headers[0][0] === 'A' && r[1].headers[0][1] === 'two: parts', JSON.stringify(r))
   assert(patternMatches('/assets/*', '/assets/a/b.js') && !patternMatches('/assets/*', '/models/a.task'), 'a splat matched the wrong path')
-  assert(patternMatches('/index.html', '/index.html') && !patternMatches('/index.html', '/index.htm'), 'an exact path did not hold')
+  assert(patternMatches('/index.html', '/index.html') && !patternMatches('/index.html', '/index.htm'), 'an exact path didn’t hold')
 })
 
 check('every page loads only from its own origin', () => {
   note(csp)
-  assert(cspSources(csp, 'default-src')?.join(' ') === "'self'", 'the default is not the own origin')
+  assert(cspSources(csp, 'default-src')?.join(' ') === "'self'", 'the default isn’t the own origin')
   const script = cspSources(csp, 'script-src') ?? []
-  assert(script.includes("'self'") && script.includes("'wasm-unsafe-eval'"), 'the pose models could not compile')
+  assert(script.includes("'self'") && script.includes("'wasm-unsafe-eval'"), 'the pose models couldn’t compile')
   assert(!script.includes("'unsafe-eval'") && !script.includes("'unsafe-inline'"), 'scripts may be evaluated or inlined')
   for (const d of ['connect-src', 'img-src', 'media-src', 'font-src', 'worker-src', 'style-src']) {
     const remote = (cspSources(csp, d) ?? []).filter((s) => /^(https?:|\*|\w+\.\w)/.test(s))
@@ -42,7 +42,7 @@ check('the camera is the one device feature a page may ask for', () => {
 })
 
 check('hashed files are kept, the page and the service worker always asked for', () => {
-  assert(/immutable/.test(headersFor(rules, '/assets/index-abc123.js')['Cache-Control'] ?? ''), 'built files are not kept')
+  assert(/immutable/.test(headersFor(rules, '/assets/index-abc123.js')['Cache-Control'] ?? ''), 'built files aren’t kept')
   assert(headersFor(rules, '/index.html')['Cache-Control'] === 'no-cache', 'the page is kept, so an update never arrives')
   assert(headersFor(rules, '/sw.js')['Cache-Control'] === 'no-cache', 'the service worker is kept')
   assert(!/immutable/.test(headersFor(rules, '/models/pose_landmarker_full.task')['Cache-Control'] ?? ''), 'a model that keeps its name is kept forever')

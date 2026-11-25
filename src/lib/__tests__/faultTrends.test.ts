@@ -34,16 +34,16 @@ check('a fault named on the older serves and not the newer reads as fewer, with 
   assert(tray!.named === 5 && tray!.judged === 10, `the tray counted ${tray!.named} of ${tray!.judged}`)
   assert(tray!.direction === 'fewer', `a fault that stopped being named read as ${tray!.direction}`)
   const ladder = progressionFor('waiters_tray')!
-  assert(tray!.step?.at === 2 && tray!.step.of === ladder.steps.length, 'the step the player is on was not carried')
+  assert(tray!.step?.at === 2 && tray!.step.of === ladder.steps.length, 'the step the player is on wasn’t carried')
 })
 
 check('the same fault getting worse reads as more, and a clean history has nothing to list', () => {
   const worse = [...Array.from({ length: 5 }, (_, i) => at(CLEAN, i)), ...Array.from({ length: 5 }, (_, i) => at(FAULTY, 5 + i))]
-  assert(faultTrends(worse).find((t) => t.flaw === 'waiters_tray')?.direction === 'more', 'a fault that began was not "more"')
+  assert(faultTrends(worse).find((t) => t.flaw === 'waiters_tray')?.direction === 'more', 'a fault that began wasn’t "more"')
   assert(faultTrends(Array.from({ length: 6 }, (_, i) => at(CLEAN, i))).length === 0, 'a clean history listed a fault')
 })
 
-check(`only the last ${FAULT_WINDOW} serves count, and a refused clip is not a clean one`, () => {
+check(`only the last ${FAULT_WINDOW} serves count, and a refused clip isn’t a clean one`, () => {
   const old = Array.from({ length: 20 }, (_, i) => at(FAULTY, i))
   const recent = Array.from({ length: FAULT_WINDOW }, (_, i) => at(CLEAN, 20 + i))
   assert(!faultTrends([...old, ...recent]).some((t) => t.flaw === 'waiters_tray'), 'serves outside the window were counted')

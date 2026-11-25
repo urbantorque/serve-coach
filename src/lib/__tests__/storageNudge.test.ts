@@ -37,9 +37,9 @@ check('Safari on iOS, after the first save, is told the way across', () => {
   const at = (o: Partial<Parameters<typeof storageNudge>[0]>) =>
     storageNudge({ ios: true, installed: false, loaded: true, filed: filed(1), now: NOW, ...o })
   assert(at({}) === 'move', 'the first save in Safari said nothing')
-  assert(at({ filed: [] }) === undefined, 'asked to move a history that does not exist yet')
+  assert(at({ filed: [] }) === undefined, 'asked to move a history that doesn’t exist yet')
   assert(at({ loaded: false }) === undefined, 'spoke before the history had loaded')
-  assert(at({ quietedAt: NOW - DAY }) === undefined, '"Not now" did not quiet it')
+  assert(at({ quietedAt: NOW - DAY }) === undefined, '"Not now" didn’t quiet it')
   assert(at({ quietedAt: NOW - MOVE_QUIET_MS }) === 'move', 'quieted for good rather than for a few days')
   assert(at({ installed: true }) === undefined, 'an installed app was told to install')
 })
@@ -108,7 +108,7 @@ check('a browser that refused to keep anything, with no file in a long while, is
 
 check('iOS not installed still earns its line, whatever the copy says', () => {
   const nudge = storageNudge({ ios: true, installed: false, loaded: true, filed: filed(3), snapshotAt: NOW, persisted: false, now: NOW })
-  assert(nudge === 'move', 'a safety copy silenced the one risk it cannot cover')
+  assert(nudge === 'move', 'a safety copy silenced the one risk it can’t cover')
 })
 
 check('every line is quiet and in the voice', () => {

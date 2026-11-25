@@ -38,7 +38,7 @@ await check('off by default, and asked for without support, the main thread read
     const { calls, landmarker } = fake()
     const detect = await poseDetector(landmarker, env)
     await detect({} as never, 50)
-    assert(calls.join() === '50', `${JSON.stringify(env)} did not read on the main thread`)
+    assert(calls.join() === '50', `${JSON.stringify(env)} didn’t read on the main thread`)
   }
 })
 
