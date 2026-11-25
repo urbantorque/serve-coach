@@ -6,7 +6,6 @@
  * Driven with fake streaming fetches and a fake clock, so nothing here
  * touches the network or waits in real time.
  */
-import { DEFAULTS } from '../storage/prefs'
 // @ts-expect-error - node's fs, and this project carries no @types/node
 import fsUntyped from 'fs'
 // @ts-expect-error - node's path, same
@@ -24,7 +23,7 @@ import {
 } from '../engineDownload'
 import { ENGINE_FILES, ENGINE_MANIFEST, engineBytes, engineMegabytes } from '../engineManifest'
 import { loadEngine } from '../pose/poseEngine'
-import Home from '../../screens/Home'
+import WarmupNote from '../../components/WarmupNote'
 import { OfflineRow } from '../../components/AppSheets'
 import type { OfflineWarmup } from '../../components/useOfflineWarmup'
 import { assert, check, heading, note, report } from '../analysis/__tests__/harness'
@@ -246,9 +245,8 @@ check('settings says the size, the bar in megabytes, and the warning before the 
   assert(row(false, { stage: 'failed', stalled: true }).includes('The download stopped. Try again'), 'a stall reads as a refusal')
   assert(row(false, undefined, 'cellular').includes('wait for Wi-Fi'), 'no warning on mobile data')
   assert(row(true).includes('Ready to use with no signal'), 'a downloaded coach doesn’t say so')
-  const first = renderToStaticMarkup(
-    createElement(Home, { sessions: [], offlineReady: false, sessionsLoaded: true, prefs: DEFAULTS, onPrefs: noop, onFilm: noop, onOpen: noop, onShowHistory: noop, onShowSettings: noop, onShowProgress: noop, onShowExample: noop }),
-  )
+  // The landing's line, its own chunk since 2026-11-25.
+  const first = renderToStaticMarkup(createElement(WarmupNote, { ready: false, onGetReady: noop }))
   assert(first.includes('needs a one-time download of 57\u00a0MB'), 'a new player isn’t told the size before the first serve')
 })
 

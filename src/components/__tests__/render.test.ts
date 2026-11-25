@@ -42,6 +42,8 @@ import { ScoreRibbon } from '../ProgressCharts'
 import type { TripPoint } from '../../lib/progress'
 import Glance from '../../screens/Glance'
 import Home from '../../screens/Home'
+import WarmupNote from '../WarmupNote'
+import type { OfflineWarmup } from '../useOfflineWarmup'
 import TabBar from '../TabBar'
 import FirstRunTop from '../FirstRunChrome'
 import Progress from '../../screens/Progress'
@@ -992,25 +994,19 @@ check('Today is easier to get around: Upload at the top, plain numbers, one note
 })
 
 check('the first run says the download with its size, only while it is needed (N3.7, lift)', () => {
-  const first = (offlineReady?: boolean) =>
-    html(
-      createElement(Home, {
-        sessions: [],
-        offlineReady,
-        sessionsLoaded: true,
-        prefs: DEFAULTS,
-        onPrefs: noop,
-        onFilm: noop,
-        onOpen: noop,
-        onShowHistory: noop,
-        onShowSettings: noop,
-        onShowProgress: noop,
-        onShowExample: noop,
-      }),
-    )
+  // The landing's line is its own chunk (WarmupNote, 2026-11-25), rendered here directly.
+  const first = (ready?: boolean, warming?: OfflineWarmup) =>
+    html(createElement(WarmupNote, { ready, warming, onGetReady: noop }))
   assert(/needs a one-time download of \d+\u00a0MB/.test(first(false)), 'the download wasn’t said with its size')
   assert(!first(true).includes('one-time download'), 'said a download already stored')
   assert(!first(undefined).includes('one-time download'), 'said a download before the cache answered')
+  // The download is one tap from the landing, and the line follows it through.
+  assert(first(false).includes('Download it now'), 'the landing doesn’t offer the download')
+  const running = first(false, { stage: 'downloading', ratio: 0.4, loadedMb: 23, totalMb: 57 })
+  assert(running.includes('Downloading the coach: 23 of 57\u00a0MB.') && !running.includes('Download it now'), 'the progress isn’t said, or the button stayed')
+  assert(first(false, { stage: 'failed', stalled: true }).includes('Try again'), 'a stopped download has no way to retry')
+  assert(first(true).includes('works with no signal'), 'a downloaded coach doesn’t say so')
+  assert(!first(true).includes('Download it now'), 'a downloaded coach was offered again')
 })
 
 check('the history groups serves by trip, newest first, each with its typical score (N3.5)', () => {

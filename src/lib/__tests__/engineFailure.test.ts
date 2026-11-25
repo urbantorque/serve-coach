@@ -9,6 +9,7 @@ import { renderToStaticMarkup } from 'react-dom/server.browser'
 import { DownloadStalled, EngineLoadError, engineFailureOf } from '../engineDownload'
 import { hintsOf } from '../analysis/types'
 import Home from '../../screens/Home'
+import WarmupNote from '../../components/WarmupNote'
 import { assert, check, heading, note, report } from '../analysis/__tests__/harness'
 
 /** The generic screen's advice, for a file the decoder refused. */
@@ -62,7 +63,8 @@ check('the first run says the download only while there is one to make', () => {
         onShowExample: noop,
       }),
     )
-    return html.slice(html.indexOf('first-foot'))
+    // The download line itself is its own chunk (WarmupNote, 2026-11-25), so it's rendered beside the foot.
+    return html.slice(html.indexOf('first-foot')) + renderToStaticMarkup(createElement(WarmupNote, { ready: offlineReady }))
   }
   assert(!foot(true).includes('one-time download'), 'a downloaded coach was offered again')
   assert(foot(false).includes('one-time download'), 'the download isn’t said before it happens')

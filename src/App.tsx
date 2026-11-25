@@ -723,6 +723,8 @@ export default function App() {
               onPrefs={(patch) => setPrefs(writePrefs(patch))}
               sessionsLoaded={sessionsLoaded}
               offlineReady={offlineReady}
+              warming={warming}
+              onGetReady={() => void makeOffline()}
               interrupted={interrupted ? interruptedLine() : undefined}
               nudge={storageNudge({
                 ios: isIOS(),

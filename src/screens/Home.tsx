@@ -1,6 +1,5 @@
 import { Suspense, lazy, useCallback, useMemo, useState } from 'react'
 import { Icon, Sheet } from '../components/primitives'
-import { engineMegabytes } from '../lib/engineManifest'
 import { NUDGE_COPY, type StorageNudge } from '../lib/storage/nudge'
 import { sessionEvidence } from '../lib/session/evidence'
 import { buildProgress, streakLine, deltaStatus, sixWeekMilestone } from '../lib/progress'
@@ -11,7 +10,8 @@ import { LANDING_PEEK } from '../lib/samplePeek'
 import { practiceHeadline, type PracticeFocus } from '../lib/practice'
 import { faultForMetric, filmable } from '../lib/analysis/progressions'
 import { fastestServe } from '../lib/speedTrend'
-import { NBSP, defaultSpeedUnit, speedFigures } from '../lib/speedCopy'
+import { defaultSpeedUnit, speedFigures } from '../lib/speedCopy'
+import type { OfflineWarmup } from '../components/useOfflineWarmup'
 import type { ServeTag, Session } from '../lib/storage/db'
 import { tagsById } from '../lib/storage/db'
 import type { TripRecord } from '../lib/storage/ledger'
@@ -29,6 +29,7 @@ const FirstRunTop = lazy(() => import('../components/FirstRunChrome'))
 const TOP_ROOM = { minHeight: 44 } as const
 /** Only wanted once the top buttons scroll away: kept out of the entry chunk. */
 const StickyFilmBar = lazy(() => import('../components/StickyFilmBar'))
+const WarmupNote = lazy(() => import('../components/WarmupNote'))
 
 /** The sticky bar's height and margin, kept clear at the foot of the landing. */
 const BAR_ROOM = { height: 84 } as const
@@ -88,6 +89,9 @@ interface Props {
   onShowPage?: (page: InfoPageId) => void
   /** `undefined` while the cache is still being asked. */
   offlineReady: boolean | undefined
+  /** The one-time download under way, and the tap that starts it from the landing. */
+  warming?: OfflineWarmup
+  onGetReady?: () => void
   /** The last analysis the page did not live to finish, said once (L6.4). */
   interrupted?: string
   /** Where the history lives, when there is something to say about it (L6.5). */
@@ -133,6 +137,8 @@ export default function Home({
   onUpload,
   onShowPage,
   offlineReady,
+  warming,
+  onGetReady,
   interrupted,
   nudge,
   onExportBackup,
@@ -256,7 +262,9 @@ export default function Home({
         </div>
         <p className="first-foot">
           Your video never leaves this {deviceNoun()}.
-          {offlineReady === false ? ` Your first serve needs a one-time download of ${engineMegabytes()}${NBSP}MB.` : ''}
+          <Suspense fallback={null}>
+            <WarmupNote ready={offlineReady} warming={warming} onGetReady={onGetReady} />
+          </Suspense>
         </p>
         {storage}
       </div>
