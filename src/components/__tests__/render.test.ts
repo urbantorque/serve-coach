@@ -490,7 +490,9 @@ check('the report answers on its first screen, then the plan, the serve, and one
   for (let i = 1; i < order.length; i++) {
     assert(at(order[i - 1][1]) < at(order[i][1]), `${order[i - 1][0]} comes after ${order[i][0]}`)
   }
-  const fold = out.slice(at('<details class="report-more"'), out.indexOf('</details>', at('<details class="report-more"')))
+  // The breakdown's own fold, found by its name: on a phone the whole-serve player folds above it (2026-11-25).
+  const start = out.lastIndexOf('<details class="report-more"', at('Everything I measured'))
+  const fold = out.slice(start, out.indexOf('</details>', start))
   for (const [what, marker] of order.slice(7)) assert(fold.includes(marker), `${what} is outside the fold`)
   assert(!/<details class="report-more"[^>]*open/.test(out), 'the fold starts open')
   // One way forward at the end, and sharing is one button at the top.

@@ -1,4 +1,4 @@
-import { Fragment, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import '../styles/blocks.css'
 import '../styles/depth.css'
 import '../styles/fundamentals.css'
@@ -263,6 +263,8 @@ export default function Report({
 }: Props) {
   const playerRef = useRef<HTMLDivElement>(null)
   const [seek, setSeek] = useState<{ phase: PhaseId; n: number }>()
+  // The phone's whole-serve player sits in a fold (2026-11-25); a phase tapped below opens it.
+  const [watchOpen, setWatchOpen] = useState(false)
   /** The last fixture saved from this report, and what it is still missing. */
   const [saved, setSaved] = useState<{ file: string; gaps: string[] }>()
   const [pickingLevel, setPickingLevel] = useState(false)
@@ -362,9 +364,49 @@ export default function Report({
 
   const goToPhase = (phase: PhaseId) => {
     setSeek((prev) => ({ phase, n: (prev?.n ?? 0) + 1 }))
+    setWatchOpen(true)
     const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-    playerRef.current?.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'center' })
+    // A frame later, so a fold that just opened has a height to scroll to.
+    requestAnimationFrame(() => playerRef.current?.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'center' }))
   }
+
+  /*
+   * The whole serve, to play and scrub. On a laptop it's the studio's main
+   * picture. On a phone it was the report's third moving figure, after the
+   * replay at the top and the side-by-side, and most of a screen tall: it's
+   * one line now, opened on a tap (2026-11-25).
+   */
+  const watchBlock = (body: ReactNode) =>
+    studio ? (
+      <section className="watch" aria-labelledby="watch-title">
+        <h2 className="t-headline" id="watch-title">
+          Watch your serve
+        </h2>
+        <div className="watch" ref={playerRef}>
+          {body}
+        </div>
+      </section>
+    ) : (
+      <details className="report-more" open={watchOpen} onToggle={(e) => setWatchOpen((e.currentTarget as HTMLDetailsElement).open)}>
+        <summary className="report-more-head">
+          <span>Watch your whole serve</span>
+          <Icon name="chevron" size={18} />
+        </summary>
+        <div className="watch report-more-body" ref={playerRef}>
+          {body}
+        </div>
+      </details>
+    )
+
+  // The words a club player is least likely to know, defined on a tap.
+  const termsRow = (
+    <p className="terms-row">
+      <span>Tap a word to see what it means:</span>
+      <Term id="trophy" />
+      <Term id="racketDrop" />
+      <Term id="score" />
+    </p>
+  )
 
   const refusal = refusalFor(analysis.triage)
   const injuries = injuryNotes(analysis.triage)
@@ -485,7 +527,7 @@ export default function Report({
           <p className="hero-speed-range">
             <Term id="likelyRange">Likely</Term> {figures.low} to {figures.high}
             {NBSP}
-            {figures.unit}. No radar has checked it.
+            {figures.unit}.
           </p>
         </section>
       )}
@@ -514,7 +556,7 @@ export default function Report({
           <p className="hero-tally-range">
             <Term id="likelyRange">Likely</Term> {figures.low} to {figures.high}
             {NBSP}
-            {figures.unit}. No radar has checked it.
+            {figures.unit}.
           </p>
         </section>
       )}
@@ -882,11 +924,9 @@ export default function Report({
         />
       )}
 
-      {live && (
-        <section className="watch" ref={playerRef} aria-labelledby="watch-title">
-          <h2 className="t-headline" id="watch-title">
-            Watch your serve
-          </h2>
+      {live &&
+        watchBlock(
+          <>
           <PosePlayer
             videoUrl={videoUrl!}
             analysis={analysis as Analysis}
@@ -903,14 +943,13 @@ export default function Report({
                 : 'The dashed outline is your last serve, lined up at the moment you hit the ball.'}
             </p>
           )}
-        </section>
-      )}
+          </>,
+        )}
 
-      {!live && kept && (
-        <section className="watch" aria-labelledby="watch-title">
-          <h2 className="t-headline" id="watch-title">
-            Watch your serve
-          </h2>
+      {!live &&
+        kept &&
+        watchBlock(
+          <>
           <KeptVideo
             url={kept.url}
             phases={analysis.phases}
@@ -926,14 +965,15 @@ export default function Report({
             racket={analysis.handedness}
           />
           <p className="player-note">This video is saved on this {deviceNoun()}. It’s deleted with this report, or sooner if space runs short.</p>
-        </section>
-      )}
+          </>,
+        )}
 
-      {!live && !kept && replay && analysis.track && (
-        <section className="watch" aria-labelledby="watch-title">
-          <h2 className="t-headline" id="watch-title">
-            Watch your serve
-          </h2>
+      {!live &&
+        !kept &&
+        replay &&
+        analysis.track &&
+        watchBlock(
+          <>
           <TrackPlayer
             track={analysis.track}
             replay={replay}
@@ -953,8 +993,8 @@ export default function Report({
                 : ' The dashed outline is your last serve, lined up at the moment you hit the ball.'
               : ''}
           </p>
-        </section>
-      )}
+          </>,
+        )}
 
       {example && !besideModel && (
         <section className="watch" aria-labelledby="model-title">
@@ -1053,13 +1093,8 @@ export default function Report({
         </details>
       )}
 
-      {/* The two moment names a club player is least likely to know, defined on a tap. */}
-      <p className="terms-row">
-        <span>Tap a word to see what it means:</span>
-        <Term id="trophy" />
-        <Term id="racketDrop" />
-        <Term id="score" />
-      </p>
+      {/* The glossary sits at the top of the breakdown; without one, here. */}
+      {!fullRead && termsRow}
 
       {fullRead ? (
         <details className="report-more" open={moreOpen} onToggle={(e) => setMoreOpen((e.currentTarget as HTMLDetailsElement).open)}>
@@ -1068,6 +1103,7 @@ export default function Report({
             <Icon name="chevron" size={18} />
           </summary>
           <div className="report-more-body">
+            {termsRow}
             {analysis.speed && 'miss' in analysis.speed && (
               <section className="speed-why" aria-label="Serve speed">
                 <h2 className="block-title">Serve speed</h2>
