@@ -414,21 +414,6 @@
   gap: 18px;
 }
 
-.glance-more > summary {
-  display: flex;
-  align-items: center;
-  min-height: 44px;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--fg-muted);
-  cursor: pointer;
-  list-style: none;
-}
-
-.glance-more > summary::-webkit-details-marker {
-  display: none;
-}
-
 /* On court the screen reads top to bottom, tight enough to fit a phone whole. */
 .glance--court {
   gap: 12px;

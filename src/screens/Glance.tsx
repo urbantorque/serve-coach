@@ -6,10 +6,6 @@ import type { FaultMove, RotationMove } from '../lib/analysis/carryForward'
 import { SERVE_OUTCOMES, type ServeOutcome } from '../lib/storage/db'
 import type { Analysis } from '../lib/analysis/types'
 import { OUTCOME_LABEL, SERVE_NUMBER_LABEL, serveTagSummary } from '../lib/serveTagCopy'
-
-/** The tag fold's line: a link, without the browser's triangle. */
-/** An invisible copy of the Stay here chip, holding the row's height once the countdown stops. */
-const HOLD_SPACE = { visibility: 'hidden' } as const
 import { hasLocalVoice, onVoicesChanged, speakLocally, stopSpeaking } from '../lib/speech'
 import { scoreMoveCaption, scoreMoveWords, type ScoreMove } from '../lib/progress'
 import { canMoveUp, tripCheckLine, tripDrillCheck } from '../lib/tripCheck'
@@ -22,8 +18,11 @@ import TermCue from '../components/TermCue'
 import type { Session } from '../lib/storage/db'
 import { readPrefs } from '../lib/storage/prefs'
 import { onCourtDefault } from '../lib/framing/handsFree'
-import { defaultSpeedUnit, speedFigures, speedGlanceLine, speedSpokenLine } from '../lib/speedCopy'
+import { defaultSpeedUnit, speedFigures, speedGlanceLine, speedRangeLine, speedSpokenLine } from '../lib/speedCopy'
 import '../styles/court.css'
+
+/** An invisible copy of the Stay here chip, holding the row's height once the countdown stops. */
+const HOLD_SPACE = { visibility: 'hidden' } as const
 
 /**
  * Seconds before the glance hands back to the viewfinder on its own, with
@@ -344,9 +343,7 @@ export default function Glance({
                 </p>
               </div>
               {reading && (
-                <p className="court-readout-note">
-                  {speedGlanceLine(reading)} Not checked against a radar.
-                </p>
+                <p className="court-readout-note">{speedRangeLine(reading)}</p>
               )}
               {scoreMove && <p className="court-readout-note">{sentence(scoreMoveWords(scoreMove))}.</p>}
               <p className="court-readout-line">
@@ -439,7 +436,7 @@ export default function Glance({
             <div className="glance-move glance-check" role="status">
               <Icon name={tripCheck.outcome === 'passed' ? 'check' : 'info'} size={15} />
               <span>
-                <strong>{tripCheck.step}</strong> · <Cue text={tripCheckLine(tripCheck)} />
+                <strong>Drill: {tripCheck.step}</strong> · <Cue text={tripCheckLine(tripCheck)} />
               </span>
               {canMoveUp(tripCheck) && onLadderStep && (
                 <button
@@ -584,6 +581,22 @@ export default function Glance({
             </div>
           </div>
         )}
+        {/* Inside the fold since 2026-11-25: a set counts the landing taps
+            above it, and as its own line under the fold it was one more thing
+            to read between serves. */}
+        {onTagOutcome && onStartSet && !set?.running && (
+          <div className="glance-actions">
+            <span className="t-overline">Count how many of your next 10 go in</span>
+            <div className="reading-chips">
+              {([1, 2] as const).map((n) => (
+                <button key={n} className="chip chip--button" onClick={() => onStartSet(n)}>
+                  {n === 1 ? 'First serves' : 'Second serves'}
+                  {bestSets?.[n] !== undefined && <span className="chip-note">· best {bestSets[n]} of 10</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         </details>
       )}
 
@@ -607,19 +620,6 @@ export default function Glance({
             </div>
           )}
         </div>
-      )}
-      {onTagOutcome && onStartSet && !set?.running && !refusal && (
-        <details className="glance-more">
-          <summary>Start a set of 10 serves</summary>
-          <div className="reading-chips">
-            {([1, 2] as const).map((n) => (
-              <button key={n} className="chip chip--button" onClick={() => onStartSet(n)}>
-                {n === 1 ? 'First serves' : 'Second serves'}
-                {bestSets?.[n] !== undefined && <span className="chip-note">· best {bestSets[n]}</span>}
-              </button>
-            ))}
-          </div>
-        </details>
       )}
 
       <footer className="glance-actions">

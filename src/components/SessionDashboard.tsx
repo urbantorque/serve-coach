@@ -165,7 +165,7 @@ export default function SessionDashboard({ session, previous, videoUrl, onPickAg
           <div className="glance-move glance-check" role="status">
             <Icon name={check.outcome === 'passed' ? 'check' : 'info'} size={15} />
             <span>
-              <strong>{check.step}</strong> · {tripCheckLine(check, 'practice')}
+              <strong>Drill: {check.step}</strong> · {tripCheckLine(check, 'practice')}
             </span>
             {canMoveUp(check) && onLadderStep && (
               <button type="button" className="btn btn--primary glance-check-move" onClick={() => onLadderStep(check.flaw, check.rung + 1, check.rung)}>

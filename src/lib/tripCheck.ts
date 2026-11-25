@@ -72,12 +72,16 @@ export const canMoveUp = (c: TripCheck): boolean => c.outcome === 'passed' && c.
 /** The glance's line for it, in the copy rules' voice: counts, never readings. */
 export function tripCheckLine(c: TripCheck, where: 'trip' | 'practice' = 'trip'): string {
   const scope = where === 'trip' ? 'today' : 'in this practice'
-  if (c.outcome === 'passed') {
-    return canMoveUp(c)
-      ? `${c.clean} of ${c.read} serves ${scope} came back without this fault. You’ve passed this step.`
-      : `${c.clean} of ${c.read} serves ${scope} came back without this fault, on the last step of this drill.`
-  }
-  if (c.outcome === 'not_yet') return `${c.clean} of ${c.read} serves ${scope} came back without this fault. Stay on this step for now.`
+  const gone = `Fault gone on ${c.clean} of ${c.read} serves ${scope}.`
+  if (c.outcome === 'passed') return canMoveUp(c) ? `${gone} You’ve passed this step.` : `${gone} You’ve passed the last step of this drill.`
+  if (c.outcome === 'not_yet') return `${gone} Stay on this step for now.`
+  /*
+   * Still counting (2026-11-25). It said "0 of 1 serves today without this
+   * fault so far. Film 5 more to check this step": two counts to work out
+   * between serves. Now it says what's left, and the tally only once there is
+   * something to count.
+   */
   const left = CHECK_SERVES - c.read
-  return `${c.clean} of ${c.read} serves ${scope} without this fault so far. Film ${left} more to check this step.`
+  const more = `Film ${left} more ${left === 1 ? 'serve' : 'serves'} and I’ll tell you if you’ve passed this step.`
+  return c.clean > 0 ? `Fault gone on ${c.clean} of ${c.read} so far. ${more}` : more
 }

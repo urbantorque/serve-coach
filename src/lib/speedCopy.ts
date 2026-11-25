@@ -83,6 +83,16 @@ export function speedSpokenLine(f: Pick<SpeedFigures, 'best'>, unit: SpeedUnit):
  */
 export const NBSP = '\u00a0'
 
+/**
+ * The line under the court screen's big figure (2026-11-25): the figure is
+ * already on screen, so only the range is said. The radar caveat lives on the
+ * report, Progress and the info page; between serves it was a third clause to
+ * read.
+ */
+export function speedRangeLine(f: Pick<SpeedFigures, 'low' | 'high' | 'unit'>): string {
+  return `Likely ${f.low} to ${f.high}${NBSP}${f.unit}.`
+}
+
 /** The glance's line for a reading. */
 export function speedGlanceLine(f: SpeedFigures): string {
   return `About ${f.best}${NBSP}${f.unit} off the racket, likely ${f.low} to ${f.high}.`

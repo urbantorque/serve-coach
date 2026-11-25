@@ -137,16 +137,16 @@ heading('On the glance')
 check('the glance offers a set, runs one, and says how it finished', () => {
   const props = { analysis: sampleAnalysis(), onOpenReport: () => {}, onBack: () => {}, onTagOutcome: () => {} }
   const offer = renderToStaticMarkup(createElement(Glance, { ...props, onStartSet: () => {} }))
-  assert(offer.includes('Start a set of 10') && offer.includes('First serves') && offer.includes('Second serves'), 'no offer')
+  assert(offer.includes('Count how many of your next 10 go in') && offer.includes('First serves') && offer.includes('Second serves'), 'no offer')
   const running = renderToStaticMarkup(
     createElement(Glance, { ...props, onStartSet: () => {}, onStopSet: () => {}, set: { line: 'Set of first serves: 3 in of 4. Aim: 7 of 10.', running: true } }),
   )
   assert(running.includes('3 in of 4') && running.includes('Stop this set'), 'the running set wasn’t shown')
-  assert(!running.includes('Start a set of 10'), 'a second set was offered while one runs')
+  assert(!running.includes('Count how many of your next 10 go in'), 'a second set was offered while one runs')
   const done = renderToStaticMarkup(
     createElement(Glance, { ...props, onStartSet: () => {}, set: { line: 'Set of 10 first serves: 8 in.', running: false } }),
   )
-  assert(done.includes('8 in.') && done.includes('Start a set of 10'), 'a finished set didn’t offer the next')
+  assert(done.includes('8 in.') && done.includes('Count how many of your next 10 go in'), 'a finished set didn’t offer the next')
   const untagged = renderToStaticMarkup(createElement(Glance, { ...props, onTagOutcome: undefined, onStartSet: () => {} }))
   assert(!untagged.includes('Start a set'), 'a set was offered where landings can’t be tapped')
 })

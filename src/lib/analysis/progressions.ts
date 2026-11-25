@@ -512,10 +512,10 @@ export function checkDrill(
 /** The line a check earns on the report, in the copy rules' voice. */
 export function drillCheckLine(check: DrillCheck): string {
   if (check.outcome === 'passed') {
-    return `${check.clean} of ${check.read} serves in that basket came back without this fault, so you have passed this step.`
+    return `Fault gone on ${check.clean} of ${check.read} serves in that video. You’ve passed this step.`
   }
   if (check.outcome === 'not_yet') {
-    return `${check.clean} of ${check.read} serves in that basket came back without this fault. Stay on this step for now.`
+    return `Fault gone on ${check.clean} of ${check.read} serves in that video. Stay on this step for now.`
   }
   return `I could judge only ${check.read} of those serves for this fault. Film a few more to check the step.`
 }

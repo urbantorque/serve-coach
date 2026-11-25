@@ -1,5 +1,5 @@
 /**
- * Sets from the player's own taps (L3.7): "Start a set of 10" on the glance,
+ * Sets from the player's own taps (L3.7): "Count how many of your next 10 go in" in the glance's tag fold,
  * aimed at their own in-rate plus one, first and second serves kept apart, and
  * the best set kept as a record.
  *

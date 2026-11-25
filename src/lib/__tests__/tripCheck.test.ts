@@ -81,7 +81,7 @@ check('too few judged serves asks for more, by how many', () => {
   const serves = [...lastWeek(), ...today(['c', 'c', 'c'])]
   const c = tripDrillCheck(serves, serves[serves.length - 1])!
   assert(c.outcome === 'unread', `outcome ${c.outcome}`)
-  assert(tripCheckLine(c).includes(`Film ${CHECK_SERVES - 3} more`), tripCheckLine(c))
+  assert(tripCheckLine(c).includes(`Film ${CHECK_SERVES - 3} more serves`), tripCheckLine(c))
 })
 
 check('serves from another trip don’t count', () => {
