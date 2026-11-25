@@ -146,7 +146,7 @@ export default function SessionDashboard({ session, previous, videoUrl, onPickAg
                             onClick={() => setCard({ drill, flaw: f.flaw, check: bar })}
                           >
                             <Icon name="target" size={14} />
-                            Show the drill in big print
+                            Show the drill full screen
                           </button>
                         )}
                       </>

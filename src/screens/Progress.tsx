@@ -305,7 +305,7 @@ function ProgressBody({
         {milestone && <p className="shape-note">{milestone}</p>}
         {form.setAside > 0 && (
           <p className="shape-note">
-            Showing your {SERVE_TYPES[form.serveType].word} serves. {form.setAside} other {form.setAside === 1 ? 'serve is' : 'serves are'} scored against different targets.
+            Only your {SERVE_TYPES[form.serveType].word} serves are shown. Your {form.setAside} other {form.setAside === 1 ? 'serve is' : 'serves are'} scored a different way.
           </p>
         )}
 
@@ -327,7 +327,7 @@ function ProgressBody({
             )}
             <div className="record-tile">
               <span className="t-figure tnum">{sessions.length}</span>
-              <span>serves filmed</span>
+              <span>serves recorded</span>
             </div>
           </div>
         )}
@@ -381,7 +381,7 @@ function ProgressBody({
       {/* What changed (D1.2): fixed, coming back, and what the best serves share, as one block. */}
       {(fixedCards.length > 0 || strain.length > 0 || strainCleared.length > 0 || links.length > 0) && (
         <section className="block" id="progress-changed">
-          <h2 className="block-title">What changed</h2>
+          <h2 className="block-title">What I’ve noticed</h2>
           {fixedCards.length > 0 && (
             <div className="progress-part" id="progress-fixed">
               <h3 className="t-subhead">Faults you fixed recently</h3>

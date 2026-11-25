@@ -579,7 +579,7 @@ export function lastSeverity(
 /** How a step is passed, in the player's words. */
 export function stepCheckLine(ladder: Progression, step: Step): string {
   if (step.check.by === 'self') return step.check.bar
-  return `Film a basket of ${CHECK_SERVES} on this step. Move up when ${ladder.pass} come back without this fault.`
+  return `Film ${CHECK_SERVES} serves on this step. Move up when the fault is gone on ${ladder.pass} of them.`
 }
 
 /** Which side of its band a card row missed on. */

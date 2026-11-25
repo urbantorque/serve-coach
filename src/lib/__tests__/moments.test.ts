@@ -339,6 +339,16 @@ check('a practice session\'s serves count, and its trip, and its fastest serve',
   note(r.bestSpeed!.line)
 })
 
+check('a week quicker than the record by its noise says it’s level, not faster', () => {
+  // The record (`fastestServe`) holds at 40; this week's 41 overlaps its range, so it isn't a new one.
+  const old = servesAt(TUE(4), 1, { ms: 40 })
+  const week = servesAt(TUE(1), 1, { ms: 41 })
+  const r = weekRecap(history(old, week), prefs(), NOW)!
+  assert(/level with your fastest ever/.test(r.bestSpeed?.line ?? ''), r.bestSpeed?.line ?? 'no speed')
+  const slower = weekRecap(history(servesAt(TUE(4), 1, { ms: 44 }), servesAt(TUE(1), 1, { ms: 36 })), prefs(), NOW)!
+  assert(!/level with/.test(slower.bestSpeed?.line ?? ''), 'a slower week was called level with the record')
+})
+
 check('no reading, no speed: a recap never makes one up', () => {
   assert(weekRecap(history(servesAt(TUE(1), 3)), prefs(), NOW)!.bestSpeed === undefined, 'a speed from nothing')
 })

@@ -444,6 +444,15 @@ export function weekRecap(
 
   const count = week.serves === 1 ? '1 serve' : `${week.serves} serves`
   const where = trips === 1 ? 'in one session' : `over ${trips} sessions`
+  /*
+   * The record moves only when a whole range clears the holder's (`fastestServe`),
+   * so a week's quickest can read a mile an hour above "fastest" on the same
+   * screen without being a record. Said as level with it, not left as a
+   * contradiction (2026-11-25).
+   */
+  const record = speeds ? fastestServe(sessions) : undefined
+  const level =
+    speeds && record && speeds.fastest.ms > record.ms && speeds.fastest.low <= record.high ? ', level with your fastest ever' : ''
   return {
     from,
     to,
@@ -452,7 +461,7 @@ export function weekRecap(
     trips,
     line: cue(`${count} ${where}.`),
     ...(speeds
-      ? { bestSpeed: { ...speeds.fastest, line: cue(`Fastest serve ${aboutSpeed(speeds.fastest, unit)}. ${SPEED_CAVEAT}`) } }
+      ? { bestSpeed: { ...speeds.fastest, line: cue(`Fastest serve ${aboutSpeed(speeds.fastest, unit)}${level}. ${SPEED_CAVEAT}`) } }
       : {}),
     faults: faultsMoved(sessions, prefs, evidence, from, to),
     steps: stepsIn(prefs, from, to),

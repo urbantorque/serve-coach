@@ -3,7 +3,7 @@ import { Icon, Sheet } from '../components/primitives'
 import { engineMegabytes } from '../lib/engineManifest'
 import { NUDGE_COPY, type StorageNudge } from '../lib/storage/nudge'
 import { sessionEvidence } from '../lib/session/evidence'
-import { buildProgress, currentRubricEra, streakLine, deltaStatus, sixWeekMilestone } from '../lib/progress'
+import { buildProgress, streakLine, deltaStatus, sixWeekMilestone } from '../lib/progress'
 import { momentsFor, weekRecap } from '../lib/moments'
 import MomentCard from '../components/MomentCard'
 import { programmeFor } from '../lib/programme'
@@ -157,8 +157,8 @@ export default function Home({
     () => (known ? streakLine(sessions, Date.now(), { ledger, cadence: prefs.cadence, practice: practiceSessions }) : undefined),
     [known, sessions, ledger, prefs.cadence, practiceSessions],
   )
-  // Serves recorded on the current scoring, a count a player recognises (2026-11-25): it was court trips.
-  const eraServes = form ? currentRubricEra(form.trips).reduce((n, t) => n + t.serves, 0) : 0
+  // Every serve recorded, the same count Progress shows (2026-11-25): it was court trips.
+  const servesRecorded = sessions.length
   const fastest = useMemo(() => (known ? fastestServe(sessions) : undefined), [known, sessions])
   const unit = readPrefs().speedUnit ?? defaultSpeedUnit()
   const tagMap = useMemo(() => tagsById(tags), [tags])
@@ -383,12 +383,12 @@ export default function Home({
                 <span className="momentum-about">about</span>
                 {speedFigures(fastest, unit).best}
               </span>
-              <span>{speedFigures(fastest, unit).unit}, fastest serve</span>
+              <span>{speedFigures(fastest, unit).unit} fastest</span>
             </span>
           )}
           <span className="momentum-stat">
-            <span className="t-figure tnum">{eraServes}</span>
-            <span>{eraServes === 1 ? 'serve recorded' : 'serves recorded'}</span>
+            <span className="t-figure tnum">{servesRecorded}</span>
+            <span>{servesRecorded === 1 ? 'serve recorded' : 'serves recorded'}</span>
           </span>
         </button>
       )}

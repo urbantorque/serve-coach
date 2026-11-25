@@ -49,7 +49,7 @@ check('the typical serve and the ribbon come before every section, and the recor
   const top = html.slice(shape, firstSection)
   assert(top.includes(`>${form.latestTrip.overall}<`), 'the head doesn’t show the trip median')
   assert(top.includes('class="ribbon'), 'no ribbon')
-  assert(top.includes('id="progress-records"') && top.includes('serves filmed'), 'the records aren’t under the ribbon')
+  assert(top.includes('id="progress-records"') && top.includes('serves recorded'), 'the records aren’t under the ribbon')
   // The path stays one tap away, every part on it.
   assert((html.match(/class="path-part /g) ?? []).length === path.parts.length, 'one row per part of the path')
 })

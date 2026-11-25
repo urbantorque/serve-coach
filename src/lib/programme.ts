@@ -405,9 +405,9 @@ const holdRow = (ladder: Progression, state: WeekState): Row => ({
   state,
   title: 'Keep it fixed for two sessions',
   drill: ladder.steps[ladder.steps.length - 1],
-  check: `Film a basket of ${CHECK_SERVES} on each of two trips.`,
+  check: `Film ${CHECK_SERVES} serves in each of two sessions.`,
   filmed: true,
-  know: `I call it fixed when ${ladder.pass} of your last ${CHECK_SERVES} serves come back without this fault, across two trips.`,
+  know: `I call it fixed when ${ladder.pass} of your last ${CHECK_SERVES} serves come back without this fault, across two sessions.`,
   trips: GRADUATION_TRIPS,
 })
 

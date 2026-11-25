@@ -471,7 +471,7 @@ check('a shrinking gap — an improvement — reads as "tighter", not as a bad-d
   const trend = buildConsistencyTrend(sessions)!
   const line = gapDeltaLine(trend.gapDelta)
   assert(line !== undefined, 'a real, non-noise change produced nothing')
-  assert(line!.includes('tighter'), `a shrinking gap didn’t read as an improvement: "${line}"`)
+  assert(line!.includes('more consistent'), `a shrinking gap didn’t read as an improvement: "${line}"`)
   assert(line!.includes('25'), `wrong magnitude: "${line}"`)
 })
 
@@ -480,7 +480,7 @@ check('a widening gap reads as "wider"', () => {
   const trend = buildConsistencyTrend(sessions)!
   const line = gapDeltaLine(trend.gapDelta)
   assert(line !== undefined, 'a real, non-noise change produced nothing')
-  assert(line!.includes('wider'), `a widening gap didn’t read as a regression: "${line}"`)
+  assert(line!.includes('less consistent'), `a widening gap didn’t read as a regression: "${line}"`)
   assert(line!.includes('25'), `wrong magnitude: "${line}"`)
 })
 

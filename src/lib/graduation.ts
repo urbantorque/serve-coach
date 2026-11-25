@@ -196,4 +196,4 @@ export function recheckDue(
 
 /** What a re-check asks for. */
 export const recheckLine = (g: Graduation): string =>
-  `Time to re-check ${FAULT_NAME[g.flaw].toLowerCase()}: film a basket of ${CHECK_SERVES} and see that it stays clean.`
+  `Time to re-check ${FAULT_NAME[g.flaw].toLowerCase()}: film ${CHECK_SERVES} serves and see if the fault stays away.`

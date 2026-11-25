@@ -130,9 +130,15 @@ export function ScoreRibbon({ points }: { points: TripPoint[] }) {
         </text>
       </svg>
       <figcaption>
-        <strong>{shortDate(shown.createdAt)}</strong>: typical {shown.overall}
-        {shown.serves < 2 ? ', one serve' : shown.low === shown.high ? `, ${shown.serves} serves, all ${shown.overall}` : `, ${shown.serves} serves from ${shown.low} to ${shown.high}`}
-        {breaks.length > 0 && <span className="ribbon-note">The break in the line is where I changed how I score serves.</span>}
+        {/* Said only for a point the player picked: the newest one is the headline above the chart. */}
+        {at !== points.length - 1 && (
+          <>
+            <strong>{shortDate(shown.createdAt)}</strong>: typical {shown.overall}
+            {shown.serves < 2 ? ', one serve' : shown.low === shown.high ? `, ${shown.serves} serves, all ${shown.overall}` : `, ${shown.serves} serves from ${shown.low} to ${shown.high}`}
+          </>
+        )}
+        {at === points.length - 1 && points.length > 1 && <span className="ribbon-note">Tap the chart to see any session.</span>}
+        {breaks.length > 0 && <span className="ribbon-note">The gap in the line is where I changed how I score serves.</span>}
       </figcaption>
     </figure>
   )
@@ -153,7 +159,7 @@ export function FaultGrid({ faults }: { faults: readonly FaultTrend[] }) {
           <div className="fault-row-head">
             <strong>{f.title}</strong>
             <span className={f.direction === 'fewer' ? 'is-better' : f.direction === 'more' ? 'is-worse' : undefined}>
-              {f.named} of {f.judged}
+              Seen on {f.named} of {f.judged}
               {f.direction === 'fewer' ? ', less often lately' : f.direction === 'more' ? ', more often lately' : ''}
               {f.step ? `, step ${f.step.at} of ${f.step.of}` : ''}
             </span>

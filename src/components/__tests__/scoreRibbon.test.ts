@@ -81,7 +81,7 @@ heading('Where the line has to stop')
 check('one rubric draws one unbroken line', () => {
   const out = draw(series([70, 74, 71, 80]))
   assert((out.match(/class="ribbon-line"/g) ?? []).length === 1, 'not one line')
-  assert(rules(out).length === 0 && !out.includes('The break in the line is where I changed how I score serves'), 'a break with no change of rubric')
+  assert(rules(out).length === 0 && !out.includes('The gap in the line is where I changed how I score serves'), 'a break with no change of rubric')
 })
 
 check('a recalibration splits the line rather than climbing across it', () => {
@@ -91,7 +91,7 @@ check('a recalibration splits the line rather than climbing across it', () => {
   // one line across would have had four.
   const curves = [...out.matchAll(/d="([^"]+)" class="ribbon-line"/g)].map((m) => (m[1].match(/C/g) ?? []).length)
   assert(curves.join() === '2,1', `the runs joined ${curves.join()}`)
-  assert(out.includes('The break in the line is where I changed how I score serves'), 'the gap isn’t explained')
+  assert(out.includes('The gap in the line is where I changed how I score serves'), 'the gap isn’t explained')
 })
 
 check('only the run the player isn’t being scored under is faded', () => {
@@ -122,10 +122,12 @@ check('a run of one trip has no ribbon to fill, and keeps its dot', () => {
 
 heading('Saying what it plots')
 
-check('the picture has a text version, and a trip reads out', () => {
+check('the picture has a text version, and the caption doesn’t repeat the headline', () => {
   const out = draw(series([70, 74]))
   assert(out.includes('aria-label="Typical score across 2 sessions, most recent 74."'), 'no text version')
-  assert(out.includes('typical 74, 4 serves from 71 to 77'), 'the newest trip doesn’t read out')
+  // The newest session is the headline above the chart (2026-11-25); the caption speaks for a picked one.
+  assert(!out.includes('typical 74, 4 serves from 71 to 77'), 'the caption repeats the headline')
+  assert(out.includes('Tap the chart to see any session.'), 'nothing says the chart can be picked')
 })
 
 report()

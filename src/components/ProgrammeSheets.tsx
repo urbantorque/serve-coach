@@ -61,7 +61,7 @@ export function SessionBody({
       </ol>
       {first && (
         <button type="button" className="btn btn--primary btn--big btn--full" onClick={() => setCard(true)}>
-          Show the drill in big print
+          Show the drill full screen
         </button>
       )}
       {/* A step with no served ball has no check to film (W5.2): the session ends on a plain serve instead. */}

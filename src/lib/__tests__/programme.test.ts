@@ -132,7 +132,7 @@ check('one row per rung from the player\'s own, then the hold across two trips',
   const current = p.weeks.find((w) => w.state === 'current')!
   assert(current === p.current && current.step!.at === 3, `current was ${current.title}`)
   assert(current.title === ladder.steps[2].name && current.drill.name === ladder.steps[2].name, 'the current row isn’t the player\'s rung')
-  assert(current.filmed && /Film a basket of 6/.test(current.check), `the check read "${current.check}"`)
+  assert(current.filmed && /Film 6 serves in each of two sessions/.test(p.weeks[p.weeks.length - 1].check) && /Film 6 serves on this step/.test(current.check), `the check read "${current.check}"`)
   assert(current.know.includes(`${ladder.pass} of ${CHECK_SERVES}`), `how to know read "${current.know}"`)
 })
 

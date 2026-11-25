@@ -575,7 +575,7 @@ check("today's session is timed, in the order the hit runs, and ends on a filmed
   const first = programme.plan.items[0]
   const want = !first || filmable(first.flaw, first.drill.name) ? 'Film serves to check it' : 'Film a serve'
   assert(out.includes(want), `the session doesn’t end on "${want}"`)
-  assert(out.includes('Show the drill in big print') && out.includes('Add to calendar'), 'the tools went')
+  assert(out.includes('Show the drill full screen') && out.includes('Add to calendar'), 'the tools went')
 })
 
 check('today knows a returning player, and a new one gets one thing to do (L4.10, lift)', () => {

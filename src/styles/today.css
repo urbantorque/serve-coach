@@ -221,6 +221,20 @@
   margin-top: 2px;
 }
 
+.moment--quiet {
+  background: var(--panel-raised);
+  box-shadow: var(--panel-edge), var(--shadow-md);
+  color: var(--fg);
+}
+
+.moment--quiet .icon {
+  color: var(--lime);
+}
+
+.moment--quiet p {
+  color: var(--fg-muted);
+}
+
 .moment h2 {
   font-size: 19px;
   font-stretch: 106%;

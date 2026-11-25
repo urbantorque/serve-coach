@@ -1253,8 +1253,8 @@ export function bestGapEverLine(record: BestGap): string {
 export function gapDeltaLine(delta: number | undefined): string | undefined {
   if (delta === undefined || Math.abs(delta) < GAP_CHANGE) return undefined
   return delta < 0
-    ? `${Math.abs(delta)} points tighter than your last basket.`
-    : `${delta} points wider than your last basket.`
+    ? `${Math.abs(delta)} points more consistent than your last practice.`
+    : `${delta} points less consistent than your last practice.`
 }
 
 /**

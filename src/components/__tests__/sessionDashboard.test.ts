@@ -172,7 +172,7 @@ check("each fix names the drill at the player's own step, with how to do it, and
   assert(moved.includes(esc(ladder.steps[on].name)), "the fix didn’t name the player's own step")
   assert(moved.includes(`step ${on + 1} of ${ladder.steps.length}`), 'the step wasn’t placed on its ladder')
   assert(moved.includes(esc(ladder.steps[on].how)), 'the drill came without how to do it')
-  assert((moved.match(/Show the drill in big print/g) ?? []).length === 1, 'the court card is offered on more than the first fix, or not at all')
+  assert((moved.match(/Show the drill full screen/g) ?? []).length === 1, 'the court card is offered on more than the first fix, or not at all')
   const fresh = renderToStaticMarkup(createElement(SessionDashboard, { session }))
   const start = startingRung(ladder)
   assert(fresh.includes(`step ${start + 1} of ${ladder.steps.length}`), 'a ladder never moved didn’t start where the plan starts it')

@@ -766,7 +766,7 @@ export default function Report({
           <Icon name="chevron" size={20} />
         </button>
         {/* After the four answers, not between the number and the fix (N7.6). */}
-        {moment && (settled || !fresh) && <MomentCard moment={moment} />}
+        {moment && (settled || !fresh) && <MomentCard moment={moment} quiet />}
       </section>
 
       {/* The drills after the first are part of the full breakdown (N6.4). */}
