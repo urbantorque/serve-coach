@@ -407,6 +407,26 @@
   color: var(--lime);
 }
 
+/* The one line the serve tags fold behind: Safari's own triangle hidden, the app's chevron instead. */
+summary.tag-summary {
+  display: flex;
+  list-style: none;
+  cursor: pointer;
+}
+
+summary.tag-summary::-webkit-details-marker {
+  display: none;
+}
+
+summary.tag-summary svg {
+  flex: none;
+  transition: transform var(--fast) var(--ease);
+}
+
+details[open] > summary.tag-summary svg {
+  transform: rotate(90deg);
+}
+
 .link-btn.link-btn--quiet {
   color: var(--fg-muted);
 }

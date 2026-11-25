@@ -8,7 +8,6 @@ import type { Analysis } from '../lib/analysis/types'
 import { OUTCOME_LABEL, SERVE_NUMBER_LABEL, serveTagSummary } from '../lib/serveTagCopy'
 
 /** The tag fold's line: a link, without the browser's triangle. */
-const TAG_SUMMARY = { listStyle: 'none', cursor: 'pointer', minHeight: 44, display: 'flex', alignItems: 'center' } as const
 /** An invisible copy of the Stay here chip, holding the row's height once the countdown stops. */
 const HOLD_SPACE = { visibility: 'hidden' } as const
 import { hasLocalVoice, onVoicesChanged, speakLocally, stopSpeaking } from '../lib/speech'
@@ -521,8 +520,9 @@ export default function Glance({
           open={tagsOpen || Boolean(set?.running)}
           onToggle={(e) => setTagsOpen((e.currentTarget as HTMLDetailsElement).open)}
         >
-          <summary className="link-btn" style={TAG_SUMMARY}>
+          <summary className="link-btn tag-summary">
             {serveTagSummary(serveNumber, outcome)}
+            <Icon name="chevron" size={16} />
           </summary>
         {onTagServe && (
           <div className="glance-actions">

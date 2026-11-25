@@ -553,17 +553,15 @@
   color: var(--fg);
 }
 
-.serve-tags {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+/* A <details> since the tags were folded: its children are spaced by margin, as a details box does not lay them out with gap everywhere. */
+.serve-tags > :not(summary) {
+  margin-top: 12px;
 }
 
+/* Each label sits over its chips: beside them, "Where it landed" wrapped onto two lines. */
 .serve-tags-row {
   display: grid;
-  grid-template-columns: 74px 1fr;
-  align-items: center;
-  gap: 10px;
+  gap: 6px;
 }
 
 .serve-tags-lead {

@@ -346,6 +346,11 @@
 
 /* Pinned to the bottom, thumb-height, because the next action is nearly always
    "record another" and it is taken one-handed while holding a racket. */
+/* The folded serve tags: a <details> box, so its rows are spaced by margin. */
+.glance-tags > :not(summary) {
+  margin-top: 12px;
+}
+
 .glance-actions {
   display: flex;
   flex-direction: column;

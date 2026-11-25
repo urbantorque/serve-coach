@@ -194,7 +194,6 @@ interface Props {
 
 /** The scoring line and its stop, on one row. Inline: the report's stylesheet is at its budget. */
 /** The serve-tag fold's line: a link, without the browser's triangle. */
-const TAG_SUMMARY = { listStyle: 'none', cursor: 'pointer', minHeight: 44, display: 'flex', alignItems: 'center' } as const
 const SCORING_ROW = { display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' } as const
 
 /** A saved session has no `frames`, so the player is only offered live. */
@@ -1012,8 +1011,9 @@ export default function Report({
           to one line that says what is known, opened on a tap (2026-11-25). */}
       {(onTagServe || onTagOutcome) && (
         <details className="serve-tags" aria-label="What you said about this serve">
-          <summary className="link-btn" style={TAG_SUMMARY}>
+          <summary className="link-btn tag-summary">
             {serveTagSummary(serveNumber, outcome, serveGuess?.serveNumber)}
+            <Icon name="chevron" size={16} />
           </summary>
           {onTagServe && (
             <div className="serve-tags-row">
