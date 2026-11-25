@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import { isCachedOffline, loadEngine } from '../lib/pose/poseEngine'
-import { isRefineModelCached, loadRefineEngine } from '../lib/pose/refineEngine'
-import { isObjectModelCached, loadObjectEngine } from '../lib/vision/objectEngine'
-import { DownloadStalled, downloadEngines } from '../lib/engineDownload'
-import { ENGINE_MANIFEST } from '../lib/engineManifest'
+import { isCachedOffline } from '../lib/pose/poseEngine'
+import { isRefineModelCached } from '../lib/pose/refineEngine'
+import { isObjectModelCached } from '../lib/vision/objectEngine'
 import { pruneEngineCaches } from '../lib/engineCache'
 
 const BASE = import.meta.env?.BASE_URL || '/'
@@ -74,28 +72,9 @@ export function useOfflineWarmup() {
    */
   const makeOffline = useCallback(async () => {
     setWarming({ stage: 'downloading', ratio: 0 })
-    try {
-      // Every engine file on one bar first (L6.1), through the service
-      // worker's cache, then the engines built from what it holds. The bar
-      // moves a megabyte at a time, not a chunk at a time, so the screen is
-      // not redrawn hundreds of times a second.
-      let shown = -1
-      await downloadEngines(ENGINE_MANIFEST, BASE, {
-        onProgress: ({ loaded, total }) => {
-          const loadedMb = Math.floor(loaded / 1e6)
-          if (loadedMb === shown) return
-          shown = loadedMb
-          setWarming({ stage: 'downloading', ratio: total ? loaded / total : 0, loadedMb, totalMb: Math.round(total / 1e6) })
-        },
-      })
-      setWarming({ stage: 'starting' })
-      await loadEngine()
-      await loadObjectEngine()
-      await loadRefineEngine()
-    } catch (err) {
-      setWarming({ stage: 'failed', stalled: err instanceof DownloadStalled })
-      return
-    }
+    // The download itself loads on the tap (warmupRun): nobody needs it before.
+    const { runWarmup } = await import('../lib/warmupRun')
+    if (!(await runWarmup(BASE, setWarming))) return
     // Downloading and keeping are separate questions, and only the cache
     // answers the second one. A browser that will not store the download —
     // an iOS private window, service workers turned off — has just loaded

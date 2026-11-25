@@ -120,19 +120,29 @@ export interface DownloadProgress {
  * (`vite.config.ts`), so this is the download and the engines then load from
  * the cache. The total is the manifest's, not each response's own length, so
  * the bar is one bar: it never runs to the end and starts again.
+ *
+ * `store` is for a page no worker controls yet, which is every first visit:
+ * the worker installs but doesn't take the page that installed it, so its
+ * route never saw the download and nothing was kept (found 2026-11-25, on
+ * the landing's "Download it now"). Given `store`, each file is kept by the
+ * page itself, in the cache the worker reads.
  */
 export async function downloadEngines(
   files: readonly EngineFile[],
   base: string,
-  opts: Omit<StreamOptions, 'onChunk' | 'keep'> & { onProgress?: (p: DownloadProgress) => void } = {},
+  opts: Omit<StreamOptions, 'onChunk' | 'keep'> & {
+    onProgress?: (p: DownloadProgress) => void
+    store?: (url: string, bytes: Uint8Array) => Promise<void>
+  } = {},
 ): Promise<void> {
   const total = files.reduce((n, f) => n + f.bytes, 0)
   let loaded = 0
   opts.onProgress?.({ loaded, total })
   for (const f of files) {
-    await fetchStreamed(`${base}${f.path}`, {
+    const url = `${base}${f.path}`
+    const bytes = await fetchStreamed(url, {
       ...opts,
-      keep: false,
+      keep: Boolean(opts.store),
       onChunk: (bytes) => {
         // Never past the total: a server that compresses, or a file that grew
         // since the build, must not push the bar over its end.
@@ -140,6 +150,7 @@ export async function downloadEngines(
         opts.onProgress?.({ loaded, total })
       },
     })
+    if (opts.store) await opts.store(url, bytes)
   }
   opts.onProgress?.({ loaded: total, total })
 }

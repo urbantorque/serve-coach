@@ -6,6 +6,7 @@
 // @ts-expect-error - node's fs, and this project carries no @types/node
 import fsUntyped from 'fs'
 import { ENGINE_CACHE, ENGINE_CACHE_PREFIX, inEngineCache, pruneEngineCaches, type CacheStorageLike } from '../engineCache'
+import { putInEngineCache } from '../engineKeep'
 import { isCachedOffline } from '../pose/poseEngine'
 import { isObjectModelCached } from '../vision/objectEngine'
 import { assert, check, heading, note, report } from '../analysis/__tests__/harness'
@@ -16,6 +17,7 @@ const fs = fsUntyped as { readFileSync: (p: string, e: 'utf8') => string }
 function fakeCaches(contents: Record<string, string[]>) {
   const store = new Map(Object.entries(contents).map(([k, v]) => [k, new Set(v)]))
   const opened: string[] = []
+  const types = new Map<string, string>()
   const cs: CacheStorageLike = {
     has: async (name) => store.has(name),
     keys: async () => [...store.keys()],
@@ -24,10 +26,16 @@ function fakeCaches(contents: Record<string, string[]>) {
       opened.push(name)
       if (!store.has(name)) store.set(name, new Set())
       const set = store.get(name)!
-      return { match: async (u: RequestInfo | URL) => (set.has(String(u)) ? new Response('') : undefined) } as unknown as Cache
+      return {
+        match: async (u: RequestInfo | URL) => (set.has(String(u)) ? new Response('') : undefined),
+        put: async (u: RequestInfo | URL, r: Response) => {
+          set.add(String(u))
+          types.set(String(u), r.headers.get('Content-Type') ?? '')
+        },
+      } as unknown as Cache
     },
   }
-  return { cs, store, opened }
+  return { cs, store, opened, types }
 }
 
 const OLD = `${ENGINE_CACHE_PREFIX}0.10.0-ort-1.18.0`
@@ -80,6 +88,18 @@ await check('older engine caches are deleted, and nothing else is', async () => 
   assert(store.has(ENGINE_CACHE), "this version's cache was deleted")
   assert(store.has(PRECACHE), "the app's own precache was deleted")
   assert((await pruneEngineCaches(cs)).length === 0, 'a second prune found more to delete')
+})
+
+
+heading('A first visit keeps its own download')
+
+await check('a file the page keeps is in the cache the worker reads, with its type', async () => {
+  const { cs, types } = fakeCaches({})
+  await putInEngineCache(MODEL, new Uint8Array([1, 2, 3]), cs)
+  await putInEngineCache(WASM, new Uint8Array([4]), cs)
+  assert(await inEngineCache([MODEL, WASM], cs), 'the kept files aren’t found where the app looks')
+  assert(types.get(WASM) === 'application/wasm', `the wasm was kept as ${types.get(WASM)}`)
+  assert(types.get(MODEL) === 'application/octet-stream', `the model was kept as ${types.get(MODEL)}`)
 })
 
 report()

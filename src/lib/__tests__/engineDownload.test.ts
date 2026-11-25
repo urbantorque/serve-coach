@@ -130,6 +130,23 @@ await check('every file on one bar, in order, never past its end', async () => {
   assert(seen[seen.length - 1].loaded === 1000, 'the bar didn’t finish')
 })
 
+await check('a page no worker controls keeps every file itself, whole and in order', async () => {
+  const files = [
+    { path: 'models/a.task', bytes: 3 },
+    { path: 'wasm/b.wasm', bytes: 2 },
+  ]
+  const bodies: Record<string, number[]> = { '/app/models/a.task': [2, 1], '/app/wasm/b.wasm': [2] }
+  const kept: [string, number][] = []
+  await downloadEngines(files, '/app/', {
+    fetch: (async (url: string) => streamed(bodies[url]).response) as unknown as typeof fetch,
+    clock: fakeClock(),
+    store: async (url, bytes) => {
+      kept.push([url, bytes.length])
+    },
+  })
+  assert(JSON.stringify(kept) === JSON.stringify([['/app/models/a.task', 3], ['/app/wasm/b.wasm', 2]]), `kept ${JSON.stringify(kept)}`)
+})
+
 await check('a fetch that never answers is rejected as stalled, and its request aborted', async () => {
   const clock = fakeClock()
   let signal: AbortSignal | undefined
