@@ -22,6 +22,9 @@ import { defaultSpeedUnit, speedFigures, speedGlanceLine, speedRangeLine, speedS
 import '../styles/court.css'
 import { MOVE_UP } from '../lib/phrases'
 import { FAULT_NAME } from '../lib/graduation'
+import { refusalPicture } from '../lib/refusalPicture'
+import FramingDiagram from '../components/FramingDiagram'
+import PlacementDiagram from '../components/PlacementDiagram'
 
 /** The serve itself beside its reading, on a laptop only (E5.7). */
 const GlanceFigure = lazy(() => import('../components/GlanceFigure'))
@@ -349,6 +352,12 @@ export default function Glance({
             <Icon name="warn" size={24} />
           </span>
           <h1 className="t-headline">{refusal.title}</h1>
+          {/* The fix drawn, where the reason is the camera (Mirror M2.2). */}
+          {refusalPicture(refusal.reason) && (
+            <div className="glance-picture">
+              {refusalPicture(refusal.reason) === 'framing' ? <FramingDiagram /> : <PlacementDiagram />}
+            </div>
+          )}
           {/* Every hint, not the first one. They are filming instructions in the
               order worth trying, and there are only ever two or three — cutting
               them to fit a small screen would drop the one that works. */}

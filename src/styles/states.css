@@ -160,6 +160,12 @@
   text-wrap: pretty;
 }
 
+/* A refusal's fix, drawn (Mirror M2.2): the same size at both widths. */
+.glance-picture {
+  width: 100%;
+  max-width: 360px;
+}
+
 .glance-hints {
   list-style: none;
   margin: 0;

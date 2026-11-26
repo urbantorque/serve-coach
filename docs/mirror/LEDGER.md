@@ -239,8 +239,27 @@ visuals 5.7, taps 9.0). Not verified: anything on a real phone.
   the card's first screen 65 to 62 on a phone; the picture says it to a
   screen reader in the same words the guide's does. `pictures.test.ts`
   holds it.
-- [ ] **M2.2 A refusal shows its fix when the reason is the camera.** Every
-  reason decided in one tested table.
+- [x] **M2.2 A refusal shows its fix when the reason is the camera.**
+  `lib/refusalPicture.ts` decides every reason, typed so a new one can't go
+  undecided:
+
+  | Reason | Picture |
+  |---|---|
+  | `body_not_visible` | framing: the phone upright, a player at full reach inside it, "racket in", "feet in" |
+  | `camera_unusable` | placement: where the phone goes, from above |
+  | `too_few_frames` | none: slow motion fixes it, which no honest picture shows |
+  | `too_blurry` | none: light and slow motion |
+  | a reason this build doesn't know | placement, the fallback's own hint |
+
+  The framing picture is new (`FramingDiagram`), in the placement's
+  language: hairline phone, lime player, faint labels; a diagram of the
+  fix, never a reading of the clip. The court screen draws it between the
+  refusal's title and its hints, at most 360 px wide at both sizes, the
+  hints kept (they are also what is read aloud). `?demo=glance-refused`
+  takes `&reason=`, and the tour adds `15b-glance-refused-frame`.
+  `pictures.test.ts` renders every reason and checks it draws what the
+  table says. Not here: the report's own line for a refused clip, which
+  stays a warning over a report still shown.
 - [ ] **M2.3 A practice video, before checking,** drawn as a strip with the
   sample's picks marked.
 - [ ] **M2.4 Today's session sheet** shows each drill's key position and the

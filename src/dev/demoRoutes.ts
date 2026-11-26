@@ -497,7 +497,8 @@ export async function runDemoRoute(
       kind: 'glance',
       analysis: {
         ...analysis,
-        triage: { ...analysis.triage, status: 'rejected', reason: 'too_few_frames' },
+        // `&reason=body_not_visible` or `camera_unusable` for a refusal with its fix drawn (Mirror M2.2).
+        triage: { ...analysis.triage, status: 'rejected', reason: new URLSearchParams(location.search).get('reason') ?? 'too_few_frames' },
       } as Analysis,
       videoUrl: '',
     })
