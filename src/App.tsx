@@ -107,7 +107,7 @@ const INTERRUPTED_AT_LOAD = takeInterrupted()
  */
 export type View =
   | { kind: 'home' }
-  | { kind: 'analyzing'; fileName: string }
+  | { kind: 'analyzing'; fileName: string; videoUrl?: string }
   | { kind: 'report'; analysis: Analysis; videoUrl: string }
   /**
    * The same analysis, said in one number and one line.
@@ -786,7 +786,7 @@ export default function App() {
               screenLine={wakeLockLine(wakeLock)}
               history={sessions}
               cold={offlineReady === false}
-              live={liveFrames}
+              live={liveFrames} clip={view.videoUrl}
             />
           )}
 

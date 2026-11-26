@@ -283,8 +283,17 @@ visuals 5.7, taps 9.0). Not verified: anything on a real phone.
   were minutes and names with nothing shown (visuals 4). `pictures.test.ts`
   checks every demonstrated fault has its key position at its own moment,
   the clean serve is shared, and each figure says whose it is.
-- [ ] **M2.5 Checking a clip** shows the player's clip and the body found so
-  far, in place of the model.
+- [x] **M2.5 Checking a clip** shows the player's clip and the body found so
+  far, in place of the model. Timed on the real bench clip: the player's
+  tracked body ("This is you, as I track you") already replaced the
+  stand-in, but only at about 54 s, after the scan had found the serve; for
+  the first fifty seconds the screen showed a stand-in serve. The clip was on
+  the device from the first second, so the checking screen now holds it
+  there, still on an early frame and tagged "Your video", until the tracked
+  body takes over. Held still on purpose: one decode beside the reading, not
+  a picture played while the pose model runs. Hidden from a screen reader,
+  which the status line already speaks to. For a basket sweep the clip is
+  the same file. `pictures.test.ts` holds it.
 
 ## Wave 3: the player's own serve
 

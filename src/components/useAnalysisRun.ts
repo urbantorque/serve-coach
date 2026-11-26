@@ -205,7 +205,8 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
       void loadAnalyzing()
       void loadReport()
       void loadGlance()
-      setView({ kind: 'analyzing', fileName: file.name || 'Your serve' })
+      // The player's own clip, on the checking screen from the start (Mirror M2.5).
+      setView({ kind: 'analyzing', fileName: file.name || 'Your serve', videoUrl: url })
       // Cleared in `finally` below however this ends; still set on the next
       // load means the page did not live to finish it (L6.4).
       markReading(file.name || 'Your serve')
@@ -375,7 +376,7 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
         liveFrames.current = []
         void loadReport()
         void loadGlance()
-        setView({ kind: 'analyzing', fileName: file.name || 'Your serve' })
+        setView({ kind: 'analyzing', fileName: file.name || 'Your serve', videoUrl: urlRef.current })
       }
 
       try {

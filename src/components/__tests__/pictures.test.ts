@@ -16,6 +16,7 @@ import { DEMOS } from '../../lib/faultDemoDials'
 import type { FlawId } from '../../lib/analysis/flaws'
 import { sampleServes } from '../../lib/session/plan'
 import Glance from '../../screens/Glance'
+import Analyzing from '../../screens/Analyzing'
 import { sampleAnalysis } from '../../dev/sampleAnalysis'
 import { REJECTIONS } from '../../lib/analysis/triage'
 import { REFUSAL_PICTURE } from '../../lib/refusalPicture'
@@ -95,6 +96,17 @@ check('today’s session shows each drill’s key position on the model, and the
   assert(own.includes('aria-label="Your last serve at'), 'the check’s figure doesn’t say it is the player’s')
   const sheet = code('components/ProgrammeSheets.tsx')
   assert(sheet.includes('<ModelPose') && sheet.includes('<OwnPose') && sheet.includes('Small figures: the model'), 'the sheet doesn’t draw them, or doesn’t say which is the model')
+})
+
+check('checking a clip shows the player’s own video from the start, in place of a stand-in (M2.5)', () => {
+  const props = { progress: { step: 'engine', ratio: 0 } as never, fileName: 'serve.mp4', onCancel: () => {} }
+  const own = renderToStaticMarkup(createElement(Analyzing, { ...props, clip: 'blob:clip' }))
+  assert(own.includes('class="wait-clip"') && own.includes('src="blob:clip"') && own.includes('Your video'), 'the clip isn’t on the checking screen')
+  assert(/<video[^>]*aria-hidden="true"/.test(own) && !/<video[^>]*autoplay/i.test(own), 'the clip plays, or a screen reader is told about a picture it can’t see')
+  const without = renderToStaticMarkup(createElement(Analyzing, props))
+  assert(!without.includes('wait-clip'), 'a sweep with no clip drew one')
+  const run = code('components/useAnalysisRun.ts')
+  assert(/kind: 'analyzing', fileName: [^}]*videoUrl: url/.test(run), 'the run doesn’t hand its clip to the checking screen')
 })
 
 report()

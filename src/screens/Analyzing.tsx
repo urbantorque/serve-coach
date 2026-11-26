@@ -114,11 +114,13 @@ interface Props {
   cold?: boolean
   /** The bodies the tracker has read so far, in this pass. */
   live?: MutableRefObject<Frame[]>
+  /** The clip being read, shown from the start until the body is tracked (Mirror M2.5). */
+  clip?: string
 }
 
 const quiet = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
-export default function Analyzing({ progress, sweep, onCancel, racket = 'right', screenLine, history, cold, live }: Props) {
+export default function Analyzing({ progress, sweep, onCancel, racket = 'right', screenLine, history, cold, live, clip }: Props) {
   // From this phone's own past passes (L6.9), or a range until there are enough
   // (E1.5). A sweep's own cells count the serves off, so it gets no range.
   const sweeping = sweep !== undefined
@@ -184,14 +186,32 @@ export default function Analyzing({ progress, sweep, onCancel, racket = 'right',
   return (
     <div className="screen wait">
       <div className="wait-stage">
-        {!seen && (
+        {/* The player's own video from the first second, held still (Mirror
+            M2.5): the body found in it took fifty seconds to come, and the
+            screen showed a stand-in serve until then. A still frame costs one
+            decode beside the reading, not a picture played. */}
+        {!seen && clip && (
+          <video
+            className="wait-clip"
+            src={clip}
+            muted
+            playsInline
+            preload="auto"
+            aria-hidden="true"
+            onLoadedMetadata={(e) => {
+              const v = e.currentTarget
+              v.currentTime = Math.min(0.4, (v.duration || 1) / 4)
+            }}
+          />
+        )}
+        {!seen && !clip && (
           <Suspense fallback={null}>
             <TeachStage racket={racket} moment={teach.moment} work={teach.parts(racket, toss)} label={`A real serve, at ${teach.title.toLowerCase()}.`} />
           </Suspense>
         )}
         {watching && <LiveBody feed={live} racket={racket} done={swingRead} onSeen={() => setSeen(true)} />}
         <div className="hero-veil" aria-hidden="true" />
-        {seen && <p className="wait-tag">{swingRead ? 'Your whole swing' : 'This is you, as I track you'}</p>}
+        {seen ? <p className="wait-tag">{swingRead ? 'Your whole swing' : 'This is you, as I track you'}</p> : clip && <p className="wait-tag">Your video</p>}
       </div>
 
       <div className="wait-foot">

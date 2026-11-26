@@ -532,6 +532,15 @@ button.session-pick:hover .session-pick-play {
   background: var(--stage);
 }
 
+/* The clip itself, until the body found in it is drawn (Mirror M2.5). */
+.wait-clip {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .wait-tag {
   position: absolute;
   left: 20px;
