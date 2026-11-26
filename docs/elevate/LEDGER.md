@@ -85,4 +85,36 @@ width use, console errors) are machine figures and sit in each set's
   6, three on the session sheet, none on the checking screen and the two
   practice screens; on the laptop, two or three on 12 of 23.
 
-- [ ] **E0.3 Room in the budgets.**
+- [x] **E0.3 Room in the budgets.** Measured with `bundle.test.ts`'s own
+  method (gzip level 9) on a build of 68e8910 and on this commit:
+
+  | | Before | After | Freed |
+  |---|---|---|---|
+  | Entry chunk, raw | 384.83 kB | 381.56 kB | 3.27 kB (of a 385 budget: room 0.17 → 3.44) |
+  | Entry chunk, gzip | 130.70 kB | 129.57 kB | 1.13 kB (of 132: room 1.30 → 2.43) |
+  | Entry stylesheet, gzip | 8.35 kB | 8.23 kB | 0.12 kB (of 14) |
+  | Split stylesheets, gzip | 19.82 kB | 19.75 kB | 0.07 kB (of 20: room 0.18 → 0.25) |
+
+  What moved. The glyphs: `icons.ts` keeps the 17 an entry module draws, and
+  the 13 only lazy screens draw (back, calendar, chevron, clock, gallery,
+  pause, play, repeat, share, sound, target, trash, warn) are in
+  `iconsMore.ts`, fetched 1.2 s after the first paint (`main.tsx`) or sooner
+  by any `Icon` that needs one, which holds its box until it lands
+  (`glyphs.ts`). `scripts/icons.mjs` writes both files, and
+  `iconSplit.test.ts` fails if an entry module names a later glyph. The
+  delta chip's rules moved from `progress.css` to `today.css`: Today draws the
+  chip, and it was unstyled there until Progress had been opened once, a
+  defect found by listing the classes entry modules use that only a lazy sheet
+  styles. About 110 lines of rules nothing draws came out (`.empty` and its
+  parts and `.error-detail` in `states.css`, `.session-figure--*`,
+  `.model-serve--quiet`).
+
+  Not adopted: a deeper cut of the entry chunk. Source-mapped, it is React
+  (141 kB), then the coaching tables (`coaching.ts` 21 kB, `progressions.ts`
+  15 kB), `progress.ts` and `db.ts` (15 kB each) and `App.tsx` (14 kB). Today
+  reads the tables to name the goal and the next drill, so moving them is a
+  restructure, not a split; it waits until an item needs more than 3.4 kB.
+  The split stylesheets have no dead weight worth the name left (a class
+  scan with the code's strings, and a scan of the modules nothing imports),
+  so their room stays thin: an item that adds a lazy screen's styles pays for
+  them in the same commit, from what it replaces.

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { watchForUpdates } from './lib/updates'
 import App from './App'
 import ErrorBoundary from './components/ErrorBoundary'
+import { loadMoreGlyphs } from './components/glyphs'
 /*
  * What every screen needs. A screen's own styles load with the screen, so the
  * first open of the app pays for the first screen and nothing else.
@@ -26,3 +27,6 @@ createRoot(document.getElementById('root')!).render(
     </ErrorBoundary>
   </StrictMode>,
 )
+
+// The glyphs behind the first screen, once it has painted (E0.3).
+setTimeout(() => void loadMoreGlyphs(), 1200)

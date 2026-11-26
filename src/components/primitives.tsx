@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import type { Status } from '../lib/analysis/types'
-import { GLYPHS, type IconName } from './icons'
+import type { IconName } from './icons'
+import { glyphPath, whenGlyphs } from './glyphs'
 import { useCountUp } from './useCountUp'
 import { useBackLayer } from './useBackLayer'
 
@@ -273,11 +274,14 @@ export function Sheet({ open, onClose, title, children, full }: SheetProps) {
 
 /* ---------------------------------------------------------------------- Icons */
 
-/** A glyph from `icons.ts`: Phosphor, at one weight, so the set agrees with itself. */
+/** A glyph from `icons.ts` or `iconsMore.ts`: Phosphor, at one weight, so the set agrees with itself. */
 export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
+  const d = glyphPath(name)
+  const [, landed] = useState(0)
+  useEffect(() => (d ? undefined : whenGlyphs(() => landed((n) => n + 1))), [d])
   return (
     <svg className="icon" width={size} height={size} viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
-      <path d={GLYPHS[name]} />
+      {d && <path d={d} />}
     </svg>
   )
 }

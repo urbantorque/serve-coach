@@ -387,11 +387,6 @@
   color: var(--fg);
 }
 
-.session-figure--great { color: var(--great); }
-.session-figure--good { color: var(--good); }
-.session-figure--fair { color: var(--fair); }
-.session-figure--work { color: var(--work); }
-
 .session-dash .session-meta {
   margin-top: 0;
 }
