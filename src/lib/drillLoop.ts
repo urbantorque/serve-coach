@@ -21,6 +21,7 @@ import { CARD_SIGNAL } from './analysis/tiers'
 import { cue } from './analysis/voice'
 import { baselineFor, reachOf, readable, trustedRows, type ReadableServe } from './baseline'
 import type { PracticeLog, ServeTag, Session } from './storage/db'
+import { CHECK_SERVES } from './analysis/progressions'
 
 export type LoopOutcome = 'towards' | 'away' | 'level' | 'within' | 'no_usual' | 'no_usual_clean' | 'no_usual_named' | 'unread'
 
@@ -55,6 +56,41 @@ const LINES: Record<LoopOutcome, (drill: string) => string> = {
   no_usual_clean: (d) => `After ${d}, this serve came back clean of it. I don’t know your usual spread yet, so it is one serve.`,
   no_usual_named: (d) => `After ${d}, this serve still shows it. I don’t know your usual spread yet, so it is one serve.`,
   unread: (d) => `After ${d}, I couldn’t read this on this serve, so I can’t say if the drill moved it.`,
+}
+
+/**
+ * Whether the drill worked, in a few words, for the head of the report (E4.2):
+ * the measured line says how far, this says which way, plainly. Nothing here
+ * is a stronger claim than the line under it.
+ */
+export const LOOP_VERDICT: Record<LoopOutcome, string> = {
+  towards: 'Moving the right way',
+  away: 'Moving the wrong way',
+  level: 'A change, not a fix yet',
+  within: 'No change yet',
+  no_usual: 'Too soon to tell',
+  no_usual_clean: 'Gone on this serve',
+  no_usual_named: 'Still there on this serve',
+  unread: 'I couldn’t read it',
+}
+
+/**
+ * What to do next, from the verdict (E4.2), so a drill that did not work is
+ * never left at "no change". `stuck` is the practice record's own advice for
+ * a drill that has stopped moving the fault over several sessions, which says
+ * more than one serve can, and wins when there is one.
+ */
+export function loopNext(read: LoopRead, stuck?: string): string {
+  if (stuck && read.outcome !== 'towards' && read.outcome !== 'no_usual_clean') return stuck
+  switch (read.outcome) {
+    case 'towards':
+    case 'no_usual_clean':
+      return `Film ${CHECK_SERVES} serves to check this step of ${read.drill}.`
+    case 'unread':
+      return 'Film your next serve side-on, whole body in the picture, so I can read it.'
+    default:
+      return `Keep at ${read.drill} next session, then film ${CHECK_SERVES} serves to check it.`
+  }
 }
 
 /**

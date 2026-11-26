@@ -3,7 +3,7 @@
  * read against that drill's fault, and called a change only past the player's
  * own spread.
  */
-import { drillLoop, flawOfDrill, rowOf, type LoopOutcome } from '../drillLoop'
+import { LOOP_VERDICT, drillLoop, flawOfDrill, loopNext, rowOf, type LoopOutcome } from '../drillLoop'
 import { METRICS } from '../analysis/coaching'
 import { CARD_NOISE_SD } from '../analysis/cardNoise'
 import { progressionFor } from '../analysis/progressions'
@@ -114,6 +114,26 @@ check('a fault with no card row is never called a change', () => {
   const loop = drillLoop(s, [...history, s], [log(lastAt + 6 * DAY, tray)])
   assert(loop?.outcome === 'no_usual_named', `${loop?.outcome}`)
   assert(cueIssues(loop!.line).length === 0, cueIssues(loop!.line).join(', '))
+})
+
+heading('The report leads with it, and says what to do (E4.2)')
+
+check('every outcome has its few words, and no verdict claims more than its line', () => {
+  const outcomes: LoopOutcome[] = ['towards', 'away', 'level', 'within', 'no_usual', 'no_usual_clean', 'no_usual_named', 'unread']
+  for (const o of outcomes) assert(Boolean(LOOP_VERDICT[o]) && cueIssues(LOOP_VERDICT[o]).length === 0, `${o}: "${LOOP_VERDICT[o]}"`)
+  // Nothing calls the drill done or the fault fixed: one serve can't say so.
+  for (const o of outcomes) assert(!/fixed|worked|works|passed/i.test(LOOP_VERDICT[o]), `${o} claims too much: "${LOOP_VERDICT[o]}"`)
+})
+
+check('a drill that did not move the fault is never left at "no change"', () => {
+  const at = (outcome: LoopOutcome) => ({ flaw: FLAW, drill: 'Toss and point', outcome, line: '' })
+  note(`${loopNext(at('within'))} | ${loopNext(at('towards'))}`)
+  for (const o of ['within', 'away', 'level', 'no_usual', 'no_usual_named'] as const) assert(/Keep at Toss and point/.test(loopNext(at(o))), `${o}: "${loopNext(at(o))}"`)
+  assert(/^Film \d serves to check/.test(loopNext(at('towards'))), 'a move the right way isn’t sent to a check')
+  // A drill stuck over several sessions: the practice record's advice wins over one serve's.
+  assert(loopNext(at('within'), 'Try the next drill.') === 'Try the next drill.', 'the stuck advice lost')
+  assert(loopNext(at('towards'), 'Try the next drill.') !== 'Try the next drill.', 'a good serve was sent away from its drill')
+  for (const o of ['within', 'towards', 'unread'] as const) assert(cueIssues(loopNext(at(o))).length === 0, `${o}: ${cueIssues(loopNext(at(o))).join(', ')}`)
 })
 
 report()

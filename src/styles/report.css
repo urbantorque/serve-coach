@@ -516,6 +516,13 @@
   color: var(--work);
 }
 
+/* The drill just done, leading the report (E4.2): the court screen's panel,
+   at the report's width and its reading floor. */
+.hero-loop {
+  max-width: none;
+  font-size: 15px;
+}
+
 .side-note {
   font-size: 15px;
   line-height: 1.4;

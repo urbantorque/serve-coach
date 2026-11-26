@@ -458,3 +458,17 @@ width use, console errors) are machine figures and sit in each set's
   Considered and left: the lesson sheet's "This fault / The fix" figures,
   which are dialled demonstrations of one movement on the model, not a
   comparison.
+
+- [x] **E4.2 The drill loop closes at the top of the report.** After a drill
+  block, whether it worked was the third of three grey lines above the fix,
+  under "About the same as your last serve" and "Your best session yet".
+  Now it leads, as its own panel: a verdict in a few words
+  (`LOOP_VERDICT`: "Moving the right way", "No change yet", "Too soon to
+  tell"...), the measured line against the player's own spread as before,
+  and what to do next (`loopNext`): a check of six serves when it moved the
+  right way, "Keep at Toss and point next session, then film 6 serves to
+  check it" when it did not, and the practice record's own advice when the
+  drill has stopped moving the fault over several sessions. The flat
+  "About the same" line goes when the loop is there. No verdict claims a
+  fix or a pass. `drillLoop.test.ts` holds the words and the next step.
+  Proved by it, the gate and the tour (`09-report-after-drill`).

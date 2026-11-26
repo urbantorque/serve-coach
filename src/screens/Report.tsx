@@ -34,7 +34,7 @@ import { targetDrawn } from '../lib/analysis/targetShape'
 import TargetShape from '../components/TargetShape'
 import { drillCheckLine, progressionFor, rungFor } from '../lib/analysis/progressions'
 import { ownGoodLine, ownGoodServe } from '../lib/ownGood'
-import { drillLoop } from '../lib/drillLoop'
+import { LOOP_VERDICT, drillLoop, loopNext } from '../lib/drillLoop'
 import { FAULT_NAME } from '../lib/graduation'
 import TrackPlayer from '../components/TrackPlayer'
 import { replayFrom } from '../lib/storage/poseTrack'
@@ -54,7 +54,7 @@ import { injuryNotes, legLeadLine, refusalFor, suppressedNote, tierLabel } from 
 import { linkedPlan, missLinks } from '../lib/missLinks'
 import { guessLine, type ServeGuess } from '../lib/serveGuess'
 import type { InjuryFlag } from '../lib/analysis/triage'
-import type { PracticeFocus } from '../lib/practice'
+import { practiceHeadline, type PracticeFocus } from '../lib/practice'
 import { readPrefs, type ServeType } from '../lib/storage/prefs'
 import {
   bestTripLine,
@@ -451,6 +451,8 @@ export default function Report({
     () => (example || !sessions ? undefined : drillLoop(analysis as Session, sessions, drillLogs, tags)),
     [example, analysis, sessions, drillLogs, tags],
   )
+  // A drill that has stopped moving its fault over several sessions: the practice record's own advice (E4.2).
+  const loopStuck = loop && practice?.verdict === 'stuck' && practice.drill.name === loop.drill ? practiceHeadline(practice) : undefined
   const againstBest = focusAgainstBest(first.flaw, analysis, best, previous && scoringVersionOf(previous) === rubric ? previous : undefined)
   const levelled = tierLabel(analysis.triage)
 
@@ -712,11 +714,24 @@ export default function Report({
         </div>
 
         <div className="hero-fix">
+          {/*
+           * The drill just done leads, before anything else (E4.2): did it
+           * work, past the player's own spread, and what to do now. It was the
+           * third of three grey lines above the fix.
+           */}
+          {loop && (
+            <section className="glance-move hero-loop" aria-label={`After ${loop.drill}`}>
+              <span>
+                <strong>{LOOP_VERDICT[loop.outcome]}</strong> · <Cue text={loop.line} />{' '}
+                <Cue text={loopNext(loop, loopStuck)} />
+              </span>
+            </section>
+          )}
           {previous &&
             (comparable ? (
               <p className="hero-delta">
                 {deltaStatus(moved ?? 0, 'overall', heroAlike) === 'flat' ? (
-                  <span>About the same as your last serve</span>
+                  !loop && <span>About the same as your last serve</span>
                 ) : (
                   <>
                     <DeltaChip delta={moved ?? 0} scope="overall" alike={heroAlike} />
@@ -731,12 +746,6 @@ export default function Report({
           {self?.reward && (
             <p className="hero-best">
               <Cue text={self.reward.line} />
-            </p>
-          )}
-          {/* The drill just done, read first (C1.4): did this serve move past the player's own spread? */}
-          {loop && (
-            <p className="hero-best">
-              <Cue text={loop.line} />
             </p>
           )}
           <span className="t-overline hero-kicker">Work on this next</span>
