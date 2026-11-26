@@ -27,3 +27,9 @@
   fill: var(--fg);
   font-weight: var(--wt-key);
 }
+
+/* A practice video as a strip of its serves (Mirror M2.3), at a size its
+   labels stay near the words beside it. */
+.plan-strip {
+  max-width: 420px;
+}

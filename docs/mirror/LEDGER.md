@@ -260,8 +260,17 @@ visuals 5.7, taps 9.0). Not verified: anything on a real phone.
   `pictures.test.ts` renders every reason and checks it draws what the
   table says. Not here: the report's own line for a refused clip, which
   stays a warning over a report still shown.
-- [ ] **M2.3 A practice video, before checking,** drawn as a strip with the
-  sample's picks marked.
+- [x] **M2.3 A practice video, before checking,** drawn as a strip with the
+  sample's picks marked. Under "10 minutes of video, so about 50 serves",
+  the video is now a row of those serves (`PlanStrip`), the ones a sample
+  checks in lime, picked by `sampleServes` itself (five spread over the
+  first third, two over the middle, five over the last), the thirds marked
+  "start", "middle", "end", and every serve the whole row. A picture of the
+  plan, not a reading: the scan hasn't found a serve yet, and the sentence
+  above it says "about". Held to 420 px so its labels stay near the words'
+  size on a laptop. The screen had no picture at all (visuals 3).
+  `pictures.test.ts` checks the row against the picker at 50, 30 and 8
+  serves, where a short video's sample is every serve.
 - [ ] **M2.4 Today's session sheet** shows each drill's key position and the
   player's last serve at the drill's fault.
 - [ ] **M2.5 Checking a clip** shows the player's clip and the body found so

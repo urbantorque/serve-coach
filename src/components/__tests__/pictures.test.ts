@@ -9,6 +9,8 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server.browser'
 import PlacementDiagram from '../PlacementDiagram'
 import FramingDiagram from '../FramingDiagram'
+import PlanStrip from '../PlanStrip'
+import { sampleServes } from '../../lib/session/plan'
 import Glance from '../../screens/Glance'
 import { sampleAnalysis } from '../../dev/sampleAnalysis'
 import { REJECTIONS } from '../../lib/analysis/triage'
@@ -58,6 +60,18 @@ check('a refusal draws its fix where the reason is the camera, and only there (M
   }
   const svg = renderToStaticMarkup(createElement(FramingDiagram))
   assert(svg.includes('role="img"') && svg.includes('aria-label="The phone upright, with all of you'), 'the framing picture has no words for a screen reader')
+})
+
+check('a practice video before checking is drawn as its serves, the sample’s marked by the picker itself (M2.3)', () => {
+  for (const n of [50, 30, 8]) {
+    const svg = renderToStaticMarkup(createElement(PlanStrip, { serves: n }))
+    const lime = (svg.match(/stroke="var\(--lime\)"/g) ?? []).length
+    const all = lime + (svg.match(/stroke="var\(--fg-faint\)" stroke-width="1.5"/g) ?? []).length
+    assert(all === n, `${n} serves drawn as ${all}`)
+    assert(lime === sampleServes(n).length, `${lime} marked, the sample takes ${sampleServes(n).length}`)
+    assert(svg.includes('role="img"') && svg.includes(`about ${n} serves in a row`), 'the strip has no words for a screen reader')
+  }
+  assert(code('screens/Session.tsx').includes('<PlanStrip serves={guess} />'), 'the plan screen doesn’t draw the strip')
 })
 
 report()

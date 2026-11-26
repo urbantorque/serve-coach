@@ -13,6 +13,7 @@ import { SESSION_SAMPLE, costLeft, guessServes, minutesOf, planChoices, speedCos
 import { toRead, type PracticeSession, type SessionStage } from '../lib/session/session'
 import { deviceNoun } from '../lib/device'
 import Locked from '../components/Locked'
+import PlanStrip from '../components/PlanStrip'
 import { useCan } from '../components/usePlan'
 
 export type { SessionStage }
@@ -250,6 +251,8 @@ function Choices({
         {length[0].toUpperCase()}
         {length.slice(1)} of video, so about {guess} serves.
       </p>
+      {/* The video as a strip of those serves, the sample's marked (Mirror M2.3). */}
+      <PlanStrip serves={guess} />
       <p className="session-meta" role="status" aria-live="polite">
         {!timed
           ? `Working out how long this takes on your ${deviceNoun()}…`
