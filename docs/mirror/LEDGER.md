@@ -227,7 +227,18 @@ visuals 5.7, taps 9.0). Not verified: anything on a real phone.
 
 ## Wave 2: pictures that explain
 
-- [ ] **M2.1 The camera's first-time card** shows the placement diagram.
+- [x] **M2.1 The camera's first-time card** shows the placement diagram.
+  The guide's top-down drawing of where the phone goes is its own component
+  now (`PlacementDiagram`, with its rules in `placement.css`), drawn by the
+  guide and by the camera's first-time card. On the card it replaces the
+  rule it draws ("Stand the phone side-on to you, about four to five metres
+  away"), so the card is "Before you film", the picture, and the two rules
+  a picture can't say: all of you in the picture, and start a second before
+  the toss. On a laptop the card is held to 440 px, so the picture is drawn
+  at the size it is meant for, not stretched across the screen. Words on
+  the card's first screen 65 to 62 on a phone; the picture says it to a
+  screen reader in the same words the guide's does. `pictures.test.ts`
+  holds it.
 - [ ] **M2.2 A refusal shows its fix when the reason is the camera.** Every
   reason decided in one tested table.
 - [ ] **M2.3 A practice video, before checking,** drawn as a strip with the

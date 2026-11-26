@@ -414,6 +414,17 @@
     top: 24px;
   }
 
+  /* ------------------------------------------------------- the camera's card */
+
+  /* A card, not a band across the screen, so the placement drawn on it stays
+     the size it is drawn at (Mirror M2.1). */
+  .film-rules {
+    left: 0;
+    right: 0;
+    max-width: 440px;
+    margin-inline: auto;
+  }
+
   /* ------------------------------------------------------------- the glance */
 
   /* The reading on the left, where it was centred in a phone's width; the taps

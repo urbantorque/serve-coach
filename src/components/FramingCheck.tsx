@@ -4,7 +4,8 @@ import { useWakeLock } from './useWakeLock'
 import { Cue, Icon } from './primitives'
 import '../styles/court.css'
 import { TICK, earcon, haptic, unlockEarcons } from '../lib/earcon'
-import { PLACEMENT, SPEED_PLACEMENT } from '../lib/placement'
+import { SPEED_PLACEMENT } from '../lib/placement'
+import PlacementDiagram from './PlacementDiagram'
 import { PREVIEW_BLOCK_CUE, previewBlockFor, previewSupported, type PreviewBlock } from '../lib/framing/access'
 import {
   PREVIEW_WINDOW,
@@ -748,10 +749,13 @@ export default function FramingCheck({ onRecorded, target, targetFlaw, rearm = f
   return (
     <div className="film">
       {firstTime && (
-        <div className="film-rules" role="dialog" aria-label="Three things before you film">
-          <h2 className="t-headline">Three things first</h2>
+        <div className="film-rules" role="dialog" aria-label="Before you film">
+          <h2 className="t-headline">Before you film</h2>
+          {/* Where the phone goes, drawn (Mirror M2.1): the rule players read
+              wrong, settled by the picture the guide already draws, so the
+              words keep only what a picture can't say. */}
+          <PlacementDiagram />
           <ol>
-            <li>Stand the phone side-on to you, about {PLACEMENT.distance} away.</li>
             <li>Get all of you in the picture, feet included.</li>
             <li>Start filming a second before your toss.</li>
           </ol>
