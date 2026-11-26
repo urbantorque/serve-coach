@@ -51,6 +51,38 @@ width use, console errors) are machine figures and sit in each set's
   68e8910; the laptop shots from Today on were taken with E0.3's icon split
   already in the working tree, which draws the same pixels.
 
-- [ ] **E0.2 Every screen scored.**
+- [x] **E0.2 Every screen scored.** The baseline below, from set `w0`.
+
+| Screen | Purpose | Action | Mine | Width | Words | Visuals | Taps | What holds it back |
+|---|---|---|---|---|---|---|---|---|
+| 01 Landing | 9 | 8 | 5 | 7 | 7 | 5 | 9 (1) | The real serve plays with no fault drawn on it; the peek card's "Hitting elbow at drop" is jargon; "Download it now" is a second lime thing. Laptop: the right pane is empty under the words. |
+| 02 Sample report | 8 | 6 | 4 | 7 | 6 | 6 | 9 (1) | The title is restated by the next sentence; "What to do now" and "Film your serve" pull two ways; laptop has two lime actions. |
+| 03 Camera's first-time card | 9 | 8 | – | 6 | 9 | 4 | 9 (1) | Words only: the set-up is not drawn, though the filming guide has the drawing. "Upload a video instead" is a second lime thing. |
+| 04 Filming guide | 9 | 8 | – | 6 | 7 | 8 | 7 (2) | "very fast" (filler the voice lint bans); five long steps before the one action. |
+| 05 Checking a clip | 9 | 9 | 5 | 5 | 6 | 6 | 10 (0) | Says what it is doing but never how long; the figure is a model, not the player. |
+| 06 Fresh report | 8 | 6 | 7 | 8 | 6 | 6 | 9 (1) | "What to do now" and "Start the drill" open the same lesson; "Change" and "Tell me how this serve went" add lime; the title is restated below it. The rig's clip is blank, so the held frame shows only the painted arm: the tour cannot judge that picture. |
+| 07 Report, reopened | 8 | 6 | 7 | 8 | 6 | 6 | 9 (1) | As 06. |
+| 08 Lesson sheet | 8 | 7 | 4 | 6 | 8 | 8 | 7 (2) | "This fault / The fix" are both the model, never the player's own; the play button is the biggest lime thing; the sheet's action is below the fold. |
+| 09 Report after a drill | 6 | 6 | 7 | 8 | 5 | 5 | 9 (1) | Three grey lines before the fault ("About the same", "Your best session yet", "No change I can trust yet") that half contradict; whether the drill worked is not the lead. |
+| 10 Today | 8 | 7 | 5 | 5 | 7 | 4 | 9 (1) | The goal card leads with "This drill isn't working yet. What now?"; serve cards are the same figure at the same moment, three with the same title; laptop's right column is empty under three numbers. |
+| 11 Today's session sheet | 7 | 3 | 5 | 6 | 6 | 4 | 9 (1) | Three stacked exits (two big buttons and a link); the minutes ("5", "13", "8") have no unit and read as scores, in lime. |
+| 12 Progress | 7 | 8 | 6 | 7 | 6 | 5 | 9 (1) | Four notes under the chart; then and now are two alike figures with nothing marked; the fault rows are walls of dark squares with no pass bar; laptop leaves a hole under the tiles and the speed chart's labels are oversized. |
+| 13 Settings | 8 | 8 | – | 6 | 8 | – | 9 (1) | The chosen option is marked by a lime outline alone, unlike every other selected state. |
+| 13b Settings, never chosen | 8 | 6 | – | 6 | 6 | – | 9 (1) | Neither hand is selected; "Work it out for me" wraps inside its pill; "No backup yet. Once you've filmed a serve" beside 29 serves. |
+| 14 Court screen | 8 | 7 | 5 | 4 | 6 | 3 | 10 (0) | The phone's court layout shows "81 mph" with no "about"; "Tell me how this serve went (optional)" is lime beside the main action; laptop: a narrow centre column, the actions top right, the rest empty (width 0.49). |
+| 15 Court, refused | 9 | 9 | – | 4 | 8 | 4 | 10 (0) | Laptop width 0.41. |
+| 16 Court, strain | 6 | 7 | 5 | 4 | 6 | 3 | 10 (0) | The strain warning sits under the fix and the button, not first. |
+| 17 Court, a fault moving | 8 | 7 | 6 | 4 | 7 | 3 | 10 (0) | The move is a line of text; nothing shows it. |
+| 18 Guided set | 5 | 7 | 5 | 4 | 5 | 3 | 10 (0) | The headline names the tossing arm while the set checks the racket drop; "This fault looks the same" leaves which fault open. |
+| 19 Guided set, passed | 6 | 4 | 5 | 4 | 6 | 3 | 9 (1) | Two lime buttons: "Film another serve" and "Move up a step". |
+| 20 Practice video, checked | 7 | 5 | 5 | 6 | 7 | 6 | 7 (2) | No main action ("Back home" at the foot); laptop's left pane is empty under the summary. |
+| 21 Practice video, before | 9 | 7 | – | 5 | 6 | 3 | 9 (1) | "Cancel" is the biggest button; "Times are from your phone, on this video" is unclear. |
+| 22 Basket | 7 | 6 | 6 | 8 | 6 | 5 | 9 (1) | As 06, with "First serve filmed" on a basket of five. |
+| **Mean** | **7.7** | **6.7** | **5.4** | **5.8** | **6.5** | **4.8** | **9.0** | |
+
+  Across both sizes: no text under 14 px and no sideways scroll on any shot;
+  lime actions on the first screen: on the phone, one on 13 shots, two on
+  6, three on the session sheet, none on the checking screen and the two
+  practice screens; on the laptop, two or three on 12 of 23.
 
 - [ ] **E0.3 Room in the budgets.**
