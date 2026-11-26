@@ -123,9 +123,17 @@ use, into `docs/elevate/gallery/`, and `docs/elevate/gallery/index.html` sets
 any two sets side by side (`w0`, the baseline, to `w5`, the close). Before it,
 Apex closed on 2026-11-23 (tagged `apex-close`); its galleries are
 `docs/lift/apex-gallery.html` and `docs/lift/apex-gallery-laptop.html`. What is
-left is in "What is open" and "The owner's call" above.
+left is in "What is open" and "The owner's call" above. After the close, the
+laptop court screen drew the player's serve beside its reading (E5.7).
 
-The suite runs **2,472 checks** (2026-11-26, at Elevate's close). The last
+**The next programme, Mirror, is written and not started.** Its brief is
+`docs/mirror/PROMPT.md` (Part 1 the review, Part 2 the prompt to paste) and
+its ledger `docs/mirror/LEDGER.md`, which starts from every screen's scores
+after E5.7. It is about pictures: the player's own serve wherever the app
+talks about it, and a picture wherever one can say honestly what words say
+now.
+
+The suite runs **2,474 checks** (2026-11-26, after E5.7). The last
 loop tag is `loop-green-15`, from the August loop.
 
 The entry chunk budget is 132 kB gzip and 385 kB raw (`bundle.test.ts`); it is
