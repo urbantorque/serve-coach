@@ -184,7 +184,12 @@ export default function Glance({
     [tripCheck, history, analysis],
   )
   const plan = causalPlan(analysis.triage, analysis.diagnosis)
-  const first = plan[0]
+  /*
+   * With no graded fault, the card's own focus, as the report leads with it
+   * (Mirror M1.4): a serve whose report said "Work on this next" was "Nothing
+   * stood out" here, read between serves as a clean one.
+   */
+  const first = plan[0] ?? (refusal ? undefined : analysis.focus)
   /*
    * Does the heading this screen is about to draw already name this fault?
    *
@@ -252,7 +257,7 @@ export default function Glance({
    * held at its moment, painted only when this serve had it. In a guided set
    * on court that is the set's fault; otherwise the first fix.
    */
-  const figureAbout = court && setLine ? trip?.target : first ? analysis.triage?.primary_flaw?.flaw : undefined
+  const figureFix = court && setLine && trip?.target ? { title: FAULT_NAME[trip.target], flaw: trip.target } : first
   const figurePaint = court && setLine ? setJudged === 'named' : !!first
 
   // And then back to the camera, counted down where it can be seen, with any
@@ -334,7 +339,7 @@ export default function Glance({
 
       {!refusal && laptop() && (
         <Suspense fallback={<figure className="glance-figure"><div className="glance-stage" /></figure>}>
-          <GlanceFigure analysis={analysis} about={figureAbout} paint={figurePaint} />
+          <GlanceFigure analysis={analysis} fix={figureFix} paint={figurePaint} />
         </Suspense>
       )}
 

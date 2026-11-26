@@ -202,9 +202,18 @@ The budgets at the start: the entry chunk 382.60 of 385 kB raw and 130.23 of
   tools would take away what the laptop is for, so nothing was folded. With
   M1.1 the screen has one lime action at both sizes, which is what this item
   was after.
-- [ ] **M1.4 The court screen names what the report names** (found in
-  M0.1): a serve with no graded fault but a card row to work on is "Nothing
-  stood out" between serves and "Work on this next" in its report.
+- [x] **M1.4 The court screen names what the report names** (found in
+  M0.1). The report leads with its graded faults, or, with none, the card's
+  own focus (`plan = ranked.length ? ranked : [analysis.focus]`); the court
+  screen read only the graded faults and said "Nothing stood out. Hit
+  another." The court screen now falls back to the same focus, on court and
+  off, and its laptop figure holds as the report's does (W5.3, W6.4): a
+  graded fault at its row's moment with its part, a card-row fix at that
+  row's moment with that row's part. On the real serve it now says
+  "Hitting elbow at drop", held at the racket drop with the hitting arm
+  painted, as its report does. A refused clip still names nothing. Proved
+  on the real serve in `courtScreen.test.ts`, at both sizes in the tour;
+  the other court screens read the same.
 
 ## Wave 2: pictures that explain
 

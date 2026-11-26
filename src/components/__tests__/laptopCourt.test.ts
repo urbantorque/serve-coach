@@ -39,7 +39,7 @@ const flaw = live.triage?.status === 'ok' ? live.triage.primary_flaw?.flaw : und
 check('the figure is the player’s own serve, held at the fix’s moment', () => {
   assert(flaw !== undefined, 'the sample serve names no fix, so this proves nothing')
   const moment = faultMoment(live.fundamentals ?? [], flaw)
-  const out = renderToStaticMarkup(createElement(GlanceFigure, { analysis: live, about: flaw, paint: true }))
+  const out = renderToStaticMarkup(createElement(GlanceFigure, { analysis: live, fix: { title: live.focus.title, flaw }, paint: true }))
   const caption = out.slice(out.indexOf('<figcaption>'), out.indexOf('</figcaption>')).replace(/<[^>]+>/g, '')
   note(`${flaw}, held at ${moment}: “${caption}”`)
   assert(out.includes('<canvas') && out.includes('aria-label="Your serve, paused at'), 'no figure, or a figure with no words for a screen reader')
