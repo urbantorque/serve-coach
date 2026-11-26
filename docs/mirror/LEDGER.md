@@ -186,8 +186,22 @@ The budgets at the start: the entry chunk 382.60 of 385 kB raw and 130.23 of
   sheet, no prop to keep in step, so a Today with no programme (and no lime
   of its own) keeps a lime Film. The tour counts one lime on Today at both
   sizes (from two) and one on Progress. `oneLime.test.ts` holds it.
-- [ ] **M1.3 The report's first screen.** 18 to 21 controls on a laptop, 7
-  or 8 on a phone: what isn't the next step folds or quietens.
+- [x] **M1.3 The report's first screen: not adopted, measured.** Listed
+  control by control on `?demo=report`:
+  - *Laptop, 19:* back and share (2); the studio's tools under the clip
+    (11): the clip's play overlay and play button, the speed, a frame back
+    and forward, the six moments; the right pane (6): the score's word and
+    the speed's "Likely", each a tap to their meaning, the drill card, the
+    second fix, "Start the drill" (the one lime) and "Film another serve".
+  - *Phone, 7:* back, share, the two words, the drill card, "Start the
+    drill" and "Film another serve".
+
+  The laptop's count is the studio, which DESIGN.md makes the laptop's
+  reason to exist, grouped under the clip. The right pane holds six, one of
+  them lime, and nothing on it is off the next step. Folding the studio's
+  tools would take away what the laptop is for, so nothing was folded. With
+  M1.1 the screen has one lime action at both sizes, which is what this item
+  was after.
 - [ ] **M1.4 The court screen names what the report names** (found in
   M0.1): a serve with no graded fault but a card row to work on is "Nothing
   stood out" between serves and "Work on this next" in its report.
