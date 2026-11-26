@@ -30,7 +30,7 @@
 }
 
 .serve-card:active {
-  transform: scale(0.97);
+  transform: var(--press-wide);
 }
 
 .serve-card-stage {

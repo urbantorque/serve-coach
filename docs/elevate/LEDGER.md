@@ -225,3 +225,20 @@ width use, console errors) are machine figures and sit in each set's
   film button and the main action; the lime link is gone). Taps unchanged.
   Proved by the tour (`10-today`, `19-guided-done`, `20-practice`,
   `21-practice-plan`) and the gate.
+
+- [x] **E1.7 One motion language, written and applied.** Presses gave by
+  eleven amounts, from 0.9 to 0.985, eight pressable things gave nothing,
+  and only the fault cards' folds moved as they opened. DESIGN.md's Motion
+  section now names one movement per kind of change: a press by the size of
+  what is pressed (`--press-wide` 0.985 for a card or a row, `--press` 0.97
+  for a button, `--press-small` 0.94 for a chip, a pill or a round control),
+  a fold whose contents rise 6 px into place at `--base` (one shared
+  `details[open]` rule; the fault cards' own copy of the keyframes went, and
+  their `both` fill became `backwards`), a sheet at `--base` leaving in
+  200 ms, a screen at `--slow`, and the arrivals that keep their own timing
+  (the report's replay, the score's count-up, the waiting screen's loops).
+  `motion.test.ts` reads every stylesheet: every press is one of the three
+  tokens, there is one fold and it leaves nothing on `transform`, every
+  other duration is a token or listed with why, and reduced motion still
+  stops everything. Proved by the test and the gate; how a press feels under
+  a finger is the one thing here a machine cannot judge.

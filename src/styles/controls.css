@@ -18,7 +18,7 @@
 }
 
 .btn:active {
-  transform: scale(0.975);
+  transform: var(--press);
 }
 
 .btn--primary {
@@ -112,7 +112,7 @@
 }
 
 .icon-btn:active {
-  transform: scale(0.9);
+  transform: var(--press-small);
 }
 
 .icon-btn--quiet {
@@ -170,7 +170,7 @@
 }
 
 .chip--button:active:not(:disabled) {
-  transform: scale(0.96);
+  transform: var(--press-small);
 }
 
 .chip--button:disabled {
@@ -208,7 +208,7 @@
 }
 
 .chip--toggle:active {
-  transform: scale(0.96);
+  transform: var(--press-small);
 }
 
 .chip--toggle.is-on {
@@ -381,7 +381,7 @@
 }
 
 .glass-btn:active {
-  transform: scale(0.94);
+  transform: var(--press-small);
 }
 
 .hero-veil {
@@ -433,6 +433,37 @@ details[open] > summary.tag-summary svg {
   color: var(--fg-muted);
 }
 
+/*
+ * The motion language's two shared pieces (E1.7; DESIGN.md, Motion). A fold's
+ * contents rise into place as it opens, at the sheet's pace; backwards, not
+ * both, for the reason the screen's rise gives in shell.css. And a press on
+ * the pressable things that had none, by size.
+ */
+details[open] > :not(summary) {
+  animation: unfold var(--base) var(--ease-out) backwards;
+}
+
+@keyframes unfold {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.hand-option:active,
+.serve-tag:active,
+.serve-chip:active {
+  transform: var(--press-small);
+}
+
+.level-option:active,
+.session-block-film:active,
+.next-goal:active,
+.momentum:active,
+.plan-item:active {
+  transform: var(--press-wide);
+}
+
 .seg {
   display: flex;
   padding: 3px;
@@ -465,7 +496,7 @@ details[open] > summary.tag-summary svg {
 }
 
 .seg-item:active {
-  transform: scale(0.92);
+  transform: var(--press-small);
 }
 
 .seg-item.is-on {
@@ -507,7 +538,7 @@ details[open] > summary.tag-summary svg {
 }
 
 .phase-pill:active {
-  transform: scale(0.94);
+  transform: var(--press-small);
 }
 
 .phase-pill.is-active {

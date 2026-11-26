@@ -323,7 +323,7 @@
 }
 
 .watch-play:active {
-  transform: scale(0.94);
+  transform: var(--press-small);
 }
 
 .watch-speed,

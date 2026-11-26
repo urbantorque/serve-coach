@@ -77,6 +77,12 @@
   color: var(--fg);
 }
 
+@media (hover: hover) {
+  .session-block-film:hover {
+    background: var(--panel-raised);
+  }
+}
+
 .programme-why,
 .programme-pace,
 .programme-note {

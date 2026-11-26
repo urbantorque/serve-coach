@@ -126,7 +126,20 @@ picture.
   Reopened, it opens at rest.
 - Screens rise 10 px and fade, with `backwards` fill. Never `both`: an animation left
   in effect on `transform` traps every fixed child inside the screen.
-- `--fast` for presses, `--base` for sheets, `--slow` for arrivals, one ease family.
+- `--fast` for presses, `--base` for sheets and folds, `--slow` for arrivals, one ease
+  family (`--ease`, `--ease-out`).
+- The language, one movement per kind of change (E1.7):
+  - **A press** gives by the size of what is pressed: `--press-wide` for a card or a
+    row, `--press` for a button, `--press-small` for a chip, a pill or a round
+    control. Everything pressable has one; nothing else scales on a press.
+  - **A fold** opens with its contents rising 6 px into place at `--base`
+    (`details[open]`, in `controls.css`); its chevron turns at `--fast`.
+  - **A sheet** rises 28 px over a fading scrim at `--base` and leaves quicker, in
+    200 ms: put away, not thrown.
+  - **A screen** rises 10 px and fades at `--slow`.
+  - **An arrival** with its own timing (the report's replay, the score's count-up,
+    the waiting screen's loops) keeps it, and `motion.test.ts` lists each one: any
+    other duration is a token.
 - Under reduced motion everything is at rest, the waiting screen keeps a still serve,
   and nothing is lost.
 - Nothing loops on a screen that is not the waiting screen or the first run.

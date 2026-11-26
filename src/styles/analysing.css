@@ -265,7 +265,7 @@
 }
 
 .session-choice:active:not(:disabled) {
-  transform: scale(0.985);
+  transform: var(--press-wide);
 }
 
 /* Waiting on the timing, not refused: dimmed, and back the moment the times are in. */
@@ -433,7 +433,7 @@
 }
 
 button.session-pick:active {
-  transform: scale(0.98);
+  transform: var(--press-wide);
 }
 
 /* Says the still plays, without covering the body in it. */

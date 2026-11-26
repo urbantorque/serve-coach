@@ -137,6 +137,14 @@
   --fast: 140ms;
   --base: 240ms;
   --slow: 480ms;
+  /*
+   * The press (E1.7), by the size of what is pressed: a card or a row gives
+   * a little, a button a little more, a chip or a round control the most, so
+   * each moves about the same few pixels under a finger.
+   */
+  --press-wide: scale(0.985);
+  --press: scale(0.97);
+  --press-small: scale(0.94);
 
   /* --- type --------------------------------------------------------------- */
   --font: 'Archivo', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text',

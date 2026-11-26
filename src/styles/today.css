@@ -61,7 +61,7 @@
 }
 
 .tab-film:active {
-  transform: scale(0.94);
+  transform: var(--press-small);
 }
 
 .tab-film-ring {

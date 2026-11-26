@@ -213,7 +213,7 @@ button.badge:hover {
 }
 
 button.badge:active {
-  transform: scale(0.97);
+  transform: var(--press-small);
 }
 
 button.badge[disabled] {
