@@ -118,3 +118,31 @@ width use, console errors) are machine figures and sit in each set's
   scan with the code's strings, and a scan of the modules nothing imports),
   so their room stays thin: an item that adds a lazy screen's styles pays for
   them in the same commit, from what it replaces.
+
+## Wave 1: seamless flow
+
+- [x] **E1.1 The core loop, as taps and waits.** Read off the code and the
+  `w0` tour, for a returning player on a phone (hands-free is on by default
+  there):
+
+  | Step | Taps | Wait | What it asks for |
+  |---|---|---|---|
+  | Landing or Today, to the camera | 1 (Film) | | A first-timer also taps "Got it" on the three rules (2). |
+  | Filming one serve | 1 (start) | 5 s spoken countdown | Recording stops on its own after the serve, or at 90 s. Upload instead: 1 tap and the phone's picker. |
+  | Checking | 0 | 45 to 54 s for an 18 s clip on a laptop (W6.9); unmeasured on a phone | Says what it is doing; says how long only once a serve has been checked before. |
+  | Court screen | 0 | back to the camera in 15 s | "Open the full report" is 1 tap. |
+  | Report, to the drill | 1 (Start the drill) | | "What to do now" opens the same sheet. |
+  | Lesson sheet, to the check | 1 (Film serves to check it), after a scroll | | The film button is below the fold on a phone. |
+  | A check of six serves | 0 a serve | 5 s countdown each, back in 15 s | Each serve is judged against the drill's one fault. |
+  | Passed, to the next step | 1 (Move up a step) | | Beside "Film another serve", both lime. |
+  | Back to Today | 1 | | |
+  | Today, to today's drill | 2 (Start today's session, Show the drill full screen) | | The film check is a second big button; the calendar a third. |
+
+  So a whole loop, from Today to a passed step and back, is 6 taps and a
+  scroll, plus the six serves themselves, which take none. What this wave
+  changes: the check waits with no estimate the first time; three screens
+  ask the player to choose between two or three equal exits (the session
+  sheet, the passed set, the practice video); Settings shows no choice for a
+  player who never made one. No step in the loop is a dead end; the practice
+  video's screen ends on "Back home" with the next drill a small button
+  inside the first fix.
