@@ -33,7 +33,7 @@ import { faultMetric, faultMoment, momentChecks } from '../lib/lookFor'
 import { targetDrawn } from '../lib/analysis/targetShape'
 import TargetShape from '../components/TargetShape'
 import { drillCheckLine, progressionFor, rungFor } from '../lib/analysis/progressions'
-import { ownGoodLine } from '../lib/ownGood'
+import { ownGoodLine, ownGoodServe } from '../lib/ownGood'
 import { drillLoop } from '../lib/drillLoop'
 import { FAULT_NAME } from '../lib/graduation'
 import TrackPlayer from '../components/TrackPlayer'
@@ -915,6 +915,7 @@ export default function Report({
           checks={momentChecks(analysis.fundamentals, focusMoment!)}
           best={best}
           last={previous}
+          good={first.flaw ? ownGoodServe(sessions, analysis, first.flaw) : undefined}
         />
       )}
 

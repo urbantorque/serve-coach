@@ -441,3 +441,20 @@ width use, console errors) are machine figures and sit in each set's
   Nothing else moved. Not verified: whether "in about an eighth of a
   second" reads as a reason to film slow motion to someone who has never
   thought about it, and anything on a real phone.
+
+## Wave 4: deepen the core strengths
+
+- [x] **E4.1 "That's mine": the player's own serve as the target.** The
+  report's side by side set the player beside a model serve, a lab serve
+  that is not theirs, even when one of their own earlier serves had the fault
+  right. Now, where there is one (the latest earlier serve of the same type,
+  under the same scoring, that the engine judged clean of this fault, the
+  rule `ownGoodLine` already kept), it leads: "Yours, Nov 20, without this
+  fault", with the fault's part lit in lime on their own body, and the key
+  says so: "Coral is what I saw on this serve. Lime is the same part on your
+  own serve that had it right." The model, their best and their last stay
+  one tap away. Lime on their own serve is only drawn because that serve was
+  judged clean of this very fault. Proved by the gate and the tour.
+  Considered and left: the lesson sheet's "This fault / The fix" figures,
+  which are dialled demonstrations of one movement on the model, not a
+  comparison.

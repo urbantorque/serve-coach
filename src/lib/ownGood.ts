@@ -12,13 +12,13 @@ import { judgeServe } from './analysis/progressions'
 import { scoringVersionOf, tripDay, typeOf } from './progress'
 import type { Session } from './storage/db'
 
-export function ownGoodLine(
+/** The serve itself: the target the report can show on the player's own body (E4.1). */
+export function ownGoodServe(
   sessions: readonly Session[] | undefined,
   now: Pick<Session, 'id' | 'createdAt' | 'serveType' | 'scoringVersion'>,
   flaw: FlawId,
-  today: number = Date.now(),
-): string | undefined {
-  const clean = (sessions ?? [])
+): Session | undefined {
+  return (sessions ?? [])
     // The same serve, judged by the same rules (W5.1): a kick met clean is not a flat serve's proof.
     .filter(
       (s) =>
@@ -29,6 +29,15 @@ export function ownGoodLine(
         judgeServe(s, flaw) === 'clean',
     )
     .sort((a, b) => b.createdAt - a.createdAt)[0]
+}
+
+export function ownGoodLine(
+  sessions: readonly Session[] | undefined,
+  now: Pick<Session, 'id' | 'createdAt' | 'serveType' | 'scoringVersion'>,
+  flaw: FlawId,
+  today: number = Date.now(),
+): string | undefined {
+  const clean = ownGoodServe(sessions, now, flaw)
   if (!clean) return undefined
   const day = tripDay(clean.createdAt, today)
   const when = day === 'today' ? 'earlier today' : `on ${day}`

@@ -23,9 +23,11 @@ interface Props {
   /** The player's best earlier serve, and the one before this. */
   best?: Session
   last?: Session
+  /** The latest earlier serve judged clean of this fault: the target, on their own body (E4.1). */
+  good?: Session
 }
 
-type Beside = 'model' | 'best' | 'last'
+type Beside = 'good' | 'model' | 'best' | 'last'
 
 const PHASE_NAME: Record<PhaseId, string> = {
   ready: 'Ready',
@@ -50,8 +52,9 @@ const reducedMotion = () =>
  * matters: a real model serve, their own best, or their last. One picture and
  * one choice, and the same scale either side so the difference is the serve.
  */
-export default function SideBySide({ swing, moment, label, work, racket, checks, best, last }: Props) {
-  const [beside, setBeside] = useState<Beside>('model')
+export default function SideBySide({ swing, moment, label, work, racket, checks, best, last, good }: Props) {
+  // Their own serve that had it right leads, where there is one (E4.1); the model otherwise.
+  const [beside, setBeside] = useState<Beside>(good ? 'good' : 'model')
   const [model, setModel] = useState<Swing | null>()
   /*
    * Which moment both bodies stand at, and, while playing, where the two are on
@@ -105,10 +108,12 @@ export default function SideBySide({ swing, moment, label, work, racket, checks,
     }
   }, [racket])
 
+  const goodSwing = useMemo(() => (good ? swingOf(good) : undefined), [good])
   const bestSwing = useMemo(() => (best ? swingOf(best) : undefined), [best])
   const lastSwing = useMemo(() => (last ? swingOf(last) : undefined), [last])
 
   const options: { id: Beside; label: string; swing?: Swing | null; caption?: string }[] = [
+    ...(goodSwing && good ? [{ id: 'good' as const, label: 'Yours, done right', swing: goodSwing, caption: `Yours, ${shortDate(good.createdAt)}, without this fault` }] : []),
     { id: 'model', label: 'A model serve', swing: model, caption: 'Model' },
     ...(bestSwing ? [{ id: 'best' as const, label: 'Your best', swing: bestSwing, caption: best ? `Your best, ${shortDate(best.createdAt)}` : undefined }] : []),
     ...(lastSwing && last?.id !== best?.id
@@ -129,7 +134,8 @@ export default function SideBySide({ swing, moment, label, work, racket, checks,
    * fault, and lime on it would say otherwise. And only when both bodies are
    * drawn for the same racket hand, so the part lit is the same part.
    */
-  const pair = at === moment && playU === null && work.length > 0 && chosen.id === 'model' && chosen.swing?.racket === swing.racket
+  // And on the player's own serve judged clean of this very fault (E4.1): there, lime is true.
+  const pair = at === moment && playU === null && work.length > 0 && (chosen.id === 'model' || chosen.id === 'good') && chosen.swing?.racket === swing.racket
 
   return (
     <section className="side" aria-labelledby="side-title">
@@ -162,7 +168,11 @@ export default function SideBySide({ swing, moment, label, work, racket, checks,
           <figcaption>{chosen.caption}</figcaption>
         </figure>
       </div>
-      {pair && <p className="side-note">Coral is what I saw on you. Lime is where to get to.</p>}
+      {pair && (
+        <p className="side-note">
+          {chosen.id === 'good' ? 'Coral is what I saw on this serve. Lime is the same part on your own serve that had it right.' : 'Coral is what I saw on you. Lime is where to get to.'}
+        </p>
+      )}
 
       <div className="side-play">
         {canPlay && (
