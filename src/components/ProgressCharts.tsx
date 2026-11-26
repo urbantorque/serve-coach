@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { shortDate, type FaultTrend, type TripPoint } from '../lib/progress'
 import type { ServeLoad } from '../lib/serveLoad'
+import { CHECK_SERVES, progressionFor } from '../lib/analysis/progressions'
+import { faultRowLine } from '../lib/faultRows'
 
 const W = 350
 const H = 196
@@ -145,32 +147,56 @@ export function ScoreRibbon({ points }: { points: TripPoint[] }) {
 }
 
 /**
- * Each fault, serve by serve, oldest on the left: a dim square where it was named
- * and a lime one where the serve came back clean, so a fault going away looks like
- * a row lighting up. The words beside it say the same thing.
+ * Each fault, serve by serve, oldest on the left: a quiet square where it was
+ * named and a green one where the serve came back clean (`--great`: a status,
+ * so not the lime of the main action).
+ *
+ * The last six are framed as the window a drill check reads, with a bar under
+ * them filling toward the ladder's pass mark (E2.2). A row of mostly dark
+ * squares read as a wall of failure, with nothing to say what "better" would
+ * look like; now the frame and the bar say how close the recent serves are.
+ * The bar is the drill check's own measure, not a pass: a step is passed only
+ * by a check, which this does not claim.
  */
 export function FaultGrid({ faults }: { faults: readonly FaultTrend[] }) {
   const rows = faults.filter((f) => f.sequence.length > 0).slice(0, 4)
   if (!rows.length) return null
   return (
     <div className="fault-grid">
-      {rows.map((f) => (
-        <div className="fault-row" key={f.flaw}>
-          <div className="fault-row-head">
-            <strong>{f.title}</strong>
-            <span className={f.direction === 'fewer' ? 'is-better' : f.direction === 'more' ? 'is-worse' : undefined}>
-              Seen on {f.named} of {f.judged}
-              {f.direction === 'fewer' ? ', less often lately' : f.direction === 'more' ? ', more often lately' : ''}
-              {f.step ? `, step ${f.step.at} of ${f.step.of}` : ''}
-            </span>
+      {rows.map((f) => {
+        const recent = f.sequence.slice(-CHECK_SERVES)
+        const older = f.sequence.slice(0, f.sequence.length - recent.length)
+        const gone = recent.filter((named) => !named).length
+        const need = progressionFor(f.flaw)?.pass
+        const line = faultRowLine(gone, recent.length, need, f.direction)
+        return (
+          <div className="fault-row" key={f.flaw}>
+            <div className="fault-row-head">
+              <strong>{f.title}</strong>
+              <span className={gone >= (need ?? Infinity) || f.direction === 'fewer' ? 'is-better' : undefined}>
+                {line}
+                {f.step ? `, step ${f.step.at} of ${f.step.of}` : ''}
+              </span>
+            </div>
+            <div className="fault-cells" role="img" aria-label={`${f.title}: seen on ${f.named} of ${f.judged} serves, oldest first. ${line}`}>
+              {older.map((named, i) => (
+                <span key={i} className={`fault-cell is-old${named ? ' is-named' : ''}`} />
+              ))}
+              <span className="fault-window" style={{ flexGrow: recent.length }}>
+                {recent.map((named, i) => (
+                  <span key={i} className={`fault-cell${named ? ' is-named' : ''}`} />
+                ))}
+                {need !== undefined && recent.length === CHECK_SERVES && (
+                  <span className="fault-meter" aria-hidden="true">
+                    <span className="fault-meter-fill" style={{ width: `${(100 * gone) / CHECK_SERVES}%` }} />
+                    <span className="fault-meter-mark" style={{ left: `${(100 * need) / CHECK_SERVES}%` }} />
+                  </span>
+                )}
+              </span>
+            </div>
           </div>
-          <div className="fault-cells" role="img" aria-label={`${f.title}: seen on ${f.named} of ${f.judged} serves, oldest first.`}>
-            {f.sequence.map((named, i) => (
-              <span key={i} className={`fault-cell${named ? ' is-named' : ''}`} />
-            ))}
-          </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

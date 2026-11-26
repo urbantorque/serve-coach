@@ -657,24 +657,60 @@
   color: var(--great);
 }
 
-.fault-row-head .is-worse {
-  color: var(--work);
-}
-
 .fault-cells {
-  display: grid;
-  grid-template-columns: repeat(10, 1fr);
+  display: flex;
   gap: 4px;
+  padding-bottom: 10px;
 }
 
+/* Clean is a status, so green; named is quiet, not a dark wall (E2.2). */
 .fault-cell {
+  flex: 1 1 0;
   height: 20px;
   border-radius: 5px;
-  background: var(--lime);
+  background: var(--great);
 }
 
 .fault-cell.is-named {
-  background: var(--ink-4);
+  background: var(--ink-3);
+}
+
+.fault-cell.is-old {
+  opacity: 0.45;
+}
+
+/* The last six, as a drill check reads them, with the bar toward its mark. */
+.fault-window {
+  position: relative;
+  display: flex;
+  flex-basis: 0;
+  gap: 4px;
+  padding: 3px;
+  margin: -3px 0;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.fault-meter {
+  position: absolute;
+  inset: auto 3px -8px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--ink-3);
+}
+
+.fault-meter > span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: inherit;
+  background: var(--great);
+}
+
+.fault-meter .fault-meter-mark {
+  inset: -3px auto;
+  width: 2px;
+  background: var(--fg-muted);
 }
 
 .then-now {

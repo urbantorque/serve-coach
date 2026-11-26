@@ -347,7 +347,7 @@ function ProgressBody({
         <section className="block">
           <h2 className="block-title">Faults, serve by serve</h2>
           <FaultGrid faults={faults} />
-          <p className="progress-foot">Each square is a serve, oldest first. Lime means the fault wasn’t there.</p>
+          <p className="progress-foot">Each square is a serve, oldest first. Green means the fault wasn’t there; I frame your last six.</p>
         </section>
       )}
 

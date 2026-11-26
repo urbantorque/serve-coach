@@ -294,3 +294,14 @@ width use, console errors) are machine figures and sit in each set's
   fault has gone."). With no graded reading on both, it says it can't mark a
   change rather than draw one. Proved by `thenNowMark.test.ts` on the rig's
   serve dialled with and without the fault, and by the tour (`12-progress`).
+
+- [x] **E2.2 Faults, serve by serve, shows the way out.** A row of mostly
+  dark squares, lime where the fault was gone, read as a wall of failure and
+  never showed the drill's pass mark. Now the last six serves are framed as
+  the window a drill check reads, with a bar under them filling toward the
+  ladder's own mark (`pass`, 4 or 5), older serves faded beside them; a
+  clean serve is the status green, not the main action's lime, and a named
+  one is quiet. The line says it: "Gone on 2 of your last 6. A drill check
+  needs 4." It never says a step is passed: only a check does that.
+  Proved by `faultRows.test.ts` (the line, the voice lint, no claim of a
+  pass) and the tour.
