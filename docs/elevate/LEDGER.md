@@ -327,3 +327,12 @@ width use, console errors) are machine figures and sit in each set's
   tap hint went. Proved by `scoreRibbon.test.ts` (a new check: nothing under
   the chart when there is nothing to say, the note as the one line) and the
   tour.
+
+- [x] **E2.5 The report's side by side: from this, to that.** At the fix's
+  moment the player's part was coral and the model's was plain, so the pair
+  said "here is the fault" but not "here is where to get to". Now the
+  model's same part is lit in lime, with one line under the pair: "Coral is
+  what I saw on you. Lime is where to get to." On two bodies, never both
+  colours on one (DESIGN.md); on the model only, since the player's own best
+  or last serve may still have the fault; and only when both are drawn for
+  the same racket hand. Proved by the tour and a shot of the section.

@@ -116,6 +116,15 @@ export default function SideBySide({ swing, moment, label, work, racket, checks,
   const phases = PHASE_ORDER.filter((p) => swing.moments[p] !== undefined)
   const canPlay = !reducedMotion() && !!chosen.swing
   const fit = { height: 0.66, feet: 0.93, across: 0.5 }
+  /*
+   * One picture, one idea (E2.5): at the fix's moment, the part is coral on
+   * you, what I saw, and lime on the model, where to get to (DESIGN.md: coral
+   * and lime as "from this, to that", on two bodies, never both on one). The
+   * model only: a best or last serve of the player's own may still have the
+   * fault, and lime on it would say otherwise. And only when both bodies are
+   * drawn for the same racket hand, so the part lit is the same part.
+   */
+  const pair = at === moment && playU === null && work.length > 0 && chosen.id === 'model' && chosen.swing?.racket === swing.racket
 
   return (
     <section className="side" aria-labelledby="side-title">
@@ -136,6 +145,8 @@ export default function SideBySide({ swing, moment, label, work, racket, checks,
                 swing={chosen.swing}
                 mode="pose"
                 at={frameOf(chosen.swing)}
+                work={pair ? work : undefined}
+                teach={pair}
                 fit={fit}
                 label={`${chosen.caption ?? 'The other serve'}, at the ${name}`}
               />
@@ -146,6 +157,7 @@ export default function SideBySide({ swing, moment, label, work, racket, checks,
           <figcaption>{chosen.caption}</figcaption>
         </figure>
       </div>
+      {pair && <p className="side-note">Coral is what I saw on you. Lime is where to get to.</p>}
 
       <div className="side-play">
         {canPlay && (
