@@ -28,6 +28,14 @@ export function SessionBody({
   const blocks = todayFor(programme, minutes)
   const first = programme.plan.items[0]
   const last = lastPracticeLine(practice)
+  // A step with no served ball has no check to film (W5.2): its row films a plain serve, and says so.
+  const checks = !first || filmable(first.flaw, first.drill.name)
+  /*
+   * One main action (E1.2): the drill, full screen, which is what the court is
+   * for. The check is filmed from its own row, at the point in the session it
+   * comes, and the calendar is a quiet link beside the time: three equal
+   * exits stacked at the foot is what DESIGN.md bans.
+   */
   return (
     <div className="session-today">
       {last && (
@@ -35,50 +43,55 @@ export function SessionBody({
           <strong>Last practice.</strong> {last} <strong>{NEXT_TIME}</strong>
         </p>
       )}
-      <div className="seg" role="group" aria-label="How long you have">
-        {COURT_MINUTES.map((m) => (
-          <button
-            key={m}
-            type="button"
-            className={`seg-item${minutes === m ? ' is-on' : ''}`}
-            aria-pressed={minutes === m}
-            onClick={() => {
-              setMinutes(m)
-              writePrefs({ courtMinutes: m })
-            }}
-          >
-            {m} min
-          </button>
-        ))}
+      <div className="session-time">
+        <div className="seg" role="group" aria-label="How long you have">
+          {COURT_MINUTES.map((m) => (
+            <button
+              key={m}
+              type="button"
+              className={`seg-item${minutes === m ? ' is-on' : ''}`}
+              aria-pressed={minutes === m}
+              onClick={() => {
+                setMinutes(m)
+                writePrefs({ courtMinutes: m })
+              }}
+            >
+              {m} min
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          className="link-btn link-btn--quiet"
+          onClick={() => {
+            const ics = weekCalendar(programme.plan, { now: new Date(), cadence: readPrefs().cadence, minutes })
+            void shareBlob(new Blob([ics], { type: 'text/calendar' }), 'serve-practice.ics', 'Serve practice', 'text/calendar')
+          }}
+        >
+          <Icon name="calendar" size={16} />
+          Add to calendar
+        </button>
       </div>
       <ol className="session-blocks">
         {blocks.map((b, i) => (
           <li key={i} className={`session-block session-block--${b.kind}`}>
-            <span className="session-block-min tnum">{b.minutes}</span>
-            <span>{b.line}</span>
+            <span className="session-block-min tnum">
+              {b.minutes}
+              <span className="session-block-unit"> min</span>
+            </span>
+            {b.kind === 'check' ? (
+              <button type="button" className="session-block-film" onClick={onFilmCheck}>
+                <span>{checks ? b.line : 'Film a serve to see where you are.'}</span>
+                <Icon name="camera" size={20} />
+              </button>
+            ) : (
+              <span>{b.line}</span>
+            )}
           </li>
         ))}
       </ol>
-      {first && (
-        <button type="button" className="btn btn--primary btn--big btn--full" onClick={() => setCard(true)}>
-          Show the drill full screen
-        </button>
-      )}
-      {/* A step with no served ball has no check to film (W5.2): the session ends on a plain serve instead. */}
-      <button type="button" className="btn btn--ghost btn--full" onClick={onFilmCheck}>
-        <Icon name="camera" size={18} />
-        {!first || filmable(first.flaw, first.drill.name) ? 'Film serves to check it' : 'Film a serve'}
-      </button>
-      <button
-        type="button"
-        className="btn btn--quiet btn--full"
-        onClick={() => {
-          const ics = weekCalendar(programme.plan, { now: new Date(), cadence: readPrefs().cadence, minutes })
-          void shareBlob(new Blob([ics], { type: 'text/calendar' }), 'serve-practice.ics', 'Serve practice', 'text/calendar')
-        }}
-      >
-        <Icon name="calendar" size={18} />
-        Add to calendar
+      <button type="button" className="btn btn--primary btn--big btn--full" onClick={first ? () => setCard(true) : onFilmCheck}>
+        {first ? 'Show the drill full screen' : 'Film a serve'}
       </button>
       {card && first && <CourtCard item={first} onClose={() => setCard(false)} />}
     </div>

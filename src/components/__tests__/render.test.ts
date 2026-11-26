@@ -576,10 +576,14 @@ check("today's session is timed, in the order the hit runs, and ends on a filmed
   const at = (s: string) => out.indexOf(s)
   assert(at('Warm up with easy serves') < at('session-block--drill') && at('session-block--drill') < at('Serve freely'), 'the hit isn’t in the order it runs')
   // A check where the step has a served ball to read; a plain serve where it has none (W5.2).
+  // Filmed from its own row, where the session reaches it (E1.2).
   const first = programme.plan.items[0]
-  const want = !first || filmable(first.flaw, first.drill.name) ? 'Film serves to check it' : 'Film a serve'
-  assert(out.includes(want), `the session doesn’t end on "${want}"`)
-  assert(out.includes('Show the drill full screen') && out.includes('Add to calendar'), 'the tools went')
+  const want = !first || filmable(first.flaw, first.drill.name) ? 'serves to check the first drill' : 'Film a serve to see where you are'
+  assert(out.includes(want) && at(want) > at('class="session-block-film"') && at('class="session-block-film"') > 0, `the check row doesn’t say "${want}"`)
+  // One main action, with the minutes said as minutes and the calendar a quiet link (E1.2).
+  assert((out.match(/btn--primary/g) ?? []).length === 1 && out.includes('Show the drill full screen'), 'the sheet has more or less than one main action')
+  assert(!out.includes('btn--ghost') && out.includes('link-btn--quiet') && out.includes('Add to calendar'), 'the calendar is a button again')
+  assert(out.includes('session-block-unit'), 'the minutes lost their unit')
 })
 
 check('today knows a returning player, and a new one gets one thing to do (L4.10, lift)', () => {

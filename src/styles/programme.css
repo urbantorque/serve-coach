@@ -7,6 +7,15 @@
   gap: 14px;
 }
 
+/* The time, and the calendar as a quiet link beside it (E1.2). */
+.session-time {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
 .session-blocks {
   display: flex;
   flex-direction: column;
@@ -14,7 +23,7 @@
 
 .session-block {
   display: grid;
-  grid-template-columns: 46px 1fr;
+  grid-template-columns: 76px 1fr;
   align-items: baseline;
   gap: 10px;
   padding: 11px 0;
@@ -40,7 +49,32 @@
 }
 
 .session-block--drill .session-block-min {
-  color: var(--lime);
+  color: var(--fg);
+}
+
+/* Minutes, said as minutes: a bare "13" read as a score (E1.2). */
+.session-block-unit {
+  font-size: 15px;
+  font-stretch: normal;
+  font-weight: 600;
+  color: var(--fg-muted);
+}
+
+/* The check, filmed from its own row at the point in the session it comes. */
+.session-block-film {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  margin: -6px 0;
+  padding: 6px 14px;
+  border-radius: var(--r-sm);
+  background: var(--panel);
+  box-shadow: var(--panel-edge);
+  font: inherit;
+  text-align: left;
+  color: var(--fg);
 }
 
 .programme-why,

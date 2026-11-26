@@ -146,3 +146,16 @@ width use, console errors) are machine figures and sit in each set's
   player who never made one. No step in the loop is a dead end; the practice
   video's screen ends on "Back home" with the next drill a small button
   inside the first fix.
+
+- [x] **E1.2 Today's session sheet: one main action.** The foot held three
+  stacked exits: "Show the drill full screen" (lime), "Film serves to check
+  it" (a full-width button) and "Add to calendar". Now the drill is the one
+  main action; the check is filmed from its own row in the plan ("Film 6
+  serves to check the first drill's step", with a camera), at the point in
+  the session it comes; and the calendar is a quiet link beside the time.
+  The minutes read "13 min", not a bare "13" in lime that looked like a
+  score, and the drill rows' minutes are no longer lime. A plan with no
+  drill yet ends on "Film a serve" as its one action. Taps are unchanged (2
+  from Today to the drill or to the check); exits at the foot 3 to 1, lime
+  things on the sheet 2 to 1. Proved by the tour (`11-session-sheet`, both
+  sizes) and the gate.
