@@ -271,8 +271,18 @@ visuals 5.7, taps 9.0). Not verified: anything on a real phone.
   size on a laptop. The screen had no picture at all (visuals 3).
   `pictures.test.ts` checks the row against the picker at 50, 30 and 8
   serves, where a short video's sample is every serve.
-- [ ] **M2.4 Today's session sheet** shows each drill's key position and the
-  player's last serve at the drill's fault.
+- [x] **M2.4 Today's session sheet** shows each drill's key position and the
+  player's last serve at the drill's fault. Each drill row ends in a small
+  figure (56 by 70): the lesson's own "The fix", the clean model serve at
+  the moment the drill's fault is read at, from the camera it is shown from
+  (`fixPose` in `lib/faultDemo.ts`, one clean serve built per camera and
+  hand rather than per drill). The check row ends in the player's last
+  serve at the first drill's fault, the part painted only when that serve
+  had it. One line under the rows says which is which: "Small figures: the
+  model at each drill's moment, and your last serve by the check." The rows
+  were minutes and names with nothing shown (visuals 4). `pictures.test.ts`
+  checks every demonstrated fault has its key position at its own moment,
+  the clean serve is shared, and each figure says whose it is.
 - [ ] **M2.5 Checking a clip** shows the player's clip and the body found so
   far, in place of the model.
 

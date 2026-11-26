@@ -32,6 +32,28 @@
   color: var(--fg-muted);
 }
 
+/* A row with its key position drawn (Mirror M2.4): the figure at the end. */
+.session-block--pose {
+  grid-template-columns: 76px 1fr 56px;
+  align-items: center;
+}
+
+.drill-pose {
+  position: relative;
+  width: 56px;
+  height: 70px;
+  overflow: hidden;
+  border-radius: var(--r-sm);
+  background: var(--stage);
+}
+
+.drill-pose .athlete {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
 .session-block + .session-block {
   border-top: 1px solid var(--hairline-soft);
 }

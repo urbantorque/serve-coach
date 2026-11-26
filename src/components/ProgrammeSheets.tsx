@@ -10,6 +10,7 @@ import { filmable } from '../lib/analysis/progressions'
 import { NEXT_TIME, lastPracticeLine } from '../lib/session/sessionCopy'
 import type { PracticeSession } from '../lib/session/session'
 import { CourtCard } from './CourtCard'
+import { ModelPose, OwnPose } from './DrillPose'
 import '../styles/programme.css'
 
 /** Today's session, in minutes, with the court card and the way to film the check. */
@@ -17,11 +18,14 @@ export function SessionBody({
   programme,
   onFilmCheck,
   practice = [],
+  lastServe,
 }: {
   programme: Programme
   onFilmCheck: () => void
   /** The practice sessions read so far, for what the last one says about today (W6.4). */
   practice?: readonly PracticeSession[]
+  /** The player's last serve, drawn by the check at the first drill's fault (Mirror M2.4). */
+  lastServe?: Session
 }) {
   const [minutes, setMinutes] = useState<CourtMinutes>(() => readPrefs().courtMinutes ?? programme.minutes)
   const [card, setCard] = useState(false)
@@ -30,6 +34,20 @@ export function SessionBody({
   const last = lastPracticeLine(practice)
   // A step with no served ball has no check to film (W5.2): its row films a plain serve, and says so.
   const checks = !first || filmable(first.flaw, first.drill.name)
+  /*
+   * Each drill row's key position, and the player's own last serve by the
+   * check (Mirror M2.4): the rows were minutes and names, with nothing shown.
+   */
+  const racket = readPrefs().handedness ?? lastServe?.handedness ?? 'right'
+  const items = programme.plan.items
+  const ownCheck = programme.goal.kind === 'fault' && lastServe && first?.flaw ? first.flaw : undefined
+  const poseFor = (b: (typeof blocks)[number], i: number) => {
+    if (b.kind === 'check') return ownCheck && lastServe ? <OwnPose session={lastServe} flaw={ownCheck} /> : null
+    if (b.kind !== 'drill') return null
+    const flaw = items[blocks.slice(0, i).filter((x) => x.kind === 'drill').length]?.flaw
+    return flaw ? <ModelPose flaw={flaw} racket={racket} /> : null
+  }
+  const posed = blocks.some((b, i) => poseFor(b, i) !== null)
   /*
    * One main action (E1.2): the drill, full screen, which is what the court is
    * for. The check is filmed from its own row, at the point in the session it
@@ -74,7 +92,7 @@ export function SessionBody({
       </div>
       <ol className="session-blocks">
         {blocks.map((b, i) => (
-          <li key={i} className={`session-block session-block--${b.kind}`}>
+          <li key={i} className={`session-block session-block--${b.kind}${poseFor(b, i) ? ' session-block--pose' : ''}`}>
             <span className="session-block-min tnum">
               {b.minutes}
               <span className="session-block-unit"> min</span>
@@ -87,9 +105,11 @@ export function SessionBody({
             ) : (
               <span>{b.line}</span>
             )}
+            {poseFor(b, i)}
           </li>
         ))}
       </ol>
+      {posed && <p className="programme-note">Small figures: the model at each drill’s moment{ownCheck ? ', and your last serve by the check' : ''}.</p>}
       <button type="button" className="btn btn--primary btn--big btn--full" onClick={first ? () => setCard(true) : onFilmCheck}>
         {first ? 'Show the drill full screen' : 'Film a serve'}
       </button>

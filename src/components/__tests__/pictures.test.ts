@@ -10,6 +10,10 @@ import { renderToStaticMarkup } from 'react-dom/server.browser'
 import PlacementDiagram from '../PlacementDiagram'
 import FramingDiagram from '../FramingDiagram'
 import PlanStrip from '../PlanStrip'
+import { ModelPose, OwnPose } from '../DrillPose'
+import { fixPose } from '../../lib/faultDemo'
+import { DEMOS } from '../../lib/faultDemoDials'
+import type { FlawId } from '../../lib/analysis/flaws'
 import { sampleServes } from '../../lib/session/plan'
 import Glance from '../../screens/Glance'
 import { sampleAnalysis } from '../../dev/sampleAnalysis'
@@ -72,6 +76,25 @@ check('a practice video before checking is drawn as its serves, the sample’s m
     assert(svg.includes('role="img"') && svg.includes(`about ${n} serves in a row`), 'the strip has no words for a screen reader')
   }
   assert(code('screens/Session.tsx').includes('<PlanStrip serves={guess} />'), 'the plan screen doesn’t draw the strip')
+})
+
+check('today’s session shows each drill’s key position on the model, and the check the player’s own (M2.4)', () => {
+  const flaws = Object.keys(DEMOS) as FlawId[]
+  for (const flaw of flaws) {
+    const pose = fixPose(flaw, 'right')
+    assert(pose !== undefined && pose.moment === DEMOS[flaw]!.moment && pose.serve.phases.some((p) => p.id === pose.moment), `${flaw} has no key position at its own moment`)
+  }
+  // Every fix is the one clean serve: built once per camera and hand.
+  const sideOn = flaws.filter((f) => !DEMOS[f]!.view)
+  assert(sideOn.length > 1 && fixPose(sideOn[0], 'right')!.serve === fixPose(sideOn[1], 'right')!.serve, 'the clean serve is rebuilt for every drill')
+  const model = renderToStaticMarkup(createElement(ModelPose, { flaw: sideOn[0], racket: 'right' }))
+  assert(model.includes('aria-label="The model serve at'), 'the drill’s figure doesn’t say it is the model')
+  const { frames: _f, ...last } = sampleAnalysis()
+  void _f
+  const own = renderToStaticMarkup(createElement(OwnPose, { session: last as never, flaw: sideOn[0] }))
+  assert(own.includes('aria-label="Your last serve at'), 'the check’s figure doesn’t say it is the player’s')
+  const sheet = code('components/ProgrammeSheets.tsx')
+  assert(sheet.includes('<ModelPose') && sheet.includes('<OwnPose') && sheet.includes('Small figures: the model'), 'the sheet doesn’t draw them, or doesn’t say which is the model')
 })
 
 report()

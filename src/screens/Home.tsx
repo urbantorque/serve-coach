@@ -469,6 +469,7 @@ export default function Home({
             <SessionBody
               programme={programme}
               practice={practiceSessions}
+              lastServe={sessions[0]}
               onFilmCheck={() => {
                 setSheet(null)
                 const first = programme.plan.items[0]

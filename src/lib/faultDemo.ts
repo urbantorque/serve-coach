@@ -156,6 +156,23 @@ export function faultDemo(flaw: FlawId, racket: 'left' | 'right'): FaultDemo | u
 }
 
 /** Exposed for the test, which has to diagnose the same frames the picture is drawn from. */
+/**
+ * The lesson's "The fix" alone (Mirror M2.4): the clean model serve, from the
+ * camera the fault is shown from, and the moment the fault is read at. For a
+ * drill's key position drawn small, where the fault beside it isn't needed.
+ * Every fix is the same clean serve, so one is built per camera and hand.
+ */
+const fixes = new Map<string, DemoServe | undefined>()
+export function fixPose(flaw: FlawId, racket: 'left' | 'right'): { serve: DemoServe; moment: PhaseId } | undefined {
+  const demo = DEMOS[flaw]
+  if (!demo) return undefined
+  const cameraYaw = yawOf(demo)
+  const key = `${cameraYaw}|${racket}`
+  if (!fixes.has(key)) fixes.set(key, built({ ...CLEAN_SERVE, cameraYaw }, racket))
+  const serve = fixes.get(key)
+  return serve ? { serve, moment: demo.moment } : undefined
+}
+
 export const demoFrames = (dials: Partial<ServeDials>, racket: 'left' | 'right'): Frame[] | undefined =>
   demoRig(dials, racket)?.frames
 
