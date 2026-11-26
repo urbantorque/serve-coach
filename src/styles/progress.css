@@ -683,6 +683,17 @@
   gap: 12px;
 }
 
+/* Each serve's reading of the fault marked on both bodies (E2.1). */
+.then-now-read {
+  display: block;
+  font-weight: 500;
+  color: var(--fg);
+}
+
+.then-now-read.is-had {
+  color: var(--work);
+}
+
 .load {
   display: grid;
   gap: 8px;

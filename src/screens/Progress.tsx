@@ -339,7 +339,7 @@ function ProgressBody({
 
       {thenNow && (
         <Suspense fallback={null}>
-          <ThenNow then={thenNow.then} now={thenNow.now} />
+          <ThenNow then={thenNow.then} now={thenNow.now} prefer={thenNow.now.triage?.status === 'ok' ? thenNow.now.triage.primary_flaw?.flaw : undefined} />
         </Suspense>
       )}
 

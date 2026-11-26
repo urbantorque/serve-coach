@@ -279,3 +279,18 @@ width use, console errors) are machine figures and sit in each set's
   and the report's old footer. About 1.5 kB of source, 0.25 kB gzip: the
   split sheets measure 19.73 kB with this wave's styles in. Proved by the
   scan, `bundle.test.ts` and the tour (no screen changed).
+
+- [x] **E2.1 Then and now marks the change.** Two figures of the player's
+  own serve, side by side at contact, looked alike and marked nothing. Now
+  `thenNowMark` picks one fault with a graded reading on both serves (the
+  row `faultMetric` returns, the one with a study or real serve motion
+  behind its band), judged on both with enough evidence (`MIN_EVIDENCE`):
+  one that went first, then the latest serve's first fix, then one still
+  there. Both bodies are held at the moment it is read at, the fault is
+  painted in coral on whichever serve had it, each serve's reading sits
+  under its date in the report's own words ("No push off the court" then
+  "Legs straighten up"), and one line says the picture in words ("Leg drive:
+  on Oct 10, no push off the court; on Nov 23, legs straighten up. That
+  fault has gone."). With no graded reading on both, it says it can't mark a
+  change rather than draw one. Proved by `thenNowMark.test.ts` on the rig's
+  serve dialled with and without the fault, and by the tour (`12-progress`).
