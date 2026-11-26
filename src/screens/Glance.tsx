@@ -21,6 +21,7 @@ import { onCourtDefault } from '../lib/framing/handsFree'
 import { defaultSpeedUnit, speedFigures, speedGlanceLine, speedRangeLine, speedSpokenLine } from '../lib/speedCopy'
 import '../styles/court.css'
 import { MOVE_UP } from '../lib/phrases'
+import { FAULT_NAME } from '../lib/graduation'
 
 /** An invisible copy of the Stay here chip, holding the row's height once the countdown stops. */
 const HOLD_SPACE = { visibility: 'hidden' } as const
@@ -194,7 +195,7 @@ export default function Glance({
    * result to the work — `primary_flaw` is absent there, so the full form with
    * the fault named is what gets built.
    */
-  const moveLine = move
+  const moveLine = move && !(trip?.target && move.flaw !== trip.target)
     ? faultMoveLine(move, move.flaw === analysis.triage?.primary_flaw?.flaw)
     : undefined
   /*
@@ -230,6 +231,13 @@ export default function Glance({
     ? repLine(trip.target, judgeServe(analysis as Session, trip.target), tripCheck)
     : undefined
   const setOver = !!guided && setDone(tripCheck)
+  /*
+   * In a guided set the big line is the set's fault and this serve's verdict
+   * on it (E4.4): it named the serve's first fix, another fault, while the
+   * voice said "not yet" about the one being checked.
+   */
+  const setJudged = guided && trip?.target ? judgeServe(analysis as Session, trip.target) : undefined
+  const setLine = guided && trip?.target ? `${FAULT_NAME[trip.target]}: ${setJudged === 'clean' ? 'gone on this serve' : setJudged === 'named' ? 'still there' : 'I couldn’t judge this one'}` : undefined
   // A passed step is the one thing to do next (E1.6): its button takes the
   // lime, and filming another serve steps back to a plain button beside it.
   const stepUp = !!tripCheck && canMoveUp(tripCheck) && !!onLadderStep
@@ -264,7 +272,7 @@ export default function Glance({
       ? guided
       : // The speed first, when there is one (C3): the reading a player most
       // wants, and the one this screen cannot show from the baseline.
-      `${reading ? `${speedSpokenLine(reading, unit)} Score ` : ''}${analysis.overall}${scoreMove ? `, ${scoreMoveWords(scoreMove)}` : ''}. ${first ? `${first.title}. ${first.why}` : 'Nothing stood out on that one. Hit another.'}`
+      `${reading ? `${speedSpokenLine(reading, unit)} Score ` : ''}${analysis.overall}${scoreMove ? `, ${scoreMoveWords(scoreMove)}` : ''}. ${first ? `${first.title}.` : 'Nothing stood out on that one. Hit another.'}`
   const [voiced, setVoiced] = useState(() => hasLocalVoice())
   // The tag fold keeps its own open state: the countdown re-renders this screen every second.
   const [tagsOpen, setTagsOpen] = useState(false)
@@ -332,6 +340,13 @@ export default function Glance({
           {/* Two numbers and one line, as big as the screen allows: the whole of
               what a player walking back wants, and nothing to study. The speed
               is lime because it is the reading; neither is a grade. */}
+          {/* On court the warning leads, above the numbers (E4.4), as it does on the report. */}
+          {strain && court && (
+            <p className="glance-move glance-strain">
+              <Icon name="warn" size={15} />
+              <span>{strain}</span>
+            </p>
+          )}
           {court && (
             <div className="court-readout">
               <div className="court-numbers">
@@ -353,7 +368,7 @@ export default function Glance({
               )}
               {scoreMove && <p className="court-readout-note">{sentence(scoreMoveWords(scoreMove))}.</p>}
               <p className="court-readout-line">
-                {first ? <strong>{first.title}</strong> : 'Nothing stood out. Hit another.'}
+                {setLine ? <strong>{setLine}</strong> : first ? <strong>{first.title}</strong> : 'Nothing stood out. Hit another.'}
               </p>
             </div>
           )}
@@ -399,7 +414,7 @@ export default function Glance({
               not get hit. Same box as `.glance-move`, same tokens, one rule
               down the side in the colour the report already gives this
               subject. */}
-          {strain && (
+          {strain && !court && (
             <p className="glance-move glance-strain">
               <Icon name="warn" size={15} />
               <span>{strain}</span>

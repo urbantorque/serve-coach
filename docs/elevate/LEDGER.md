@@ -485,3 +485,22 @@ width use, console errors) are machine figures and sit in each set's
   trend). Nothing new is claimed; what was spread over the screen is
   gathered under the two bodies it is about. Proved by the gate and the tour
   (`12-progress`).
+
+- [x] **E4.4 On court, read from a fence.** Three things the court screen
+  got wrong for a player walking back:
+  - *A guided set's headline named another fault.* The set checking the
+    racket drop showed "Your tossing arm comes down early" in big type while
+    the voice said "Not yet" about the drop. The big line is now the set's
+    fault and this serve's verdict on it ("Racket drop: still there"), and
+    the other fault's "looks the same" line is not shown in a set.
+  - *The strain warning came after the numbers and the button.* On court it
+    now leads, above the numbers, as it does on the report.
+  - *What is read aloud* was the speed, the score, the fix and its whole
+    "why", about forty words between two serves. It is now the speed, the
+    score and the fix's name; the why is for reading.
+  Checked and left as they are: the countdown (five seconds, spoken, then
+  recording starts on its own), and a guided set of six needs no screen (each
+  serve returns to the camera on its own). Counting ten serves in still
+  needs a tap per serve on where it landed: the app cannot see the court,
+  and says so. Proved by the gate and the tour (`18-guided`,
+  `16-glance-strain`).
