@@ -516,3 +516,23 @@ width use, console errors) are machine figures and sit in each set's
   390 px: every pill one line, 35 px tall. (That demo's earlier serve is the
   same frames with the fault judged clean, so its two bodies look alike; on
   real serves they differ.)
+
+- [x] **E4.6 Wave 4's close.** Set `w4`, shot at 91f4018: 46 shots, none
+  failed, nothing clipped, no console errors from the app. Before and after:
+  `gallery/index.html?a=w3&b=w4`, and `w3-w4-phone.jpg`. The rescore,
+  screens that moved:
+
+  | Screen | Purpose | Mine | Words | Why |
+  |---|---|---|---|---|
+  | 09 Report after a drill | 6 → 8 | | 6 → 7 | Whether the drill worked leads, with what to do next |
+  | 12 Progress | | 7 → 8 | | "Since Oct 10": the change, the faults gone, the speed that moved, under the two bodies |
+  | 16 Court, strain | 6 → 8 | | | The warning leads, above the numbers |
+  | 18 Guided set | 5 → 8 | | 5 → 7 | The big line is the set's own fault and this serve's verdict |
+  | 19 Guided set, passed | 6 → 7 | | | The same |
+  | **Mean, all 23** | **8.1** (7.7) | **5.6** (5.5) | **7.2** (7.1) | |
+
+  The report's own-serve comparison (E4.1) shows only where the player has
+  an earlier serve judged clean of the fault, which the tour's report demos
+  do not, so it is not in these scores; it was checked on
+  `?demo=lesson-own` (E4.5). Not verified: anything on a real phone, and
+  the spoken lines' length as heard, not counted.
