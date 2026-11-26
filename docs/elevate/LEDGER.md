@@ -336,3 +336,23 @@ width use, console errors) are machine figures and sit in each set's
   colours on one (DESIGN.md); on the model only, since the player's own best
   or last serve may still have the fault; and only when both are drawn for
   the same racket hand. Proved by the tour and a shot of the section.
+
+- [x] **E2.6 Wave 2's close.** Set `w2`, shot at 19347e9: 46 shots, none
+  failed, no console errors from the app. Before and after:
+  `gallery/index.html?a=w1&b=w2`, with `w1-w2-phone.jpg` and
+  `w1-w2-laptop.jpg` for the changed screens. The rescore, screens that
+  moved:
+
+  | Screen | Mine | Words | Visuals | Why |
+  |---|---|---|---|---|
+  | 02 Sample report, 06 and 07 Report | | | 6 → 7 | The side by side says from this to that: coral on you, lime on the model |
+  | 09 Report after a drill; 22 Basket | | | 5 → 6 | The same pair |
+  | 10 Today | 5 → 6 | | 4 → 6 | Each card held at its own fault, its usual said past the noise, no two titles alike |
+  | 12 Progress | 6 → 7 | 6 → 7 | 5 → 7 | Then and now marks one fault on both bodies; the fault rows show the window and the mark; one line under the chart |
+  | **Mean, all 23** | **5.5** (5.4) | **6.7** (6.7) | **5.2** (4.8) | |
+
+  Purpose, action, width and taps did not move. The tour's own measures:
+  Progress's first phone screen carries 76 words where it carried 88. Not
+  verified: anything on a real phone, and whether a player reads the framed
+  six as the drill check's window without being told (the line under the
+  grid says it).
