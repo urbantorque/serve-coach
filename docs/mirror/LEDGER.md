@@ -283,6 +283,12 @@ visuals 5.7, taps 9.0). Not verified: anything on a real phone.
   were minutes and names with nothing shown (visuals 4). `pictures.test.ts`
   checks every demonstrated fault has its key position at its own moment,
   the clean serve is shared, and each figure says whose it is.
+
+  Caught at the wave's tour: the taller rows pushed "Show the drill full
+  screen" off a phone's first screen (lime actions 1 to 0). The sheet's one
+  main action now stays at the sheet's foot while the rows scroll under it
+  (`position: sticky`), so it is on screen whatever the rows hold: one lime
+  action again at both sizes.
 - [x] **M2.5 Checking a clip** shows the player's clip and the body found so
   far, in place of the model. Timed on the real bench clip: the player's
   tracked body ("This is you, as I track you") already replaced the

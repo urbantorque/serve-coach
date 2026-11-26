@@ -7,6 +7,14 @@
   gap: 14px;
 }
 
+/* The one main action stays at the sheet's foot while the rows scroll
+   (Mirror M2.4): each drill's figure made the sheet taller than a phone. */
+.session-today > .btn--primary {
+  position: sticky;
+  bottom: 12px;
+  z-index: 1;
+}
+
 /* The time, and the calendar as a quiet link beside it (E1.2). */
 .session-time {
   display: flex;
