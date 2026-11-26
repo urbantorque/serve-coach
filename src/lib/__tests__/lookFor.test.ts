@@ -101,7 +101,8 @@ check('the pair renders the player beside something to compare, with its checks'
   const html = renderToStaticMarkup(
     createElement(SideBySide, { swing: swingOf(a)!, moment: 'drop', label: 'Racket drop', work: [], racket: 'left', checks }),
   )
-  assert(html.includes('Your racket drop, side by side'), 'the pair has no title')
+  // The moment in the heading is a tap (E3.4): its words are read without the tags.
+  assert(html.replace(/<[^>]+>/g, '').includes('Your racket drop, side by side'), 'the pair has no title')
   assert(html.includes('aria-label="Your racket drop, as the tracked body"'), 'the player half is missing')
   for (const c of checks) assert(html.includes(c.label), `${c.label} isn’t listed`)
 })
@@ -112,7 +113,7 @@ check('the report shows the pair at the top fault, and the moments say how they 
   const top = causalPlan(a.triage, a.diagnosis)[0]
   const moment = faultMoment(a.fundamentals, top.flaw)!
   const label = a.phases.find((p) => p.id === moment)!.label.toLowerCase()
-  assert(html.includes(`Your ${label}, side by side`), `the pair at the ${label} isn’t on the report`)
+  assert(html.replace(/<[^>]+>/g, '').includes(`Your ${label}, side by side`), `the pair at the ${label} isn’t on the report`)
   // The moment the player is parked on says what to look for; the rest are a tap away.
   assert(html.includes(LOOK_FOR.ready.replace(/'/g, '&#x27;')), 'the moment on screen doesn’t say what to look for')
   const marks = (html.match(/watch-mark--(tick|cross)/g) ?? []).length

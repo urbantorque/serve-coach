@@ -328,23 +328,6 @@
   white-space: normal;
 }
 
-.terms-row {
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 12px;
-  margin: -4px 0 10px;
-  font-size: 14px;
-  color: var(--fg-muted);
-}
-
-/* In the row, a meaning opens against the row rather than its word, so the
-   last word's never runs off the right edge of a phone (N2.11). */
-.terms-row .term {
-  position: static;
-}
-
 /* A quiet aside inside a chip: the best set beside its serve number (N3.2). */
 .chip-note {
   color: var(--fg-muted);

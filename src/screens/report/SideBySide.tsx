@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import AthleteCanvas from '../../components/AthleteCanvas'
 import { Icon } from '../../components/primitives'
+import Term from '../../components/Term'
+import type { GlossaryId } from '../../lib/glossary'
 import type { PhaseId } from '../../lib/analysis/types'
 import { swingOf, type Swing } from '../../lib/figure/swing'
 import { PHASE_ORDER, syncedFrame } from '../../lib/figure/syncPhases'
@@ -33,6 +35,9 @@ const PHASE_NAME: Record<PhaseId, string> = {
   contact: 'Contact',
   finish: 'Finish',
 }
+
+/** The moments with a meaning a tap away, named where the heading uses them (E3.4). */
+const TERM_OF: Partial<Record<PhaseId, GlossaryId>> = { trophy: 'trophy', drop: 'racketDrop' }
 
 /** How long one synced play-through takes: slow enough to watch two bodies at once. */
 const PLAY_SECONDS = 4
@@ -129,7 +134,7 @@ export default function SideBySide({ swing, moment, label, work, racket, checks,
   return (
     <section className="side" aria-labelledby="side-title">
       <h2 className="t-headline" id="side-title">
-        Your {name}, side by side
+        Your {TERM_OF[at] ? <Term id={TERM_OF[at]!}>{name}</Term> : name}, side by side
       </h2>
       <div className="side-pair">
         <figure className="side-cell">

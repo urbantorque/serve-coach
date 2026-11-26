@@ -403,3 +403,13 @@ width use, console errors) are machine figures and sit in each set's
   `render`, `guidedSet` and `tripCheck` tests check for the constants. A
   wording change is now one edit. The speed's words already lived in
   `speedCopy.ts`. Proved by the gate.
+
+- [x] **E3.4 Jargon explained on the word itself.** The report carried a
+  row of its own, "Tap a word to see what it means: Trophy, Racket drop,
+  Your score", apart from where any of the three words was used. It went.
+  The held frame's caption and the side by side's heading now carry their
+  moment as the tap ("Paused at the trophy", "Your trophy, side by side"),
+  and the score's own words ("A solid serve to build on") open what the
+  score is. `wordsInChrome.test.ts` now holds the rule itself: a word the
+  report uses in prose is a tap there, and the row is gone. Proved by it,
+  the gate and the tour.

@@ -400,15 +400,6 @@ export default function Report({
     )
 
   // The words a club player is least likely to know, defined on a tap.
-  const termsRow = (
-    <p className="terms-row">
-      <span>Tap a word to see what it means:</span>
-      <Term id="trophy" />
-      <Term id="racketDrop" />
-      <Term id="score" />
-    </p>
-  )
-
   const refusal = refusalFor(analysis.triage)
   const injuries = injuryNotes(analysis.triage)
   // Worst cause first, falling back to the single focus on a report filed
@@ -513,7 +504,9 @@ export default function Report({
             /100
           </span>
         </span>
-        <p className="hero-band">{verdict}</p>
+        <p className="hero-band">
+          <Term id="score">{verdict}</Term>
+        </p>
       </div>
       {figures && (
         <section className="hero-speed" aria-label="Serve speed">
@@ -714,7 +707,7 @@ export default function Report({
               <TargetShape metric={heldTarget} />
             </div>
           ) : (
-            <p className="hero-moment">{heldAt(focusPhase?.id ?? 'contact')}</p>
+            <p className="hero-moment">{heldCaption(focusPhase?.id ?? 'contact')}</p>
           ))}
         </div>
 
@@ -1094,9 +1087,6 @@ export default function Report({
         </details>
       )}
 
-      {/* The glossary sits at the top of the breakdown; without one, here. */}
-      {!fullRead && termsRow}
-
       {fullRead ? (
         <details className="report-more" open={moreOpen} onToggle={(e) => setMoreOpen((e.currentTarget as HTMLDetailsElement).open)}>
           <summary className="report-more-head">
@@ -1104,7 +1094,6 @@ export default function Report({
             <Icon name="chevron" size={18} />
           </summary>
           <div className="report-more-body">
-            {termsRow}
             {analysis.speed && 'miss' in analysis.speed && (
               <section className="speed-why" aria-label="Serve speed">
                 <h2 className="block-title">Serve speed</h2>
@@ -1436,6 +1425,17 @@ function DrilledLine({
       )}
     </div>
   )
+}
+
+/**
+ * The held frame's caption, with the moment's name a tap away where it has a
+ * meaning to give (E3.4): the word explained where it is used, not in a row
+ * of words of its own.
+ */
+function heldCaption(phase: PhaseId): ReactNode {
+  if (phase === 'trophy') return <>Paused at the <Term id="trophy">trophy</Term></>
+  if (phase === 'drop') return <>Paused at the <Term id="racketDrop">racket drop</Term></>
+  return heldAt(phase)
 }
 
 /** What the held frame is stopped on, in words under it. */

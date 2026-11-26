@@ -58,7 +58,15 @@ check('trophy, racket drop, stance and firing order are each a tap away on the r
   const html = renderToStaticMarkup(createElement(Report, { analysis: a, onBack: noop, onAnalyzeAnother: noop }))
   const words = [...html.matchAll(/class="term-word"[^>]*>([^<]+)</g)].map((m) => m[1])
   note(`terms on the report: ${words.join(', ')}`)
-  for (const w of ['Trophy', 'Racket drop']) assert(words.includes(w), `${w} isn’t defined on a tap`)
+  // On the word where the report uses it, not in a row of words of its own
+  // (E3.4): wherever prose names the moment, that word is the tap. A button's
+  // own label is a control, not prose, and a tap on it does what it says.
+  const prose = html.replace(/<button[\s\S]*?<\/button>/g, ' ').replace(/<[^>]+>/g, ' ')
+  for (const [w, re] of [['trophy', /\btrophy\b/i], ['racket drop', /\bracket drop\b/i]] as const) {
+    if (re.test(prose)) assert(words.some((x) => re.test(x)), `${w} is used on the report but isn’t defined on a tap`)
+  }
+  assert(words.some((x) => /^trophy$/i.test(x)), 'the fixture no longer holds its frame at the trophy, so this check reaches nothing')
+  assert(!html.includes('Tap a word to see what it means'), 'the row of words is back')
   assert(words.some((w) => /stance/i.test(w)) === Boolean(a.diagnosis?.stance), 'the stance chip isn’t a term')
   assert(words.includes('The order your body moved in') === html.includes('The order your body moved in'), 'firing order isn’t a term')
   assert(html.includes('The order your body moved in') && a.diagnosis?.stance !== undefined, 'the fixture shows neither stance nor firing order')
