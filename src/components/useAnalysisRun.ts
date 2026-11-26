@@ -22,7 +22,6 @@ import { isSession } from '../lib/session/length'
 import { probeDuration } from '../lib/session/probe'
 import { sessionIdFor, type PracticeSession, type SessionStage } from '../lib/session/session'
 import type { SessionVideo } from '../lib/session/video'
-import { keepClip } from '../lib/storage/clipStore'
 import { applyWhenIdle, onUpdateWaiting } from '../lib/updates'
 import type { SweepProgress } from '../screens/Analyzing'
 import { loadAnalysis, loadAnalyzing, loadReport, loadSessionScreen, loadSessionLive, loadGlance } from '../appLoaders'
@@ -274,9 +273,13 @@ export function useAnalysisRun(deps: AnalysisRunDeps) {
           // A keep that fails is said on the report (L6.7), rather than found
           // later as a reopened report with nothing to play.
           const id = analysis.id
-          void keepClip(clipIdOf(id), file, { optedIn: true }).then((ok) => {
-            if (!ok) setKeepFailedFor(id)
-          })
+          // The store loads here, after the read, not with the entry (Mirror M0.4).
+          void import('../lib/storage/clipStore')
+            .then(({ keepClip }) => keepClip(clipIdOf(id), file, { optedIn: true }))
+            .catch(() => false)
+            .then((ok) => {
+              if (!ok) setKeepFailedFor(id)
+            })
         }
         recheckOffline()
 

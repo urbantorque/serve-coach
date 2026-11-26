@@ -1,5 +1,7 @@
 import { keyframesFromTrack, readKeyframePoses, readSwingTrack } from './poseTrack'
-import { forgetAllClips, forgetClip } from './clipStore'
+// The clip store loads when a clip is forgotten, not with the entry (Mirror M0.4).
+const forgetClip = (clipId: string) => import('./clipStore').then((m) => m.forgetClip(clipId))
+const forgetAllClips = () => import('./clipStore').then((m) => m.forgetAllClips())
 import { clipIdOf } from './sessionKey'
 import { mergeTripRecords, normaliseTripRecord, tripRecordsOf, type TripRecord } from './ledger'
 import { readPrefs } from './prefs'

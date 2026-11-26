@@ -1,7 +1,4 @@
 import { useCallback, useEffect, useState } from 'react'
-import { isCachedOffline } from '../lib/pose/poseEngine'
-import { isRefineModelCached } from '../lib/pose/refineEngine'
-import { isObjectModelCached } from '../lib/vision/objectEngine'
 import { pruneEngineCaches } from '../lib/engineCache'
 
 const BASE = import.meta.env?.BASE_URL || '/'
@@ -32,9 +29,12 @@ export type OfflineWarmup = {
  * `isObjectModelCached`).
  */
 function checkOfflineReady(): Promise<boolean> {
-  return Promise.all([isCachedOffline(), isObjectModelCached(), isRefineModelCached()]).then(
-    ([pose, object, refine]) => pose && object && refine,
-  )
+  // The engines' own modules, loaded for the question rather than with the
+  // entry (Mirror M0.4): the answer is a badge, never the first paint.
+  return Promise.all([import('../lib/pose/poseEngine'), import('../lib/vision/objectEngine'), import('../lib/pose/refineEngine')])
+    .then(([pose, object, refine]) => Promise.all([pose.isCachedOffline(), object.isObjectModelCached(), refine.isRefineModelCached()]))
+    .then(([pose, object, refine]) => pose && object && refine)
+    .catch(() => false)
 }
 
 /**

@@ -12,7 +12,7 @@ import { useAnalysisRun } from './components/useAnalysisRun'
 import { useSets } from './components/useSets'
 import { useHistoryLookups } from './components/useHistoryLookups'
 import { loadAnalysis, loadAnalyzing, loadReport, loadSessionScreen, loadGlance } from './appLoaders'
-import { meteredConnection } from './lib/engineDownload'
+import { isIOS, isInstalled, meteredConnection } from './lib/platform'
 import { interruptedLine, takeInterrupted } from './lib/interrupted'
 import { findPracticeFocus, type PracticeFocus } from './lib/practice'
 import { captureAgainWith } from './components/captureAgain'
@@ -40,12 +40,10 @@ import type { ServePairFrames } from './lib/analysis/consistency'
 import { SCORING_VERSION, type Analysis, type FailedCapture } from './lib/analysis/types'
 import { parsePath, pathFor, titleFor, type InfoPageId } from './lib/routes'
 import { getPracticeSession, getSession, logPractice, safely, saveSession, tagsById, unlogPractice, type Session } from './lib/storage/db'
-import { downloadBackup, isIOS, isInstalled } from './lib/storage/backup'
 import { storageNudge } from './lib/storage/nudge'
 import { readPrefs, writePrefs, type Prefs } from './lib/storage/prefs'
 import { clipIdOf } from './lib/storage/sessionKey'
 import type { PracticeSession, SessionStage } from './lib/session/session'
-import { clipFor, keptClips } from './lib/storage/clipStore'
 import type { KeptOther } from './screens/Report'
 import { guessServeNumber } from './lib/serveGuess'
 import type { ProtectionStatus, RecoveryOffer } from './lib/storage/protect'
@@ -674,6 +672,9 @@ export default function App() {
     let cancelled = false
     const urls = new Map<string, string>()
     void (async () => {
+      // The clip store loads with the first reopened report, not the entry (Mirror M0.4).
+      const { clipFor, keptClips } = (await import('./lib/storage/clipStore').catch(() => undefined)) ?? {}
+      if (!clipFor || !keptClips || cancelled) return
       const own = await clipFor(clipIdOf(reopenedId))
       if (!own || cancelled) return
       const all = historyRef.current.sessions
@@ -752,7 +753,8 @@ export default function App() {
                 })
               }
               onExportBackup={() =>
-                void downloadBackup()
+                // The backup code loads on the tap, not with the entry (Mirror M0.4).
+                void import('./lib/storage/backup').then((m) => m.downloadBackup())
                   .then(() => setPrefs(readPrefs()))
                   .catch(() => {})
               }

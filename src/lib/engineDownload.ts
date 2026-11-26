@@ -155,20 +155,8 @@ export async function downloadEngines(
   opts.onProgress?.({ loaded: total, total })
 }
 
-/**
- * Whether the player is on a connection a 57 MB download costs money on: Save
- * Data turned on, or the browser saying the connection is cellular. Chrome on
- * Android reports both; Safari reports neither, and nothing is said there.
- */
-export function meteredConnection(nav: {
-  connection?: { saveData?: boolean; type?: string }
-}): 'saveData' | 'cellular' | undefined {
-  const c = nav.connection
-  if (!c) return undefined
-  if (c.saveData) return 'saveData'
-  if (c.type === 'cellular') return 'cellular'
-  return undefined
-}
+// In `platform.ts` since Mirror M0.4, so the entry can ask it without the downloader.
+export { meteredConnection } from './platform'
 
 /* ------------------------------------------------- when the engine fails (L6.2) */
 

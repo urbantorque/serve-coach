@@ -12,6 +12,9 @@ import './styles/tokens.css'
 import './styles/shell.css'
 import './styles/controls.css'
 import './styles/today.css'
+// Today draws the serve cards for every returning player, so their rules ride
+// with Today's rather than in a sheet of their own (Mirror M0.4).
+import './styles/serveCards.css'
 import './styles/states.css'
 import './styles/wide.css'
 

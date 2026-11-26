@@ -113,8 +113,27 @@ The budgets at the start: the entry chunk 382.60 of 385 kB raw and 130.23 of
   sheets read 0.9 to 0.92 (from 0.96 to 1).
 - [ ] **M0.3 The baseline.** Set `m0` at both sizes, 25 screens; the two
   new screens scored.
-- [ ] **M0.4 Make room.** In the entry chunk and the split stylesheets,
-  with the kB freed recorded.
+- [x] **M0.4 Make room.** The entry chunk carried code for questions asked
+  after the first paint, or after a tap. Read off a source-mapped build:
+  - the offline badge's "is the model cached?" pulled in all three engine
+    modules (the pose engine, the object engine, the refine engine and
+    RTMPose's decoder); they now load when the question is asked;
+  - the clip store loads with a reopened report, after a read, or when a
+    clip is forgotten, not with the entry;
+  - the backup code loads on the tap that exports it;
+  - `isIOS`, `isInstalled` and `meteredConnection` moved to
+    `lib/platform.ts`, so the first screen asks them without the backup
+    code and the engine downloader (both re-export them).
+
+  The entry chunk goes from 382.60 to 372.16 kB raw (10.44 freed) and from
+  130.23 to 126.26 kB gzip (3.97 freed). The split stylesheets have no dead
+  rules left (every class a source file names, or builds from a state, is
+  drawn), so the room there is a move: Today draws the serve cards for every
+  returning player, so their rules join Today's in the entry sheet. The split
+  sheets go from 19.61 to 19.02 kB gzip (0.59 freed), the entry sheet from
+  8.89 to 9.13 of its 14. The badge, Today, the landing and a reopened
+  report with its kept clip were shot at both sizes with no console errors;
+  the clip loads on both.
 
 ## Wave 1: one main action
 

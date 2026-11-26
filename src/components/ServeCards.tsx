@@ -9,7 +9,6 @@ import { readPrefs } from '../lib/storage/prefs'
 import AthleteCanvas from './AthleteCanvas'
 import { DeltaChip } from './DeltaChip'
 import { Icon } from './primitives'
-import '../styles/serveCards.css'
 
 interface Props {
   sessions: Session[]

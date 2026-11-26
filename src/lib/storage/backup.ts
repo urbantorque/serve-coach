@@ -170,36 +170,9 @@ export async function isPersisted(): Promise<boolean> {
   }
 }
 
-/**
- * Is this running as an installed app?
- *
- * On iOS this is the only thing that exempts a site from the seven-day storage
- * clearance, which makes it the single most effective thing a player can do to
- * keep their history — and worth asking them to do, once.
- */
-export function isInstalled(): boolean {
-  try {
-    return (
-      window.matchMedia?.('(display-mode: standalone)').matches ||
-      // Safari's own, pre-standard flag. Still the only signal on iOS.
-      (navigator as unknown as { standalone?: boolean }).standalone === true
-    )
-  } catch {
-    return false
-  }
-}
-
-export const isIOS = (): boolean => {
-  try {
-    return (
-      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-      // iPadOS reports itself as a Mac; the touch points give it away.
-      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-    )
-  } catch {
-    return false
-  }
-}
+// In `platform.ts` since Mirror M0.4, so the entry can ask them without the
+// backup code; said here too for every importer that reads them from here.
+export { isInstalled, isIOS } from '../platform'
 
 /**
  * The storage an import reads and writes through.
