@@ -266,3 +266,16 @@ width use, console errors) are machine figures and sit in each set's
   the practice video 0 to 1. (On a sheet it counts the lime behind the
   scrim too, so it reads 3 on the session sheet before and after.) Not
   verified: how a press feels under a finger, and anything on a real phone.
+
+## Wave 2: visualisations that explain
+
+- [x] **E2.0 Room for the wave's styles.** The split stylesheets were at
+  19.86 of 20 kB gzip after Wave 1, and this wave's pictures need rules.
+  A stricter scan than E0.3's (class names only where a `className` or a
+  class string names them, comments stripped) found rules no screen draws:
+  the four Progress tiles the record row replaced (`.tiles`, `.tile`), the
+  practice video's old row of four counts (`.session-figures`) and its blank
+  pick, the filmstrip's grid (`.strip`, whose tiles' own box rule stays),
+  and the report's old footer. About 1.5 kB of source, 0.25 kB gzip: the
+  split sheets measure 19.73 kB with this wave's styles in. Proved by the
+  scan, `bundle.test.ts` and the tour (no screen changed).

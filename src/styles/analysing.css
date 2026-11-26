@@ -358,35 +358,6 @@
   gap: 22px;
 }
 
-/* Four counts in a row: found, read, unclear and the middle score. */
-.session-figures {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
-  gap: 6px;
-}
-
-.session-figures > div {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 10px 12px;
-  border-radius: var(--r-sm);
-  background: var(--ink-1);
-  border: 1px solid var(--hairline-soft);
-}
-
-.session-figures dt {
-  font-size: 14px;
-  color: var(--fg-faint);
-}
-
-.session-figures dd {
-  font-size: 22px;
-  font-weight: 660;
-  letter-spacing: -0.02em;
-  color: var(--fg);
-}
-
 .session-dash .session-meta {
   margin-top: 0;
 }
@@ -467,8 +438,7 @@ button.session-pick:active {
   background: var(--scrim);
 }
 
-.session-picks img,
-.session-pick-blank {
+.session-picks img {
   grid-column: 1 / -1;
   width: 100%;
   height: auto;
@@ -534,8 +504,7 @@ button.session-pick:active {
 }
 
 /* A pick that plays: its still answers the pointer as the other rows do. */
-button.session-pick:hover img,
-button.session-pick:hover .session-pick-blank {
+button.session-pick:hover img {
   border-color: var(--hairline);
 }
 

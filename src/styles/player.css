@@ -192,33 +192,6 @@
    Keyframe filmstrip
    ========================================================================= */
 
-/*
- * All six positions on the page at once.
- *
- * This was a horizontal scroller with its scrollbar hidden, which is a fine
- * pattern for a list whose length nobody has been told — and the worst possible
- * one here, because the heading directly above it promises six. Three fitted,
- * the fourth was clipped by the edge of the shell, and there was no scrollbar,
- * arrow or gradient to say the other three existed. A player counted three
- * under a heading that said six and concluded the app was broken.
- *
- * Two columns rather than three below 480px: the cards carry a skeleton with an
- * angle callout drawn on it, and a third column on a phone shrinks them to about
- * a hundred pixels, at which point the callout is unreadable. Better to scroll
- * the page — which people expect — than to shrink the thing they came to look at.
- */
-.strip {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px 11px;
-}
-
-@media (min-width: 480px) {
-  .strip {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
 /* The drawn keyframe takes the same box as the photograph it stands in for, so
    a report whose stills have been pruned has the same layout as one that still
    has them — the strip does not reflow as a history ages. Listed alongside the

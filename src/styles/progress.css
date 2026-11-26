@@ -448,41 +448,6 @@
    Progress at a glance (L4.9)
    ========================================================================= */
 
-/* Four tiles, two by two at a phone's width: the first screen answers "how am
-   I doing" before any chart is scrolled to. */
-.tiles {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.tile {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  min-width: 0;
-  min-height: 118px;
-  padding: 14px 14px 12px;
-  border-radius: var(--r-md);
-  border: 1px solid var(--hairline);
-  background: var(--ink-2);
-  color: var(--fg);
-  text-align: left;
-  font: inherit;
-}
-
-button.tile {
-  cursor: pointer;
-  transition: border-color var(--fast) var(--ease);
-}
-
-@media (hover: hover) {
-  button.tile:hover {
-    border-color: var(--fg-faint);
-  }
-}
-
 /* One share button (L4.9): a disclosure whose summary is the button, opening
    onto the cards there are to share. */
 .share-menu > summary {
