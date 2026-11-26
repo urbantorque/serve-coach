@@ -112,9 +112,10 @@ export default function SideBySide({ swing, moment, label, work, racket, checks,
   const bestSwing = useMemo(() => (best ? swingOf(best) : undefined), [best])
   const lastSwing = useMemo(() => (last ? swingOf(last) : undefined), [last])
 
+  // Short labels, so four fit on one line of a phone (E4.5); the caption under the figure says the rest.
   const options: { id: Beside; label: string; swing?: Swing | null; caption?: string }[] = [
-    ...(goodSwing && good ? [{ id: 'good' as const, label: 'Yours, done right', swing: goodSwing, caption: `Yours, ${shortDate(good.createdAt)}, without this fault` }] : []),
-    { id: 'model', label: 'A model serve', swing: model, caption: 'Model' },
+    ...(goodSwing && good ? [{ id: 'good' as const, label: 'Done right', swing: goodSwing, caption: `Yours, ${shortDate(good.createdAt)}, without this fault` }] : []),
+    { id: 'model', label: 'Model', swing: model, caption: 'Model' },
     ...(bestSwing ? [{ id: 'best' as const, label: 'Your best', swing: bestSwing, caption: best ? `Your best, ${shortDate(best.createdAt)}` : undefined }] : []),
     ...(lastSwing && last?.id !== best?.id
       ? [{ id: 'last' as const, label: 'Your last', swing: lastSwing, caption: last ? `Your last, ${shortDate(last.createdAt)}` : undefined }]

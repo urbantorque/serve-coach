@@ -504,3 +504,15 @@ width use, console errors) are machine figures and sit in each set's
   needs a tap per serve on where it landed: the app cannot see the court,
   and says so. Proved by the gate and the tour (`18-guided`,
   `16-glance-strain`).
+
+- [x] **E4.5 The comparison's labels fit a phone.** Checking E4.1 on the
+  demo built for it (`?demo=lesson-own`, a serve after one judged clean of
+  its fault) showed the side by side leading with "Yours, Nov 25, without
+  this fault" and lime on the player's own arm, as meant; and its pills
+  wrapping, "Yours, done right" and "A model serve" each on two lines, the
+  defect Settings had in Wave 1. The pills are short now ("Done right",
+  "Model", "Your best", "Your last"); the caption under the figure says the
+  rest ("Yours, Nov 25, without this fault", "Your best, Oct 3"). Measured in the browser at
+  390 px: every pill one line, 35 px tall. (That demo's earlier serve is the
+  same frames with the fault judged clean, so its two bodies look alike; on
+  real serves they differ.)
