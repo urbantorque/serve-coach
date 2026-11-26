@@ -111,8 +111,33 @@ The budgets at the start: the entry chunk 382.60 of 385 kB raw and 130.23 of
   behind the screen they cover. That is M4.1's and M4.2's starting point.
   The camera's card is the full-width camera, so 1 is right. On a phone the
   sheets read 0.9 to 0.92 (from 0.96 to 1).
-- [ ] **M0.3 The baseline.** Set `m0` at both sizes, 25 screens; the two
-  new screens scored.
+- [x] **M0.3 The baseline.** Set `m0`, shot at 47025796: 50 shots at both
+  sizes, none failed, nothing clipped, no console errors. Against `w5` and
+  `e57`, the measures moved only where M0.2 changed what is measured (the
+  sheets, and the filming guide, which is a sheet too: 0.36 of a laptop's
+  width, no lime action of its own) and where the court screen's "Read
+  aloud" chip came or went with the browser's voices. No screen was
+  rescored: the shots are the same. Still more than one lime action, as
+  Wave 1 found: the play button beside the main action on the laptop's
+  sample, fresh, reopened and after-a-drill reports and the basket, and
+  the Film button beside "Start today's session" on Today at both sizes.
+
+  The two new screens, scored:
+
+  | Screen | Purpose | Action | Mine | Width | Words | Visuals | Taps |
+  |---|---|---|---|---|---|---|---|
+  | 07b Report on real footage | 8 | 8 | 8 | 8 | 7 | 7 | 9 |
+  | 14b Court screen on real footage | 6 | 8 | 7 | 7 | 5 | 5 | 10 |
+
+  The real report is the reopened report with the player's own clip and
+  its moments under it (on a laptop the clip leads; on a phone the figure
+  replay leads and the clip sits under it), and the only report with one
+  lime action, since the browser's own controls play the kept clip. The
+  real court screen says "Nothing stood out. Hit another." over a serve
+  its report says to work on (M1.4), which costs it purpose and words.
+
+  Means over the 25 screens: purpose 8.0, action 7.8, mine 6.1, width 6.9,
+  words 7.2, visuals 5.7, taps 9.0.
 - [x] **M0.4 Make room.** The entry chunk carried code for questions asked
   after the first paint, or after a tap. Read off a source-mapped build:
   - the offline badge's "is the model cached?" pulled in all three engine
