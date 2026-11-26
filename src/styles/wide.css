@@ -181,10 +181,32 @@
     grid-column: 1 / -1;
   }
 
-  /* The shape of the serve and its records, beside then-and-now and the faults (D1.2). */
-  .progress-screen > .shape {
+  /*
+   * The shape of the serve and its records, then its speed, on the left; then
+   * and now, the faults and what I've noticed on the right (D1.2, E5.2). The
+   * shape used to span two rows and leave a hole under its tiles while the
+   * right ran on; each side now stacks its own, so neither waits on the other.
+   */
+  .progress-screen > .shape,
+  .progress-screen > #progress-speed {
     grid-column: 1;
-    grid-row: span 2;
+  }
+
+  .progress-screen > .then-now,
+  .progress-screen > .block:has(> .fault-grid),
+  .progress-screen > #progress-changed {
+    grid-column: 2;
+  }
+
+  /* A chart's words are drawn in its own units, so a chart stretched across a
+     wide pane grew its axis to 24 px; held near its drawn width (about 1.2
+     times), its words stay the size of the words beside it (E5.2). */
+  .progress-screen .speed-trips {
+    max-width: 384px;
+  }
+
+  .progress-screen .ribbon {
+    max-width: 420px;
   }
 
   /* Empty: the words and the one action on the left, the model serve as one

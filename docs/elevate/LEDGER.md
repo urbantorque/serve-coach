@@ -549,3 +549,11 @@ width use, console errors) are machine figures and sit in each set's
   the chart. The ribbon's rules moved from Progress's sheet to Today's,
   since Today draws it too: the split sheets got lighter by them. Proved by
   the tour (`10-today`, laptop) and the gate.
+
+- [x] **E5.2 Progress on a laptop: no hole, no outsized chart words.** The
+  score spanned two rows on the left and left a hole under its tiles while
+  the right ran on; each side now stacks its own (the score and the speed on
+  the left; then and now, the faults and what I've noticed on the right).
+  The speed chart and the score chart, stretched across a wide pane, drew
+  their axes at 20 to 24 px; each is held near its drawn width (384 and 420
+  px), so its words read at about the size of the words beside them. Proved by the tour (`12-progress`, laptop).
