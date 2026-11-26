@@ -305,3 +305,15 @@ width use, console errors) are machine figures and sit in each set's
   needs 4." It never says a step is passed: only a check does that.
   Proved by `faultRows.test.ts` (the line, the voice lint, no claim of a
   pass) and the tour.
+
+- [x] **E2.3 Serve cards with scent.** Every card held the same figure at
+  contact, and on a season of one fault three neighbours carried the same
+  title. `cardScents` now gives each card its own picture (held at the
+  moment its title is about, the fault painted where the serve had it; a
+  record held at contact), the score against the player's usual before it,
+  shown only past their own noise (the overall's own change threshold and
+  the spread of their usual, as a small chip), and a title that differs from
+  its neighbour's ("Your tossing arm comes down early", then "Tossing arm
+  again", then "Tossing arm, 3 in a row", oldest first). Proved by
+  `serveCards.test.ts` (no two neighbours alike, the run's words, the usual
+  said only past the noise) and the tour (`10-today`).
