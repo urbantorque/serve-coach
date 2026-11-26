@@ -242,3 +242,27 @@ width use, console errors) are machine figures and sit in each set's
   other duration is a token or listed with why, and reduced motion still
   stops everything. Proved by the test and the gate; how a press feels under
   a finger is the one thing here a machine cannot judge.
+
+- [x] **E1.8 Wave 1's close.** Set `w1`, shot at f6bb529: 46 shots, none
+  failed, no console errors from the app. Before and after:
+  `gallery/index.html?a=w0&b=w1`. The rescore, screens that moved:
+
+  | Screen | Purpose | Action | Words | Why |
+  |---|---|---|---|---|
+  | 05 Checking a clip | | | 6 → 7 | Says how long, the first time too |
+  | 06, 07 Report; 22 Basket | | 6 → 7 | | The optional tags are a quiet link; chosen chips are not lime |
+  | 10 Today | | 7 → 8 | 7 → 8 | Leads with the goal and the next thing; the stuck line is quiet, under the action |
+  | 11 Today's session sheet | 7 → 8 | 3 → 8 | 6 → 7 | One main action; minutes said as minutes; the check where it comes |
+  | 13 Settings | | 8 → 9 | | One chosen look, no lime outline |
+  | 13b Settings, never chosen | | 6 → 9 | 6 → 8 | The guesses chosen and said; every pill on one line |
+  | 14, 16, 17, 18 Court screen | | 7 → 8 | | The optional tags quiet |
+  | 19 Guided set, passed | | 4 → 8 | | One lime action: move up a step |
+  | 20 Practice video, checked | | 5 → 8 | | The first drill is the main action |
+  | 21 Practice video, before | | 7 → 8 | | "Cancel" quiet beside the two choices |
+  | **Mean, all 23** | **7.7** (7.7) | **7.8** (6.7) | **6.7** (6.5) | |
+
+  Mine, width, visuals and taps did not move this wave. The tour's own
+  count of lime actions on the first phone screen: the passed set 2 to 1,
+  the practice video 0 to 1. (On a sheet it counts the lime behind the
+  scrim too, so it reads 3 on the session sheet before and after.) Not
+  verified: how a press feels under a finger, and anything on a real phone.
