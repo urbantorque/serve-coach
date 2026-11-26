@@ -9,6 +9,10 @@ import type { OfflineWarmup } from './useOfflineWarmup'
 import { writePrefs, type Prefs } from '../lib/storage/prefs'
 import { deviceNoun } from '../lib/device'
 import { INFO_PAGES, INFO_TITLES, type InfoPageId } from '../lib/routes'
+import { inferCadence } from '../lib/progress'
+import type { Session } from '../lib/storage/db'
+import type { TripRecord } from '../lib/storage/ledger'
+import type { PracticeSession } from '../lib/session/session'
 
 const FilmingGuide = lazy(() => import('./FilmingGuide'))
 const StoragePanel = lazy(() => import('./StoragePanel'))
@@ -26,7 +30,8 @@ interface Props {
   onSheet: (sheet: AppSheet) => void
   prefs: Prefs
   onPrefs: (next: Prefs) => void
-  serves: number
+  /** The serves, sessions and practice videos, for the count and for the guesses Settings shows (E1.3). */
+  history: { sessions: Session[]; ledger: readonly TripRecord[]; practice: readonly PracticeSession[] }
   onImported: () => void
   offline: { ready: boolean | undefined; warming?: OfflineWarmup; metered?: 'saveData' | 'cellular'; onDownload: () => void }
   /** What the automatic copy of the history covers, in a sentence. */
@@ -77,8 +82,16 @@ export function OfflineRow({ ready, warming, metered, onDownload }: Props['offli
  * The sheets over every screen: how to film it, and Settings with the things
  * only Settings holds. Out of `App.tsx`, where they were a third of the file.
  */
-export default function AppSheets({ sheet, onSheet, prefs, onPrefs, serves, onImported, offline, protection, onPage }: Props) {
+export default function AppSheets({ sheet, onSheet, prefs, onPrefs, history, onImported, offline, protection, onPage }: Props) {
   const save = (patch: Partial<Prefs>) => onPrefs(writePrefs(patch))
+  /*
+   * A player who never chose sees the app's guess chosen, and says so (E1.3):
+   * the hand the latest serve was read with, and the pace of their visits.
+   * One tap on the other option corrects it.
+   */
+  const serves = history.sessions.length
+  const handGuess = history.sessions[0]?.handedness === 'left' ? 'left' : 'right'
+  const cadenceGuess = sheet === 'settings' && !prefs.cadence ? inferCadence(history.sessions, history.ledger, history.practice) : undefined
   return (
     <>
       <Sheet
@@ -95,10 +108,10 @@ export default function AppSheets({ sheet, onSheet, prefs, onPrefs, serves, onIm
       </Sheet>
 
       <Sheet open={sheet === 'settings'} onClose={() => onSheet(null)} title="Settings">
-        <HandednessPicker value={prefs.handedness} onChange={(handedness) => save({ handedness })} />
+        <HandednessPicker value={prefs.handedness} guess={handGuess} fromServes={serves > 0} onChange={(handedness) => save({ handedness })} />
         <Suspense fallback={null}>
           <SpeedUnitPicker value={prefs.speedUnit ?? defaultSpeedUnit()} onChange={(speedUnit) => save({ speedUnit })} />
-          <CadencePicker value={prefs.cadence} onChange={(cadence) => save({ cadence })} />
+          <CadencePicker value={prefs.cadence} guess={cadenceGuess} onChange={(cadence) => save({ cadence })} />
           <fieldset className="hand-pick">
             <legend>Sounds</legend>
             <div className="hand-pick-options">

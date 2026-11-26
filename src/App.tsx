@@ -1135,7 +1135,7 @@ export default function App() {
         onSheet={setSheet}
         prefs={prefs}
         onPrefs={setPrefs}
-        serves={sessions.length}
+        history={{ sessions, ledger: tripLedger, practice: practiceSessions }}
         onImported={refreshSessions}
         offline={{ ready: offlineReady, warming, metered, onDownload: () => void makeOffline() }}
         protection={protection?.line}

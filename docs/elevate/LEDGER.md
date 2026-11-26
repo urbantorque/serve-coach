@@ -159,3 +159,19 @@ width use, console errors) are machine figures and sit in each set's
   from Today to the drill or to the check); exits at the foot 3 to 1, lime
   things on the sheet 2 to 1. Proved by the tour (`11-session-sheet`, both
   sizes) and the gate.
+
+- [x] **E1.3 Settings shows its guesses.** A player who never chose saw
+  neither hand selected, and "How often do you get to a court?" offered a
+  fourth pill, "Work it out for me", that wrapped onto two lines and never
+  said what it had worked out. Now the hand the latest serve was read with
+  (right, with no serves) is shown chosen, under "From your serves, I’ve
+  guessed right-handed. Tap the other if that’s wrong."; and the pace the
+  streak is already read at (`inferCadence`, from the serves, the session
+  ledger and the practice videos) is shown chosen among three pills that fit
+  on one line, under "I’ve guessed this from your sessions." One tap on the
+  other option sets it, as before. `App.tsx` passes the history in place of
+  the count, so it stays 1,196 lines. Proved by the tour (`13b-settings-new`
+  against `w0`: no hand chosen and a wrapped pill before; both guesses
+  chosen and every pill on one line after) and the gate. The "No backup
+  yet" line under it is a demo-route artifact (the seeded serves are never
+  stored), not this screen's.
