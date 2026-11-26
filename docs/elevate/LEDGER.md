@@ -187,3 +187,18 @@ width use, console errors) are machine figures and sit in each set's
   chosen rule leaves `--chosen` or uses lime; `contrast.test.ts` still
   passes. Proved by the tour (Settings, the session sheet's time, the
   report's tags) and the gate.
+
+- [x] **E1.5 Every wait says how long; every empty state and error says
+  what to do.** The audit: the practice video says its minutes before and
+  its time left while it runs; the coach's download says its size and its
+  progress; the empty Progress screen says "Film two serves" with the button
+  under it; a refused clip lists what to change; the crash screen offers a
+  reload and a backup. The one gap was the first checks on a device:
+  `estimateLine` says nothing until it has timed three, so a first-time
+  player watched a bar with no length. They now read "About a minute or
+  two. After a few serves I’ll know this phone’s own pace." (with "plus the
+  first download" when the coach is not yet in), until the device's own
+  figure replaces it. The range stands on W6.9's laptop timing (45 to 54 s
+  for an 18 s clip); no phone has been timed, so its top is left wide, and
+  a sweep's cells count its serves off instead. `estimate.test.ts` holds the
+  line to the voice lint and to the screen. Proved by the gate.

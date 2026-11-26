@@ -5,7 +5,8 @@
  */
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server.browser'
-import { MIN_TIMINGS, estimateLine, roughSeconds, timingsOf } from '../analysis/timings'
+import { MIN_TIMINGS, estimateLine, firstEstimateLine, roughSeconds, timingsOf } from '../analysis/timings'
+import { cueIssues } from '../analysis/voice'
 import Analyzing from '../../screens/Analyzing'
 import type { Session } from '../storage/db'
 import { assert, check, heading, note, report } from '../analysis/__tests__/harness'
@@ -44,6 +45,18 @@ check('a basket is the per-serve figure times its serves', () => {
   const line = estimateLine(t, { serves: 6 })
   assert(line === 'About 3 minutes for 6 serves on this phone.', `said "${line}"`)
   assert(estimateLine(t, { serves: 3 }) === 'About 75 seconds for 3 serves on this phone.', 'a short basket')
+})
+
+check('the first checks say a range, not nothing (E1.5)', () => {
+  const warm = firstEstimateLine({ device: 'phone' })
+  const cold = firstEstimateLine({ device: 'phone', cold: true })
+  note(`${warm} | ${cold}`)
+  assert(/minute/.test(warm) && /download/.test(cold) && !/download/.test(warm), 'the range or the download went missing')
+  for (const line of [warm, cold]) assert(cueIssues(line).length === 0, `"${line}": ${cueIssues(line).join(', ')}`)
+  const out = renderToStaticMarkup(
+    createElement(Analyzing, { progress: { step: 'tracking', ratio: 0.1 } as never, fileName: 'serve.mp4', onCancel: () => {}, history: [] }),
+  )
+  assert(out.includes('About a minute or two.'), 'a first check waited with no length said')
 })
 
 check('the analysing screen says it', () => {

@@ -5,7 +5,8 @@ import { Icon } from '../components/primitives'
 import LiveBody from '../components/LiveBody'
 import type { AnalyzeProgress, Step } from '../lib/analysis/analyze'
 import { MIN_COMPARABLE_SERVES } from '../lib/analysis/consistency'
-import { estimateLine, timingsOf } from '../lib/analysis/timings'
+import { estimateLine, firstEstimateLine, timingsOf } from '../lib/analysis/timings'
+import { deviceNoun } from '../lib/device'
 import type { Frame, PhaseId } from '../lib/analysis/types'
 import type { Session } from '../lib/storage/db'
 
@@ -118,10 +119,12 @@ interface Props {
 const quiet = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
 export default function Analyzing({ progress, sweep, onCancel, racket = 'right', screenLine, history, cold, live }: Props) {
-  // From this phone's own past passes, or nothing until there are enough (L6.9).
+  // From this phone's own past passes (L6.9), or a range until there are enough
+  // (E1.5). A sweep's own cells count the serves off, so it gets no range.
+  const sweeping = sweep !== undefined
   const estimate = useMemo(
-    () => estimateLine(timingsOf(history ?? []), { cold, serves: sweep?.total }),
-    [history, cold, sweep?.total],
+    () => estimateLine(timingsOf(history ?? []), { cold, serves: sweep?.total }) ?? (sweeping ? undefined : firstEstimateLine({ cold, device: deviceNoun() })),
+    [history, cold, sweep?.total, sweeping],
   )
   const aside = useTicker(TEACH.length, ASIDE_MS)
   const [seen, setSeen] = useState(false)

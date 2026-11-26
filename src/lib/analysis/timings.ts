@@ -140,3 +140,17 @@ export function estimateLine(t: Timings | undefined, o: { cold?: boolean; serves
   if (!o.cold) return `${what}.`
   return t.coldMedianMs ? `${what}, with the first download.` : `${what}, plus the first download.`
 }
+
+/**
+ * The first few checks, before this device has a pace of its own (E1.5).
+ *
+ * A wait that says nothing about its length is the one a player gives up on,
+ * and `estimateLine` says nothing until `MIN_TIMINGS` passes. So the first
+ * ones are given a range, said as a range. Where it comes from: W6.9 timed a
+ * first check of an 18 s clip at 45 to 54 s on a laptop; one serve is a
+ * shorter clip, and no phone has been timed, so the top of the range is left
+ * wide. Once there is a pace of this device's own, that figure replaces this.
+ */
+export function firstEstimateLine(o: { cold?: boolean; device: string }): string {
+  return `${o.cold ? 'About a minute or two, plus the first download' : 'About a minute or two'}. After a few serves I’ll know this ${o.device}’s own pace.`
+}
