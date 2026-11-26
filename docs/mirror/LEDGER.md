@@ -301,6 +301,27 @@ visuals 5.7, taps 9.0). Not verified: anything on a real phone.
   which the status line already speaks to. For a basket sweep the clip is
   the same file. `pictures.test.ts` holds it.
 
+**Wave 2 closed.** Set `m2`, shot at 93b8aa52 with the session sheet
+reshot at f8859896: 52 shots (the new refusal at both sizes), none failed,
+no console errors, one lime action at most on every screen. Before and
+after: `m1-m2-laptop-pictures.jpg` and `m1-m2-phone-pictures.jpg`.
+Rescored:
+
+| Screen | Mine | Width | Visuals |
+|---|---|---|---|
+| 03 Camera's first-time card | – | 6 | 4 → **7** |
+| 05 Checking a clip | 5 → **8** | 5 → **6** | 6 → **7** |
+| 11 Today's session sheet | 5 → **6** | 6 | 4 → **7** |
+| 21 Practice video, before | – | 5 → **6** | 3 → **7** |
+| 15b Court, refused: not all in the picture (new) | – | 5 | 7 |
+
+The new screen's other scores: purpose 9, action 9, words 8, taps 10. Means
+over the same 25 screens as before: mine 6.1 to 6.3, width 6.9 to 7.0,
+visuals 5.7 to 6.2; purpose 8.1, action 8.1, words 7.2 and taps 9.0
+unchanged. Over all 26 with the new refusal: visuals 6.2, words 7.3.
+Not verified: a real phone, and the checking screen's clip on a clip that
+isn't the bench's.
+
 ## Wave 3: the player's own serve
 
 - [ ] **M3.1 The sample report is the landing's real serve,** credited and
