@@ -1051,7 +1051,7 @@ export default function Report({
           to one line that says what is known, opened on a tap (2026-11-25). */}
       {(onTagServe || onTagOutcome) && (
         <details className="serve-tags" aria-label="What you said about this serve">
-          <summary className="link-btn tag-summary">
+          <summary className="link-btn link-btn--quiet tag-summary">
             {serveTagSummary(serveNumber, outcome, serveGuess?.serveNumber)}
             <Icon name="chevron" size={16} />
           </summary>

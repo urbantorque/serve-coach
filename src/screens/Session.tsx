@@ -115,7 +115,8 @@ export default function Session({
               Keep the app open while I check the video. If you leave, I pause and keep my place.
             </p>
           )}
-          <button className="btn btn--ghost btn--full" onClick={onLeave}>
+          {/* Quiet beside the two ways to read the video, which are the choice here (E1.6). */}
+          <button className={resuming ? 'btn btn--ghost btn--full' : 'btn btn--quiet btn--full'} onClick={onLeave}>
             {resuming ? 'Not now' : 'Cancel'}
           </button>
         </div>
@@ -218,7 +219,8 @@ export default function Session({
             onLadderStep={onLadderStep}
           />
         )}
-        <button className="btn btn--ghost btn--full" onClick={onLeave}>
+        {/* Quiet: the next drill, or a step to move up, is the screen's one main action (E1.6). */}
+        <button className="btn btn--quiet btn--full" onClick={onLeave}>
           Back home
         </button>
       </div>

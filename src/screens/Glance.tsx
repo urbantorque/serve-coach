@@ -229,6 +229,10 @@ export default function Glance({
     ? repLine(trip.target, judgeServe(analysis as Session, trip.target), tripCheck)
     : undefined
   const setOver = !!guided && setDone(tripCheck)
+  // A passed step is the one thing to do next (E1.6): its button takes the
+  // lime, and filming another serve steps back to a plain button beside it.
+  const stepUp = !!tripCheck && canMoveUp(tripCheck) && !!onLadderStep
+  const filmClass = stepUp ? 'btn btn--ghost' : 'btn btn--primary'
 
   // And then back to the camera, counted down where it can be seen, with any
   // touch of this screen — a tag, a scroll — keeping it here instead.
@@ -354,7 +358,7 @@ export default function Glance({
           {/* The next serve, under the figure rather than under every tag and
               chip on the screen (Q8). It is what the walk back is for. */}
           {court && onRecordAnother && (
-            <button className="btn btn--primary btn--big btn--full" onClick={onRecordAnother}>
+            <button className={`${filmClass} btn--big btn--full`} onClick={onRecordAnother}>
               <Icon name="camera" size={20} />
               Film another serve
             </button>
@@ -517,7 +521,7 @@ export default function Glance({
           open={tagsOpen || Boolean(set?.running)}
           onToggle={(e) => setTagsOpen((e.currentTarget as HTMLDetailsElement).open)}
         >
-          <summary className="link-btn tag-summary">
+          <summary className="link-btn link-btn--quiet tag-summary">
             {serveTagSummary(serveNumber, outcome)}
             <Icon name="chevron" size={16} />
           </summary>
@@ -625,7 +629,7 @@ export default function Glance({
       <footer className="glance-actions">
         {!court && nextRow}
         {onRecordAnother && !court && (
-          <button className="btn btn--primary btn--full" onClick={onRecordAnother}>
+          <button className={`${filmClass} btn--full`} onClick={onRecordAnother}>
             <Icon name="camera" size={18} />
             Film another serve
           </button>

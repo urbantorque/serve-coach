@@ -139,13 +139,14 @@ export default function SessionDashboard({ session, previous, videoUrl, onPickAg
                           </span>
                         </p>
                         {i === 0 && <p className="focus-next-why">{drill.how}</p>}
+                        {/* The screen's one main action (E1.6), unless a passed step takes it below. */}
                         {i === 0 && bar && (
                           <button
                             type="button"
-                            className="chip chip--button week-check"
+                            className={check && canMoveUp(check) && onLadderStep ? 'chip chip--button week-check' : 'btn btn--primary btn--full'}
                             onClick={() => setCard({ drill, flaw: f.flaw, check: bar })}
                           >
-                            <Icon name="target" size={14} />
+                            <Icon name="target" size={check && canMoveUp(check) && onLadderStep ? 14 : 18} />
                             Show the drill full screen
                           </button>
                         )}

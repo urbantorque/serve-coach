@@ -342,14 +342,6 @@ export default function Home({
               ))}
             </span>
           </button>
-          {/* How long it takes, and a drill that has stopped moving, one tap down: the card says the goal and the next thing. A stalled drill names itself on the tap. */}
-          <details className="next-more">
-            <summary className="link-btn" style={SUMMARY}>
-              {stuck ? 'This drill isn’t working yet. What now?' : 'How long this takes'}
-            </summary>
-            <p className="next-pace">{programme.pace}</p>
-            {stuck && <p className="next-stuck">{stuck}</p>}
-          </details>
           <div className="next-today">
             <span className="next-label">Next on court</span>
             <strong>{current.drill.name}</strong>
@@ -372,6 +364,16 @@ export default function Home({
           <button className="btn btn--primary btn--big btn--full" onClick={() => setSheet('session')}>
             Start today's session
           </button>
+          {/* How long it takes, and a drill that has stopped moving, one tap down and
+              under the one main action (E1.6): the card leads with the goal and the
+              next thing, not with what isn't working. A stalled drill names itself on the tap. */}
+          <details className="next-more">
+            <summary className="link-btn link-btn--quiet" style={SUMMARY}>
+              {stuck ? 'This drill isn’t working yet. What now?' : 'How long this takes'}
+            </summary>
+            <p className="next-pace">{programme.pace}</p>
+            {stuck && <p className="next-stuck">{stuck}</p>}
+          </details>
         </section>
       )}
 

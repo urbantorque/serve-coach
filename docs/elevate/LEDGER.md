@@ -202,3 +202,26 @@ width use, console errors) are machine figures and sit in each set's
   for an 18 s clip); no phone has been timed, so its top is left wide, and
   a sweep's cells count its serves off instead. `estimate.test.ts` holds the
   line to the voice lint and to the screen. Proved by the gate.
+
+- [x] **E1.6 One main action where there were two or none.** Four screens:
+  - *A passed guided set* had two lime buttons, "Film another serve" and
+    "Move up a step". The step takes the lime now and filming another serve
+    is a plain button, on the court layout and off it.
+  - *The optional serve tags* ("Tell me how this serve went (optional)"), on
+    the court screen and the report, were a lime link beside the main
+    action. They are a quiet link now: optional reads as optional.
+  - *A checked practice video* had no main action: "Back home" was the
+    biggest button, and the first fix's drill a small chip inside it. The
+    drill is now the one main action ("Show the drill full screen"), unless a
+    passed step takes it, and "Back home" is quiet. Before the video is read,
+    "Cancel" is quiet beside the two ways to read it.
+  - *Today's goal card* led with "This drill isn’t working yet. What now?" in
+    lime, above the next step. The fold now sits under "Start today's
+    session", quiet: the card says the goal, then the next thing, then what
+    isn't working.
+
+  Lime actions on the first phone screen, from the tour's own count: the
+  passed set 2 to 1, the checked practice video 0 to 1, Today 2 to 2 (the
+  film button and the main action; the lime link is gone). Taps unchanged.
+  Proved by the tour (`10-today`, `19-guided-done`, `20-practice`,
+  `21-practice-plan`) and the gate.
