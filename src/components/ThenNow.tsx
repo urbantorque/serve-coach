@@ -27,7 +27,22 @@ const MOMENTS: { id: PhaseId; label: string }[] = [
  * fault with a graded reading on both serves is marked (`thenNowMark`); with
  * none, the screen says so rather than drawing a change it cannot stand behind.
  */
-export default function ThenNow({ then, now, prefer }: { then: Session; now: Session; prefer?: FlawId }) {
+/**
+ * What has moved since the earlier serve, for the story's head (E4.3): proof,
+ * not a number. Each line is one the screen already holds to the player's own
+ * noise (the faults the graduation rule calls gone, the speed trend), so this
+ * claims nothing new; it gathers it under the two bodies it is about.
+ */
+export interface SinceThen {
+  /** The earlier serve is the player's first of this type, under any scoring. */
+  first: boolean
+  /** The faults gone since, by their short names. */
+  gone: string[]
+  /** The speed range that moved, as the speed trend says it, when it moved. */
+  speed?: string
+}
+
+export default function ThenNow({ then, now, prefer, since }: { then: Session; now: Session; prefer?: FlawId; since?: SinceThen }) {
   const mark = useMemo(() => thenNowMark(then, now, prefer), [then, now, prefer])
   const [moment, setMoment] = useState<PhaseId>(mark?.moment ?? 'contact')
   const a = useMemo(() => swingOf(then), [then])
@@ -62,9 +77,9 @@ export default function ThenNow({ then, now, prefer }: { then: Session; now: Ses
   return (
     <section className="then-now" aria-labelledby="then-title">
       <h2 className="t-headline" id="then-title">
-        Then and now
+        {since?.first ? 'Since you started' : `Since ${shortDate(then.createdAt)}`}
       </h2>
-      {mark && <p className="t-overline">{mark.name}, at the {MOMENTS.find((m) => m.id === mark.moment)?.label.toLowerCase() ?? mark.moment}</p>}
+      {mark && <p className="t-overline">{mark.name}, at {mark.moment === 'contact' ? 'contact' : `the ${MOMENTS.find((m) => m.id === mark.moment)?.label.toLowerCase() ?? mark.moment}`}</p>}
       <div className="side-pair">
         {cell(then, a, 'then')}
         {cell(now, b, 'now')}
@@ -72,6 +87,12 @@ export default function ThenNow({ then, now, prefer }: { then: Session; now: Ses
       <p className="progress-foot">
         {mark ? thenNowLine(mark, shortDate(then.createdAt), shortDate(now.createdAt)) : 'Nothing I grade was read on both of these serves, so I can’t mark a change on them.'}
       </p>
+      {since && (since.gone.length > 0 || since.speed) && (
+        <ul className="then-now-since">
+          {since.gone.length > 0 && <li>{since.gone.length === 1 ? `Gone since then: ${since.gone[0].toLowerCase()}.` : `Gone since then: ${since.gone.map((g) => g.toLowerCase()).join(', ')}.`}</li>}
+          {since.speed && <li>{since.speed}</li>}
+        </ul>
+      )}
       <div className="seg" role="group" aria-label="Which moment">
         {moments.map((m) => (
           <button key={m.id} type="button" className={`seg-item${m.id === moment ? ' is-on' : ''}`} aria-pressed={m.id === moment} onClick={() => setMoment(m.id)}>

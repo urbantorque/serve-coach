@@ -708,6 +708,14 @@
   gap: 12px;
 }
 
+/* What moved since then, under the two bodies (E4.3). */
+.then-now-since {
+  display: grid;
+  gap: 4px;
+  font-size: 15px;
+  color: var(--fg);
+}
+
 /* Each serve's reading of the fault marked on both bodies (E2.1). */
 .then-now-read {
   display: block;

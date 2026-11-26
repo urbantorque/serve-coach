@@ -472,3 +472,16 @@ width use, console errors) are machine figures and sit in each set's
   "About the same" line goes when the loop is there. No verdict claims a
   fix or a pass. `drillLoop.test.ts` holds the words and the next step.
   Proved by it, the gate and the tour (`09-report-after-drill`).
+
+- [x] **E4.3 The progress story, as proof.** Then and now was headed
+  "Then and now" over two bodies, with what had moved scattered further
+  down the screen. It is now the story's head: "Since you started" when the
+  earlier serve is the player's first of that serve type at all, and "Since
+  Oct 10" otherwise (the seeded season started in September under the old
+  scoring, so it says the date, not "started"). Under the pair, E2.1's
+  marked change, then the faults gone since ("Gone since then: leg drive.")
+  and the speed range that moved, each a line the screen already holds to
+  the player's own noise (the graduation rule's fixed faults, the speed
+  trend). Nothing new is claimed; what was spread over the screen is
+  gathered under the two bodies it is about. Proved by the gate and the tour
+  (`12-progress`).

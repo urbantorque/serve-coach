@@ -34,6 +34,7 @@ import {
   tripsOf,
   thenAndNow,
   deltaStatus,
+  typeOf,
 } from '../lib/progress'
 import { tagsById, type ServeTag, type Session } from '../lib/storage/db'
 import type { TripRecord } from '../lib/storage/ledger'
@@ -217,6 +218,19 @@ function ProgressBody({
     return form ? thenAndNow(swung, swung.length, form.serveType) : undefined
   }, [sessions, form])
 
+  /*
+   * Since you started (E4.3): the faults gone and the speed that moved, under
+   * the two bodies, from lines this screen already holds to the player's own
+   * noise. "Started" only when the earlier serve is their first of its type
+   * at all, under any scoring; otherwise it is said by its date.
+   */
+  const since = useMemo(() => {
+    if (!thenNow) return undefined
+    const { then } = thenNow
+    const first = sessions.every((s) => typeOf(s) !== typeOf(then) || s.createdAt >= then.createdAt)
+    return { first, gone: fixedCards.map((c) => c.name), speed: quicker ? speedTrendLine(quicker, unit) : undefined }
+  }, [thenNow, sessions, fixedCards, quicker, unit])
+
   const [changed, setChanged] = useState(0)
   const { pendingDelete, commitDelete, remove, undoDelete } = usePendingDelete({
     refreshSessions: () => {
@@ -339,7 +353,7 @@ function ProgressBody({
 
       {thenNow && (
         <Suspense fallback={null}>
-          <ThenNow then={thenNow.then} now={thenNow.now} prefer={thenNow.now.triage?.status === 'ok' ? thenNow.now.triage.primary_flaw?.flaw : undefined} />
+          <ThenNow then={thenNow.then} now={thenNow.now} prefer={thenNow.now.triage?.status === 'ok' ? thenNow.now.triage.primary_flaw?.flaw : undefined} since={since} />
         </Suspense>
       )}
 
