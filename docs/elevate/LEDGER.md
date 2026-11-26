@@ -413,3 +413,14 @@ width use, console errors) are machine figures and sit in each set's
   score is. `wordsInChrome.test.ts` now holds the rule itself: a word the
   report uses in prose is a tap there, and the row is gone. Proved by it,
   the gate and the tour.
+
+- [x] **E3.5 The court's speed fits a phone with its "about".** Wave 3's
+  tour caught what E3.1 broke: "about" set beside the court screen's big
+  speed widened the row, and on a 390 px phone the score's own label was
+  cut to "sco". "about" now sits on its own small line over the figure,
+  where it still says itself before the number and the row is as wide as it
+  was. And the tour now counts what it missed: text cut off by a box that
+  hides its overflow (`clipped`, screen-reader-only text aside), beside
+  sideways scroll; its click on the session sheet matches either
+  apostrophe. Proved by the tour (`14-glance`, phone: nothing clipped) and
+  the gate.

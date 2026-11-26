@@ -121,7 +121,8 @@ const SCREENS = [
     url: '/?demo=history',
     wait: 2400,
     steps: async (p) => {
-      await tap(p, "Start today's session")
+      // Either apostrophe: the copy went curly in E3.1.
+      await p.getByText(/Start today.s session/).first().click()
       await p.waitForTimeout(1200)
     },
   },
@@ -230,8 +231,16 @@ function measure() {
     if (visible(el) && !(rail && rail.contains(el)) && el.getBoundingClientRect().width > 24) cover(el.getBoundingClientRect())
   }
   const span = bins.length ? bins.reduce((a, b) => a + b, 0) / bins.length : 0
+  // Text cut off by a box that hides its overflow: words the player can't read.
+  const clipped = [...document.querySelectorAll('body *')].filter((el) => {
+    if (!visible(el) || !el.textContent.trim()) return false
+    const s = getComputedStyle(el)
+    // Not screen-reader-only text, which is clipped to a pixel on purpose.
+    return /hidden|clip/.test(s.overflowX) && el.clientWidth > 2 && el.scrollWidth > el.clientWidth + 1
+  }).length
   return {
     screens: +(height / innerHeight).toFixed(1),
+    clipped,
     controls: controls.length,
     firstScreenControls: controls.filter(onFirst).length,
     words,
@@ -286,7 +295,7 @@ async function shoot(browser, set, sizeName, screen) {
     }
     console.log(
       `${sizeName} ${screen.name}: ${entry.screens} screens, ${entry.firstScreenWords} words first, ` +
-        `${entry.limeActions} lime, ${entry.underFloor.length} under 14px${entry.sideways ? ', SIDEWAYS' : ''}` +
+        `${entry.limeActions} lime, ${entry.underFloor.length} under 14px${entry.sideways ? ', SIDEWAYS' : ''}${entry.clipped ? `, ${entry.clipped} CLIPPED` : ''}` +
         `, width ${entry.widthUse}${console_.some((c) => c.type === 'error' || c.type === 'pageerror') ? ', CONSOLE ERRORS' : ''}`,
     )
   } catch (e) {

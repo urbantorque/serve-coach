@@ -354,9 +354,11 @@
   letter-spacing: 0;
 }
 
-/* Before the figure, so a speed says "about" where it is read (E3.1). */
+/* Over the figure, so a speed says "about" where it is read (E3.1), on its own
+   line: beside it, it pushed the score's label off a 390 px phone (E3.5). */
 .court-readout-about {
-  margin: 0 0.12em 0 0;
+  display: block;
+  margin: 0 0 0.1em;
 }
 
 .court-readout-note {
