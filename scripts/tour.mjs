@@ -19,7 +19,9 @@
  * its controls, its words, how many lime actions sit on the first screen
  * (DESIGN.md: one), any text under the 14 px floor, any sideways scroll, how
  * much of a laptop's width the content spans, and every console error,
- * warning and page error. `index.html` pairs any two sets, screen by screen.
+ * warning and page error. Over an open sheet, the first screen's words,
+ * controls, lime actions and width are the sheet's own (Mirror M0.2).
+ * `index.html` pairs any two sets, screen by screen.
  *
  * Dev tooling: nothing here ships. It drives Chrome through the Playwright copy
  * that `playwright-cli` installs, as `lift-shots.mjs` did before it.
@@ -181,12 +183,18 @@ function measure() {
   }
   const doc = document.documentElement
   const height = Math.max(doc.scrollHeight, document.body.scrollHeight)
-  const controls = [...document.querySelectorAll('button, a[href], input:not([type=hidden]), summary, select, [role=button]')].filter(visible)
+  // Over an open sheet, the first screen is the sheet (Mirror M0.2): the
+  // screen behind it is dimmed and can't be pressed, so its words, controls
+  // and lime action aren't counted as the sheet's.
+  const modals = [...document.querySelectorAll('[role=dialog][aria-modal=true], dialog[open]')].filter(visible)
+  const top = modals[modals.length - 1]
+  const layer = top ?? document.body
+  const controls = [...layer.querySelectorAll('button, a[href], input:not([type=hidden]), summary, select, [role=button]')].filter(visible)
   const main = document.querySelector('main') ?? document.body
   const words = (main.innerText.match(/\S+/g) ?? []).length
   // Words a player sees on the first screen, from the text nodes that sit on it.
   let firstWords = 0
-  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
+  const walker = document.createTreeWalker(layer, NodeFilter.SHOW_TEXT)
   const range = document.createRange()
   for (let n = walker.nextNode(); n; n = walker.nextNode()) {
     if (!n.textContent.trim() || !n.parentElement || !visible(n.parentElement)) continue
@@ -195,6 +203,7 @@ function measure() {
     if (r.height > 0 && r.top < innerHeight && r.bottom > 0) firstWords += (n.textContent.match(/\S+/g) ?? []).length
   }
   // Lime as a fill on something pressable: DESIGN.md's "one main action".
+  // Counting the screen behind a sheet made every sheet read 2 or 3.
   const LIME = 'rgb(205, 249, 74)'
   const limeActions = controls.filter((el) => {
     if (!onFirst(el)) return false
@@ -224,13 +233,14 @@ function measure() {
     const to = Math.min(bins.length - 1, Math.floor((r.right - railRight - 1) / BIN))
     for (let i = from; i <= to; i++) bins[i] = 1
   }
-  const lines = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
+  // A sheet's own width: the dimmed screen behind it is not the sheet using the width.
+  const lines = document.createTreeWalker(layer, NodeFilter.SHOW_TEXT)
   for (let n = lines.nextNode(); n; n = lines.nextNode()) {
     if (!n.textContent.trim() || !n.parentElement || !visible(n.parentElement) || (rail && rail.contains(n))) continue
     range.selectNodeContents(n)
     for (const r of range.getClientRects()) cover(r)
   }
-  for (const el of document.querySelectorAll('img, canvas, video, svg, figure')) {
+  for (const el of layer.querySelectorAll('img, canvas, video, svg, figure')) {
     if (visible(el) && !(rail && rail.contains(el)) && el.getBoundingClientRect().width > 24) cover(el.getBoundingClientRect())
   }
   const span = bins.length ? bins.reduce((a, b) => a + b, 0) / bins.length : 0

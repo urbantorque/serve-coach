@@ -91,8 +91,26 @@ The budgets at the start: the entry chunk 382.60 of 385 kB raw and 130.23 of
     drop" (the card row furthest off its band); the court screen says
     "Nothing stood out on that one", because it reads only the graded
     faults. Added as M1.4.
-- [ ] **M0.2 A sheet's own count.** The tour counts lime actions in the top
-  layer only.
+- [x] **M0.2 A sheet's own count.** Over an open sheet (the topmost
+  `role="dialog"` with `aria-modal`), the tour now measures the sheet alone:
+  its lime actions, its first-screen words and controls, and its width.
+  The dimmed screen behind it can't be pressed or read. Recounted at both
+  sizes:
+
+  | Sheet | Lime | Words first, laptop | Width, laptop |
+  |---|---|---|---|
+  | 03 Camera's first-time card | 2 → **1** | 158 → **65** | 1 → **1** |
+  | 08 Lesson sheet | 3 → **1** | 205 → **73** | 0.82 → **0.36** |
+  | 11 Today's session sheet | 3 → **1** | 241 → **80** | 0.86 → **0.38** |
+  | 13 Settings | 2 → **0** | 279 → **118** | 0.86 → **0.37** |
+  | 13b Settings, never chosen | 2 → **0** | 276 → **115** | 0.86 → **0.37** |
+
+  Each sheet has one lime action of its own, and Settings none (its choices
+  are chosen states, not actions). The width is the finding: on a laptop
+  the sheets use about a third of the width, which the old measure hid
+  behind the screen they cover. That is M4.1's and M4.2's starting point.
+  The camera's card is the full-width camera, so 1 is right. On a phone the
+  sheets read 0.9 to 0.92 (from 0.96 to 1).
 - [ ] **M0.3 The baseline.** Set `m0` at both sizes, 25 screens; the two
   new screens scored.
 - [ ] **M0.4 Make room.** In the entry chunk and the split stylesheets,
