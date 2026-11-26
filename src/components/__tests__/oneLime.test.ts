@@ -29,4 +29,14 @@ check('playing a clip is never lime: the report’s, the lesson’s and the side
   }
 })
 
+check('beside a screen’s own main action, the film button is a ring, not a second fill (M1.2)', () => {
+  const body = rule('today.css', '.shell:has(.btn--primary) ~ .tabbar .tab-film')
+  assert(!/background[^;]*--lime\b/.test(body), 'the stepped-back film button is still a lime fill')
+  assert(/inset 0 0 0 2px var\(--lime\)/.test(body) && /color:\s*var\(--lime\)/.test(body), 'it no longer reads as the lime film button')
+  // Where the screen has no main action of its own (Progress), the button keeps its fill.
+  assert(/background:\s*var\(--lime\)/.test(rule('today.css', '.tab-film')), 'the film button lost its own fill')
+  const app = fs.readFileSync('src/App.tsx', 'utf8')
+  assert(/<\/main>\s*\n\s*\{[^}]*\n?\s*<TabBar/.test(app) || app.indexOf('</main>') < app.indexOf('<TabBar'), 'the tab bar no longer follows the screen, so the rule can’t see its main action')
+})
+
 report()

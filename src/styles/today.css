@@ -64,6 +64,16 @@
   transform: var(--press-small);
 }
 
+/* Beside a screen's own main action, the film button steps back to a lime
+   ring (Mirror M1.2): still the film button between Today and Progress
+   (DESIGN.md), no longer a second lime fill beside "Start today's session".
+   Where filming is the screen's only action, it stays a fill. */
+.shell:has(.btn--primary) ~ .tabbar .tab-film {
+  background: var(--ink-2);
+  color: var(--lime);
+  box-shadow: inset 0 0 0 2px var(--lime), var(--film-lift);
+}
+
 .tab-film-ring {
   position: absolute;
   inset: -3px;

@@ -176,8 +176,16 @@ The budgets at the start: the entry chunk 382.60 of 385 kB raw and 130.23 of
   `oneLime.test.ts` holds both rules. The tour's basket waits 9 s, not 6:
   it records its clip in real time, and at 6 s it was caught between
   screens twice.
-- [ ] **M1.2 The phone's Film tab.** One lime per screen, by DESIGN.md's
-  rule.
+- [x] **M1.2 The phone's Film tab.** DESIGN.md asks for both "the lime film
+  button" between Today and Progress and one lime action a screen. On Today
+  both stood lime: "Start today's session" and the Film button (the tab bar
+  on a phone, the rail on a laptop). Decided by the screen: where it shows a
+  lime main action of its own (`.shell:has(.btn--primary)`), the Film button
+  steps back to a lime ring on ink, still the film button; where filming is
+  the only action (Progress), it stays a fill. One CSS rule in Today's
+  sheet, no prop to keep in step, so a Today with no programme (and no lime
+  of its own) keeps a lime Film. The tour counts one lime on Today at both
+  sizes (from two) and one on Progress. `oneLime.test.ts` holds it.
 - [ ] **M1.3 The report's first screen.** 18 to 21 controls on a laptop, 7
   or 8 on a phone: what isn't the next step folds or quietens.
 - [ ] **M1.4 The court screen names what the report names** (found in
