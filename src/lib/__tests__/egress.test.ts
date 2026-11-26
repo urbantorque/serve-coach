@@ -117,6 +117,14 @@ const ALLOWED: (Site & { why: string })[] = [
       '`public/`. It sends nothing, and is skipped when the browser asks to save data.',
   },
   {
+    file: 'dev/demoRoutes.ts',
+    pattern: 'fetch',
+    why:
+      "`?demo=real` (Mirror M0.1), dev-only and out of the production bundle: two GETs from " +
+      "this app's own origin (`BASE_URL`-relative), the landing's licensed clip and its stored " +
+      'report, both shipped in `public/landing/`. It sends nothing.',
+  },
+  {
     file: 'lib/speech.ts',
     pattern: 'speechSynthesis',
     why:

@@ -240,6 +240,35 @@ export async function runDemoRoute(
     setView({ kind: 'session', session, stage: { state: 'done' }, canRead: false })
     return
   }
+  /*
+   * Real footage (Mirror M0.1): the landing's licensed serve, read by the
+   * engine and stored as a report (`scripts/landing-serve.mjs`), opened as a
+   * player would reopen their own: the report with its kept clip, or with
+   * `&glance` the court screen. Every other route is the rig, which has no
+   * camera; this one is how the tour sees a player's own clip.
+   */
+  if (demo === 'real') {
+    const base = import.meta.env.BASE_URL
+    const [{ normalise }, { keepClip }, { clipIdOf }, raw, clip] = await Promise.all([
+      import('../lib/storage/db'),
+      import('../lib/storage/clipStore'),
+      import('../lib/storage/sessionKey'),
+      fetch(`${base}landing/report.json`).then((r) => r.json() as Promise<unknown>),
+      fetch(`${base}landing/serve.mp4`).then((r) => r.blob()),
+    ])
+    const session = normalise(raw)
+    if (!session) throw new Error('landing/report.json is not a stored report')
+    if (new URLSearchParams(location.search).has('glance')) {
+      const url = URL.createObjectURL(clip)
+      keepVideoUrl(url)
+      setView({ kind: 'glance', analysis: session, videoUrl: url })
+      return
+    }
+    await keepClip(clipIdOf(session.id), clip, { optedIn: true })
+    seedHistory({ sessions: [session], practice: [] })
+    setView({ kind: 'saved', session })
+    return
+  }
   // A clip filmed with the phone on its side, refused by the same check the
   // app runs (`turnedPicture`) on the rig's serve turned a quarter. `&turn=40`
   // or `&turn=180` shows the other two wordings.

@@ -99,6 +99,8 @@ const SCREENS = [
   // The report
   { group: 'The report', name: '06-report-fresh', title: 'A fresh report', url: '/?demo=live', wait: 9000 },
   { group: 'The report', name: '07-report-reopened', title: 'A report reopened', url: '/?demo=report', wait: 2400 },
+  // Real footage (Mirror M0.1): the landing's licensed serve, its report reopened with its kept clip.
+  { group: 'The report', name: '07b-report-real', title: 'A report on real footage', url: '/?demo=real', wait: 4000 },
   {
     group: 'The report',
     name: '08-lesson-sheet',
@@ -153,6 +155,7 @@ const SCREENS = [
 
   // On court
   { group: 'On court', name: '14-glance', title: 'The court screen', url: '/?demo=glance', wait: 2400 },
+  { group: 'On court', name: '14b-glance-real', title: 'The court screen on real footage', url: '/?demo=real&glance', wait: 3000 },
   { group: 'On court', name: '15-glance-refused', title: 'The court screen, a refused serve', url: '/?demo=glance-refused', wait: 2400 },
   { group: 'On court', name: '16-glance-strain', title: 'The court screen, a strain warning', url: '/?demo=glance-strain', wait: 2400 },
   { group: 'On court', name: '17-glance-move', title: 'The court screen, a fault moving', url: '/?demo=glance-move', wait: 2400 },

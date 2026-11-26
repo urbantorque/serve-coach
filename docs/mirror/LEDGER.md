@@ -62,9 +62,35 @@ The budgets at the start: the entry chunk 382.60 of 385 kB raw and 130.23 of
 
 ## Wave 0: real footage and a baseline
 
-- [ ] **M0.1 A real report to measure against.** The landing's licensed
-  clip read by the engine and saved as a stored report; `?demo=real` and
-  `?demo=real&glance` open it with its clip; both screens in the tour.
+- [x] **M0.1 A real report to measure against.** `scripts/landing-serve.mjs`
+  now files its read as a stored report too (`public/landing/report.json`,
+  38 kB): the frames dropped, the track kept, every clip time (the moments,
+  the window, the track, contact, the ball's curve and the toss) moved onto
+  the committed `serve.mp4` by matching the copy against the clip picture by
+  picture, and one serve in it, since the copy is that serve alone.
+  `--report` writes it alone, leaving the landing's clip and card as they
+  are. `?demo=real` keeps the clip as a player's is kept and reopens the
+  report; `&glance` opens the court screen. The tour shoots both
+  (`07b-report-real`, `14b-glance-real`). `landingReport.test.ts` holds it:
+  a report the app opens, on today's rubric, its score and first fix its
+  own card's, every time inside the clip.
+
+  Found on the way, and recorded rather than hidden:
+  - *The engine doesn't read this clip the same way twice.* The landing's
+    card was 79 with "Hitting elbow at drop"; two runs today read 83 with
+    "Racket drop" (the trophy and the drop on one frame) and 84 with
+    "Hitting elbow at drop". The extractor seeks the clip and gives up on
+    a slow seek, so how busy the machine is changes the frames read. The
+    trimmed copy itself reads 79 with another first fix, "Time from trophy
+    to contact". So the report is the 84 read, the latest; the landing and
+    a report of its serve must come from one run, which the script's full
+    run now does, and M3.1 does that before the sample report becomes this
+    serve.
+  - *The court screen and the report disagree on a serve with no graded
+    fault.* This serve's report says "Work on this next: Hitting elbow at
+    drop" (the card row furthest off its band); the court screen says
+    "Nothing stood out on that one", because it reads only the graded
+    faults. Added as M1.4.
 - [ ] **M0.2 A sheet's own count.** The tour counts lime actions in the top
   layer only.
 - [ ] **M0.3 The baseline.** Set `m0` at both sizes, 25 screens; the two
@@ -80,6 +106,9 @@ The budgets at the start: the entry chunk 382.60 of 385 kB raw and 130.23 of
   rule.
 - [ ] **M1.3 The report's first screen.** 18 to 21 controls on a laptop, 7
   or 8 on a phone: what isn't the next step folds or quietens.
+- [ ] **M1.4 The court screen names what the report names** (found in
+  M0.1): a serve with no graded fault but a card row to work on is "Nothing
+  stood out" between serves and "Work on this next" in its report.
 
 ## Wave 2: pictures that explain
 
