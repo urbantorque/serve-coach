@@ -127,14 +127,14 @@ export default function StudioLayer({ marks, aspect, tool, time, onAdd, onPan, z
         const l = at(labelAt(m))
         return (
           <g key={i}>
-            <path d={path(m.pts)} fill="none" style={{ stroke: 'var(--lime)', strokeWidth: 2.5, strokeLinecap: 'round', strokeLinejoin: 'round' }} />
+            <path d={path(m.pts)} className="studio-mark" />
             {m.pts.map((p, j) => (
-              <circle key={j} cx={at(p).x} cy={at(p).y} r={4} style={{ fill: 'var(--lime)' }} />
+              <circle key={j} cx={at(p).x} cy={at(p).y} r={4} className="studio-dot" />
             ))}
             <text
               x={l.x + 8}
               y={l.y - 8}
-              style={{ fill: 'var(--fg)', fontSize: 15, fontWeight: 700, paintOrder: 'stroke', stroke: 'var(--ink)', strokeWidth: 4 }}
+              className="studio-label"
             >
               {markLabel(m, aspect)}
             </text>
@@ -142,9 +142,9 @@ export default function StudioLayer({ marks, aspect, tool, time, onAdd, onPan, z
         )
       })}
       {draft.map((p, j) => (
-        <circle key={`d${j}`} cx={at(p).x} cy={at(p).y} r={5} style={{ fill: 'none', stroke: 'var(--lime)', strokeWidth: 2 }} />
+        <circle key={`d${j}`} cx={at(p).x} cy={at(p).y} r={5} className="studio-draft-dot" />
       ))}
-      {draft.length > 1 && <path d={path(draft)} fill="none" style={{ stroke: 'var(--lime)', strokeWidth: 2, strokeDasharray: '6 5' }} />}
+      {draft.length > 1 && <path d={path(draft)} className="studio-draft" />}
     </svg>
   )
 }

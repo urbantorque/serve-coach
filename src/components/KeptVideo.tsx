@@ -163,7 +163,7 @@ export default function KeptVideo({ url, phases, aspect, others = [], four = fal
           )}
         </div>
       ) : (
-        <div style={{ position: 'relative' }}>
+        <div className="kept-frame">
           <video
             ref={(el) => {
               videos.current[0] = el

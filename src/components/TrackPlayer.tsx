@@ -479,9 +479,8 @@ export default function TrackPlayer({ track, replay, phases, racket, paired, bod
           the keyframe bodies use, so a drawn serve never sits in the black box
           that means a video. */}
       <div
-        className="player-stage player-stage--pose"
+        className="player-stage player-stage--pose player-stage--square"
         ref={stageRef}
-        style={{ aspectRatio: '1' }}
       >
         <canvas ref={canvasRef} />
         <button

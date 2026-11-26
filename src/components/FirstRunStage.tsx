@@ -66,7 +66,7 @@ export default function FirstRunStage({ racket = 'right', onDrawn }: { racket?: 
         preload="auto"
         onError={() => setReplay('drawn')}
         aria-hidden="true"
-        style={{ position: 'absolute', width: 2, height: 2, opacity: 0, pointerEvents: 'none' }}
+        className="offscreen-probe"
       />
       {replay && <RealServe replay={replay} video={videoRef} onFailed={() => setReplay('drawn')} />}
     </>

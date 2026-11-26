@@ -26,6 +26,112 @@
   animation: rise var(--slow) var(--ease-out) backwards;
 }
 
+/* ----------------------------------------------------------------------------
+   Small layouts that were inline styles (E5.4): one place, in classes.
+   ------------------------------------------------------------------------- */
+
+/* The landing's top links hold their place while they load. */
+.top-room {
+  min-height: 44px;
+}
+
+/* The landing's sticky bar's height, kept clear at its foot. */
+.bar-room {
+  height: 84px;
+}
+
+/* Today's header: Upload beside Settings. */
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* A fold's tap-down, as a link without the browser's triangle. */
+.fold-summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.fold-summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Two quiet buttons side by side under the main action, each on one line. */
+.second-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 4px;
+}
+
+.btn-tight {
+  padding-inline: 6px;
+  white-space: nowrap;
+}
+
+/* A segmented control as wide as its options, not the column. */
+.seg--fit {
+  width: fit-content;
+}
+
+/* A video the page needs playing but nobody needs to see. */
+.offscreen-probe {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.kept-frame {
+  position: relative;
+}
+
+.player-stage--square {
+  aspect-ratio: 1;
+}
+
+/* The studio's marks on the picture: lime is where the player measured. */
+.studio-mark,
+.studio-draft {
+  fill: none;
+  stroke: var(--lime);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.studio-mark {
+  stroke-width: 2.5;
+}
+
+.studio-draft {
+  stroke-width: 2;
+  stroke-dasharray: 6 5;
+}
+
+.studio-dot {
+  fill: var(--lime);
+}
+
+.studio-draft-dot {
+  fill: none;
+  stroke: var(--lime);
+  stroke-width: 2;
+}
+
+.studio-label {
+  fill: var(--fg);
+  font-size: 15px;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: var(--ink);
+  stroke-width: 4;
+}
+
 @keyframes rise {
   from {
     opacity: 0;

@@ -258,7 +258,7 @@ function Choices({
             : `I timed these on your ${deviceNoun()}, for this video.`}
       </p>
       {/* Off by default: a speed costs the ball's pass on every serve. */}
-      <div className="seg" role="group" aria-label="Serve speeds" style={{ width: 'fit-content' }}>
+      <div className="seg seg--fit" role="group" aria-label="Serve speeds">
         {[false, true].map((on) => (
           <button
             key={String(on)}

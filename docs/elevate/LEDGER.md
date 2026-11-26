@@ -567,3 +567,13 @@ width use, console errors) are machine figures and sit in each set's
   positions and zoom all work without a mouse. Drawing a line or an angle
   still needs a pointer on the picture: said in the tool's own words, not
   hidden. `studioTools.test.ts` holds it.
+
+- [x] **E5.4 Inline styles to classes.** Home's six named style objects
+  (the landing's top room and bar room, Today's header actions, the fold's
+  tap-down, the second row and its tight buttons), the practice plan's
+  segmented control, the first-run probe video, the kept video's frame, the
+  pose player's square stage, and the studio's lines, dots, draft and label
+  are classes in `shell.css` now, on tokens. What stays inline is geometry
+  computed per frame (a position, a width, a zoom), which a class cannot
+  hold. The entry stylesheet carries them; the split sheets are untouched.
+  Proved by the gate and the tour (no screen changed).

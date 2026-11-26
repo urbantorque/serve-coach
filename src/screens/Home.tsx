@@ -27,26 +27,25 @@ const FirstRunStage = lazy(() => import('../components/FirstRunStage'))
 const FirstRunMore = lazy(() => import('../components/FirstRunMore'))
 /** The landing's top links, out of the entry chunk; a box of their height holds the place, so nothing moves when they arrive. */
 const FirstRunTop = lazy(() => import('../components/FirstRunChrome'))
-const TOP_ROOM = { minHeight: 44 } as const
+// The landing's top links hold their place in a box of their height (`.top-room`, shell.css).
 /** Only wanted once the top buttons scroll away: kept out of the entry chunk. */
 const StickyFilmBar = lazy(() => import('../components/StickyFilmBar'))
 const WarmupNote = lazy(() => import('../components/WarmupNote'))
 
-/** The sticky bar's height and margin, kept clear at the foot of the landing. */
-const BAR_ROOM = { height: 84 } as const
-/** Today's header: Upload beside Settings, so a clip on the phone is one tap from the top. */
-const TOP_ACTIONS = { display: 'flex', alignItems: 'center', gap: 4 } as const
-/** The goal card's tap-down: a link, without the browser's triangle. */
-const SUMMARY = { listStyle: 'none', cursor: 'pointer', minHeight: 44, display: 'flex', alignItems: 'center' } as const
-
-/**
- * Upload and the sample, side by side under the one main action: a clip the
- * player already has is on the first screen, not behind the camera, and the
- * screen still has one main action and no third stacked exit (DESIGN.md).
+/*
+ * The landing's and Today's small layouts are classes in shell.css (E5.4):
+ * `.bar-room` keeps the sticky bar's height clear at the landing's foot,
+ * `.top-actions` sets Upload beside Settings, `.fold-summary` is a fold's
+ * tap-down as a link, without the browser's triangle.
  */
-const SECOND_ROW = { display: 'flex', flexWrap: 'wrap', justifyContent: 'center', columnGap: 4 } as const
-/** Each label on one line: at 375 px the two fit side by side; narrower, they stack whole. */
-const SECOND_BUTTON = { paddingInline: 6, whiteSpace: 'nowrap' } as const
+
+/*
+ * Upload and the sample, side by side under the one main action (`.second-row`):
+ * a clip the player already has is on the first screen, not behind the camera,
+ * and the screen still has one main action and no third stacked exit
+ * (DESIGN.md). Each label on one line (`.btn-tight`): at 375 px the two fit
+ * side by side; narrower, they stack whole.
+ */
 // Only when a gate is shut, which the app never does until paid plans are on (N6.4).
 const Locked = lazy(() => import('../components/Locked'))
 const ServeCards = lazy(() => import('../components/ServeCards'))
@@ -218,7 +217,7 @@ export default function Home({
     return (
       <>
       <div className="screen first-run">
-        <Suspense fallback={<div style={TOP_ROOM} />}>
+        <Suspense fallback={<div className="top-room" />}>
           <FirstRunTop onShowPage={onShowPage} />
         </Suspense>
         {restore}
@@ -253,14 +252,14 @@ export default function Home({
             <Icon name="camera" size={21} />
             Film my serve
           </button>
-          <div style={onUpload ? SECOND_ROW : undefined}>
+          <div className={onUpload ? 'second-row' : undefined}>
             {onUpload && (
-              <button className="btn btn--quiet" style={SECOND_BUTTON} onClick={onUpload}>
+              <button className="btn btn--quiet btn-tight" onClick={onUpload}>
                 <Icon name="upload" size={18} />
                 Upload a video
               </button>
             )}
-            <button className={onUpload ? "btn btn--quiet" : "btn btn--quiet btn--full"} style={onUpload ? SECOND_BUTTON : undefined} onClick={onShowExample}>
+            <button className={onUpload ? 'btn btn--quiet btn-tight' : 'btn btn--quiet btn--full'} onClick={onShowExample}>
               See a sample report
             </button>
           </div>
@@ -277,7 +276,7 @@ export default function Home({
         <FirstRunMore onShowPage={onShowPage} />
       </Suspense>
       {/* Room at the foot for the bar below, so it never covers the last links. */}
-      <div aria-hidden="true" style={BAR_ROOM} />
+      <div aria-hidden="true" className="bar-room" />
       <Suspense fallback={null}>
         <StickyFilmBar watchId="first-actions" onFilm={onFilm} onUpload={onUpload} />
       </Suspense>
@@ -300,9 +299,9 @@ export default function Home({
     <div className="screen today">
       <header className="today-top">
         <h1 className="t-display">Today</h1>
-        <div style={TOP_ACTIONS}>
+        <div className="top-actions">
           {onUpload && (
-            <button className="btn btn--quiet" style={SECOND_BUTTON} onClick={onUpload} aria-label="Upload a video">
+            <button className="btn btn--quiet btn-tight" onClick={onUpload} aria-label="Upload a video">
               <Icon name="upload" size={18} />
               Upload
             </button>
@@ -373,7 +372,7 @@ export default function Home({
               under the one main action (E1.6): the card leads with the goal and the
               next thing, not with what isn't working. A stalled drill names itself on the tap. */}
           <details className="next-more">
-            <summary className="link-btn link-btn--quiet" style={SUMMARY}>
+            <summary className="link-btn link-btn--quiet fold-summary">
               {stuck ? 'This drill isn’t working yet. What now?' : 'How long this takes'}
             </summary>
             <p className="next-pace">{programme.pace}</p>
