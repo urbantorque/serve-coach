@@ -536,3 +536,16 @@ width use, console errors) are machine figures and sit in each set's
   do not, so it is not in these scores; it was checked on
   `?demo=lesson-own` (E4.5). Not verified: anything on a real phone, and
   the spoken lines' length as heard, not counted.
+
+## Wave 5: premium finish, laptop and code health
+
+- [x] **E5.1 Today on a laptop: the right pane says whether it is getting
+  better.** Beside the goal, the right pane held three numbers, one line
+  and then a dark field down to the serves. It now draws the score's shape
+  under the numbers, Progress's own ribbon (the axis fitted to the player's
+  range, never under 24 points, the range drawn, a change of scoring
+  marked), at a width where its words stay the size of the words beside
+  it. On a laptop only, decided once by the width, so a phone never fetches
+  the chart. The ribbon's rules moved from Progress's sheet to Today's,
+  since Today draws it too: the split sheets got lighter by them. Proved by
+  the tour (`10-today`, laptop) and the gate.

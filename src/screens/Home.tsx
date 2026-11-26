@@ -50,6 +50,9 @@ const SECOND_BUTTON = { paddingInline: 6, whiteSpace: 'nowrap' } as const
 // Only when a gate is shut, which the app never does until paid plans are on (N6.4).
 const Locked = lazy(() => import('../components/Locked'))
 const ServeCards = lazy(() => import('../components/ServeCards'))
+/** The score's shape, from Progress's own chart: on a laptop's Today only (E5.1). */
+const ScoreRibbon = lazy(() => import('../components/ProgressCharts').then((m) => ({ default: m.ScoreRibbon })))
+const laptop = () => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(min-width: 1024px)').matches
 const StepPassed = lazy(() => import('../components/StepPassed'))
 const SessionBody = lazy(() => import('../components/ProgrammeSheets').then((m) => ({ default: m.SessionBody })))
 const ProgrammeBody = lazy(() => import('../components/ProgrammeSheets').then((m) => ({ default: m.ProgrammeBody })))
@@ -160,6 +163,7 @@ export default function Home({
   const moments = useMemo(() => (known ? momentsFor(sessions, prefs, Date.now(), evidence, more) : []), [known, sessions, prefs, evidence, more])
   const recap = useMemo(() => (known ? weekRecap(sessions, prefs, Date.now(), evidence, more) : undefined), [known, sessions, prefs, evidence, more])
   const form = useMemo(() => (known ? buildProgress(sessions, undefined, ledger) : undefined), [known, sessions, ledger])
+  const [wide] = useState(laptop)
   const streak = useMemo(
     () => (known ? streakLine(sessions, Date.now(), { ledger, cadence: prefs.cadence, practice: practiceSessions }) : undefined),
     [known, sessions, ledger, prefs.cadence, practiceSessions],
@@ -406,6 +410,14 @@ export default function Home({
       {/* Is it getting better (D1.3): said in a line, even when the change is too small for a chip. */}
       {/* One line under the numbers, not two: the six-week read where there is one, else the streak. */}
       {(form && sixWeekMilestone(form, 0)) || streak ? <p className="today-streak">{(form && sixWeekMilestone(form, 0)) || streak}</p> : null}
+      {/* On a laptop the right pane sat empty under three numbers (E5.1): the shape of the serve fills it. */}
+      {wide && form && form.trips.length > 1 && (
+        <section className="today-ribbon" aria-label="Your typical score over time">
+          <Suspense fallback={null}>
+            <ScoreRibbon points={form.trips} />
+          </Suspense>
+        </section>
+      )}
 
       {recapFresh && recap && (
         <section className="recap" aria-label={recap.label}>

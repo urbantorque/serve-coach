@@ -129,6 +129,15 @@
     grid-column: 2;
   }
 
+  /* The score's shape under the numbers, so the right pane says whether it
+     is getting better in a picture, not only in a line (E5.1). */
+  .today > .today-ribbon {
+    grid-column: 2;
+    /* Its words are drawn in the chart's own units: held near its drawn width,
+       they stay the size of the words beside it. */
+    max-width: 420px;
+  }
+
   .today:has(> .next-up, > [data-locked='pathway']) > .today-tip {
     padding-top: 20px;
     border-top: 1px solid var(--hairline-soft);
