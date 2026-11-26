@@ -577,3 +577,12 @@ width use, console errors) are machine figures and sit in each set's
   computed per frame (a position, a width, a zoom), which a class cannot
   hold. The entry stylesheet carries them; the split sheets are untouched.
   Proved by the gate and the tour (no screen changed).
+
+- [x] **E5.5 Report.tsx split where this programme touched it.** The
+  report's foot helpers, the drill it was drilling (`DrilledLine`) and the
+  held frame's caption with its tap (`heldCaption`, `heldAt`), are their
+  own files under `screens/report/`, beside the side by side and the lesson
+  already there. Report.tsx goes from 1,463 lines to 1,404. No behaviour
+  change: the render, wordsInChrome and a11y suites read the same report
+  and pass unchanged. App.tsx was touched only for one prop and stays 1,196
+  lines, under its own budget; it is not split.

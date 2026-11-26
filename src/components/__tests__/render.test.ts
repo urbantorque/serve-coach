@@ -1085,7 +1085,8 @@ check('only a move up is recorded as a step passed, and every ladder button says
   const app = fs.readFileSync('src/App.tsx', 'utf8')
   assert(/const passed = from !== undefined && step > from/.test(app), 'a step back could be recorded as a pass')
   assert(app.includes('...(passed ? { ladderPassedAt:'), 'a pass isn’t stored apart from a move')
-  for (const f of ['src/screens/Report.tsx', 'src/screens/Glance.tsx', 'src/components/SessionDashboard.tsx']) {
+  // The report's drilled step has its own file since E5.5.
+  for (const f of ['src/screens/report/DrilledLine.tsx', 'src/screens/Glance.tsx', 'src/components/SessionDashboard.tsx']) {
     const calls = fs.readFileSync(f, 'utf8').match(/onLadderStep\([^)]*\)/g) ?? []
     assert(calls.length > 0, `${f} has no ladder button`)
     for (const c of calls) assert(c.split(',').length === 3, `${f}: ${c} doesn’t say which rung it leaves`)

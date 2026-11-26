@@ -32,10 +32,9 @@ import Term from '../components/Term'
 import { faultMetric, faultMoment, momentChecks } from '../lib/lookFor'
 import { targetDrawn } from '../lib/analysis/targetShape'
 import TargetShape from '../components/TargetShape'
-import { drillCheckLine, progressionFor, rungFor } from '../lib/analysis/progressions'
+import { progressionFor, rungFor } from '../lib/analysis/progressions'
 import { ownGoodLine, ownGoodServe } from '../lib/ownGood'
 import { LOOP_VERDICT, drillLoop, loopNext } from '../lib/drillLoop'
-import { FAULT_NAME } from '../lib/graduation'
 import TrackPlayer from '../components/TrackPlayer'
 import { replayFrom } from '../lib/storage/poseTrack'
 import { pairTracks } from '../lib/trackPair'
@@ -72,7 +71,8 @@ import RevealStage from './report/RevealStage'
 import ShareChoice from './report/ShareChoice'
 import SideBySide from './report/SideBySide'
 import { deviceNoun } from '../lib/device'
-import { MOVE_UP } from '../lib/phrases'
+import { DrilledLine } from './report/DrilledLine'
+import { heldCaption } from './report/heldMoment'
 
 /*
  * The band in words, as a caption to the score. Said once, and short: the fix
@@ -1401,63 +1401,4 @@ export default function Report({
       {shareSheet}
     </div>
   )
-}
-
-/** The fault the player was drilling, when it has stopped being the first fix. */
-function DrilledLine({
-  check,
-  rung,
-  steps,
-  stepName,
-  onLadderStep,
-}: {
-  check: NonNullable<Analysis['drillCheck']>
-  rung: number
-  steps: number
-  stepName?: string
-  onLadderStep?: (flaw: string, step: number, from?: number) => void
-}) {
-  const [moved, setMoved] = useState(false)
-  const name = FAULT_NAME[check.flaw]
-  return (
-    <div className="drill-check">
-      <p>{moved ? `${name}: now on step ${rung + 2} of ${steps}, ${stepName}.` : `${name}, which you were drilling: ${drillCheckLine(check)}`}</p>
-      {onLadderStep && !moved && check.outcome === 'passed' && rung < steps - 1 && (
-        <button
-          className="btn btn--ghost btn--full"
-          onClick={() => {
-            onLadderStep(check.flaw, rung + 1, rung)
-            setMoved(true)
-          }}
-        >
-          {MOVE_UP}
-        </button>
-      )}
-    </div>
-  )
-}
-
-/**
- * The held frame's caption, with the moment's name a tap away where it has a
- * meaning to give (E3.4): the word explained where it is used, not in a row
- * of words of its own.
- */
-function heldCaption(phase: PhaseId): ReactNode {
-  if (phase === 'trophy') return <>Paused at the <Term id="trophy">trophy</Term></>
-  if (phase === 'drop') return <>Paused at the <Term id="racketDrop">racket drop</Term></>
-  return heldAt(phase)
-}
-
-/** What the held frame is stopped on, in words under it. */
-function heldAt(phase: PhaseId): string {
-  return phase === 'contact' ? 'Paused at contact' : phase === 'ready' ? 'Paused at the ready position' : `Paused at the ${PHASE_NAME[phase]}`
-}
-
-const PHASE_NAME: Record<PhaseId, string> = {
-  ready: 'ready position',
-  toss: 'toss',
-  trophy: 'trophy',
-  drop: 'racket drop',
-  contact: 'contact',
-  finish: 'finish',
 }
