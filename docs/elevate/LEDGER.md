@@ -424,3 +424,20 @@ width use, console errors) are machine figures and sit in each set's
   sideways scroll; its click on the session sheet matches either
   apostrophe. Proved by the tour (`14-glance`, phone: nothing clipped) and
   the gate.
+
+- [x] **E3.6 Wave 3's close.** Set `w3`, shot at 1a14006: 46 shots, none
+  failed, nothing clipped, no console errors from the app. Before and after:
+  `gallery/index.html?a=w2&b=w3`, and `w2-w3-phone.jpg`. The rescore,
+  clarity of words, screens that moved:
+
+  | Screen | Words | Why |
+  |---|---|---|
+  | 02 Sample report, 06 and 07 Report, 09 After a drill, 22 Basket | 6 → 7 (09: 5 → 6) | The line under the fault says its cost and its feel, not the title again; words are a tap where they're used |
+  | 04 Filming guide | 7 → 8 | No filler: the swing's real time |
+  | 14 Court screen | 6 → 7 | The speed says "about" where it is read |
+  | 21 Practice video, before | 6 → 7 | Says who timed what |
+  | **Mean, all 23** | **7.1** (6.7) | |
+
+  Nothing else moved. Not verified: whether "in about an eighth of a
+  second" reads as a reason to film slow motion to someone who has never
+  thought about it, and anything on a real phone.
