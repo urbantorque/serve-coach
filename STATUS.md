@@ -2,9 +2,11 @@
 
 Serve Coach coaches a tennis serve from one phone clip, read entirely on the
 device. This page says what works, what is open, and what is the owner's call.
-The programme that brought it here is `docs/apex/HANDOVER.md`, its ledger is
-`docs/apex/LEDGER.md` (Waves 0 to 6, closed on 2026-11-23, its close at the end), the visual rules are `DESIGN.md`,
-and `README.md` says how to run it.
+The latest programme is Elevate: its brief is `docs/elevate/PROMPT.md` and its
+ledger `docs/elevate/LEDGER.md` (Waves 0 to 5, closed on 2026-11-26, every
+screen scored before and after). The one before it is `docs/apex/HANDOVER.md`
+with `docs/apex/LEDGER.md`. The visual rules are `DESIGN.md`, and `README.md`
+says how to run it.
 
 Finished ledgers from earlier loops are in `docs/history/` and `docs/next/`, with
 the full design record that used to be the README
@@ -36,10 +38,14 @@ names.
 - **On court.** Hands-free recording with a spoken countdown and framing check,
   a glance between serves, a court card, and today's session in minutes.
 - **Over time.** Today answers what the serve is like now, whether it is
-  getting better and what to do this week, on its first screen. Progress is one
-  story: the serve now, then and now on the player's body, the faults serve by
-  serve, speed (about, with its range, never graded), what changed, and one
-  fold for the rest.
+  getting better and what to do this week, on its first screen; each recent
+  serve's card is held at its own fault and says its score against the
+  player's usual, past their noise. Progress is one story: the serve now,
+  "since you started" on the player's own two bodies with one graded fault
+  marked on both, the faults serve by serve against the drill check's mark,
+  speed (about, with its range, never graded), what changed, and one fold for
+  the rest. After a drill block, the next report leads with whether it worked
+  and what to do next.
 - **The laptop studio,** on the rail. Frame keys (arrows, J K L, 1 to 6),
   zoom and pan, lines and angles measured on the picture and kept with the
   serve and shown on the coach's page, the best serve's ghost at four
@@ -107,27 +113,34 @@ switched on.
 
 ## Resuming this loop
 
-The Apex programme is closed: `apex` is merged into `main` and tagged
-`apex-close` (2026-11-23), and the repo is public at
-https://github.com/urbantorque/serve-coach with every branch and tag. Its last
-independent review, before Wave 6, scored it a player 7, a designer 7, a
-coach 6.5, an engine hunter 6 and a first-time visitor 6, out of ten against
-the brief (W5.1 fixed its findings). What is left is in "What is open" and
-"The owner's call" above, and in the ledger's close. The before and after galleries are
-`docs/lift/apex-gallery.html` (phone) and `docs/lift/apex-gallery-laptop.html`.
+The Elevate programme is closed (2026-11-26), on `main` and pushed to `main`
+and `apex`. It lifted how the app feels, explains and reads, in five waves
+over 23 scored screens; the ledger's close has every screen's before and
+after scores. A screen tour is committed: `node scripts/tour.mjs <set>`
+against the dev server on 5180 shoots every main screen at 390 by 844 and 1440
+by 900, with its console, its words, its lime actions, clipped text and width
+use, into `docs/elevate/gallery/`, and `docs/elevate/gallery/index.html` sets
+any two sets side by side (`w0`, the baseline, to `w5`, the close). Before it,
+Apex closed on 2026-11-23 (tagged `apex-close`); its galleries are
+`docs/lift/apex-gallery.html` and `docs/lift/apex-gallery-laptop.html`. What is
+left is in "What is open" and "The owner's call" above.
 
-The suite runs **2,437 checks** (2026-11-23, after W6.14). The last loop tag is
-`loop-green-15`, from the August loop.
+The suite runs **2,472 checks** (2026-11-26, at Elevate's close). The last
+loop tag is `loop-green-15`, from the August loop.
 
 The entry chunk budget is 132 kB gzip and 385 kB raw (`bundle.test.ts`); it is
-383.15 kB raw and 130.73 kB gzip at the close. The split stylesheets are at
-their 20 kB budget: the next screen style needs room made first. Run
-`npm run build` before trusting a size figure: `bundle.test.ts` reads `dist/`.
+382.51 kB raw and 130.17 kB gzip at the close. The split stylesheets are at
+19.61 kB gzip of their 20 kB budget, and the entry stylesheet at 8.75 of 14,
+after Elevate took out rules nothing drew (E0.3, E2.0); a new screen style still
+pays for itself from what it replaces. Run `npm run build` before trusting a
+size figure: `bundle.test.ts` reads `dist/`.
 
 How to work here, in short:
 
-- One commit per ledger item, ticked in `docs/apex/LEDGER.md` with what it
+- One commit per ledger item, ticked in the programme's ledger with what it
   turned out to be and how it was proved. A measured "not adopted" is a result.
+- After a visual change, shoot the tour and look: `scripts/tour.mjs` shows a
+  clipped label or a second lime action in its own numbers.
 - Before a commit, chained so a failure cannot commit: `npm run typecheck`,
   `npx eslint .`, `npm run build`, `npm test`. `npm run release` runs all of it
   and then checks the built app offline in a browser.

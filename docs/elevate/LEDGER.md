@@ -349,7 +349,7 @@ width use, console errors) are machine figures and sit in each set's
   | 09 Report after a drill; 22 Basket | | | 5 → 6 | The same pair |
   | 10 Today | 5 → 6 | | 4 → 6 | Each card held at its own fault, its usual said past the noise, no two titles alike |
   | 12 Progress | 6 → 7 | 6 → 7 | 5 → 7 | Then and now marks one fault on both bodies; the fault rows show the window and the mark; one line under the chart |
-  | **Mean, all 23** | **5.5** (5.4) | **6.7** (6.7) | **5.2** (4.8) | |
+  | **Mean, all 23** | **5.5** (5.4) | **6.8** (6.7) | **5.2** (4.8) | |
 
   Purpose, action, width and taps did not move. The tour's own measures:
   Progress's first phone screen carries 76 words where it carried 88. Not
@@ -436,7 +436,7 @@ width use, console errors) are machine figures and sit in each set's
   | 04 Filming guide | 7 → 8 | No filler: the swing's real time |
   | 14 Court screen | 6 → 7 | The speed says "about" where it is read |
   | 21 Practice video, before | 6 → 7 | Says who timed what |
-  | **Mean, all 23** | **7.1** (6.7) | |
+  | **Mean, all 23** | **7.1** (6.8) | |
 
   Nothing else moved. Not verified: whether "in about an eighth of a
   second" reads as a reason to film slow motion to someone who has never
@@ -529,7 +529,7 @@ width use, console errors) are machine figures and sit in each set's
   | 16 Court, strain | 6 → 8 | | | The warning leads, above the numbers |
   | 18 Guided set | 5 → 8 | | 5 → 7 | The big line is the set's own fault and this serve's verdict |
   | 19 Guided set, passed | 6 → 7 | | | The same |
-  | **Mean, all 23** | **8.1** (7.7) | **5.6** (5.5) | **7.2** (7.1) | |
+  | **Mean, all 23** | **8.1** (7.7) | **5.6** (5.5) | **7.3** (7.1) | |
 
   The report's own-serve comparison (E4.1) shows only where the player has
   an earlier serve judged clean of the fault, which the tour's report demos
@@ -586,3 +586,67 @@ width use, console errors) are machine figures and sit in each set's
   change: the render, wordsInChrome and a11y suites read the same report
   and pass unchanged. App.tsx was touched only for one prop and stays 1,196
   lines, under its own budget; it is not split.
+
+- [x] **E5.6 The programme's close.** Set `w5`, shot at f390d5c4: 46
+  shots, none failed, nothing clipped, nothing scrolling sideways, no text
+  under 14 px, no console errors from the app. The galleries, each wave's
+  before and after, open from `gallery/index.html` (any two sets):
+  `w0` to `w1` (`w0-w1-phone.jpg`), `w1` to `w2` (`w1-w2-phone.jpg`,
+  `w1-w2-laptop.jpg`), `w2` to `w3` (`w2-w3-phone.jpg`), `w3` to `w4`
+  (`w3-w4-phone.jpg`), and the whole programme, `w0` to `w5`
+  (`w0-w5-phone.jpg`, `w0-w5-laptop.jpg`).
+
+  Every screen, rescored against the same seven questions as the baseline
+  (bold where it moved):
+
+  | Screen | Purpose | Action | Mine | Width | Words | Visuals | Taps |
+  |---|---|---|---|---|---|---|---|
+  | 01 Landing | 9 | 8 | 5 | 7 | 7 | 5 | 9 |
+  | 02 Sample report | 8 | 6 | 4 | 7 | 6 → **7** | 6 → **7** | 9 |
+  | 03 Camera’s first-time card | 9 | 8 | – | 6 | 9 | 4 | 9 |
+  | 04 Filming guide | 9 | 8 | – | 6 | 7 → **8** | 8 | 7 |
+  | 05 Checking a clip | 9 | 9 | 5 | 5 | 6 → **7** | 6 | 10 |
+  | 06 Fresh report | 8 | 6 → **7** | 7 | 8 | 6 → **7** | 6 → **7** | 9 |
+  | 07 Report, reopened | 8 | 6 → **7** | 7 | 8 | 6 → **7** | 6 → **7** | 9 |
+  | 08 Lesson sheet | 8 | 7 | 4 | 6 | 8 | 8 | 7 |
+  | 09 Report after a drill | 6 → **8** | 6 | 7 | 8 | 5 → **7** | 5 → **6** | 9 |
+  | 10 Today | 8 | 7 → **8** | 5 → **6** | 5 → **7** | 7 → **8** | 4 → **6** | 9 |
+  | 11 Today’s session sheet | 7 → **8** | 3 → **8** | 5 | 6 | 6 → **7** | 4 | 9 |
+  | 12 Progress | 7 | 8 | 6 → **8** | 7 → **8** | 6 → **7** | 5 → **7** | 9 |
+  | 13 Settings | 8 | 8 → **9** | – | 6 | 8 | – | 9 |
+  | 13b Settings, never chosen | 8 | 6 → **9** | – | 6 | 6 → **8** | – | 9 |
+  | 14 Court screen | 8 | 7 → **8** | 5 | 4 | 6 → **7** | 3 | 10 |
+  | 15 Court, refused | 9 | 9 | – | 4 | 8 | 4 | 10 |
+  | 16 Court, strain | 6 → **8** | 7 → **8** | 5 | 4 | 6 | 3 | 10 |
+  | 17 Court, a fault moving | 8 | 7 → **8** | 6 | 4 | 7 | 3 | 10 |
+  | 18 Guided set | 5 → **8** | 7 → **8** | 5 | 4 | 5 → **7** | 3 | 10 |
+  | 19 Guided set, passed | 6 → **7** | 4 → **8** | 5 | 4 | 6 | 3 | 9 |
+  | 20 Practice video, checked | 7 | 5 → **8** | 5 | 6 | 7 | 6 | 7 |
+  | 21 Practice video, before | 9 | 7 → **8** | – | 5 | 6 → **7** | 3 | 9 |
+  | 22 Basket | 7 | 6 → **7** | 6 | 8 | 6 → **7** | 5 → **6** | 9 |
+  | **Mean** | 7.7 → **8.1** | 6.7 → **7.8** | 5.4 → **5.6** | 5.8 → **6.0** | 6.5 → **7.3** | 4.8 → **5.2** | 9.0 → **9.0** |
+
+  Two means written at the wave closes were miscounted and are corrected
+  above where they stand: clarity of words after Wave 2 was 6.8, not 6.7,
+  and after Wave 4 it was 7.3, not 7.2 (the guided set's words moved two
+  points, not one).
+
+  The budgets at the close: the entry chunk 382.51 kB raw and 130.17 kB gzip
+  (of 385 and 132); the entry stylesheet 8.75 kB gzip (of 14); the split
+  stylesheets 19.61 kB gzip (of 20), lighter than at the start for the rules
+  taken out. 2,472 checks pass.
+
+  What this programme did not reach, said plainly:
+  - *Nothing has run on a real phone,* as before it.
+  - *The court screen on a laptop* still sits in a narrow column with its
+    actions to one side (width 4). It is read from a fence on a phone; on a
+    laptop it is a review screen nobody films from, and the studio is the
+    laptop's reason to exist.
+  - *"That's mine" moved least* (5.4 to 5.6): the report's held frame is
+    the player's own clip, which the demo routes cannot supply, so the tour
+    scores the screens that show a figure; the own-serve comparison appears
+    only for a player with an earlier serve clean of the fault.
+  - *The court screens' pictures* (3 or 4 throughout) were left as numbers and words
+    on purpose: a picture to study is the report's job, not a fence's.
+  - *Drawing in the studio* still needs a pointer.
+  - Owner steps: none added; `docs/next/OWNER-STEPS.md` is unchanged.
