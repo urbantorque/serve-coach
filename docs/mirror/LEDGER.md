@@ -162,8 +162,20 @@ The budgets at the start: the entry chunk 382.60 of 385 kB raw and 130.23 of
 
 ## Wave 1: one main action
 
-- [ ] **M1.1 Play isn't the main action.** The report player's and the
-  lesson's play controls become the quiet control.
+- [x] **M1.1 Play isn't the main action.** The player's play button
+  (`.watch-play`: the report's clip, the studio, the lesson's model, the
+  track player) and the side by side's (`.side-play-btn`) were lime fills
+  beside the screen's main action. Both are now the raised ink control
+  (`--ink-4`, the icon in `--fg`), the same family as the Slow chip beside
+  them, at the same size, with the same press and keys. The played-so-far
+  bar stays lime: it is the current thing. The tour now counts one lime
+  action on the sample, fresh, reopened, real and after-a-drill reports
+  and the basket at both sizes (from two on a laptop). The lesson sheet
+  counts none on its first screen: its pause was its only lime. Its action
+  is further down the sheet, which M4.1's two panes bring up.
+  `oneLime.test.ts` holds both rules. The tour's basket waits 9 s, not 6:
+  it records its clip in real time, and at 6 s it was caught between
+  screens twice.
 - [ ] **M1.2 The phone's Film tab.** One lime per screen, by DESIGN.md's
   rule.
 - [ ] **M1.3 The report's first screen.** 18 to 21 controls on a laptop, 7

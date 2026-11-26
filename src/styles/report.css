@@ -455,8 +455,8 @@
   width: 44px;
   height: 44px;
   border-radius: var(--r-pill);
-  background: var(--lime);
-  color: var(--lime-ink);
+  background: var(--ink-4);
+  color: var(--fg);
   transition: transform var(--fast) var(--ease);
 }
 

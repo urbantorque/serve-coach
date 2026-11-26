@@ -167,7 +167,7 @@ const SCREENS = [
   // Practice
   { group: 'Practice', name: '20-practice', title: 'A practice video, checked', url: '/?demo=session', wait: 5000 },
   { group: 'Practice', name: '21-practice-plan', title: 'A practice video, before checking', url: '/?demo=session&plan', wait: 5000 },
-  { group: 'Practice', name: '22-basket', title: 'A basket of serves', url: '/?demo=basket', wait: 6000 },
+  { group: 'Practice', name: '22-basket', title: 'A basket of serves', url: '/?demo=basket', wait: 9000 },
 ]
 
 /** The page's own measure of itself. Runs in the page. */

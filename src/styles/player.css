@@ -290,8 +290,10 @@
   height: 52px;
   flex: none;
   border-radius: var(--r-pill);
-  background: var(--lime);
-  color: var(--lime-ink);
+  /* Raised ink, not lime (Mirror M1.1): playing the clip is never the
+     screen's main action, and it sat lime beside the one that is. */
+  background: var(--ink-4);
+  color: var(--fg);
   transition: transform var(--fast) var(--ease);
 }
 
