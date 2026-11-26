@@ -181,9 +181,10 @@
 /* A pressed chip looks chosen, as a toggle does (N7.6): aria-pressed alone
    left a tagged serve looking the same as the choices beside it. */
 .chip--button[aria-pressed='true'] {
-  background: var(--lime-glow);
-  border-color: color-mix(in srgb, var(--lime) 42%, transparent);
-  color: var(--lime);
+  background: var(--chosen);
+  box-shadow: var(--chosen-edge);
+  color: var(--fg);
+  border-color: transparent;
 }
 
 /* A row of chips. Here since N7.6, because the glance uses it and does not
@@ -211,9 +212,10 @@
 }
 
 .chip--toggle.is-on {
-  background: var(--lime-glow);
-  border-color: color-mix(in srgb, var(--lime) 42%, transparent);
-  color: var(--lime);
+  background: var(--chosen);
+  box-shadow: var(--chosen-edge);
+  color: var(--fg);
+  border-color: transparent;
 }
 
 .tag {
@@ -467,7 +469,8 @@ details[open] > summary.tag-summary svg {
 }
 
 .seg-item.is-on {
-  background: var(--ink-4);
+  background: var(--chosen);
+  box-shadow: var(--chosen-edge);
   color: var(--fg);
 }
 

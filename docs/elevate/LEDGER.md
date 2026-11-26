@@ -175,3 +175,15 @@ width use, console errors) are machine figures and sit in each set's
   chosen and every pill on one line after) and the gate. The "No backup
   yet" line under it is a demo-route artifact (the seeded serves are never
   stored), not this screen's.
+
+- [x] **E1.4 One look for "chosen".** Eight rules marked a chosen option
+  four ways: a lime outline (Settings), a filled panel (segmented controls),
+  a lime glow (pressed chips), a lime fill (serve chips, serve tags). Each
+  now draws one token, `--chosen` (a raised fill, `#2d3649`, with a top light
+  `--chosen-edge`), and none draws lime, which stays for the main action. A
+  guessed tag is outlined in the faint text colour until confirmed. Not
+  choices, and left alone: the current tab, the framing pips, a chart's
+  picked dot. `chosenState.test.ts` reads every stylesheet and fails if a
+  chosen rule leaves `--chosen` or uses lime; `contrast.test.ts` still
+  passes. Proved by the tour (Settings, the session sheet's time, the
+  report's tags) and the gate.

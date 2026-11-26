@@ -344,6 +344,8 @@
 }
 
 .watch-lines.is-on {
+  background: var(--chosen);
+  box-shadow: var(--chosen-edge);
   color: var(--fg);
 }
 

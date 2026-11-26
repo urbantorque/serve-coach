@@ -589,15 +589,16 @@
 }
 
 .serve-tag.is-on {
-  background: var(--lime);
-  color: var(--lime-ink);
+  background: var(--chosen);
+  box-shadow: var(--chosen-edge);
+  color: var(--fg);
 }
 
 /* A guess, not the player's word: outlined until they confirm it. */
 .serve-tag.is-guess {
   background: transparent;
-  box-shadow: inset 0 0 0 1.5px var(--lime);
-  color: var(--lime);
+  box-shadow: inset 0 0 0 1.5px var(--fg-faint);
+  color: var(--fg);
 }
 
 /* ------------------------------------------------------------- the one fold */

@@ -186,8 +186,8 @@
 }
 
 .hand-option.is-on {
-  background: var(--panel-raised);
-  box-shadow: inset 0 0 0 1.5px var(--lime);
+  background: var(--chosen);
+  box-shadow: var(--chosen-edge);
   color: var(--fg);
 }
 

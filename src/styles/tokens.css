@@ -97,6 +97,13 @@
   --panel: linear-gradient(180deg, #151a25, #0f131b);
   --panel-raised: linear-gradient(180deg, #1c2230, #131822);
   --panel-edge: inset 0 1px 0 rgba(255, 255, 255, 0.055);
+  /*
+   * Chosen, one of a set (E1.4): a picked option, a pressed toggle, a tag. A
+   * raised fill with the light along its top, the same everywhere it appears.
+   * Never lime, which is kept for the one main action.
+   */
+  --chosen: #2d3649;
+  --chosen-edge: inset 0 1px 0 rgba(255, 255, 255, 0.09);
   --stage:
     radial-gradient(90% 62% at 34% 26%, rgba(126, 146, 178, 0.3), transparent 72%),
     radial-gradient(70% 34% at 60% 100%, rgba(205, 249, 74, 0.07), transparent 76%),

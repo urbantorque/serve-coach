@@ -129,9 +129,10 @@
 }
 
 .serve-chip.is-on {
-  background: var(--lime);
-  border-color: var(--lime);
-  color: var(--lime-ink);
+  background: var(--chosen);
+  box-shadow: var(--chosen-edge);
+  color: var(--fg);
+  border-color: transparent;
 }
 
 /*
@@ -1135,8 +1136,10 @@ ul.drill-steps li {
 }
 
 .level-option.is-on {
-  border-color: var(--lime);
-  background: color-mix(in srgb, var(--lime) 12%, var(--ink-2));
+  background: var(--chosen);
+  box-shadow: var(--chosen-edge);
+  color: var(--fg);
+  border-color: transparent;
 }
 
 .level-option.is-on strong {
