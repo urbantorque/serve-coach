@@ -215,6 +215,16 @@ The budgets at the start: the entry chunk 382.60 of 385 kB raw and 130.23 of
   on the real serve in `courtScreen.test.ts`, at both sizes in the tour;
   the other court screens read the same.
 
+**Wave 1 closed.** Set `m1`, shot at 350b09a5: 50 shots, none failed, no
+console errors, and no screen at either size with more than one lime action
+(from seven). Before and after: `m0-m1-laptop-report_Today_real.jpg` and
+`m0-m1-phone-Today_real.jpg`. Rescored: action on the sample report 6 to 7,
+the fresh and reopened reports 7 to 8, the report after a drill 6 to 7,
+Today 8 to 9, the basket 7 to 8; the court screen on real footage, purpose
+6 to 8 and words 5 to 7. Means over the 25 screens: purpose 8.0 to 8.1,
+action 7.8 to 8.1; the rest unchanged (mine 6.1, width 6.9, words 7.2,
+visuals 5.7, taps 9.0). Not verified: anything on a real phone.
+
 ## Wave 2: pictures that explain
 
 - [ ] **M2.1 The camera's first-time card** shows the placement diagram.
