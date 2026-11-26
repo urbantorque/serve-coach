@@ -348,22 +348,22 @@ interface FlawCopy {
 const FLAW_COPY: Record<FlawId, FlawCopy> = {
   waiters_tray: {
     title: 'Palm turned up under the racket',
-    low: 'Your hand sits flat under the handle, so the strings face the sky and the arm can’t turn through the ball.',
+    low: 'The strings face the sky, so your arm can’t turn through the ball. Turn your hand so the racket’s edge leads up.',
   },
   toss_height: {
     // "Short" means depth in tennis, and every good serve is struck on the way
     // down, so neither said what is wrong (L1.5).
     title: 'Your toss is too low',
-    low: 'The ball peaks below your full reach, so you bend your arm or rush the swing to meet it.',
+    low: 'You bend your arm or rush the swing to meet it. Toss so the ball peaks above your racket at full reach.',
     highTitle: 'Your toss goes too high',
-    high: 'The ball goes far above your reach, so you wait for it and your swing slows or stops.',
+    high: 'You wait for the ball to come down, and your swing slows. Toss so it peaks near the top of your reach.',
   },
   toss_drift: {
     // Axis-neutral, because this is what the report says when it does not know
     // which way the toss wandered. True of both axes and of the tie between
     // them; `byAxis` sharpens it wherever the camera angle can be read.
     title: 'Your toss wanders off line',
-    low: 'The ball leaves your hand on a new path each serve, so you move to it instead of standing under it.',
+    low: 'You move to the ball instead of standing under it. Let go of it at the same point every serve.',
     byAxis: {
       // The usual case on the framing this app recommends. No direction is
       // claimed — `axes.ts` recovers yaw from an `acos` and cannot tell a lens
@@ -372,47 +372,47 @@ const FLAW_COPY: Record<FlawId, FlawCopy> = {
       // printed as an observation.
       depth: {
         title: 'Your toss drifts forwards and back',
-        low: 'The ball leaves your hand nearer or further out each serve, so you reach for it or crowd it.',
+        low: 'You reach for some serves and crowd others. Send the ball up the same distance in front every time.',
       },
       // The original line, unchanged, now printed only where it is true: a
       // camera round towards face-on, where image x really does carry the
       // shoulder-line axis.
       lateral: {
         title: 'Your toss drifts sideways',
-        low: 'The ball leaves your hand travelling across your body, so you chase it instead of standing under it.',
+        low: 'You chase the ball across your body. Send it straight up from your hand, over the same spot every time.',
       },
     },
   },
   posture_collapse: {
     title: 'Your upper body bends sideways',
-    low: 'Your upper body bends sideways instead of staying tall, so you hit lower and your lower back takes the strain.',
+    low: 'You hit lower, and your lower back takes the strain. Stay tall through the hit, chest up.',
   },
   collapsed_elbow: {
     title: 'Your hitting elbow sits too low',
-    low: 'Your elbow sits below your shoulder, so your forearm does the swinging instead of your whole arm.',
+    low: 'Your forearm does the swinging instead of your whole arm. Lift the elbow to shoulder height as the racket drops.',
   },
   shallow_drop: {
     title: 'The racket doesn’t fall behind your back',
     // The racket head falls; the hand stays near the shoulder (D7.1). The old
     // line asked for the hand down the back, the picture the band dropped.
-    low: 'Your racket head never falls behind your back, so the swing starts halfway up and meets the ball slower.',
+    low: 'The swing starts halfway up and meets the ball slower. Let the racket head fall behind your back first.',
   },
   early_shoulder_rotation: {
     title: 'Your chest turns to the net too early',
     // True of both readings (D3.6): a chest open past the hips at the trophy,
     // from a corner, and a chest half turned before the racket's low point,
     // from the side. "Before your hips do" was true of the first only.
-    low: 'Your chest turns to the court before the racket drops, so your legs and body add nothing to the swing.',
+    low: 'Your legs and body add nothing to the swing. Keep your side to the net until the racket drops.',
   },
   no_leg_drive: {
     title: 'Your legs don’t push you up',
-    low: 'Your hips barely rise between the knee bend and the hit, so your arm does the work your legs should.',
+    low: 'Your arm does the work your legs should. Bend your knees, then push up into the ball.',
   },
   // Not named any more — see `arming_the_ball` in flaws.ts. Kept for the reports
   // that were filed with it.
   arming_the_ball: {
     title: 'The arm goes first',
-    low: 'Your shoulders turn before your hips, so the serve relies on arm strength alone.',
+    low: 'The serve relies on arm strength alone. Let your hips turn first, then your shoulders.',
   },
   // Unreachable today, and kept rather than deleted. `pancake_contact` carries
   // `notNamed` in flaws.ts — see `UNDER_RESOLVED.pronation_deg` in tiers.ts for
@@ -422,19 +422,19 @@ const FLAW_COPY: Record<FlawId, FlawCopy> = {
   // estimator lands, this is the copy that comes back. Do not read it as live.
   pancake_contact: {
     title: 'The strings meet the ball flat',
-    low: 'Your hand never turns over through the ball, so you push it forward instead of driving across it.',
+    low: 'You push the ball forward instead of driving across it. Turn your hand over through the hit.',
   },
   low_contact: {
     title: 'You strike the ball low',
-    low: 'You meet the ball below full reach, so the serve has to climb before it can come down.',
+    low: 'The serve has to climb before it can come down. Reach up and meet the ball at full stretch.',
   },
   toss_arm_drops: {
     title: 'Your tossing arm comes down early',
-    low: 'Your tossing arm comes down before the swing, your front shoulder follows it, and you meet the ball lower.',
+    low: 'Your front shoulder follows it down, so you meet the ball lower. Keep the arm pointing at the ball until the racket starts up.',
   },
   contact_behind: {
     title: 'You hit the ball over your head',
-    low: 'You meet the ball over or behind your head, because the toss goes up over you instead of in front.',
+    low: 'The toss goes up over you, not in front. Toss further forward, so you reach out to hit.',
   },
 }
 

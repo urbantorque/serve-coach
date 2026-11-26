@@ -378,3 +378,16 @@ width use, console errors) are machine figures and sit in each set's
     video."
   - The report's headline restated by the next sentence is E3.2's.
   Proved by the scan, the voice lint and the gate.
+
+- [x] **E3.2 The faults, said as the thing, the cost and the feel.** Each
+  fault's title says the thing; the line under it used to say it again
+  ("Your tossing arm comes down early" / "Your tossing arm comes down before
+  the swing..."). Every line under a title (eleven faults, three of them
+  with a second side or an axis of their own) now says what the fault costs,
+  then what to feel instead, and never repeats the title: "Your front
+  shoulder follows it down, so you meet the ball lower. Keep the arm pointing
+  at the ball until the racket starts up." The costs are the old lines'
+  claims, kept; the feels are the drills' own cues. Inside the lint (25
+  words, two sentences), and no line tells the swing to pause or stop.
+  `faultCopy.test.ts` holds every line to two sentences that do not restate
+  their title. Proved by it, `copy.test.ts` (44 checks) and the gate.
