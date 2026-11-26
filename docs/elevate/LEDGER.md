@@ -557,3 +557,13 @@ width use, console errors) are machine figures and sit in each set's
   The speed chart and the score chart, stretched across a wide pane, drew
   their axes at 20 to 24 px; each is held near its drawn width (384 and 420
   px), so its words read at about the size of the words beside them. Proved by the tour (`12-progress`, laptop).
+
+- [x] **E5.3 The studio's tools say what they do.** The laptop studio's
+  tools were named, not explained: "Line", "Angle", "Body lines". Each now
+  carries what it does ("Measure an angle: tap one end, the corner, then the
+  other end", "Save this frame as a picture, with your lines on it"), the
+  zoom its key, and the player its keys as `aria-keyshortcuts` beside its
+  spoken help; it already takes focus, so frame keys, play, the six key
+  positions and zoom all work without a mouse. Drawing a line or an angle
+  still needs a pointer on the picture: said in the tool's own words, not
+  hidden. `studioTools.test.ts` holds it.

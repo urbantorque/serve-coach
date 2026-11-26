@@ -758,6 +758,7 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired, tools = f
       tabIndex={0}
       onKeyDown={onKeyDown}
       role="group"
+      aria-keyshortcuts="ArrowLeft ArrowRight J K L Space 1 2 3 4 5 6 + -"
       aria-label="Serve video. Left and right arrows or J and L step one frame, space or K plays, keys 1 to 6 jump to each key position, plus and minus zoom."
     >
       <div className="player-stage" style={{ aspectRatio: `${video.width} / ${video.height}` }}>
@@ -879,6 +880,7 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired, tools = f
             className={`watch-lines${skeletonOn ? ' is-on' : ''}`}
             onClick={() => setSkeletonOn((v) => !v)}
             aria-pressed={skeletonOn}
+            title="Draw the body I tracked over the video"
           >
             Body lines
           </button>
@@ -887,34 +889,41 @@ export default function PosePlayer({ videoUrl, analysis, seek, paired, tools = f
           tools ? (
             <>
               {(['line', 'angle'] as const).map((t) => (
-                <button key={t} className={`watch-lines${tool === t ? ' is-on' : ''}`} onClick={() => setTool(tool === t ? undefined : t)} aria-pressed={tool === t}>
+                <button
+                  key={t}
+                  className={`watch-lines${tool === t ? ' is-on' : ''}`}
+                  onClick={() => setTool(tool === t ? undefined : t)}
+                  aria-pressed={tool === t}
+                  title={t === 'line' ? 'Measure a line: tap its two ends on the picture' : 'Measure an angle: tap one end, the corner, then the other end'}
+                >
                   {t === 'line' ? 'Line' : 'Angle'}
                 </button>
               ))}
               {paired && (
-                <button className="watch-lines" onClick={nextGhost} aria-label={`Your best serve drawn ${GHOST_STEPS[ghostAt].label}. Change it.`}>
+                <button className="watch-lines" onClick={nextGhost} aria-label={`Your best serve drawn ${GHOST_STEPS[ghostAt].label}. Change it.`} title="Change how strongly your best serve is drawn under this one">
                   Best: {GHOST_STEPS[ghostAt].label}
                 </button>
               )}
-              <button className="watch-lines" onClick={() => zoomBy(1)} disabled={zoom === ZOOMS.length - 1} aria-label="Zoom in">
+              <button className="watch-lines" onClick={() => zoomBy(1)} disabled={zoom === ZOOMS.length - 1} aria-label="Zoom in" aria-keyshortcuts="+" title="Zoom in (+)">
                 Zoom in
               </button>
-              <button className="watch-lines" onClick={() => zoomBy(-1)} disabled={zoom === 0} aria-label="Zoom out">
+              <button className="watch-lines" onClick={() => zoomBy(-1)} disabled={zoom === 0} aria-label="Zoom out" aria-keyshortcuts="-" title="Zoom out (−)">
                 Zoom out
               </button>
               {marks.length > 0 && (
-                <button className="watch-lines" onClick={() => onMarks?.(marks.slice(0, -1))}>
+                <button className="watch-lines" onClick={() => onMarks?.(marks.slice(0, -1))} title="Take away the last line or angle you drew">
                   Undo mark
                 </button>
               )}
               <button
                 className="watch-lines"
                 onClick={() => videoRef.current && void exportStill(videoRef.current, canvasRef.current, marks, aspect, analysis.createdAt)}
+                title="Save this frame as a picture, with your lines on it"
               >
                 Save still
               </button>
               {canRecordClip() && (
-                <button className="watch-lines" onClick={() => void saveClip()} disabled={recording} aria-busy={recording}>
+                <button className="watch-lines" onClick={() => void saveClip()} disabled={recording} aria-busy={recording} title="Save the clip as a video, with your lines on it">
                   {recording ? 'Saving the clip' : 'Save clip'}
                 </button>
               )}
