@@ -81,7 +81,7 @@ heading('Where the line has to stop')
 check('one rubric draws one unbroken line', () => {
   const out = draw(series([70, 74, 71, 80]))
   assert((out.match(/class="ribbon-line"/g) ?? []).length === 1, 'not one line')
-  assert(rules(out).length === 0 && !out.includes('The gap in the line is where I changed how I score serves'), 'a break with no change of rubric')
+  assert(rules(out).length === 0 && !out.includes('changed how I score serves') && !out.includes('New scoring'), 'a break with no change of rubric')
 })
 
 check('a recalibration splits the line rather than climbing across it', () => {
@@ -91,7 +91,8 @@ check('a recalibration splits the line rather than climbing across it', () => {
   // one line across would have had four.
   const curves = [...out.matchAll(/d="([^"]+)" class="ribbon-line"/g)].map((m) => (m[1].match(/C/g) ?? []).length)
   assert(curves.join() === '2,1', `the runs joined ${curves.join()}`)
-  assert(out.includes('The gap in the line is where I changed how I score serves'), 'the gap isn’t explained')
+  // Labelled where it applies, on the chart, and in the text version (E2.4).
+  assert(out.includes('New scoring</text>') && out.includes('The gap in the line is where I changed how I score serves.'), 'the gap isn’t explained')
 })
 
 check('only the run the player isn’t being scored under is faded', () => {
@@ -127,7 +128,15 @@ check('the picture has a text version, and the caption doesn’t repeat the head
   assert(out.includes('aria-label="Typical score across 2 sessions, most recent 74."'), 'no text version')
   // The newest session is the headline above the chart (2026-11-25); the caption speaks for a picked one.
   assert(!out.includes('typical 74, 4 serves from 71 to 77'), 'the caption repeats the headline')
-  assert(out.includes('Tap the chart to see any session.'), 'nothing says the chart can be picked')
+})
+
+check('one line of words under the chart at most, and none of them a hint (E2.4)', () => {
+  const quiet = draw(series([70, 74]))
+  const caption = (html: string) => html.slice(html.indexOf('<figcaption>') + 12, html.indexOf('</figcaption>'))
+  assert(caption(quiet) === '', `words under the chart with nothing to say: "${caption(quiet)}"`)
+  assert(!quiet.includes('Tap the chart'), 'the tap hint is back')
+  const noted = renderToStaticMarkup(createElement(ScoreRibbon, { points: series([70, 74]), note: '6 weeks in, a typical serve scores 74.' }))
+  assert(caption(noted) === '6 weeks in, a typical serve scores 74.', `the note isn’t the one line: "${caption(noted)}"`)
 })
 
 report()

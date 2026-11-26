@@ -525,12 +525,6 @@
   margin-top: 3px;
 }
 
-.shape-note {
-  font-size: 15px;
-  line-height: 1.4;
-  color: var(--fg-muted);
-}
-
 .ribbon svg {
   width: 100%;
   height: auto;
@@ -547,11 +541,6 @@
 
 .ribbon figcaption strong {
   color: var(--fg);
-}
-
-.ribbon-note {
-  display: block;
-  color: var(--fg-faint);
 }
 
 .ribbon-grid {

@@ -294,6 +294,12 @@ function ProgressBody({
           <p>
             <strong>Typical {SERVE_TYPES[form.serveType].word} serve</strong>
             <span>{[tripDay(trip.createdAt), range].filter(Boolean).join(', ')}</span>
+            {/* Above the chart, not under it (E2.4): what the line leaves out is part of what it is. */}
+            {form.setAside > 0 && (
+              <span>
+                Only your {SERVE_TYPES[form.serveType].word} serves are shown. Your {form.setAside} other {form.setAside === 1 ? 'serve is' : 'serves are'} scored a different way.
+              </span>
+            )}
             {form.tripDelta !== undefined && deltaStatus(form.tripDelta, 'trip') !== 'flat' && (
               <span className="shape-delta">
                 <DeltaChip delta={form.tripDelta} scope="trip" /> since last time
@@ -301,13 +307,7 @@ function ProgressBody({
             )}
           </p>
         </div>
-        <ScoreRibbon points={form.trips} />
-        {milestone && <p className="shape-note">{milestone}</p>}
-        {form.setAside > 0 && (
-          <p className="shape-note">
-            Only your {SERVE_TYPES[form.serveType].word} serves are shown. Your {form.setAside} other {form.setAside === 1 ? 'serve is' : 'serves are'} scored a different way.
-          </p>
-        )}
+        <ScoreRibbon points={form.trips} note={milestone || undefined} />
 
         {(fig || sheetBestScore) && (
           <div className="record-tiles" id="progress-records">

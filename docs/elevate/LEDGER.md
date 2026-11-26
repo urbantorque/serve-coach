@@ -317,3 +317,13 @@ width use, console errors) are machine figures and sit in each set's
   again", then "Tossing arm, 3 in a row", oldest first). Proved by
   `serveCards.test.ts` (no two neighbours alike, the run's words, the usual
   said only past the noise) and the tour (`10-today`).
+
+- [x] **E2.4 One line of words under the chart.** Under the score chart sat
+  a tap hint, a scoring-change note, the six-week line and the serve-type
+  note: four lines. Now the caption is one line, the picked session or else
+  the six-week read; a change of scoring is labelled "New scoring" on the
+  chart at the break, and said in the chart's text version; what the line
+  leaves out (the other serve types) moved above it, into its heading; the
+  tap hint went. Proved by `scoreRibbon.test.ts` (a new check: nothing under
+  the chart when there is nothing to say, the note as the one line) and the
+  tour.

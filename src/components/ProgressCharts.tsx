@@ -42,8 +42,13 @@ function runsOf(points: readonly TripPoint[]): number[][] {
  * what left the old chart mostly empty, but never spans fewer than twenty-four
  * points, so a small wobble cannot be drawn as a mountain. Tap anywhere to read
  * a trip. The numbers are also there as a table for anyone who wants them.
+ *
+ * One line of words under it at most (E2.4): the session the player picked, or
+ * else the one `note` the screen gives it. A change of scoring is labelled on
+ * the chart at the break itself, where it applies, and said in the text
+ * version; the tap hint went, since a dot under a finger answers it.
  */
-export function ScoreRibbon({ points }: { points: TripPoint[] }) {
+export function ScoreRibbon({ points, note }: { points: TripPoint[]; note?: string }) {
   const [picked, setPicked] = useState<number>()
   if (!points.length) return null
   const lows = points.map((p) => p.low)
@@ -78,7 +83,7 @@ export function ScoreRibbon({ points }: { points: TripPoint[] }) {
       <svg
         viewBox={`0 0 ${W} ${H}`}
         role="img"
-        aria-label={`Typical score across ${points.length} sessions, most recent ${newest.overall}.`}
+        aria-label={`Typical score across ${points.length} sessions, most recent ${newest.overall}.${breaks.length ? ' The gap in the line is where I changed how I score serves.' : ''}`}
         onPointerDown={pick}
         // A mouse reads a trip by hovering, a finger by touching (N5.4).
         onPointerMove={(e) => (e.buttons || e.pointerType === 'mouse') && pick(e)}
@@ -119,7 +124,12 @@ export function ScoreRibbon({ points }: { points: TripPoint[] }) {
           )
         })}
         {breaks.map((b) => (
-          <line key={b} className="ribbon-break" x1={b} x2={b} y1={TOP - 8} y2={H - FOOT + 4} />
+          <g key={b}>
+            <line className="ribbon-break" x1={b} x2={b} y1={TOP - 8} y2={H - FOOT + 4} />
+            <text className="ribbon-axis" x={b + 5} y={TOP - 10}>
+              New scoring
+            </text>
+          </g>
         ))}
         {points.map((p, i) => (
           <circle key={p.id} className={`ribbon-dot${i === at ? ' is-on' : ''}`} cx={x(i)} cy={y(p.overall)} r={i === at ? 6 : 4} />
@@ -139,8 +149,7 @@ export function ScoreRibbon({ points }: { points: TripPoint[] }) {
             {shown.serves < 2 ? ', one serve' : shown.low === shown.high ? `, ${shown.serves} serves, all ${shown.overall}` : `, ${shown.serves} serves from ${shown.low} to ${shown.high}`}
           </>
         )}
-        {at === points.length - 1 && points.length > 1 && <span className="ribbon-note">Tap the chart to see any session.</span>}
-        {breaks.length > 0 && <span className="ribbon-note">The gap in the line is where I changed how I score serves.</span>}
+        {at === points.length - 1 && note}
       </figcaption>
     </figure>
   )
