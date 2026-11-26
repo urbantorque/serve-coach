@@ -293,7 +293,7 @@ export async function renderBasketCard(
   const handoffLines = c.possibleHandoff
     ? layoutLines(
         ctx,
-        "These serves don't measure as the same height. If someone else served in this clip, this comparison is two people, not one player's consistency.",
+        "These serves don’t measure as the same height. If someone else served in this clip, this comparison is two people, not one player’s consistency.",
         W - PAD * 2,
       )
     : []

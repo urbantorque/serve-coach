@@ -354,6 +354,11 @@
   letter-spacing: 0;
 }
 
+/* Before the figure, so a speed says "about" where it is read (E3.1). */
+.court-readout-about {
+  margin: 0 0.12em 0 0;
+}
+
 .court-readout-note {
   font-size: 15.5px;
   line-height: 1.32;

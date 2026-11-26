@@ -196,7 +196,7 @@ const FAILURE_COPY: Record<EngineFailure, (mb: number) => { title: string; hints
     ],
   }),
   stalled: (mb) => ({
-    title: "The coach's download stopped",
+    title: "The coach’s download stopped",
     hints: ['Check your connection and try again.', `On Wi-Fi the ${mb} MB takes a minute or two.`],
   }),
   failed: () => ({

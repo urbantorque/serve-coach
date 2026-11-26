@@ -336,6 +336,7 @@ export default function Glance({
               <div className="court-numbers">
                 {reading && (
                   <p className="court-readout-figure court-readout-figure--speed">
+                    <span className="court-readout-unit court-readout-about">about</span>
                     {reading.best}
                     <span className="court-readout-unit">{reading.unit}</span>
                     <span className="sr-only"> off the racket</span>

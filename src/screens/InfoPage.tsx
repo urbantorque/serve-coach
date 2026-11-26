@@ -350,7 +350,7 @@ function Privacy() {
       </Section>
       <Section title="What I keep, and where">
         <p>Your scores, the joint positions I track and your settings live in this browser, on this {here}.</p>
-        <p>Clearing this site's data in your browser deletes them. A backup file you export stays yours to keep or delete.</p>
+        <p>Clearing this site’s data in your browser deletes them. A backup file you export stays yours to keep or delete.</p>
       </Section>
       <Section title="What leaves, and when">
         <p>The body tracking files download from this site the first time you check a serve. After that the app works with no signal.</p>
@@ -400,7 +400,7 @@ function Terms({ onPage }: { onPage: Go }) {
         <p>Your videos and results stay yours, on your own device. You can delete them from your browser at any time.</p>
       </Section>
       <Section title="Fair use">
-        <p>Use the app for your own serve, or for someone else's with their permission. Don’t try to break, copy or resell it.</p>
+        <p>Use the app for your own serve, or for someone else’s with their permission. Don’t try to break, copy or resell it.</p>
       </Section>
       {PAYMENTS !== 'off' && (
         <Section title="Plus">

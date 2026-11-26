@@ -121,7 +121,7 @@ const timesWord = (factor: number): string => {
 export function stretchNote(stretch: Stretch): string {
   return stretch.source === 'file'
     ? `Your phone filmed this in slow motion at ${timesWord(stretch.factor)}, so every timing here is real time.`
-    : `The ball's fall shows slow motion at ${timesWord(stretch.factor)}, so every timing here is real time.`
+    : `The ball’s fall shows slow motion at ${timesWord(stretch.factor)}, so every timing here is real time.`
 }
 
 export type StretchSource = 'file' | 'ball' | 'none'

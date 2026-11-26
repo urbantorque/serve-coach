@@ -64,7 +64,7 @@ export function courtPlan(week: WeekPlan | undefined, minutes: CourtMinutes): Co
     const line = once ? `${item.drill.name}: ${item.drill.reps}, once.` : `${item.drill.name}: ${item.drill.reps}, then repeat.`
     blocks.push({ kind: 'drill', minutes: m, line })
   })
-  blocks.push({ kind: 'check', minutes: CHECK, line: `Film ${CHECK_SERVES} serves to check the first drill's step.` })
+  blocks.push({ kind: 'check', minutes: CHECK, line: `Film ${CHECK_SERVES} serves to check the first drill’s step.` })
   const free = minutes - warm - drillTime - CHECK + spare
   if (free > 0) blocks.push({ kind: 'free', minutes: free, line: 'Serve freely and let the drill settle in.' })
   return blocks

@@ -39,12 +39,12 @@ export const STILL_EVIDENCE: Record<FlawId, StillEvidence> = {
     none: 'A full drop and a shallow one leave the hand at nearly the same height on the drop still; the racket, which tells them apart, isn’t drawn from the clip.',
   },
   no_leg_drive: { none: 'A rise runs from the knee bend to the hit, and a still holds one of the two moments.' },
-  toss_drift: { none: "The tossing hand's wander is a path, and a still holds one point of it." },
+  toss_drift: { none: "The tossing hand’s wander is a path, and a still holds one point of it." },
   early_shoulder_rotation: {
     none: 'From the side the chest turns towards the lens, which narrows the shoulders by a few pixels and moves nothing a player can see.',
   },
   posture_collapse: { none: 'From the side the trunk bends along the line the camera looks down.' },
-  waiters_tray: { none: "The palm's direction is read from a few hand landmarks, too small on a still to draw honestly." },
+  waiters_tray: { none: "The palm’s direction is read from a few hand landmarks, too small on a still to draw honestly." },
   arming_the_ball: { none: 'Not named (see flaws.ts).' },
   pancake_contact: { none: 'Not named (see flaws.ts).' },
 }

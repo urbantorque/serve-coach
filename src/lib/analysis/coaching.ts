@@ -155,7 +155,7 @@ export const METRICS: Record<string, MetricCopy> = {
     phase: 'trophy',
     source: {
       motion:
-        "No study gives a share. The forty Bath serves hold the arm up for 72–79% of the window from every placement, and the rig's dropped arm reads under 55.",
+        "No study gives a share. The forty Bath serves hold the arm up for 72–79% of the window from every placement, and the rig’s dropped arm reads under 55.",
     },
     weight: 1.1,
     ideal: [55, 100],
@@ -183,7 +183,7 @@ export const METRICS: Record<string, MetricCopy> = {
     phase: 'toss',
     source: {
       motion:
-        "No study measures the hand's line. The forty Bath serves drift 0.2–1.6% of height from every placement, and the rig's wandering hand reads over 3.",
+        "No study measures the hand’s line. The forty Bath serves drift 0.2–1.6% of height from every placement, and the rig’s wandering hand reads over 3.",
     },
     weight: 0.9,
     /*
@@ -507,7 +507,7 @@ export const METRICS: Record<string, MetricCopy> = {
     phase: 'drop',
     source: {
       study:
-        "Fleisig 2003: 104° of elbow flexion at full external rotation, 76° at the joint. Gao 2026: 52° and 67° at the racket's low point.",
+        "Fleisig 2003: 104° of elbow flexion at full external rotation, 76° at the joint. Gao 2026: 52° and 67° at the racket’s low point.",
     },
     weight: 1,
     ideal: [40, 95],
@@ -533,7 +533,7 @@ export const METRICS: Record<string, MetricCopy> = {
     phase: 'drop',
     source: {
       motion:
-        "No study measures it. The forty Bath serves read 6.5–16% from every placement, and the rig's racket that never falls reads 0.",
+        "No study measures it. The forty Bath serves read 6.5–16% from every placement, and the rig’s racket that never falls reads 0.",
     },
     // Under every other measurement on this card, and deliberately so. The band
     // below is provisional in a way none of the others are, and weight is the
@@ -613,7 +613,7 @@ export const METRICS: Record<string, MetricCopy> = {
     phase: 'contact',
     source: {
       study:
-        "Newton 2025: the forward swing from the racket's low point takes 13.2 ± 2.1% of 0.97 s, about 128 ms, in high-performance men.",
+        "Newton 2025: the forward swing from the racket’s low point takes 13.2 ± 2.1% of 0.97 s, about 128 ms, in high-performance men.",
     },
     weight: 1,
     ideal: [110, 230],

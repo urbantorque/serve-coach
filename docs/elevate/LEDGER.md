@@ -356,3 +356,25 @@ width use, console errors) are machine figures and sit in each set's
   verified: anything on a real phone, and whether a player reads the framed
   six as the drill check's window without being told (the line under the
   grid says it).
+
+## Wave 3: words that help
+
+- [x] **E3.1 Every string a player sees, read from the tour.** What the
+  reading found and changed:
+  - *A speed without "about".* The court screen's big figure said "81 mph",
+    the range a line under it; DESIGN.md bans a speed without "about", so
+    "about" now sits before the figure, as on the report and Today.
+  - *Straight apostrophes in copy*, against the copy rules' curly one: "Today's
+    session" and "Start today's session", "the first drill's step", "The
+    coach's download stopped", and twelve more in the slow-motion and still
+    notes, the accuracy page's citations, the coach's page, the share card
+    and the info pages. A scan of every string and JSX text now finds none
+    outside the dev tools.
+  - *Filler.* The filming guide said the racket swings up "very fast"; it now
+    says "in about an eighth of a second", the Newton 2025 figure the engine
+    already cites (13% of 0.97 s).
+  - *An unclear line.* Before a practice video is read, "Times are from your
+    phone, on this video" now says "I timed these on your phone, for this
+    video."
+  - The report's headline restated by the next sentence is E3.2's.
+  Proved by the scan, the voice lint and the gate.

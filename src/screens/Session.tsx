@@ -255,7 +255,7 @@ function Choices({
           ? `Working out how long this takes on your ${deviceNoun()}…`
           : perSampleMs === undefined
             ? `I couldn’t work out how fast your ${deviceNoun()} is, so I can’t say how long this will take.`
-            : `Times are from your ${deviceNoun()}, on this video.`}
+            : `I timed these on your ${deviceNoun()}, for this video.`}
       </p>
       {/* Off by default: a speed costs the ball's pass on every serve. */}
       <div className="seg" role="group" aria-label="Serve speeds" style={{ width: 'fit-content' }}>

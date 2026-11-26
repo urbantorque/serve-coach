@@ -173,7 +173,7 @@ export const SIGNALS: Record<string, SignalSpec> = {
     seriousMiss: 12,
     source: {
       motion:
-        "Forty Bath serves coil 5.7–17° at the trophy from every corner and end, inside the band and named at no rung; the rig's open chest (shoulders 10° ahead, from a corner) reads -44 and is named at every rung",
+        "Forty Bath serves coil 5.7–17° at the trophy from every corner and end, inside the band and named at no rung; the rig’s open chest (shoulders 10° ahead, from a corner) reads -44 and is named at every rung",
     },
   },
 

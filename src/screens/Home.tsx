@@ -362,7 +362,7 @@ export default function Home({
             </button>
           )}
           <button className="btn btn--primary btn--big btn--full" onClick={() => setSheet('session')}>
-            Start today's session
+            Start today’s session
           </button>
           {/* How long it takes, and a drill that has stopped moving, one tap down and
               under the one main action (E1.6): the card leads with the goal and the
@@ -451,7 +451,7 @@ export default function Home({
           </p>
         ))}
 
-      <Sheet open={sheet === 'session'} onClose={() => setSheet(null)} title="Today's session">
+      <Sheet open={sheet === 'session'} onClose={() => setSheet(null)} title="Today’s session">
         <Suspense fallback={null}>
           {programme && (
             <SessionBody

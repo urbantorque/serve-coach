@@ -35,7 +35,7 @@ const RULES = [
   {
     title: 'Use slow motion if your phone has it',
     body:
-      'The racket swings up to the ball very fast. Slow motion shows that part more clearly.',
+      'The racket swings up to the ball in about an eighth of a second. Slow motion shows that part more clearly.',
   },
   {
     // N2.7: the one placement that gives an ordinary clip a serve speed.
