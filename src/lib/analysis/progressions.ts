@@ -49,6 +49,7 @@ import { FLAWS, MIN_EVIDENCE, type FlawId } from './flaws'
 import { CARD_SIGNAL, SIGNALS, type Severity } from './tiers'
 import type { Triage } from './triage'
 import type { Drill, FundamentalId } from './types'
+import { PASSED_STEP, STAY_ON_STEP, faultGone } from '../phrases'
 
 /**
  * How a step is passed (L4.2). By the app, when the step is a served ball it
@@ -512,10 +513,10 @@ export function checkDrill(
 /** The line a check earns on the report, in the copy rules' voice. */
 export function drillCheckLine(check: DrillCheck): string {
   if (check.outcome === 'passed') {
-    return `Fault gone on ${check.clean} of ${check.read} serves in that video. You’ve passed this step.`
+    return `${faultGone(check.clean, check.read, 'in that video')} ${PASSED_STEP}`
   }
   if (check.outcome === 'not_yet') {
-    return `Fault gone on ${check.clean} of ${check.read} serves in that video. Stay on this step for now.`
+    return `${faultGone(check.clean, check.read, 'in that video')} ${STAY_ON_STEP}`
   }
   return `I could judge only ${check.read} of those serves for this fault. Film a few more to check the step.`
 }

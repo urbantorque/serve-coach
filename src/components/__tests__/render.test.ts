@@ -75,6 +75,7 @@ import { buildConsistency } from '../../lib/analysis/consistency'
 import { normalise, type Session } from '../../lib/storage/db'
 import type { Analysis } from '../../lib/analysis/types'
 import { assert, check, heading, report } from '../../lib/analysis/__tests__/harness'
+import { MOVE_UP, PASSED_STEP, STAY_ON_STEP } from '../../lib/phrases'
 
 /** Render, and let anything thrown out of the render path fail the check. */
 const html = (node: Parameters<typeof renderToStaticMarkup>[0]): string =>
@@ -705,12 +706,12 @@ check('the glance shows the trip drill check, and offers the move only once it i
     )
   const clean = [0, 1, 2, 3, 4, 5].map((k) => judged(k, false))
   const passed = glance(clean)
-  assert(passed.includes('passed this step'), 'a passed trip didn’t say so')
-  assert(passed.includes('Move up a step'), 'a passed trip offered no move')
+  assert(passed.includes(PASSED_STEP), 'a passed trip didn’t say so')
+  assert(passed.includes(MOVE_UP), 'a passed trip offered no move')
   const short = glance([0, 1, 2, 3, 4, 5].map((k) => judged(k, true)))
-  assert(short.includes('Stay on this step') && !short.includes('Move up a step'), 'a failed trip offered the move')
+  assert(short.includes(STAY_ON_STEP) && !short.includes(MOVE_UP), 'a failed trip offered the move')
   const steps = progressionFor('shallow_drop')!.steps.length
-  assert(!glance(clean, steps - 1).includes('Move up a step'), 'the last step offered a move past the end of the ladder')
+  assert(!glance(clean, steps - 1).includes(MOVE_UP), 'the last step offered a move past the end of the ladder')
   assert(!html(createElement(Glance, { analysis: live, onOpenReport: noop, onBack: noop })).includes('glance-check'), 'a check was drawn with no history')
 })
 
@@ -1096,7 +1097,7 @@ check('a basket\'s drill check leads the focus card, above the drill (N4.2)', ()
   const flaw = causalPlan(base.triage, base.diagnosis)[0].flaw!
   const analysis = { ...base, drillCheck: { flaw, read: 6, clean: 5, need: progressionFor(flaw)!.pass, outcome: 'passed' as const } }
   const out = html(createElement(DrillCard, { item: causalPlan(base.triage, base.diagnosis)[0], racket: 'right', check: analysis.drillCheck, rung: 0, onLadderStep: noop }))
-  const said = out.indexOf('passed this step')
+  const said = out.indexOf(PASSED_STEP)
   assert(said > 0, 'the passed check wasn’t said')
   assert(said < out.indexOf('class="drill-how"'), 'the check still follows the drill')
 })

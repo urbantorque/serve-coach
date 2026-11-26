@@ -6,6 +6,7 @@ import { CHECK_SERVES, drillCheckLine, filmable, progressionFor, stepCheckLine }
 import type { Analysis } from '../../lib/analysis/types'
 import { hasDemo } from '../../lib/faultDemoDials'
 import { COST_NAME, LESSONS, fromLine } from '../../lib/analysis/lessons'
+import { MOVE_UP } from '../../lib/phrases'
 
 type PlanItem = Analysis['focus']
 
@@ -67,7 +68,7 @@ export default function DrillCard({ item, racket, check, rung, onLadderStep, dri
             <>
               {check.outcome === 'passed' && rung < ladder.steps.length - 1 && (
                 <button className="btn btn--primary btn--full" onClick={() => move(rung + 1)}>
-                  Move up a step
+                  {MOVE_UP}
                 </button>
               )}
               {check.outcome === 'not_yet' && check.clean <= check.need / 2 && rung > 0 && (

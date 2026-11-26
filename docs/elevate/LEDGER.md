@@ -391,3 +391,15 @@ width use, console errors) are machine figures and sit in each set's
   words, two sentences), and no line tells the swing to pause or stop.
   `faultCopy.test.ts` holds every line to two sentences that do not restate
   their title. Proved by it, `copy.test.ts` (44 checks) and the gate.
+
+- [x] **E3.3 Shared phrases in one place.** The drill check's verdict was
+  written out in three files and its button in four ("Move up a step" on the
+  court screen, the report, a practice video and the lesson; Today said "You
+  passed this step. Go to the next one"), and the tests copied the
+  sentences again. `lib/phrases.ts` holds them once (`PASSED_STEP`,
+  `PASSED_LAST_STEP`, `STAY_ON_STEP`, `MOVE_UP`, `faultGone`,
+  `filmMoreToCheck`, and `sessions` for a counted session); every screen
+  builds from it, Today's button says "Move up a step" like the rest, and
+  `render`, `guidedSet` and `tripCheck` tests check for the constants. A
+  wording change is now one edit. The speed's words already lived in
+  `speedCopy.ts`. Proved by the gate.

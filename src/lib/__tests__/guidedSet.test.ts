@@ -10,6 +10,7 @@ import { cueIssues, wordCount } from '../analysis/voice'
 import type { FlawId } from '../analysis/flaws'
 import type { Session } from '../storage/db'
 import { assert, check, heading, note, report } from '../analysis/__tests__/harness'
+import { PASSED_STEP, STAY_ON_STEP } from '../phrases'
 
 const MIN = 60 * 1000
 
@@ -111,14 +112,14 @@ check('a passed set says so and ends', () => {
   const said = play(DROP, 'cccccc')
   const last = said[said.length - 1]
   assert(last.done, 'six clean serves are an answer')
-  assert(last.line.includes('passed this step'), last.line)
+  assert(last.line.includes(PASSED_STEP), last.line)
   note(last.line)
 })
 check('a set past reaching its bar ends early, and says to stay', () => {
   const said = play(DROP, 'nnn')
   const end = said.findIndex((s) => s.done)
   assert(end >= 0 && end < 6, `ended at serve ${end + 1}`)
-  assert(said[end].line.includes('Stay on this step'), said[end].line)
+  assert(said[end].line.includes(STAY_ON_STEP), said[end].line)
   note(`ended after ${end + 1} serves: ${said[end].line}`)
 })
 

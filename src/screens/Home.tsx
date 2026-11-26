@@ -21,6 +21,7 @@ import { DeltaChip } from '../components/DeltaChip'
 import { deviceNoun } from '../lib/device'
 import type { InfoPageId } from '../lib/routes'
 import { useCan } from '../components/usePlan'
+import { MOVE_UP } from '../lib/phrases'
 
 const FirstRunStage = lazy(() => import('../components/FirstRunStage'))
 const FirstRunMore = lazy(() => import('../components/FirstRunMore'))
@@ -358,7 +359,7 @@ export default function Home({
                 onLadderStep(m.flaw, m.to, m.from)
               }}
             >
-              You passed this step. Go to the next one
+              {MOVE_UP}
             </button>
           )}
           <button className="btn btn--primary btn--big btn--full" onClick={() => setSheet('session')}>

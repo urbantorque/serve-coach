@@ -20,6 +20,7 @@ import { readPrefs } from '../lib/storage/prefs'
 import { onCourtDefault } from '../lib/framing/handsFree'
 import { defaultSpeedUnit, speedFigures, speedGlanceLine, speedRangeLine, speedSpokenLine } from '../lib/speedCopy'
 import '../styles/court.css'
+import { MOVE_UP } from '../lib/phrases'
 
 /** An invisible copy of the Stay here chip, holding the row's height once the countdown stops. */
 const HOLD_SPACE = { visibility: 'hidden' } as const
@@ -449,7 +450,7 @@ export default function Glance({
                   className="btn btn--primary glance-check-move"
                   onClick={() => onLadderStep(tripCheck.flaw, tripCheck.rung + 1, tripCheck.rung)}
                 >
-                  Move up a step
+                  {MOVE_UP}
                 </button>
               )}
             </div>

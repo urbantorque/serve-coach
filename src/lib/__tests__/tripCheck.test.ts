@@ -12,6 +12,7 @@ import { cueIssues } from '../analysis/voice'
 import type { FlawId } from '../analysis/flaws'
 import type { Session } from '../storage/db'
 import { assert, check, heading, note, report } from '../analysis/__tests__/harness'
+import { STAY_ON_STEP } from '../phrases'
 
 const MIN = 60 * 1000
 const DAY = 24 * 60 * MIN
@@ -74,7 +75,7 @@ check('a trip short of the bar says stay on this step', () => {
   const serves = [...lastWeek(), ...today(['c', 'n', 'n', 'c', 'n', 'n'])]
   const c = tripDrillCheck(serves, serves[serves.length - 1])!
   assert(c.outcome === 'not_yet' && !canMoveUp(c), `outcome ${c.outcome}`)
-  assert(/Stay on this step/.test(tripCheckLine(c)), tripCheckLine(c))
+  assert(tripCheckLine(c).includes(STAY_ON_STEP), tripCheckLine(c))
 })
 
 check('too few judged serves asks for more, by how many', () => {

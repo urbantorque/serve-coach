@@ -72,6 +72,7 @@ import RevealStage from './report/RevealStage'
 import ShareChoice from './report/ShareChoice'
 import SideBySide from './report/SideBySide'
 import { deviceNoun } from '../lib/device'
+import { MOVE_UP } from '../lib/phrases'
 
 /*
  * The band in words, as a caption to the score. Said once, and short: the fix
@@ -1430,7 +1431,7 @@ function DrilledLine({
             setMoved(true)
           }}
         >
-          Move up a step
+          {MOVE_UP}
         </button>
       )}
     </div>

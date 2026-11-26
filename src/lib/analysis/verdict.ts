@@ -37,6 +37,7 @@ import { SEVERITY_RANK, rungName, type Severity } from './tiers'
 import type { Analysis, Drill } from './types'
 import { cue } from './voice'
 import { PLACEMENT } from '../placement'
+import { sessions } from '../phrases'
 
 /* --------------------------------------------------------------- refusal -- */
 
@@ -296,8 +297,7 @@ export function strainGlanceLine(
  */
 export function strainBehindLine(record: { trips: number; of: number }): string | undefined {
   if (record.trips < 1 || record.of < 1) return undefined
-  const trips = record.of === 1 ? 'session' : 'sessions'
-  return cue(`Also in ${record.trips} of your ${record.of} ${trips} before this one.`)
+  return cue(`Also in ${record.trips} of your ${sessions(record.of)} before this one.`)
 }
 
 /**

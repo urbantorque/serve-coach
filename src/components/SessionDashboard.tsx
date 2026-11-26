@@ -26,6 +26,7 @@ import { extremes, highlightsOf, sessionStats, type Highlight } from '../lib/ses
 import { sessionSpeeds } from '../lib/speedTrend'
 import { NO_SESSION_SPEED, defaultSpeedUnit, sessionSpeedLine } from '../lib/speedCopy'
 import { readPrefs } from '../lib/storage/prefs'
+import { MOVE_UP } from '../lib/phrases'
 
 /*
  * A finished practice session, read together (L2.8): the nine parts of
@@ -170,7 +171,7 @@ export default function SessionDashboard({ session, previous, videoUrl, onPickAg
             </span>
             {canMoveUp(check) && onLadderStep && (
               <button type="button" className="btn btn--primary glance-check-move" onClick={() => onLadderStep(check.flaw, check.rung + 1, check.rung)}>
-                Move up a step
+                {MOVE_UP}
               </button>
             )}
           </div>

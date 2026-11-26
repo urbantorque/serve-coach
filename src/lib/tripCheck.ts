@@ -21,6 +21,7 @@ import type { FlawId } from './analysis/flaws'
 import { tripsOf } from './progress'
 import type { Session } from './storage/db'
 import { drilledFault } from './weekPlan'
+import { PASSED_LAST_STEP, PASSED_STEP, STAY_ON_STEP, faultGone, filmMoreToCheck } from './phrases'
 
 export interface TripCheck extends DrillCheck {
   /** The rung the player is on, zero-based, and how many the ladder has. */
@@ -69,12 +70,12 @@ export function tripDrillCheck(
 /** Whether the glance should offer "Move up a step": passed, and a step left to move to. */
 export const canMoveUp = (c: TripCheck): boolean => c.outcome === 'passed' && c.rung < c.steps - 1
 
-/** The glance's line for it, in the copy rules' voice: counts, never readings. */
+/** The glance's line for it, in the copy rules' voice: counts, never readings. Its phrases are `phrases.ts`'s. */
 export function tripCheckLine(c: TripCheck, where: 'trip' | 'practice' = 'trip'): string {
   const scope = where === 'trip' ? 'today' : 'in this practice'
-  const gone = `Fault gone on ${c.clean} of ${c.read} serves ${scope}.`
-  if (c.outcome === 'passed') return canMoveUp(c) ? `${gone} You’ve passed this step.` : `${gone} You’ve passed the last step of this drill.`
-  if (c.outcome === 'not_yet') return `${gone} Stay on this step for now.`
+  const gone = faultGone(c.clean, c.read, scope)
+  if (c.outcome === 'passed') return `${gone} ${canMoveUp(c) ? PASSED_STEP : PASSED_LAST_STEP}`
+  if (c.outcome === 'not_yet') return `${gone} ${STAY_ON_STEP}`
   /*
    * Still counting (2026-11-25). It said "0 of 1 serves today without this
    * fault so far. Film 5 more to check this step": two counts to work out
@@ -82,6 +83,6 @@ export function tripCheckLine(c: TripCheck, where: 'trip' | 'practice' = 'trip')
    * something to count.
    */
   const left = CHECK_SERVES - c.read
-  const more = `Film ${left} more ${left === 1 ? 'serve' : 'serves'} and I’ll tell you if you’ve passed this step.`
-  return c.clean > 0 ? `Fault gone on ${c.clean} of ${c.read} so far. ${more}` : more
+  const more = filmMoreToCheck(left)
+  return c.clean > 0 ? `${faultGone(c.clean, c.read)} ${more}` : more
 }
