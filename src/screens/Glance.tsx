@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Cue, Icon, ScoreRing } from '../components/primitives'
 import { DeltaChip } from '../components/DeltaChip'
 import { causalPlan, faultMoveLine, refusalFor, rotationMoveLine } from '../lib/analysis/verdict'
@@ -22,6 +22,10 @@ import { defaultSpeedUnit, speedFigures, speedGlanceLine, speedRangeLine, speedS
 import '../styles/court.css'
 import { MOVE_UP } from '../lib/phrases'
 import { FAULT_NAME } from '../lib/graduation'
+
+/** The serve itself beside its reading, on a laptop only (E5.7). */
+const GlanceFigure = lazy(() => import('../components/GlanceFigure'))
+const laptop = () => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(min-width: 1024px)').matches
 
 /** An invisible copy of the Stay here chip, holding the row's height once the countdown stops. */
 const HOLD_SPACE = { visibility: 'hidden' } as const
@@ -243,6 +247,14 @@ export default function Glance({
   const stepUp = !!tripCheck && canMoveUp(tripCheck) && !!onLadderStep
   const filmClass = stepUp ? 'btn btn--ghost' : 'btn btn--primary'
 
+  /*
+   * The picture a laptop's width is for (E5.7): the fault the big line names,
+   * held at its moment, painted only when this serve had it. In a guided set
+   * on court that is the set's fault; otherwise the first fix.
+   */
+  const figureAbout = court && setLine ? trip?.target : first ? analysis.triage?.primary_flaw?.flaw : undefined
+  const figurePaint = court && setLine ? setJudged === 'named' : !!first
+
   // And then back to the camera, counted down where it can be seen, with any
   // touch of this screen — a tag, a scroll — keeping it here instead.
   const [backIn, setBackIn] = useState<number | null>(() => (handsFree && onRecordAnother && !setOver ? BACK_TO_CAMERA_S : null))
@@ -319,6 +331,12 @@ export default function Glance({
           </button>
         )}
       </header>
+
+      {!refusal && laptop() && (
+        <Suspense fallback={<figure className="glance-figure"><div className="glance-stage" /></figure>}>
+          <GlanceFigure analysis={analysis} about={figureAbout} paint={figurePaint} />
+        </Suspense>
+      )}
 
       {refusal ? (
         <section className="glance-body">

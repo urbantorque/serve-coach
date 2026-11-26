@@ -641,7 +641,7 @@ width use, console errors) are machine figures and sit in each set's
   - *The court screen on a laptop* still sits in a narrow column with its
     actions to one side (width 4). It is read from a fence on a phone; on a
     laptop it is a review screen nobody films from, and the studio is the
-    laptop's reason to exist.
+    laptop's reason to exist. (Done since, at the owner's ask: E5.7.)
   - *"That's mine" moved least* (5.4 to 5.6): the report's held frame is
     the player's own clip, which the demo routes cannot supply, so the tour
     scores the screens that show a figure; the own-serve comparison appears
@@ -650,3 +650,48 @@ width use, console errors) are machine figures and sit in each set's
     on purpose: a picture to study is the report's job, not a fence's.
   - *Drawing in the studio* still needs a pointer.
   - Owner steps: none added; `docs/next/OWNER-STEPS.md` is unchanged.
+
+## After the close
+
+- [x] **E5.7 The court screen on a laptop: the serve beside its reading.**
+  Asked for by the owner after the close. On a laptop the court screen was a
+  phone's centred column in the left half and its actions in the right
+  (`widthUse` 0.43 to 0.49, width 4). The left pane is now the player's own
+  serve, held at the moment the first fix is read at, the part it is about
+  painted in coral as the report and the serve cards paint it, captioned
+  with the moment ("Paused at the trophy", the word a tap away). The score,
+  the fix, the drill check, the speed, the taps and the one lime action
+  share the right pane, read from its edge rather than centred. With
+  hands-free on, the big readout sits in the right pane the same way; in a
+  guided set the figure holds the set's fault, painted only when this serve
+  had it. A refused clip draws no body, since nothing on it was read: its
+  words now start at the left pane's edge, the action beside them.
+
+  On a laptop only, decided by the width when the screen opens and hidden if
+  the window is narrowed after; a phone never fetches the figure. The
+  phone's six court shots match `w5` (words, one lime action, width use).
+  Laptop `widthUse` for 14 and 16 to 19 is 0.66 to 0.74 (from 0.43 to
+  0.49), each on one screen; the refusal is 0.37 to 0.43 (from 0.41; the
+  Read aloud chip comes and goes with the browser's voices), short words
+  with nothing honest to draw. The figure spans the right pane's four rows
+  at most: spanning eight left five empty row gaps under the actions and a
+  tenth of a screen to scroll. Before and after, set `e57`:
+  `w5-e57-laptop-court_guided_set.jpg`. `laptopCourt.test.ts` holds the
+  figure, its moment and caption, the phone and refusal drawing none, and
+  the two-pane rules. 2,474 checks pass; the entry stylesheet is 8.89 kB
+  gzip (from 8.75), the split sheets unchanged.
+
+  Rescored (bold where it moved):
+
+  | Screen | Mine | Width | Visuals |
+  |---|---|---|---|
+  | 14 Court screen | 5 → **6** | 4 → **8** | 3 → **5** |
+  | 15 Court, refused | – | 4 → **5** | 4 |
+  | 16 Court, strain | 5 → **6** | 4 → **8** | 3 → **5** |
+  | 17 Court, a fault moving | 6 → **7** | 4 → **8** | 3 → **5** |
+  | 18 Guided set | 5 → **6** | 4 → **8** | 3 → **5** |
+  | 19 Guided set, passed | 5 → **6** | 4 → **8** | 3 → **5** |
+  | **Mean, all 23 screens** | 5.6 → **5.9** | 6.0 → **6.9** | 5.2 → **5.7** |
+
+  Visuals move by half, not more: the phone, where the screen is read from
+  a fence, still has numbers and words only, on purpose.

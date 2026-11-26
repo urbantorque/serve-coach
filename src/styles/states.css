@@ -112,6 +112,11 @@
   flex-direction: column;
 }
 
+/* A laptop's picture (E5.7), hidden if the window is narrowed after it drew. */
+.glance-figure {
+  display: none;
+}
+
 .glance-top {
   display: flex;
   align-items: center;

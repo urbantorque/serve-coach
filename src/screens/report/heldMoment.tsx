@@ -18,7 +18,7 @@ export function heldCaption(phase: PhaseId): ReactNode {
 }
 
 /** What the held frame is stopped on, in words under it. */
-function heldAt(phase: PhaseId): string {
+export function heldAt(phase: PhaseId): string {
   return phase === 'contact' ? 'Paused at contact' : phase === 'ready' ? 'Paused at the ready position' : `Paused at the ${PHASE_NAME[phase]}`
 }
 

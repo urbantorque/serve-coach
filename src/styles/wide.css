@@ -436,12 +436,76 @@
     align-self: start;
   }
 
-  .glance > :not(.glance-top):not(.glance-body) {
+  .glance > :not(.glance-top):not(.glance-body):not(.glance-figure) {
     grid-column: 2;
   }
 
   .glance > .glance-actions:first-of-type {
     margin-top: 0;
+  }
+
+  /* Read from the pane's edge, not centred in it: a phone's centred column
+     in half a laptop was a narrow strip in a dark field (E5.7). */
+  .glance > .glance-body {
+    align-items: flex-start;
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .glance .glance-why,
+  .glance .glance-hints {
+    max-width: 46ch;
+  }
+
+  .glance .glance-move {
+    max-width: 52ch;
+  }
+
+  /* With a serve to draw, the serve takes the left pane: the player's own
+     body at the fix's moment, the fault in coral. The reading, its taps and
+     the one action share the right (E5.7). */
+  .shell > .glance:has(> .glance-figure) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .glance > .glance-figure {
+    display: block;
+    grid-column: 1;
+    /* The right pane's four rows at most (the reading, the taps, a set, the
+       actions): each empty row spanned would add a gap under the actions. */
+    grid-row: 2 / span 4;
+    align-self: start;
+    position: sticky;
+    top: 24px;
+    margin: 0;
+  }
+
+  .glance:has(> .glance-figure) > .glance-body {
+    grid-column: 2;
+    grid-row: auto;
+  }
+
+  .glance-stage {
+    position: relative;
+    aspect-ratio: 5 / 6;
+    max-height: calc(100svh - 150px);
+    overflow: hidden;
+    border-radius: var(--r-lg);
+    background: var(--stage);
+  }
+
+  .glance-stage .athlete {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .glance-figure figcaption {
+    padding-top: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--fg-muted);
   }
 
   /* ---------------------------------------------------------- the info pages */
